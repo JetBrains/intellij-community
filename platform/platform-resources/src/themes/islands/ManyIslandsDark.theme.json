@@ -1243,16 +1243,18 @@
     "Tooltip.Learning": {
       "background": "got-it-bg",
       "borderColor": "got-it-bg",
+
       "foreground": "text-default",
       "Header.foreground": "text-default",
-      "stepNumberForeground": "blue-100",
+      "stepNumberForeground": "got-it-text-step",
       "secondaryActionForeground": "got-it-text-link",
       "linkForeground": "got-it-text-link",
       "linkUnderlineDefaultColor": "got-it-text-link",
       "linkUnderlineHoveredColor": "got-it-text-link",
-      "spanBackground": "accent-brand-bg-secondary",
+
+      "spanBackground": "got-it-shortcut-bg",
       "spanForeground": "text-default",
-      "codeBorderColor": "#FFFFFF70",
+      "codeBorderColor": "got-it-code-border",
       "iconFillColor": "got-it-bg",
       "iconBorderColor": "icon-over-accent"
     },
