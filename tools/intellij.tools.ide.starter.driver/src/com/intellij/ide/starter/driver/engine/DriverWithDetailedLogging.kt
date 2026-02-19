@@ -2,7 +2,6 @@ package com.intellij.ide.starter.driver.engine
 
 import com.intellij.driver.client.Driver
 import com.intellij.driver.client.Remote
-import com.intellij.driver.client.impl.JmxCallException
 import com.intellij.driver.model.LockSemantics
 import com.intellij.driver.model.OnDispatcher
 import com.intellij.driver.sdk.ui.ui
@@ -20,6 +19,8 @@ import com.intellij.tools.ide.util.common.logError
 import com.intellij.tools.ide.util.common.logOutput
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.withTimeoutOrNull
+import java.util.concurrent.CompletableFuture
+import java.util.concurrent.TimeUnit
 import kotlin.io.path.Path
 import kotlin.io.path.createDirectories
 import kotlin.io.path.div
@@ -62,19 +63,23 @@ internal class DriverWithDetailedLogging(private val driver: Driver, logUiHierar
   }
 
   private fun createErrorScreenshotOrNull(): String? {
-    try {
-      return this.takeScreenshot("driverError")
+    return try {
+      val future = CompletableFuture.supplyAsync { this.takeScreenshot("driverError") }
+      future.get(30, TimeUnit.SECONDS)
     }
-    catch (_: JmxCallException) {
-      return null
+    catch (e: Exception) {
+      logError("Failed to take error screenshot: ${e.message}")
+      null
     }
   }
 
   private fun saveHierarchy(path: String) {
     try {
-      ui.robotProvider.saveHierarchy(path)
+      val future = CompletableFuture.runAsync { ui.robotProvider.saveHierarchy(path) }
+      future.get(30, TimeUnit.SECONDS)
     }
-    catch (_: Throwable) {
+    catch (e: Exception) {
+      logError("Failed to save UI hierarchy: ${e.message}")
     }
   }
 
