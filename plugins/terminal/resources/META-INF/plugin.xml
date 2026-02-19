@@ -41,6 +41,7 @@
 
   <dependencies>
     <plugin id="com.intellij.modules.lang"/>
+    <module name="intellij.platform.ide.impl.wsl"/>
   </dependencies>
 
   <content namespace="jetbrains">
