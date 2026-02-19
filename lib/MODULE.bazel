@@ -8113,6 +8113,223 @@ http_file(
 )
 
 http_file(
+  name = "org_jetbrains_intellij_deps_batik-batik-transcoder-1_16_0-35_http",
+  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/intellij/deps/batik/batik-transcoder/1.16.0-35/batik-transcoder-1.16.0-35.jar",
+  sha256 = "72d9d8d4bb8b7cef3522db4811aae30d87d39442419c7747920bd07ddb6f807c",
+  downloaded_file_path = "batik-transcoder-1.16.0-35.jar"
+)
+
+http_file(
+  name = "org_jetbrains_intellij_deps_batik-batik-awt-util-1_16_0-35_http",
+  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/intellij/deps/batik/batik-awt-util/1.16.0-35/batik-awt-util-1.16.0-35.jar",
+  sha256 = "943e4ec9912c2799ba4cc710783b41ddda7be20c6280c75204108385c684cac1",
+  downloaded_file_path = "batik-awt-util-1.16.0-35.jar"
+)
+
+http_file(
+  name = "org_apache_xmlgraphics-xmlgraphics-commons-2_8_http",
+  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/apache/xmlgraphics/xmlgraphics-commons/2.8/xmlgraphics-commons-2.8.jar",
+  sha256 = "abe7c5a9d196a64c398c678e234c8ae7b59b6539a9fd7d31e4a41055d68defbd",
+  downloaded_file_path = "xmlgraphics-commons-2.8.jar"
+)
+
+http_file(
+  name = "org_jetbrains_intellij_deps_batik-batik-bridge-1_16_0-35_http",
+  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/intellij/deps/batik/batik-bridge/1.16.0-35/batik-bridge-1.16.0-35.jar",
+  sha256 = "ddcf155b6eed0c2157761b07170c1656ce30607808a659ab83e7ea7455c1b9fe",
+  downloaded_file_path = "batik-bridge-1.16.0-35.jar"
+)
+
+http_file(
+  name = "org_jetbrains_intellij_deps_batik-batik-anim-1_16_0-35_http",
+  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/intellij/deps/batik/batik-anim/1.16.0-35/batik-anim-1.16.0-35.jar",
+  sha256 = "bea5166ae9d887e385ac439495dd452ceb06dcada8dd3a2a88ac693242bcddd0",
+  downloaded_file_path = "batik-anim-1.16.0-35.jar"
+)
+
+http_file(
+  name = "org_jetbrains_intellij_deps_batik-batik-parser-1_16_0-35_http",
+  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/intellij/deps/batik/batik-parser/1.16.0-35/batik-parser-1.16.0-35.jar",
+  sha256 = "d57a4af13b351fb4916fe19c00942b9ac41102f52e883441944e311be2a08186",
+  downloaded_file_path = "batik-parser-1.16.0-35.jar"
+)
+
+http_file(
+  name = "org_jetbrains_intellij_deps_batik-batik-svg-dom-1_16_0-35_http",
+  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/intellij/deps/batik/batik-svg-dom/1.16.0-35/batik-svg-dom-1.16.0-35.jar",
+  sha256 = "f436c50c43a21aa9e84c2882d149871d0f146d648de5a2de175170030ae3a168",
+  downloaded_file_path = "batik-svg-dom-1.16.0-35.jar"
+)
+
+http_file(
+  name = "org_jetbrains_intellij_deps_batik-batik-dom-1_16_0-35_http",
+  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/intellij/deps/batik/batik-dom/1.16.0-35/batik-dom-1.16.0-35.jar",
+  sha256 = "9bd7b4e71a598e0001d411baefecf599f8d9423ba50a80555ef7abcd5319ee79",
+  downloaded_file_path = "batik-dom-1.16.0-35.jar"
+)
+
+http_file(
+  name = "org_jetbrains_intellij_deps_batik-batik-css-1_16_0-35_http",
+  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/intellij/deps/batik/batik-css/1.16.0-35/batik-css-1.16.0-35.jar",
+  sha256 = "3daa833eead75cf3452ea749a471dcac9d5d556c43de0fd609dd7cf758677f0d",
+  downloaded_file_path = "batik-css-1.16.0-35.jar"
+)
+
+http_file(
+  name = "org_jetbrains_intellij_deps_batik-batik-ext-1_16_0-35_http",
+  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/intellij/deps/batik/batik-ext/1.16.0-35/batik-ext-1.16.0-35.jar",
+  sha256 = "c798b742fd0e0760a1137bb6f95ae8ebd3059de5c72ddb35f7f577e915f7c579",
+  downloaded_file_path = "batik-ext-1.16.0-35.jar"
+)
+
+http_file(
+  name = "org_jetbrains_intellij_deps_batik-batik-gvt-1_16_0-35_http",
+  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/intellij/deps/batik/batik-gvt/1.16.0-35/batik-gvt-1.16.0-35.jar",
+  sha256 = "50e8508e1453e552c6f9d70d11956be3dd39cfefb561ddbf621ab94896a2f8bb",
+  downloaded_file_path = "batik-gvt-1.16.0-35.jar"
+)
+
+http_file(
+  name = "org_jetbrains_intellij_deps_batik-batik-svggen-1_16_0-35_http",
+  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/intellij/deps/batik/batik-svggen/1.16.0-35/batik-svggen-1.16.0-35.jar",
+  sha256 = "f5dc9308dff817151e0ff2881b3132c62309bafa401ce5dbe6703c52ed999eef",
+  downloaded_file_path = "batik-svggen-1.16.0-35.jar"
+)
+
+http_file(
+  name = "org_jetbrains_intellij_deps_batik-batik-util-1_16_0-35_http",
+  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/intellij/deps/batik/batik-util/1.16.0-35/batik-util-1.16.0-35.jar",
+  sha256 = "c51733a4c6bf4c071141b798487e2293bd79981ace013ad7d123441b7fb34d14",
+  downloaded_file_path = "batik-util-1.16.0-35.jar"
+)
+
+http_file(
+  name = "org_jetbrains_intellij_deps_batik-batik-constants-1_16_0-35_http",
+  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/intellij/deps/batik/batik-constants/1.16.0-35/batik-constants-1.16.0-35.jar",
+  sha256 = "76711fea4a9f5e7cb2b52957632c0a78664d805a008f4ac81886bd5c9400afea",
+  downloaded_file_path = "batik-constants-1.16.0-35.jar"
+)
+
+http_file(
+  name = "org_jetbrains_intellij_deps_batik-batik-xml-1_16_0-35_http",
+  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/intellij/deps/batik/batik-xml/1.16.0-35/batik-xml-1.16.0-35.jar",
+  sha256 = "9a0f5d35033edf4a6326153536f7cc700a6ff3579abd94adb2eaaafdac8ee64a",
+  downloaded_file_path = "batik-xml-1.16.0-35.jar"
+)
+
+http_file(
+  name = "org_jetbrains_intellij_deps_batik-batik-transcoder-1_16_0-35-sources_http",
+  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/intellij/deps/batik/batik-transcoder/1.16.0-35/batik-transcoder-1.16.0-35-sources.jar",
+  sha256 = "64e1b18ce6483443711d9c947ca7c947ed65661700d3a4980ad4c564e462c901",
+  downloaded_file_path = "batik-transcoder-1.16.0-35-sources.jar"
+)
+
+http_file(
+  name = "org_jetbrains_intellij_deps_batik-batik-awt-util-1_16_0-35-sources_http",
+  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/intellij/deps/batik/batik-awt-util/1.16.0-35/batik-awt-util-1.16.0-35-sources.jar",
+  sha256 = "e8837cb92a69379b816f0dcd3c3908e826358ef0e11d37e590de610d615fa59c",
+  downloaded_file_path = "batik-awt-util-1.16.0-35-sources.jar"
+)
+
+http_file(
+  name = "org_apache_xmlgraphics-xmlgraphics-commons-2_8-sources_http",
+  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/apache/xmlgraphics/xmlgraphics-commons/2.8/xmlgraphics-commons-2.8-sources.jar",
+  sha256 = "c359c6c709f6b79f6bbe72b2863cd1ce642a583facb8bd4965b79013473f4d1d",
+  downloaded_file_path = "xmlgraphics-commons-2.8-sources.jar"
+)
+
+http_file(
+  name = "org_jetbrains_intellij_deps_batik-batik-bridge-1_16_0-35-sources_http",
+  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/intellij/deps/batik/batik-bridge/1.16.0-35/batik-bridge-1.16.0-35-sources.jar",
+  sha256 = "8476fbfaac21b0099878f5251b844ffe936f6ef035954c630aeb6b89f88f45a1",
+  downloaded_file_path = "batik-bridge-1.16.0-35-sources.jar"
+)
+
+http_file(
+  name = "org_jetbrains_intellij_deps_batik-batik-anim-1_16_0-35-sources_http",
+  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/intellij/deps/batik/batik-anim/1.16.0-35/batik-anim-1.16.0-35-sources.jar",
+  sha256 = "3d2a111b4e1299bc73944660523266f73d83caa0a6cb037256834e1c812c4ad8",
+  downloaded_file_path = "batik-anim-1.16.0-35-sources.jar"
+)
+
+http_file(
+  name = "org_jetbrains_intellij_deps_batik-batik-parser-1_16_0-35-sources_http",
+  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/intellij/deps/batik/batik-parser/1.16.0-35/batik-parser-1.16.0-35-sources.jar",
+  sha256 = "8fddb3a9659ba3a8616c6584d65473dfe2abb31a86ecaf555a7cbfb22cecf3c5",
+  downloaded_file_path = "batik-parser-1.16.0-35-sources.jar"
+)
+
+http_file(
+  name = "org_jetbrains_intellij_deps_batik-batik-svg-dom-1_16_0-35-sources_http",
+  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/intellij/deps/batik/batik-svg-dom/1.16.0-35/batik-svg-dom-1.16.0-35-sources.jar",
+  sha256 = "10b9d72c5ec4f56c2aa59a4e71c91037ae9aa80d123bd26b6540a26aa3e74ce4",
+  downloaded_file_path = "batik-svg-dom-1.16.0-35-sources.jar"
+)
+
+http_file(
+  name = "org_jetbrains_intellij_deps_batik-batik-dom-1_16_0-35-sources_http",
+  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/intellij/deps/batik/batik-dom/1.16.0-35/batik-dom-1.16.0-35-sources.jar",
+  sha256 = "d6e313489f50403daf8074c6d6c4d842a896e74bd101ee1a80ea7a615457289e",
+  downloaded_file_path = "batik-dom-1.16.0-35-sources.jar"
+)
+
+http_file(
+  name = "org_jetbrains_intellij_deps_batik-batik-css-1_16_0-35-sources_http",
+  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/intellij/deps/batik/batik-css/1.16.0-35/batik-css-1.16.0-35-sources.jar",
+  sha256 = "0b2749c9bd4e347e668497b9a9b819b3326dba8c5bffffb0b8eb23068d1acc15",
+  downloaded_file_path = "batik-css-1.16.0-35-sources.jar"
+)
+
+http_file(
+  name = "org_jetbrains_intellij_deps_batik-batik-ext-1_16_0-35-sources_http",
+  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/intellij/deps/batik/batik-ext/1.16.0-35/batik-ext-1.16.0-35-sources.jar",
+  sha256 = "215ae40c7b36bd8d1b4bc5a70ea6111d414eaf0c0fc2f87300a1d28d3edf0f51",
+  downloaded_file_path = "batik-ext-1.16.0-35-sources.jar"
+)
+
+http_file(
+  name = "org_jetbrains_intellij_deps_batik-batik-gvt-1_16_0-35-sources_http",
+  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/intellij/deps/batik/batik-gvt/1.16.0-35/batik-gvt-1.16.0-35-sources.jar",
+  sha256 = "3e109f59457708ff508df71c06d7e4a5347d0ca16001934a3e78377d05f199dd",
+  downloaded_file_path = "batik-gvt-1.16.0-35-sources.jar"
+)
+
+http_file(
+  name = "org_jetbrains_intellij_deps_batik-batik-svggen-1_16_0-35-sources_http",
+  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/intellij/deps/batik/batik-svggen/1.16.0-35/batik-svggen-1.16.0-35-sources.jar",
+  sha256 = "50950c2fa03d198f8f33a9478f7ef5ca03d0198ef66165f5ac4611525ab3d0e3",
+  downloaded_file_path = "batik-svggen-1.16.0-35-sources.jar"
+)
+
+http_file(
+  name = "org_jetbrains_intellij_deps_batik-batik-util-1_16_0-35-sources_http",
+  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/intellij/deps/batik/batik-util/1.16.0-35/batik-util-1.16.0-35-sources.jar",
+  sha256 = "b6f49af111902f0c307f4344be04d5c895c3e018ef18a7c6cde0ac3670f50192",
+  downloaded_file_path = "batik-util-1.16.0-35-sources.jar"
+)
+
+http_file(
+  name = "org_jetbrains_intellij_deps_batik-batik-constants-1_16_0-35-sources_http",
+  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/intellij/deps/batik/batik-constants/1.16.0-35/batik-constants-1.16.0-35-sources.jar",
+  sha256 = "fd088941787863cd3498ac7359b05e11d374657b8c35218d87ec657ac558ac42",
+  downloaded_file_path = "batik-constants-1.16.0-35-sources.jar"
+)
+
+http_file(
+  name = "org_jetbrains_intellij_deps_batik-batik-xml-1_16_0-35-sources_http",
+  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/intellij/deps/batik/batik-xml/1.16.0-35/batik-xml-1.16.0-35-sources.jar",
+  sha256 = "5b2c31669ddce36c910c221cdc3d031b0a2e2007ebe00e2f2583270122729e70",
+  downloaded_file_path = "batik-xml-1.16.0-35-sources.jar"
+)
+
+http_file(
+  name = "xml-apis-xml-apis-ext-1_3_04_http",
+  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/xml-apis/xml-apis-ext/1.3.04/xml-apis-ext-1.3.04.jar",
+  sha256 = "d0b4887dc34d57de49074a58affad439a013d0baffa1a8034f8ef2a5ea191646",
+  downloaded_file_path = "xml-apis-ext-1.3.04.jar"
+)
+
+http_file(
   name = "org_jetbrains_intellij-blockmap-1_0_7_http",
   url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/jetbrains/intellij/blockmap/1.0.7/blockmap-1.0.7.jar",
   sha256 = "7e3f98d3370551fea909ceb952e4797108a3a5ef67a1d7b5fb03a036eab24df9",

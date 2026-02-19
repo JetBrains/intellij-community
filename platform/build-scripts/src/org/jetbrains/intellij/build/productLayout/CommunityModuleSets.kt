@@ -416,6 +416,7 @@ object CommunityModuleSets {
     moduleSet(xml())
     moduleSet(duplicates())
     module("intellij.platform.structuralSearch")
+    embeddedModule("intellij.libraries.batik")
 
     // Note: rd.common is intentionally NOT included in ide.common
     // Reason: Rider uses custom module loading mode due to early backend startup requirements.

@@ -395,6 +395,7 @@
     <module name="intellij.libraries.grpc.netty.shaded"/>
     <module name="intellij.libraries.jspecify"/>
     <module name="intellij.platform.structuralSearch"/>
+    <module name="intellij.libraries.batik" loading="embedded"/>
     <!-- endregion -->
   </content>
 </idea-plugin>

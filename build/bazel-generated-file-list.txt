@@ -370,6 +370,7 @@ libraries/asm
 libraries/asm-tools
 libraries/assertj-core
 libraries/automaton
+libraries/batik
 libraries/blockmap
 libraries/bouncy-castle-pgp
 libraries/bouncy-castle-provider
