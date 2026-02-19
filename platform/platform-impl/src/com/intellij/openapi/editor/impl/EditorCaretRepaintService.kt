@@ -73,11 +73,14 @@ internal class EditorCaretRepaintService(coroutineScope: CoroutineScope) {
     check(actionRequests.tryEmit(Unit))
   }
 
+  private fun shouldUseNormalBlinking(editor: EditorImpl) =
+    editor.shouldDisableAnimations() || !editor.settings.isSmoothCaretBlinking
+
   private suspend fun blink(editor: EditorImpl) {
-    if (editor.settings.isSmoothCaretBlinking) {
-      blinkSmooth(editor)
-    } else {
+    if (shouldUseNormalBlinking(editor)) {
       blinkNormal(editor)
+    } else {
+      blinkSmooth(editor)
     }
   }
 

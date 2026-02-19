@@ -3355,13 +3355,17 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     }
   }
 
+  boolean shouldDisableAnimations() {
+    return Registry.is("ui.simplified", false) ||
+           PowerSaveMode.isEnabled() ||
+           RemoteDesktopService.isRemoteSession();
+  }
+
   private boolean shouldSetCursorPositionImmediately() {
     return !getSettings().isAnimatedCaret() ||
            gainedFocus.getAndSet(false) ||
            myMouseIsInDrag ||
-           Registry.is("ui.simplified", false) ||
-           PowerSaveMode.isEnabled() ||
-           RemoteDesktopService.isRemoteSession();
+           shouldDisableAnimations();
   }
 
   private void setCursorPosition() {
