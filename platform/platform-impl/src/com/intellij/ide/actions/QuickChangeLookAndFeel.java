@@ -1,6 +1,7 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.actions;
 
+import com.intellij.diagnostic.LoadingState;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.ui.LafManager;
@@ -276,7 +277,9 @@ public final class QuickChangeLookAndFeel extends QuickSwitchSchemeAction implem
                                             boolean lockEditorScheme) {
       UIThemeLookAndFeelInfo cur = lafManager.getCurrentUIThemeLookAndFeel();
       if (!force && cur == lf) return;
-      ChangeLAFAnimator animator = Registry.is("ide.intellij.laf.enable.animation") ? ChangeLAFAnimator.showSnapshot() : null;
+      ChangeLAFAnimator animator = LoadingState.COMPONENTS_LOADED.isOccurred() && Registry.is("ide.intellij.laf.enable.animation")
+                                   ? ChangeLAFAnimator.showSnapshot()
+                                   : null;
 
       final boolean wasDarcula = StartupUiUtil.isUnderDarcula();
       lafManager.setCurrentLookAndFeel(lf, lockEditorScheme);
