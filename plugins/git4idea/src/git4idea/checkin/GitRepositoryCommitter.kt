@@ -109,7 +109,7 @@ internal class GitRepositoryCommitter(val repository: GitRepository, private val
 
   private fun performPostCommitSquashIfNeeded(commitMessage: String) {
     if (commitOptions.commitToAmend is CommitToAmend.Specific) {
-      GitAmendSpecificCommitSquasher.squashLastCommitIntoTarget(repository, commitOptions.commitToAmend.targetHash, commitMessage)
+      GitAmendSpecificCommitSquasher.squashAmendCommitIntoTarget(repository, commitOptions.commitToAmend.targetHash, commitMessage)
     }
   }
 }

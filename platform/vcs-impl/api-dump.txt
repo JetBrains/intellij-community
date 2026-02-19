@@ -3995,6 +3995,7 @@ f:com.intellij.vcs.commit.CommitCheckFailure$WithDetails
 - f:getViewDetailsLinkText():java.lang.String
 com.intellij.vcs.commit.CommitExceptionWithActions
 - a:getActions():java.util.List
+- getShouldAddShowDetailsAction():Z
 f:com.intellij.vcs.commit.CommitModeManager
 - com.intellij.openapi.Disposable
 - sf:Companion:com.intellij.vcs.commit.CommitModeManager$Companion

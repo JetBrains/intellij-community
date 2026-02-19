@@ -5,4 +5,6 @@ import com.intellij.notification.NotificationAction
 
 interface CommitExceptionWithActions {
   val actions: List<NotificationAction>
+  val shouldAddShowDetailsAction: Boolean
+    get() = true
 }
