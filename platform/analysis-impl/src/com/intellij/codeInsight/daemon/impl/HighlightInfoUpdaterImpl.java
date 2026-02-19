@@ -11,6 +11,7 @@ import com.intellij.injected.editor.DocumentWindow;
 import com.intellij.lang.ASTNode;
 import com.intellij.lang.Language;
 import com.intellij.lang.annotation.Annotator;
+import com.intellij.lang.annotation.ExternalAnnotator;
 import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.openapi.Disposable;
@@ -485,7 +486,9 @@ public final class HighlightInfoUpdaterImpl extends HighlightInfoUpdater impleme
       if (isAnnotatorToolId(toolId) || isHighlightVisitorToolId(toolId)) {
         return this == ANNOTATOR_OR_VISITOR;
       }
-      if (toolId == InjectedLanguageManagerImpl.INJECTION_BACKGROUND_TOOL_ID || toolId == InjectedLanguageManagerImpl.INJECTION_SYNTAX_TOOL_ID) {
+      if (toolId == InjectedLanguageManagerImpl.INJECTION_BACKGROUND_TOOL_ID
+          || toolId == InjectedLanguageManagerImpl.INJECTION_SYNTAX_TOOL_ID
+          || toolId instanceof Class<?> c && ExternalAnnotator.class.isAssignableFrom(c)) {
         return false;
       }
       assert false : "unknown tool id type: "+toolId +"("+toolId.getClass()+")";
