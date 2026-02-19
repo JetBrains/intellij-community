@@ -85,7 +85,7 @@ class DefaultImportPerformer(private val partials: Collection<PartialImportPerfo
     val pluginsToInstall = pluginIds.filter { !installedPlugins.contains(it.idString) }.toSet()
 
     val installAndEnableTask = getInstallAndEnableTask(project, pluginsToInstall, false, false, pi.modalityState) {}
-    installAndEnableTask.runBlocking()
+    installAndEnableTask.loadPlugins()
 
     val plugins = installAndEnableTask.getPlugins()
     val customPlugins = installAndEnableTask.getCustomPlugins().map { it.getDescriptor() as PluginNode }
