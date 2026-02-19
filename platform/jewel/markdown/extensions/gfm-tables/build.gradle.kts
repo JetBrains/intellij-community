@@ -12,6 +12,8 @@ dependencies {
     implementation(libs.commonmark.ext.gfm.tables)
 
     testImplementation(compose.desktop.uiTestJUnit4)
+    testImplementation(projects.markdown.testing)
+    testImplementation(compose.desktop.currentOs)
 }
 
 publicApiValidation { excludedClassRegexes = setOf("org.jetbrains.jewel.markdown.extensions.github.tables.*") }

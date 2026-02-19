@@ -74,7 +74,7 @@ internal class GitHubTableBlockRenderer(
         val headerRenderer = remember(headerRootStyling) { blockRenderer.createCopy(rootStyling = headerRootStyling) }
 
         val rows =
-            remember(tableBlock, blockRenderer, inlineRenderer, tableStyling) {
+            remember(tableBlock, blockRenderer, inlineRenderer, tableStyling, enabled, onUrlClick) {
                 val headerCells =
                     tableBlock.header.cells.map<TableCell, @Composable () -> Unit> { cell ->
                         {
