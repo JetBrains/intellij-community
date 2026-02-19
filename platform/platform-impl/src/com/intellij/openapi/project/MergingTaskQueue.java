@@ -12,6 +12,7 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.impl.ProgressSuspender;
 import com.intellij.openapi.project.DumbModeStatisticsCollector.IndexingFinishType;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.platform.util.progress.RawProgressReporter;
 import kotlin.Unit;
 import kotlinx.coroutines.Job;
 import kotlinx.coroutines.JobKt;
@@ -285,7 +286,7 @@ public class MergingTaskQueue<T extends MergeableQueueTask<T>> {
       Disposer.dispose(task);
     }
 
-    public void executeTask() {
+    public void executeTask(@NotNull RawProgressReporter reporter) {
       // this is the cancellation check
       try {
         JobKt.ensureActive(taskJob);
@@ -294,7 +295,22 @@ public class MergingTaskQueue<T extends MergeableQueueTask<T>> {
       }
 
       beforeTask();
-      ProgressIndicator indicator = new EmptyProgressIndicator();
+      ProgressIndicator indicator = new EmptyProgressIndicator() {
+        @Override
+        public void setText(String text) {
+          reporter.text(text);
+        }
+
+        @Override
+        public void setText2(String text) {
+          reporter.details(text);
+        }
+
+        @Override
+        public void setFraction(double fraction) {
+          reporter.fraction(fraction);
+        }
+      };
       taskJob.invokeOnCompletion(true, true, (exception) -> {
         if (exception instanceof CancellationException) {
           indicator.cancel();

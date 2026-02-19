@@ -4,14 +4,12 @@ package com.intellij.openapi.project
 import com.intellij.concurrency.IntelliJContextElement
 import com.intellij.internal.statistic.StructuredIdeActivity
 import com.intellij.openapi.diagnostic.thisLogger
-import com.intellij.openapi.progress.ProcessCanceledException
-import com.intellij.openapi.progress.ProgressIndicator
-import com.intellij.openapi.progress.ProgressManager
-import com.intellij.openapi.progress.impl.ProgressSuspender
+import com.intellij.openapi.progress.TaskInfo
 import com.intellij.openapi.project.DumbModeStatisticsCollector.IndexingFinishType
 import com.intellij.openapi.project.DumbModeStatisticsCollector.logProcessFinished
 import com.intellij.openapi.project.MergingTaskQueue.SubmissionReceipt
-import com.intellij.openapi.wm.ex.ProgressIndicatorEx
+import com.intellij.openapi.util.NlsContexts
+import com.intellij.platform.util.progress.RawProgressReporter
 import com.intellij.util.indexing.IndexingBundle
 import kotlinx.coroutines.flow.first
 import org.jetbrains.annotations.ApiStatus
@@ -29,29 +27,44 @@ class DumbServiceGuiExecutor(project: Project, queue: DumbServiceMergingTaskQueu
 
   internal fun guiSuspender(): MergingQueueGuiSuspender = super.guiSuspender
 
-  override fun processTasksWithProgress(suspender: ProgressSuspender?,
-                                        visibleIndicator: ProgressIndicator,
+  override fun processTasksWithProgress(reporter: RawProgressReporter,
                                         parentActivity: StructuredIdeActivity?): SubmissionReceipt? {
     if (parentActivity != null) {
       thisLogger().error("DumbServiceGuiExecutor is supposed to have a plain structure of activities. $parentActivity")
     }
     val childActivity = DumbModeStatisticsCollector.DUMB_MODE_ACTIVITY.started(project)
-    if (project.isDisposed) {
-      throw ProcessCanceledException()
-    }
-
     var taskCompletedNormally = false
     return try {
-      if (visibleIndicator is ProgressIndicatorEx) DumbServiceAppIconProgress.registerForProgress(project, visibleIndicator)
-      super.processTasksWithProgress(suspender, visibleIndicator, childActivity).also {
-        taskCompletedNormally = true
+      val dumbServiceAppIconProgress = DumbServiceAppIconProgress(project)
+      val delegatingReporter = delegatingProgressReporter(dumbServiceAppIconProgress, reporter)
+      try {
+        super.processTasksWithProgress(delegatingReporter, childActivity).also {
+          taskCompletedNormally = true
+        }
+      } finally {
+          dumbServiceAppIconProgress.finish(DummyTaskInfo) // none of TaskInfo methods are used inside, this is just to satisfy the API
       }
     }
     finally {
       logProcessFinished(childActivity, if (taskCompletedNormally) IndexingFinishType.FINISHED else IndexingFinishType.TERMINATED)
-      if (project.isDisposed) {
-        throw ProcessCanceledException()
+    }
+  }
+
+  private object DummyTaskInfo: TaskInfo {
+    override fun getTitle(): @NlsContexts.ProgressTitle String = ""
+    override fun getCancelText(): @NlsContexts.Button String? = null
+
+    override fun getCancelTooltipText(): @NlsContexts.Tooltip String? = null
+
+    override fun isCancellable(): Boolean = false
+  }
+
+  private fun delegatingProgressReporter(dumbServiceProgress: DumbServiceAppIconProgress, reporter: RawProgressReporter): RawProgressReporter = object: RawProgressReporter by reporter {
+    override fun fraction(fraction: Double?) {
+      if (fraction != null) {
+        dumbServiceProgress.fraction = fraction
       }
+      reporter.fraction(fraction)
     }
   }
 

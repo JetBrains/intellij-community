@@ -6,6 +6,7 @@ import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.MergingTaskQueue.SubmissionReceipt;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.platform.util.progress.RawProgressReporter;
 import com.intellij.testFramework.LeakHunter;
 import com.intellij.testFramework.junit5.TestApplication;
 import org.jetbrains.annotations.NotNull;
@@ -50,7 +51,7 @@ public class MergingTaskQueueTest {
     while (true) {
       try (MergingTaskQueue.QueuedTask<?> nextTask = queue.extractNextTask()) {
         if (nextTask == null) return;
-        nextTask.executeTask();
+        nextTask.executeTask(new RawProgressReporter() {});
       }
     }
   }
@@ -396,7 +397,7 @@ public class MergingTaskQueueTest {
     try (MergingTaskQueue.QueuedTask<?> task = queue.extractNextTask()) {
       queue.disposePendingTasks();
       assertNull(isDisposed.get());
-      task.executeTask();
+      task.executeTask(new RawProgressReporter() {});
       fail();
     }
     catch (ProcessCanceledException ignore) {
@@ -422,7 +423,7 @@ public class MergingTaskQueueTest {
 
     Thread th = new Thread(() -> {
       try (MergingTaskQueue.QueuedTask<?> nextTask = queue.extractNextTask()) {
-        nextTask.executeTask();
+        nextTask.executeTask(new RawProgressReporter() {});
       }
       catch (Exception e) {
         LOG.error(e);

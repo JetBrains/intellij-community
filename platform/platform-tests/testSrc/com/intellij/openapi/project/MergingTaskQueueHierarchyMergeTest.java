@@ -2,6 +2,7 @@
 package com.intellij.openapi.project;
 
 import com.intellij.openapi.project.MergingTaskQueueTest.LoggingTask;
+import com.intellij.platform.util.progress.RawProgressReporter;
 import com.intellij.testFramework.fixtures.BasePlatformTestCase;
 import org.jetbrains.annotations.Nullable;
 
@@ -42,7 +43,7 @@ public class MergingTaskQueueHierarchyMergeTest extends BasePlatformTestCase {
     while (true) {
       try (MergingTaskQueue.QueuedTask<?> nextTask = myQueue.extractNextTask()) {
         if (nextTask == null) return;
-        nextTask.executeTask();
+        nextTask.executeTask(new RawProgressReporter() {});
       }
     }
   }
