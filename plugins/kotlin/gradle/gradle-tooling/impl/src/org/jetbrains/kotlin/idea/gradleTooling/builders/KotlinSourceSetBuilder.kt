@@ -4,9 +4,11 @@ package org.jetbrains.kotlin.idea.gradleTooling.builders
 import org.gradle.api.Named
 import org.jetbrains.kotlin.idea.gradleTooling.IdeaKotlinExtras
 import org.jetbrains.kotlin.idea.gradleTooling.KotlinDependency
+import org.jetbrains.kotlin.idea.gradleTooling.KotlinGradlePluginVersion
 import org.jetbrains.kotlin.idea.gradleTooling.KotlinSourceSetImpl
 import org.jetbrains.kotlin.idea.gradleTooling.MultiplatformModelImportingContext
 import org.jetbrains.kotlin.idea.gradleTooling.builders.KotlinAndroidSourceSetInfoBuilder.buildKotlinAndroidSourceSetInfo
+import org.jetbrains.kotlin.idea.gradleTooling.getKotlinSourceSetGeneratedSourceRoots
 import org.jetbrains.kotlin.idea.gradleTooling.isHMPPEnabled
 import org.jetbrains.kotlin.idea.gradleTooling.reflect.KotlinSourceSetReflection
 import org.jetbrains.kotlin.idea.gradleTooling.supportsKotlinAndroidSourceSetInfo
@@ -38,14 +40,19 @@ internal class KotlinSourceSetBuilder(
             .keys
     }
 
-    fun buildKotlinSourceSet(sourceSetReflection: KotlinSourceSetReflection): KotlinSourceSetImpl? {
+    fun buildKotlinSourceSet(
+        sourceSetReflection: KotlinSourceSetReflection,
+        kotlinGradlePluginVersion: KotlinGradlePluginVersion?,
+    ): KotlinSourceSetImpl? {
         val languageSettings = sourceSetReflection.languageSettings
             ?.let { KotlinLanguageSettingsBuilder.buildComponent(it) }
             ?: return null
 
         val sourceDirs = sourceSetReflection.kotlin?.srcDirs ?: emptySet()
         val resourceDirs = sourceSetReflection.resources?.srcDirs ?: emptySet()
-        val generatedKotlinDirs = sourceSetReflection.generatedSources?.srcDirs?.toSet() ?: emptySet()
+        val generatedKotlinDirs = sourceSetReflection
+            .getKotlinSourceSetGeneratedSourceRoots(kotlinGradlePluginVersion)
+            .map { it.toFile() }.toSet()
         val dependsOnSourceSets = sourceSetReflection.dependsOn.map { it.name }.toSet()
         val additionalVisibleSourceSets = sourceSetReflection.additionalVisibleSourceSets.map { it.name }.toSet()
 
