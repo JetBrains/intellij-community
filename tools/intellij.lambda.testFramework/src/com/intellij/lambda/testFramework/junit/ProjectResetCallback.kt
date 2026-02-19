@@ -7,6 +7,8 @@ import com.intellij.ide.starter.project.ProjectInfoSpec
 import com.intellij.ide.starter.utils.catchAll
 import com.intellij.ide.trustedProjects.impl.TrustedProjectStartupDialog
 import com.intellij.lambda.testFramework.starter.IdeInstance
+import com.intellij.lambda.testFramework.testApi.waitForNoProjects
+import com.intellij.lambda.testFramework.testApi.waitForProject
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.writeIntentReadAction
 import com.intellij.openapi.diagnostic.thisLogger
@@ -17,6 +19,7 @@ import com.intellij.remoteDev.tests.impl.utils.waitSuspending
 import com.intellij.testFramework.utils.io.deleteRecursively
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.NonCancellable
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withContext
 import org.junit.jupiter.api.extension.AfterEachCallback
@@ -129,6 +132,9 @@ class ProjectResetCallback : BeforeEachCallback, AfterEachCallback {
         }
       }
     }
+    IdeInstance.ide.runInFrontend("Wait for no projects to be opened", globalTestScope = true) {
+      waitForNoProjects()
+    }
   }
 
   private suspend fun openPreparedProject(projectPath: Path) {
@@ -154,6 +160,10 @@ class ProjectResetCallback : BeforeEachCallback, AfterEachCallback {
       finally {
         Disposer.dispose(disposable)
       }
+    }
+
+    ide.runInFrontend("Wait for project to be opened", globalTestScope = true) {
+      waitForProject()
     }
   }
 }

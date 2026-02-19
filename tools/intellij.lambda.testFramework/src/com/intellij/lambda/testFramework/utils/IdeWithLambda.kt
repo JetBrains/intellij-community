@@ -57,20 +57,22 @@ class IdeWithLambda(delegate: BackgroundRun, val rdSession: LambdaRdTestSession,
   suspend inline fun runInFrontendGetResult(
     name: String = defaultStepName(),
     parameters: List<Serializable> = emptyList(),
+    globalTestScope: Boolean = false,
     timeout: Duration = defaultTimeout,
     lambdaConsumer: SerializedLambdaWithIdeContextHelper.SuspendingSerializableConsumer<LambdaFrontendContext, Serializable>,
   ): Serializable {
-    return rdSession.runGetResult(name, parameters = parameters, lambdaConsumer = lambdaConsumer, timeout = timeout)
+    return rdSession.runGetResult(name, parameters = parameters, lambdaConsumer = lambdaConsumer, timeout = timeout, globalTestScope = globalTestScope)
            ?: error("Run hasn't returned a Serializable result")
   }
 
   suspend inline fun runInFrontend(
     name: String = defaultStepName(),
     parameters: List<Serializable> = emptyList(),
+    globalTestScope: Boolean = false,
     timeout: Duration = defaultTimeout,
     lambdaConsumer: SerializedLambdaWithIdeContextHelper.SuspendingSerializableConsumer<LambdaFrontendContext, Any?>,
   ) {
-    runInFrontendGetResult(name, parameters, timeout) { parameters ->
+    runInFrontendGetResult(name, parameters, globalTestScope, timeout) { parameters ->
       with(lambdaConsumer) {
         runSerializedLambda(parameters)
       }
