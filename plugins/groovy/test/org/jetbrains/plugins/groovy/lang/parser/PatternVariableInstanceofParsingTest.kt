@@ -17,4 +17,8 @@ class PatternVariableInstanceofParsingTest : GroovyParsingTestCase() {
   fun testNewLineRespectKeyword() = doTest()
 
   fun testNewLineRespectSafeMemberAccess() = doTest()
+
+  fun testNewLineRespectBinaryExpression() = doTest()
+
+  fun testNewLineRespectAssignmentStatement() = doTest()
 }

@@ -6331,13 +6331,13 @@ public class GroovyGeneratedParser implements PsiParser, LightPsiParser {
   }
 
   /* ********************************************************** */
-  // (IDENTIFIER | weak_keyword_identifiers) !(T_DOT | T_SAFE_DOT | T_LPAREN | reserved_keyword)
+  // (IDENTIFIER | weak_keyword_identifiers) pattern_variable_lookahead
   public static boolean pattern_variable(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "pattern_variable")) return false;
     boolean r;
     Marker m = enter_section_(b, l, _NONE_, PATTERN_VARIABLE, "<pattern variable>");
     r = pattern_variable_0(b, l + 1);
-    r = r && pattern_variable_1(b, l + 1);
+    r = r && pattern_variable_lookahead(b, l + 1);
     exit_section_(b, l, m, r, false, null);
     return r;
   }
@@ -6351,26 +6351,51 @@ public class GroovyGeneratedParser implements PsiParser, LightPsiParser {
     return r;
   }
 
-  // !(T_DOT | T_SAFE_DOT | T_LPAREN | reserved_keyword)
-  private static boolean pattern_variable_1(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "pattern_variable_1")) return false;
+  /* ********************************************************** */
+  // &(mb_nl ('&&' | '||' | '?' | T_RPAREN | '}' | ';' | '==>') | nls | <<eof>>)
+  static boolean pattern_variable_lookahead(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "pattern_variable_lookahead")) return false;
     boolean r;
-    Marker m = enter_section_(b, l, _NOT_);
-    r = !pattern_variable_1_0(b, l + 1);
+    Marker m = enter_section_(b, l, _AND_);
+    r = pattern_variable_lookahead_0(b, l + 1);
     exit_section_(b, l, m, r, false, null);
     return r;
   }
 
-  // T_DOT | T_SAFE_DOT | T_LPAREN | reserved_keyword
-  private static boolean pattern_variable_1_0(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "pattern_variable_1_0")) return false;
+  // mb_nl ('&&' | '||' | '?' | T_RPAREN | '}' | ';' | '==>') | nls | <<eof>>
+  private static boolean pattern_variable_lookahead_0(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "pattern_variable_lookahead_0")) return false;
     boolean r;
     Marker m = enter_section_(b);
-    r = consumeToken(b, T_DOT);
-    if (!r) r = consumeToken(b, T_SAFE_DOT);
-    if (!r) r = consumeToken(b, T_LPAREN);
-    if (!r) r = parseReservedKeyword(b, l + 1);
+    r = pattern_variable_lookahead_0_0(b, l + 1);
+    if (!r) r = nls(b, l + 1);
+    if (!r) r = eof(b, l + 1);
     exit_section_(b, m, null, r);
+    return r;
+  }
+
+  // mb_nl ('&&' | '||' | '?' | T_RPAREN | '}' | ';' | '==>')
+  private static boolean pattern_variable_lookahead_0_0(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "pattern_variable_lookahead_0_0")) return false;
+    boolean r;
+    Marker m = enter_section_(b);
+    r = mb_nl(b, l + 1);
+    r = r && pattern_variable_lookahead_0_0_1(b, l + 1);
+    exit_section_(b, m, null, r);
+    return r;
+  }
+
+  // '&&' | '||' | '?' | T_RPAREN | '}' | ';' | '==>'
+  private static boolean pattern_variable_lookahead_0_0_1(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "pattern_variable_lookahead_0_0_1")) return false;
+    boolean r;
+    r = consumeToken(b, T_LAND);
+    if (!r) r = consumeToken(b, T_LOR);
+    if (!r) r = consumeToken(b, T_Q);
+    if (!r) r = consumeToken(b, T_RPAREN);
+    if (!r) r = consumeToken(b, T_RBRACE);
+    if (!r) r = consumeToken(b, T_SEMI);
+    if (!r) r = consumeToken(b, T_IMPL);
     return r;
   }
 

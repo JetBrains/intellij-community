@@ -1168,8 +1168,8 @@ in_expression ::= expression mb_nl ('in' | '!in') mb_nl <<disableNlBeforeClosure
 instanceof_expression ::= expression mb_nl instanceof_expression_tail
 private instanceof_expression_tail ::= ('instanceof' | '!instanceof') mb_nl (pattern_test | expect_type) { pin = 1 }
 private pattern_test ::= (type_element (mb_nl pattern_variable)?)
-pattern_variable ::= (IDENTIFIER | weak_keyword_identifiers) !(T_DOT | T_SAFE_DOT | T_LPAREN | reserved_keyword)
-
+pattern_variable ::= (IDENTIFIER | weak_keyword_identifiers) pattern_variable_lookahead
+private pattern_variable_lookahead ::= &(mb_nl ('&&' | '||' | '?' | T_RPAREN | '}' | ';' | '==>') | nls | <<eof>>)
 as_expression ::= expression mb_nl ('as') mb_nl type_element
 
 private priority8 ::= equality_expression | compare_expression | regex_find_expression | regex_match_expression
