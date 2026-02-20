@@ -56,6 +56,7 @@ import kotlinx.coroutines.cancel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.withContext
+import org.jetbrains.annotations.ApiStatus
 import java.awt.AWTEvent
 import java.awt.Component
 import java.awt.Dimension
@@ -122,7 +123,7 @@ class ActionMenu constructor(
 
     // also triggering initialization of private field "popupMenu" from JMenu with our own JBPopupMenu
     BegMenuItemUI.registerMultiChoiceSupport(getPopupMenu()) { popupMenu ->
-      Utils.updateMenuItems(popupMenu, getDataContext(), this.place, this.presentationFactory)
+      updateMenuItems(popupMenu)
     }
   }
 
@@ -161,6 +162,15 @@ class ActionMenu constructor(
       else SwingUtilities.getAncestorOfClass(IdeFrame::class.java, component)) as? IdeFrame
       frame?.getStatusBar()?.setInfo(if (isIncluded) description else null)
     }
+  }
+  
+  @ApiStatus.Internal
+  fun updateMenuItems() {
+    updateMenuItems(getPopupMenu())
+  }
+
+  private fun updateMenuItems(popupMenu: JPopupMenu) {
+    Utils.updateMenuItems(popupMenu, getDataContext(), this.place, this.presentationFactory)
   }
 
   override fun getPopupMenu(): JPopupMenu {

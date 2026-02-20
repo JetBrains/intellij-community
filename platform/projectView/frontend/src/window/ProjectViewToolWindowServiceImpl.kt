@@ -84,11 +84,11 @@ internal class ProjectViewToolWindowServiceImpl(
         for (paneId in listOf(projectViewPaneId("ProjectPane"))) {
           launch(CoroutineName("Manage PV pane $paneId from the provider ${provider.id}")) {
             try {
-              LOG.debug { "Initializing pane $paneId"}
+              LOG.debug { "Initializing pane $paneId" }
               val pane = withContext(Dispatchers.UI) {
-                provider.createPane(paneId)
+                provider.createPane(project, paneId)
               }
-              LOG.debug { "Created pane $paneId"}
+              LOG.debug { "Created pane $paneId" }
               managePane(toolWindow, provider.id, pane)
             }
             catch (e: Throwable) {
@@ -123,7 +123,7 @@ internal class ProjectViewToolWindowServiceImpl(
       withTimeoutOrNull(15.seconds) { // in case something went wrong with loading the state
         stateInitJob.await()
       }
-      LOG.debug { "The saved state has been loaded for ${pane.id}"}
+      LOG.debug { "The saved state has been loaded for ${pane.id}" }
       try {
         withContext(Dispatchers.UI) {
           val content = ContentFactory.getInstance().createContent(
@@ -138,14 +138,14 @@ internal class ProjectViewToolWindowServiceImpl(
             toolWindow.contentManager.removeContentManagerListener(currentPaneListener)
           }
           toolWindow.contentManager.addContent(content)
-          LOG.debug { "The content has been created for ${pane.id}"}
+          LOG.debug { "The content has been created for ${pane.id}" }
           pane.component.launchOnShow("Pane $providerId:${pane.id} service state saving/restoring") {
             try {
               val paneState = state[providerId]?.get(pane.id)
               if (paneState != null) {
                 pane.restoreStateFrom(paneState)
               }
-              LOG.debug { "Applied the loaded state for ${pane.id}"}
+              LOG.debug { "Applied the loaded state for ${pane.id}" }
               awaitCancellation()
             }
             finally {
@@ -154,7 +154,7 @@ internal class ProjectViewToolWindowServiceImpl(
               paneElement.setAttribute("pane", pane.id.idString)
               pane.saveStateTo(paneElement)
               state.computeIfAbsent(providerId) { ConcurrentHashMap() }[pane.id] = paneElement
-              LOG.debug { "Saved the last state for ${pane.id}"}
+              LOG.debug { "Saved the last state for ${pane.id}" }
             }
           }
         }
@@ -163,7 +163,7 @@ internal class ProjectViewToolWindowServiceImpl(
         LOG.debug(e)
         throw e
       }
-      LOG.debug { "Obtaining the RCP service to manage the pane ${pane.id}"}
+      LOG.debug { "Obtaining the RCP service to manage the pane ${pane.id}" }
       val rpc = ProjectViewRpc.getInstance()
       launch(CoroutineName("Pane $providerId:${pane.id} state updates")) {
         LOG.debug { "Collecting pane state updates for ${pane.id}" }
@@ -183,7 +183,7 @@ internal class ProjectViewToolWindowServiceImpl(
           rpcChannel.send(request)
         }
       }
-      LOG.debug { "Managing pane ${pane.id}"}
+      LOG.debug { "Managing pane ${pane.id}" }
       pane.manage()
     }
   }

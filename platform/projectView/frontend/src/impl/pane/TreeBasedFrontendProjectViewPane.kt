@@ -10,8 +10,12 @@ import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.actionSystem.DataSink
 import com.intellij.openapi.actionSystem.IdeActions
 import com.intellij.openapi.actionSystem.UiDataProvider
+import com.intellij.openapi.diagnostic.debug
+import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.SimpleToolWindowPanel
 import com.intellij.platform.projectView.actions.ProjectViewOption
+import com.intellij.platform.projectView.actions.ProjectViewOptionMenuUpdater
 import com.intellij.platform.projectView.actions.ProjectViewOptionState
 import com.intellij.platform.projectView.frontend.pane.FrontendProjectViewPane
 import com.intellij.platform.projectView.pane.PROJECT_VIEW_SELECTED_NODE_IDS_KEY
@@ -44,13 +48,15 @@ import kotlinx.coroutines.awaitCancellation
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.channels.ReceiveChannel
 import org.jdom.Element
-import java.util.EnumMap
+import java.util.concurrent.ConcurrentHashMap
 import javax.swing.JComponent
 import javax.swing.event.TreeExpansionEvent
 import javax.swing.event.TreeExpansionListener
 import javax.swing.tree.DefaultMutableTreeNode
 
-internal abstract class TreeBasedFrontendProjectViewPane : FrontendProjectViewPane, UiDataProvider {
+internal abstract class TreeBasedFrontendProjectViewPane(
+  private val project: Project,
+) : FrontendProjectViewPane, UiDataProvider {
   private val treeModel = DefaultTreeModelWithCachedPresentation()
   private val tree = Tree(treeModel).also {
     it.isRootVisible = false
@@ -59,7 +65,6 @@ internal abstract class TreeBasedFrontendProjectViewPane : FrontendProjectViewPa
   private val scrollPane = ScrollPaneFactory.createScrollPane(tree, true)
   private val contentPanel = ContentPanel(scrollPane)
 
-  private val optionStates = EnumMap<ProjectViewOption, ProjectViewOptionState>(ProjectViewOption::class.java)
   private val optionSupport = OptionSupport()
   
   private inner class ContentPanel(content: JComponent) : SimpleToolWindowPanel(true), UiDataProvider {
@@ -162,7 +167,7 @@ internal abstract class TreeBasedFrontendProjectViewPane : FrontendProjectViewPa
         }
       }
       is ProjectViewOptionStateEvent -> {
-        optionStates.putAll(event.optionStates)
+        optionSupport.updateOptionStates(event.optionStates)
       }
     }
   }
@@ -220,10 +225,18 @@ internal abstract class TreeBasedFrontendProjectViewPane : FrontendProjectViewPa
   }
   
   private inner class OptionSupport : ProjectViewOptionSupport {
+    private val optionStates = ConcurrentHashMap<ProjectViewOption, ProjectViewOptionState>()
+
     override fun getOptionState(option: ProjectViewOption): ProjectViewOptionState? = optionStates[option]
 
     override fun requestOptionValueUpdate(option: ProjectViewOption, newValue: Boolean) {
       sendRequest(ProjectViewPaneUpdateOptionValueRequest(option, newValue))
+    }
+
+    fun updateOptionStates(optionStates: Map<ProjectViewOption, ProjectViewOptionState>) {
+      LOG.debug { "Received updated option values: $optionStates" }
+      this.optionStates.putAll(optionStates)
+      ProjectViewOptionMenuUpdater.getInstance(project).updateMenu()
     }
   }
 }
@@ -246,3 +259,5 @@ private class Node(
 
   override fun getPathElementId(): String = (presentation as TreeNodePresentationImpl).mainText
 }
+
+private val LOG = logger<TreeBasedFrontendProjectViewPane>()

@@ -1,4 +1,6 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+@file:OptIn(ExperimentalAtomicApi::class)
+
 package com.intellij.platform.projectView.actions
 
 import com.intellij.ide.projectView.impl.ProjectViewImpl
@@ -6,15 +8,30 @@ import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.ToggleOptionAction
 import com.intellij.openapi.actionSystem.ToggleOptionAction.Option
+import com.intellij.openapi.actionSystem.impl.ActionMenu
+import com.intellij.openapi.actionSystem.impl.getActionMenu
 import com.intellij.openapi.actionSystem.remoting.ActionRemoteBehavior
 import com.intellij.openapi.actionSystem.remoting.ActionRemoteBehaviorSpecification
+import com.intellij.openapi.application.EDT
+import com.intellij.openapi.components.Service
+import com.intellij.openapi.components.service
+import com.intellij.openapi.diagnostic.debug
+import com.intellij.openapi.diagnostic.fileLogger
+import com.intellij.openapi.diagnostic.trace
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.Project
 import com.intellij.platform.projectView.window.ProjectViewOptionSupport
 import com.intellij.platform.projectView.window.isProjectViewSplit
+import kotlinx.coroutines.CoroutineName
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 import kotlinx.serialization.Serializable
 import org.jetbrains.annotations.ApiStatus
+import java.lang.ref.WeakReference
 import java.util.function.Function
+import kotlin.concurrent.atomics.AtomicReference
+import kotlin.concurrent.atomics.ExperimentalAtomicApi
 
 internal abstract class OptionAction(
   legacyActionSupplier: () -> ProjectViewImpl.Action,
@@ -99,14 +116,26 @@ private fun frontendOption(
 ): Option = FrontendOption(event, option)
 
 private class FrontendOption(private val event: AnActionEvent, private val option: ProjectViewOption) : Option {
-  override fun isSelected(): Boolean = service()?.getOptionState(option)?.isSelected == true
+  override fun isSelected(): Boolean = getOptionState()?.isSelected == true
 
-  override fun isEnabled(): Boolean = service()?.getOptionState(option)?.isEnabled == true
+  override fun isEnabled(): Boolean = getOptionState()?.isEnabled == true
 
-  override fun isAlwaysVisible(): Boolean = service()?.getOptionState(option)?.isAlwaysVisible == true
+  override fun isAlwaysVisible(): Boolean = getOptionState()?.isAlwaysVisible == true
+
+  private fun getOptionState(): ProjectViewOptionState? {
+    val result = service()?.getOptionState(option)
+    LOG.trace { "FrontendOption.getOptionState($option): $result" }
+    return result
+  }
 
   override fun setSelected(selected: Boolean) {
     service()?.requestOptionValueUpdate(option, selected)
+    val project = event.project
+    val menu = event.getActionMenu()
+    if (project != null && menu != null) {
+      LOG.debug { "Requested $option to change its value to $selected, action menu update pending" }
+      ProjectViewOptionMenuUpdater.getInstance(project).markMenuNeedsUpdating(menu)
+    }
   }
   
   private fun service(): ProjectViewOptionSupport? {
@@ -141,3 +170,33 @@ data class ProjectViewOptionState(
   val isEnabled: Boolean,
   val isAlwaysVisible: Boolean,
 )
+
+@Service(Service.Level.PROJECT)
+@ApiStatus.Internal
+class ProjectViewOptionMenuUpdater(private val coroutineScope: CoroutineScope) {
+  companion object {
+    @JvmStatic fun getInstance(project: Project): ProjectViewOptionMenuUpdater = project.service()
+  }
+
+  private val menuNeedsUpdating = AtomicReference(WeakReference<ActionMenu?>(null))
+
+  fun markMenuNeedsUpdating(menu: ActionMenu) {
+    menuNeedsUpdating.store(WeakReference(menu))
+  }
+  
+  fun updateMenu() {
+    // EDT is a must here, as action updates need the lock, and using UI will throw an exception inside,
+    // which, at the moment of the implementation, is silently swallowed by the action system.
+    coroutineScope.launch(
+      Dispatchers.EDT + CoroutineName("ProjectViewOptionMenuUpdater")
+    ) {
+      val menu = menuNeedsUpdating.load().get() ?: return@launch
+      if (menu.popupMenu.isShowing) {
+        LOG.debug { "Updating project view option menu" }
+        menu.updateMenuItems()
+      }
+    }
+  }
+}
+
+private val LOG = fileLogger()

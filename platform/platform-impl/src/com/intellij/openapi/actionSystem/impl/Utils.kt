@@ -1498,3 +1498,8 @@ interface SuspendingUpdateSessionInternal: SuspendingUpdateSession {
   fun visitCaches(visitor: (AnAction, String, Any) -> Unit)
   fun dropCaches(predicate: (Any) -> Boolean)
 }
+
+@ApiStatus.Internal
+fun AnActionEvent.getActionMenu(): ActionMenu? {
+  return (uiKind as? ActualActionUiKind)?.component as? ActionMenu?
+}
