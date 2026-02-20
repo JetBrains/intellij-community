@@ -84,7 +84,6 @@ internal class GitAddCommitToRemoteBranchOperation(
       remote = remote,
       refspec = "refs/heads/$branchName:refs/remotes/${remote.name}/$branchName",
       unshallow = false,
-      updateHeadOk = false,
     )
 
     val result = GitFetchSupport.fetchSupport(project).fetch(listOf(fetchSpec))
