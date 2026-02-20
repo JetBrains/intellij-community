@@ -1,7 +1,7 @@
 <error descr="Unparenthesized assignment expressions are prohibited at the top level of an expression statement">y := f(x)</error>  # INVALID
 (y := f(x))  # Valid, though not recommended
 
-y0 = <error descr="Unparenthesized assignment expressions are prohibited at the top level of the right hand side of an assignment statement">y1 := f(x)</error>  # INVALID
+y0 = <error descr="Unparenthesized assignment expressions are prohibited at the top level of the right-hand side of an assignment statement">y1 := f(x)</error>  # INVALID
 y0 = (y1 := f(x))  # Valid, though discouraged
 
 class A:

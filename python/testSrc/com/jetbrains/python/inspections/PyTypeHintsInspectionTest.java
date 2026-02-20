@@ -944,14 +944,14 @@ public class PyTypeHintsInspectionTest extends PyInspectionTestCase {
                        def __init__(self, v):
                            pass
 
-                   def a(b: <warning descr="Generics should be specified through square brackets"><warning descr="Type hint is invalid or refers to the expression which is not a correct type">A(int)</warning></warning>):
+                   def a(b: <warning descr="Generics should be specified through square brackets"><warning descr="Invalid type annotation">A(int)</warning></warning>):
                        pass
 
                    def c(d):
                        # type: (<warning descr="Generics should be specified through square brackets">A(int)</warning>) -> None
                        pass
 
-                   def e(f: <warning descr="Generics should be specified through square brackets"><warning descr="Type hint is invalid or refers to the expression which is not a correct type">A()</warning></warning>):
+                   def e(f: <warning descr="Generics should be specified through square brackets"><warning descr="Invalid type annotation">A()</warning></warning>):
                        pass
 
                    def g(h):
@@ -962,7 +962,7 @@ public class PyTypeHintsInspectionTest extends PyInspectionTestCase {
                    v2 = None  # type: <warning descr="Generics should be specified through square brackets">A(int)</warning>
 
                    U = A
-                   def i(j: <warning descr="Generics should be specified through square brackets"><warning descr="Type hint is invalid or refers to the expression which is not a correct type">U(int)</warning></warning>):
+                   def i(j: <warning descr="Generics should be specified through square brackets"><warning descr="Invalid type annotation">U(int)</warning></warning>):
                        pass
                       \s
                    v3 = None  # type: <warning descr="Generics should be specified through square brackets">U(int)</warning>
@@ -1549,7 +1549,7 @@ public class PyTypeHintsInspectionTest extends PyInspectionTestCase {
     doTestByText("""
                    from typing import Self
 
-                   something: <warning descr="Type hint is invalid or refers to the expression which is not a correct type"><warning descr="Cannot use 'Self' outside class">Self</warning> | None</warning> = None
+                   something: <warning descr="Invalid type annotation"><warning descr="Cannot use 'Self' outside class">Self</warning> | None</warning> = None
                    """);
   }
 
@@ -2549,7 +2549,7 @@ public class PyTypeHintsInspectionTest extends PyInspectionTestCase {
                  a1 = 3
                  a2 = a1
                  a3 = a2
-                 def foo(p: <warning descr="Type hint is invalid or refers to the expression which is not a correct type">a3</warning>): ...
+                 def foo(p: <warning descr="Invalid type annotation">a3</warning>): ...
                  """);
   }
 
@@ -2927,19 +2927,19 @@ public class PyTypeHintsInspectionTest extends PyInspectionTestCase {
   public void testInvalidTypeAliasStatement() {
     doTestByText("""
                var1 = 1
-               type BadTypeAlias1 = <warning descr="Type hint is invalid or refers to the expression which is not a correct type">eval(<warning descr="Generics should be specified through square brackets">"".join(<warning descr="Generics should be specified through square brackets">map(chr, [105, 110, 116])</warning>)</warning>)</warning>
-               type BadTypeAlias2 = <warning descr="Type hint is invalid or refers to the expression which is not a correct type">[int, str]</warning>
-               type BadTypeAlias3 = <warning descr="Type hint is invalid or refers to the expression which is not a correct type">((int, str),)</warning>
-               type BadTypeAlias4 = <warning descr="Type hint is invalid or refers to the expression which is not a correct type">[int for i in <warning descr="Generics should be specified through square brackets">range(1)</warning>]</warning>
-               type BadTypeAlias5 = <warning descr="Type hint is invalid or refers to the expression which is not a correct type">{"a": "b"}</warning>
-               type BadTypeAlias6 = <warning descr="Type hint is invalid or refers to the expression which is not a correct type">(lambda: int)()</warning>
-               type BadTypeAlias7 = <warning descr="Type hint is invalid or refers to the expression which is not a correct type">[int][0]</warning>
-               type BadTypeAlias8 = <warning descr="Type hint is invalid or refers to the expression which is not a correct type">int if 1 < 3 else str</warning>
-               type BadTypeAlias9 = <warning descr="Type hint is invalid or refers to the expression which is not a correct type">var1</warning>
-               type BadTypeAlias10 = <warning descr="Type hint is invalid or refers to the expression which is not a correct type">True</warning>
-               type BadTypeAlias11 = <warning descr="Type hint is invalid or refers to the expression which is not a correct type">1</warning>
-               type BadTypeAlias12 = <warning descr="Type hint is invalid or refers to the expression which is not a correct type">list or set</warning>
-               type BadTypeAlias13 = <warning descr="Type hint is invalid or refers to the expression which is not a correct type">f"{'int'}"</warning>
+               type BadTypeAlias1 = <warning descr="Invalid type annotation">eval(<warning descr="Generics should be specified through square brackets">"".join(<warning descr="Generics should be specified through square brackets">map(chr, [105, 110, 116])</warning>)</warning>)</warning>
+               type BadTypeAlias2 = <warning descr="Invalid type annotation">[int, str]</warning>
+               type BadTypeAlias3 = <warning descr="Invalid type annotation">((int, str),)</warning>
+               type BadTypeAlias4 = <warning descr="Invalid type annotation">[int for i in <warning descr="Generics should be specified through square brackets">range(1)</warning>]</warning>
+               type BadTypeAlias5 = <warning descr="Invalid type annotation">{"a": "b"}</warning>
+               type BadTypeAlias6 = <warning descr="Invalid type annotation">(lambda: int)()</warning>
+               type BadTypeAlias7 = <warning descr="Invalid type annotation">[int][0]</warning>
+               type BadTypeAlias8 = <warning descr="Invalid type annotation">int if 1 < 3 else str</warning>
+               type BadTypeAlias9 = <warning descr="Invalid type annotation">var1</warning>
+               type BadTypeAlias10 = <warning descr="Invalid type annotation">True</warning>
+               type BadTypeAlias11 = <warning descr="Invalid type annotation">1</warning>
+               type BadTypeAlias12 = <warning descr="Invalid type annotation">list or set</warning>
+               type BadTypeAlias13 = <warning descr="Invalid type annotation">f"{'int'}"</warning>
                """);
   }
 
@@ -3014,14 +3014,14 @@ public class PyTypeHintsInspectionTest extends PyInspectionTestCase {
   // PY-76851
   public void testSimpleRecursiveTypeAliasStatement() {
     doTestByText("""
-                   type TypeAlias = <warning descr="Type hint is invalid or refers to the expression which is not a correct type">TypeAlias</warning>
+                   type TypeAlias = <warning descr="Invalid type annotation">TypeAlias</warning>
                    """);
   }
 
   // PY-76851
   public void testRecursiveTypeAliasStatementInUnion() {
     doTestByText("""
-                   type TypeAlias = <warning descr="Type hint is invalid or refers to the expression which is not a correct type">int | TypeAlias</warning>
+                   type TypeAlias = <warning descr="Invalid type annotation">int | TypeAlias</warning>
                    type TypeAlias2 = int | str
                    """);
   }
@@ -3029,7 +3029,7 @@ public class PyTypeHintsInspectionTest extends PyInspectionTestCase {
   // PY-76851
   public void testUnionRecursiveTypeAliasStatement() {
     doTestByText("""
-                   type TypeAlias = <warning descr="Type hint is invalid or refers to the expression which is not a correct type">TypeAlias | int</warning>
+                   type TypeAlias = <warning descr="Invalid type annotation">TypeAlias | int</warning>
                    """);
   }
 
@@ -3037,9 +3037,9 @@ public class PyTypeHintsInspectionTest extends PyInspectionTestCase {
   // PY-76851
   public void testDeepRecursiveTypeAliasStatement() {
     doTestByText("""
-                   type TypeAlias1 = <warning descr="Type hint is invalid or refers to the expression which is not a correct type">TypeAlias2</warning>
-                   type TypeAlias2 = <warning descr="Type hint is invalid or refers to the expression which is not a correct type">TypeAlias3</warning>
-                   type TypeAlias3 = <warning descr="Type hint is invalid or refers to the expression which is not a correct type">TypeAlias1</warning>
+                   type TypeAlias1 = <warning descr="Invalid type annotation">TypeAlias2</warning>
+                   type TypeAlias2 = <warning descr="Invalid type annotation">TypeAlias3</warning>
+                   type TypeAlias3 = <warning descr="Invalid type annotation">TypeAlias1</warning>
                    """);
   }
 
@@ -3362,7 +3362,7 @@ public class PyTypeHintsInspectionTest extends PyInspectionTestCase {
                    CARTESIAN = [Direction.NORTH, Direction.EAST, Direction.SOUTH, Direction.WEST]
                    print(CARTESIAN[0])
                    
-                   type Alias = <warning descr="Type hint is invalid or refers to the expression which is not a correct type">[int, str]</warning>
+                   type Alias = <warning descr="Invalid type annotation">[int, str]</warning>
                    myAlias: TypeAlias = <warning descr="Assigned value of type alias must be a correct type">[int, str]</warning>
                    """);
   }
