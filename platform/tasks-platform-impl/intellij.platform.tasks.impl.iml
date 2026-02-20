@@ -36,5 +36,6 @@
     <orderEntry type="module" module-name="intellij.platform.lang" />
     <orderEntry type="module" module-name="intellij.platform.debugger.impl.shared" />
     <orderEntry type="module" module-name="intellij.platform.debugger.impl.ui" />
+    <orderEntry type="module" module-name="intellij.libraries.fastutil" />
   </component>
 </module>

@@ -199,5 +199,6 @@
     <orderEntry type="module" module-name="intellij.java.guiForms.rt" />
     <orderEntry type="module" module-name="intellij.python.externalIndex" />
     <orderEntry type="module" module-name="intellij.python.community.impl.conda" />
+    <orderEntry type="module" module-name="intellij.libraries.kotlinx.collections.immutable" />
   </component>
 </module>

@@ -25,5 +25,6 @@
     <orderEntry type="module" module-name="intellij.platform.boot" />
     <orderEntry type="module" module-name="intellij.platform.core.impl" />
     <orderEntry type="module" module-name="intellij.codeowners.runtime.resolver" />
+    <orderEntry type="module" module-name="intellij.platform.lang" />
   </component>
 </module>

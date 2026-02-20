@@ -38,6 +38,7 @@
     <orderEntry type="module" module-name="intellij.kotlin.gradle.codeInsight.toml.k2" scope="TEST" />
     <orderEntry type="module" module-name="kotlin.fir.testFramework" scope="TEST" />
     <orderEntry type="module" module-name="intellij.kotlin.gradle.java" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.platform.jps.model" scope="TEST" />
   </component>
   <component name="TestModuleProperties" production-module="intellij.kotlin.gradle.java" />
 </module>

@@ -52,5 +52,7 @@
     <orderEntry type="library" scope="TEST" name="jimfs" level="project" />
     <orderEntry type="module" module-name="intellij.platform.ijent.community.buildConstants" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.testFramework.monorepo" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.platform.analysis" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.platform.codeStyle" scope="TEST" />
   </component>
 </module>
