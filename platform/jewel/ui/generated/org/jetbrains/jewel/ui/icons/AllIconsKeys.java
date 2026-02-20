@@ -688,6 +688,12 @@ public final class AllIconsKeys {
     public static final @NotNull IntelliJIconKey BreakpointUnsuspendentDisabled = new IntelliJIconKey("expui/breakpoints/breakpointUnsuspendentDisabled.svg", "expui/breakpoints/breakpointUnsuspendentDisabled.svg", AllIconsKeys.class);
     /** 14x14 */ 
     @GeneratedFromIntelliJSources
+    public static final @NotNull IntelliJIconKey ConditionalInstrumentation = new IntelliJIconKey("expui/breakpoints/conditionalInstrumentation.svg", "expui/breakpoints/conditionalInstrumentation.svg", AllIconsKeys.class);
+    /** 14x14 */ 
+    @GeneratedFromIntelliJSources
+    public static final @NotNull IntelliJIconKey LoggingInstrumentation = new IntelliJIconKey("expui/breakpoints/loggingInstrumentation.svg", "expui/breakpoints/loggingInstrumentation.svg", AllIconsKeys.class);
+    /** 14x14 */ 
+    @GeneratedFromIntelliJSources
     public static final @NotNull IntelliJIconKey MultipleBreakpointsDisabled = new IntelliJIconKey("expui/breakpoints/multipleBreakpointsDisabled.svg", "expui/breakpoints/multipleBreakpointsDisabled.svg", AllIconsKeys.class);
     /** 14x14 */ 
     @GeneratedFromIntelliJSources

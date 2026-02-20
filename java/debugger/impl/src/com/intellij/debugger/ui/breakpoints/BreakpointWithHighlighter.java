@@ -182,17 +182,12 @@ public abstract class BreakpointWithHighlighter<P extends JavaBreakpointProperti
 
     InstrumentationBreakpointState info = requestsManager.getInstrumentationInfo(this);
     if (info != null && info.isInstrumentationModeEnabled() && ApplicationManager.getApplication().isInternal()) {
-      LayeredIcon newIcon = new LayeredIcon(2);
-      Icon breakpointIcon;
       if (DebuggerSettings.SUSPEND_NONE.equals(getSuspendPolicy())) {
-        breakpointIcon = AllIcons.Debugger.Db_no_suspend_breakpoint;
+        return AllIcons.Breakpoints.LoggingInstrumentation;
       }
       else {
-        breakpointIcon = AllIcons.Debugger.Db_set_breakpoint;
+        return AllIcons.Breakpoints.ConditionalInstrumentation;
       }
-      newIcon.setIcon(breakpointIcon, 0);
-      newIcon.setIcon(AllIcons.Nodes.Module8x8, 1, 0, 0);
-      return newIcon;
     }
 
     if (isVerified) {
