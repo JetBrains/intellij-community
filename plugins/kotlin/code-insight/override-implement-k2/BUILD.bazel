@@ -44,6 +44,7 @@ jvm_library(
     "//plugins/kotlin/code-insight/impl-base:kotlin-codeInsight-shared",
     "//plugins/kotlin/base/analysis",
     "@lib//:kotlinc-analysis-api-impl-base",
+    "//plugins/kotlin/base/code-insight",
   ]
 )
 ### auto-generated section `build intellij.kotlin.codeInsight.overrideImplement` end

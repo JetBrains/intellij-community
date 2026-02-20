@@ -4,9 +4,13 @@ package org.jetbrains.kotlin.idea.util
 import com.intellij.psi.impl.compiled.ClsParameterImpl
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
+import org.jetbrains.kotlin.analysis.api.renderer.declarations.KaDeclarationRenderer
+import org.jetbrains.kotlin.analysis.api.renderer.declarations.renderers.KaDeclarationNameRenderer
 import org.jetbrains.kotlin.analysis.api.signatures.KaVariableSignature
 import org.jetbrains.kotlin.analysis.api.symbols.KaSymbolModality
 import org.jetbrains.kotlin.analysis.api.symbols.KaValueParameterSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.markers.KaNamedSymbol
+import org.jetbrains.kotlin.analysis.utils.printer.PrettyPrinter
 import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.psi.KtProperty
 
@@ -46,6 +50,29 @@ val KaValueParameterSymbol.realName: Name?
 
         return realJavaName
     }
+
+/**
+ * Creates a renderer that uses names from attached sources for value parameters based on cls java parameter names and delegates to the initial renderer otherwise
+ *
+ * @see KaVariableSignature.realName
+ * @see KaValueParameterSymbol.hasSynthesizedName
+ */
+@OptIn(KaExperimentalApi::class)
+fun createRealNameRenderer(renderer: KaDeclarationNameRenderer): KaDeclarationNameRenderer = object : KaDeclarationNameRenderer {
+    override fun renderName(
+        analysisSession: KaSession,
+        name: Name,
+        symbol: KaNamedSymbol?,
+        declarationRenderer: KaDeclarationRenderer,
+        printer: PrettyPrinter
+    ) {
+        if (symbol is KaValueParameterSymbol && symbol.hasSynthesizedName) {
+            printer.append((with(analysisSession) { symbol.realName } ?: name).asString())
+        } else {
+            renderer.renderName(analysisSession, name, symbol, declarationRenderer, printer)
+        }
+    }
+}
 
 /**
  * A real name for the parameter represented by the given signature.

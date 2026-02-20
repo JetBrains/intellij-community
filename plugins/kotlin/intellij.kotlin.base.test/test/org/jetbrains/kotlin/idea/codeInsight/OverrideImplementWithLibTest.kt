@@ -16,7 +16,7 @@ abstract class OverrideImplementWithLibTest<T : ClassMember> : AbstractOverrideI
         val mockSourcesBase = IDEA_TEST_DATA_DIR.resolve("codeInsight/overrideImplement/withLib")
         val mockSource = mockSourcesBase.resolve(getTestName(true) + "Src")
 
-        mockLibraryFacility = MockLibraryFacility(mockSource, attachSources = false)
+        mockLibraryFacility = MockLibraryFacility(mockSource, attachSources = name.contains("Cls"))
         mockLibraryFacility.setUp(module)
     }
 
@@ -32,6 +32,10 @@ abstract class OverrideImplementWithLibTest<T : ClassMember> : AbstractOverrideI
     }
 
     fun testGenericSubstituted() {
+        doOverrideFileTest()
+    }
+
+    fun testJavaClsParameterNames() {
         doOverrideFileTest()
     }
 }
