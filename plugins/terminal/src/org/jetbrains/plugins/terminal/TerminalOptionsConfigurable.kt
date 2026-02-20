@@ -486,16 +486,19 @@ internal class TerminalOptionsConfigurable(private val project: Project) : Bound
   private suspend fun detectAvailableShellCommandLines(project: Project): List<String> {
     // Use shells detector directly because this code is executed on the backend.
     // But in any other cases, shells should be fetched from the backend using TerminalShellsDetectionApi.
-    return TerminalShellsDetectionService.detectShells(project).map { shellInfo ->
-      val filteredOptions = shellInfo.options.filter {
-        // Do not show login and interactive options in the UI.
-        // They anyway will be substituted implicitly in the shell starting logic.
-        // So, there is no need to specify them in the settings.
-        it != LocalTerminalStartCommandBuilder.INTERACTIVE_CLI_OPTION && !LocalTerminalDirectRunner.LOGIN_CLI_OPTIONS.contains(it)
+    return TerminalShellsDetectionService.detectShells(project)
+      .environments
+      .flatMap { it.shells }
+      .map { shellInfo ->
+        val filteredOptions = shellInfo.options.filter {
+          // Do not show login and interactive options in the UI.
+          // They anyway will be substituted implicitly in the shell starting logic.
+          // So, there is no need to specify them in the settings.
+          it != LocalTerminalStartCommandBuilder.INTERACTIVE_CLI_OPTION && !LocalTerminalDirectRunner.LOGIN_CLI_OPTIONS.contains(it)
+        }
+        val shellCommand = (listOf(shellInfo.path) + filteredOptions)
+        ParametersListUtil.join(shellCommand)
       }
-      val shellCommand = (listOf(shellInfo.path) + filteredOptions)
-      ParametersListUtil.join(shellCommand)
-    }
   }
 }
 

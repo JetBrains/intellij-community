@@ -8,6 +8,7 @@ import com.intellij.openapi.actionSystem.AnActionHolder
 import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.actionSystem.DefaultActionGroup
 import com.intellij.openapi.actionSystem.PlatformDataKeys
+import com.intellij.openapi.actionSystem.Separator
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.project.Project
@@ -23,10 +24,10 @@ import com.intellij.util.ui.JBUI
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
-import org.jetbrains.plugins.terminal.shellDetection.TerminalShellsDetectionApi
 import org.jetbrains.plugins.terminal.fus.TerminalOpeningWay
 import org.jetbrains.plugins.terminal.fus.TerminalStartupFusInfo
 import org.jetbrains.plugins.terminal.shellDetection.DetectedShellInfo
+import org.jetbrains.plugins.terminal.shellDetection.TerminalShellsDetectionApi
 import org.jetbrains.plugins.terminal.ui.OpenPredefinedTerminalActionProvider
 import org.jetbrains.plugins.terminal.util.terminalProjectScope
 import java.awt.Point
@@ -90,10 +91,27 @@ internal class TerminalNewPredefinedSessionAction : DumbAwareAction() {
     return JBPopupFactory.getInstance().createActionGroupPopup(null, group, dataContext, false, true, false, null, -1, null)
   }
 
-  private suspend fun detectShells(project: Project): List<OpenShellAction> {
+  private suspend fun detectShells(project: Project): List<AnAction> {
     // Fetch shells from the backend
-    return TerminalShellsDetectionApi.getInstance()
-      .detectShells(project.projectId())
+    val detectionResult = TerminalShellsDetectionApi.getInstance().detectShells(project.projectId())
+    val shellEnvironments = detectionResult.environments.filter { it.shells.isNotEmpty() }
+    return when {
+      shellEnvironments.isEmpty() -> emptyList()
+      shellEnvironments.size == 1 -> {
+        createOpenShellActions(shellEnvironments[0].shells)
+      }
+      else -> {
+        shellEnvironments.flatMap {
+          val actions = createOpenShellActions(it.shells)
+          val separatorAction = Separator(it.environmentName)
+          listOf(separatorAction) + actions
+        }
+      }
+    }
+  }
+
+  private fun createOpenShellActions(shells: List<DetectedShellInfo>): List<OpenShellAction> {
+    return shells
       .groupByTo(LinkedHashMap(), DetectedShellInfo::name)
       .values
       .flatMap { shellInfos ->

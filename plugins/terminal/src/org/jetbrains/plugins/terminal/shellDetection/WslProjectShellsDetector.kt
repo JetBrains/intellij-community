@@ -5,6 +5,8 @@ import com.intellij.openapi.project.Project
 import com.intellij.platform.eel.provider.LocalEelDescriptor
 import com.intellij.platform.eel.provider.getEelDescriptor
 import com.intellij.platform.ide.impl.wsl.WslEelDescriptor
+import org.jetbrains.plugins.terminal.shellDetection.TerminalShellsDetectionUtil.LOCAL_ENVIRONMENT_NAME
+import org.jetbrains.plugins.terminal.shellDetection.TerminalShellsDetectionUtil.WSL_ENVIRONMENT_NAME
 import org.jetbrains.plugins.terminal.shellDetection.TerminalShellsDetectionUtil.detectUnixShells
 import org.jetbrains.plugins.terminal.shellDetection.TerminalShellsDetectionUtil.detectWindowsShells
 import org.jetbrains.plugins.terminal.shellDetection.TerminalShellsDetectionUtil.detectWslDistributions
@@ -14,7 +16,7 @@ import org.jetbrains.plugins.terminal.shellDetection.TerminalShellsDetectionUtil
  * So, it detects Unix shells in the WSL and Windows shells in the host OS.
  */
 internal class WslProjectShellsDetector : TerminalShellsDetector {
-  override suspend fun detectShells(project: Project): List<DetectedShellInfo> {
+  override suspend fun detectShells(project: Project): ShellsDetectionResult {
     check(isApplicable(project)) { "Should only be called if isApplicable() == true" }
 
     val wslEelDescriptor = project.getEelDescriptor()
@@ -22,7 +24,12 @@ internal class WslProjectShellsDetector : TerminalShellsDetector {
 
     val wslShells = detectUnixShells(wslEelDescriptor)
     val hostShells = detectWindowsShells(hostEelDescriptor) + detectWslDistributions()
-    return wslShells + hostShells
+
+    val envInfo = listOf(
+      DetectedShellsEnvironmentInfo(WSL_ENVIRONMENT_NAME, wslShells),
+      DetectedShellsEnvironmentInfo(LOCAL_ENVIRONMENT_NAME, hostShells),
+    )
+    return ShellsDetectionResult(envInfo)
   }
 
   override fun isApplicable(project: Project): Boolean {

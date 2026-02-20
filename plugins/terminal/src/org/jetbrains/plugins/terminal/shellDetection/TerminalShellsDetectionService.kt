@@ -13,19 +13,19 @@ object TerminalShellsDetectionService {
   /**
    * Finds available shells that can be started in the embedded terminal in the provided [project].
    */
-  suspend fun detectShells(project: Project): List<DetectedShellInfo> {
+  suspend fun detectShells(project: Project): ShellsDetectionResult {
     val detector = TerminalShellsDetector.EP_NAME.extensionList.firstOrNull { it.isApplicable(project) }
     return if (detector != null) {
       LOG.debug { "Using $detector to detect shells for $project" }
       withContext(Dispatchers.IO) {
-        val shells = detector.detectShells(project)
-        LOG.debug { "Detected shells:\n${shells.joinToString("\n")}" }
-        shells
+        val result = detector.detectShells(project)
+        LOG.debug { "Detected shells:\n$result" }
+        result
       }
     }
     else {
       LOG.warn("Didn't find any applicable shell detectors for $project")
-      emptyList()
+      ShellsDetectionResult(emptyList())
     }
   }
 

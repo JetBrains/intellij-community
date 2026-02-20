@@ -10,6 +10,21 @@ import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Internal
 @Serializable
+data class ShellsDetectionResult(
+  /** Environments where shells can be started */
+  val environments: List<DetectedShellsEnvironmentInfo>,
+)
+
+@ApiStatus.Internal
+@Serializable
+data class DetectedShellsEnvironmentInfo(
+  /** User-readable name of the environment where shell can be started */
+  val environmentName: @NlsSafe String,
+  val shells: List<DetectedShellInfo>,
+)
+
+@ApiStatus.Internal
+@Serializable
 data class DetectedShellInfo(
   /** User-readable name of the shell, for example, zsh or Windows PowerShell */
   val name: @NlsSafe String,

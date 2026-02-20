@@ -11,7 +11,7 @@ import org.jetbrains.annotations.ApiStatus
 @ApiStatus.Internal
 @Rpc
 interface TerminalShellsDetectionApi : RemoteApi<Unit> {
-  suspend fun detectShells(projectId: ProjectId): List<DetectedShellInfo>
+  suspend fun detectShells(projectId: ProjectId): ShellsDetectionResult
 
   companion object {
     @JvmStatic

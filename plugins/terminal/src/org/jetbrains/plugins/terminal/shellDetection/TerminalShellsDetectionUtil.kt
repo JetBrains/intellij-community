@@ -23,6 +23,10 @@ import org.jetbrains.plugins.terminal.runner.LocalTerminalStartCommandBuilder
 
 @ApiStatus.Internal
 object TerminalShellsDetectionUtil {
+  const val LOCAL_ENVIRONMENT_NAME: String = "Host"
+  const val WSL_ENVIRONMENT_NAME: String = "WSL"
+  const val DEV_CONTAINER_ENVIRONMENT_NAME: String = "Dev Container"
+
   private val UNIX_BINARIES_DIRECTORIES = listOf(
     "/bin",
     "/usr/bin",

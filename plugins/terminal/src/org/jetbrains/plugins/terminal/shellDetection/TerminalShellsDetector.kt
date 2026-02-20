@@ -16,7 +16,7 @@ import org.jetbrains.annotations.ApiStatus
  */
 @ApiStatus.Internal
 interface TerminalShellsDetector {
-  suspend fun detectShells(project: Project): List<DetectedShellInfo>
+  suspend fun detectShells(project: Project): ShellsDetectionResult
 
   fun isApplicable(project: Project): Boolean
 
