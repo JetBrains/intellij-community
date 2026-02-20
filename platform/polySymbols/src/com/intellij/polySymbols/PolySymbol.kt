@@ -16,6 +16,7 @@ import com.intellij.platform.backend.presentation.TargetPresentation
 import com.intellij.polySymbols.PolySymbol.Companion.PROP_DOC_HIDE_ICON
 import com.intellij.polySymbols.context.PolyContext
 import com.intellij.polySymbols.documentation.PolySymbolDocumentationCustomizer
+import com.intellij.polySymbols.impl.PolySymbolPropertyGetter
 import com.intellij.polySymbols.query.PolySymbolMatch
 import com.intellij.polySymbols.query.PolySymbolMatchCustomizer
 import com.intellij.polySymbols.query.PolySymbolQueryExecutor
@@ -38,6 +39,7 @@ import com.intellij.util.concurrency.annotations.RequiresReadLock
 import org.jetbrains.annotations.ApiStatus
 import java.util.Locale
 import javax.swing.Icon
+import kotlin.reflect.KClass
 
 /**
  * The core element of the Poly Symbols framework. It is identified through `name` and `kind` properties.
@@ -165,7 +167,7 @@ interface PolySymbol : Symbol, NavigatableSymbol, PolySymbolPrioritizedScope {
    * [PolySymbolProperty.tryCast] method for returned values.
    */
   operator fun <T : Any> get(property: PolySymbolProperty<T>): T? =
-    null
+    PolySymbolPropertyGetter.get(this, property)
 
   /**
    * Returns [TargetPresentation] used by [SearchTarget] and [RenameTarget].
@@ -273,7 +275,6 @@ interface PolySymbol : Symbol, NavigatableSymbol, PolySymbolPrioritizedScope {
   ): String =
     queryExecutor.namesProvider.adjustRename(oldName, newName, occurence)
 
-
   sealed interface Priority : Comparable<Priority> {
 
     val value: Double
@@ -311,6 +312,11 @@ interface PolySymbol : Symbol, NavigatableSymbol, PolySymbolPrioritizedScope {
       }
     }
   }
+
+  @Target(AnnotationTarget.PROPERTY, AnnotationTarget.FIELD, AnnotationTarget.PROPERTY_GETTER,
+          AnnotationTarget.ANNOTATION_CLASS)
+  @Retention(AnnotationRetention.RUNTIME)
+  annotation class Property(val property: KClass<*>)
 
   companion object {
 

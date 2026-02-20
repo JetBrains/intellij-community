@@ -111,7 +111,7 @@ open class PolySymbolsDebugOutputPrinter : DebugOutputPrinter() {
         level, "properties",
         propertiesToPrint
           .sortedBy { it.name }
-          .mapNotNull { prop -> source[prop]?.let { Pair(prop, it) } }
+          .mapNotNull { prop -> source[prop]?.let { Pair(prop.name, it) } }
           .toMap()
           .takeIf { it.isNotEmpty() }
       )

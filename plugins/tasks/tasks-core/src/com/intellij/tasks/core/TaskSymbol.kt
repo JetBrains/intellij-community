@@ -159,7 +159,7 @@ sealed class AbstractTaskSymbol : PolySymbol, DocumentationSymbol {
     when (property) {
       PolySymbol.PROP_IJ_TEXT_ATTRIBUTES_KEY -> property.tryCast(EditorColors.REFERENCE_HYPERLINK_COLOR.externalName)
       TASK_PROPERTY -> property.tryCast(task)
-      else -> null
+      else -> super.get(property)
     }
 
   override val presentation: TargetPresentation

@@ -59,7 +59,7 @@ internal class CommitMessageReferenceProvider : PsiPolySymbolReferenceProvider<P
     override fun <T : Any> get(property: PolySymbolProperty<T>): T? =
       when (property) {
         PolySymbol.PROP_IJ_TEXT_ATTRIBUTES_KEY -> property.tryCast(EditorColors.REFERENCE_HYPERLINK_COLOR.externalName)
-        else -> null
+        else -> super.get(property)
       }
 
     override val presentation: TargetPresentation

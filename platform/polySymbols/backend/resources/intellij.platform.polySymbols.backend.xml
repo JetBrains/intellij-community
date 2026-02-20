@@ -1,7 +1,10 @@
 <idea-plugin visibility="public">
   <dependencies>
     <module name="intellij.platform.backend"/>
+    <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
+    <module name="intellij.libraries.kotlin.reflect"/>
     <module name="intellij.platform.polySymbols"/>
+    <!-- endregion -->
   </dependencies>
 
   <extensionPoints>

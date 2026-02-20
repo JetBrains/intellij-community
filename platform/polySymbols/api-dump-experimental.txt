@@ -43,6 +43,9 @@
 - a:getValue():D
 *f:com.intellij.polySymbols.PolySymbol$Priority$Companion
 - f:custom(D):com.intellij.polySymbols.PolySymbol$Priority
+*@:com.intellij.polySymbols.PolySymbol$Property
+- java.lang.annotation.Annotation
+- a:property():java.lang.Class
 *:com.intellij.polySymbols.PolySymbolApiStatus
 - *sf:Companion:com.intellij.polySymbols.PolySymbolApiStatus$Companion
 - sf:Deprecated:com.intellij.polySymbols.PolySymbolApiStatus$Deprecated
@@ -200,11 +203,15 @@
 - s:getEntries():kotlin.enums.EnumEntries
 - s:valueOf(java.lang.String):com.intellij.polySymbols.PolySymbolNameSegment$MatchProblem
 - s:values():com.intellij.polySymbols.PolySymbolNameSegment$MatchProblem[]
-*:com.intellij.polySymbols.PolySymbolProperty
+*a:com.intellij.polySymbols.PolySymbolProperty
 - *sf:Companion:com.intellij.polySymbols.PolySymbolProperty$Companion
-- s:get(java.lang.String,java.lang.Class):com.intellij.polySymbols.PolySymbolProperty
-- a:getName():java.lang.String
-- a:tryCast(java.lang.Object):java.lang.Object
+- <init>(java.lang.String,java.lang.Class):V
+- f:equals(java.lang.Object):Z
+- sf:get(java.lang.String,java.lang.Class):com.intellij.polySymbols.PolySymbolProperty
+- f:getName():java.lang.String
+- f:getType():java.lang.Class
+- f:hashCode():I
+- f:tryCast(java.lang.Object):java.lang.Object
 *f:com.intellij.polySymbols.PolySymbolProperty$Companion
 - f:get(java.lang.String,java.lang.Class):com.intellij.polySymbols.PolySymbolProperty
 *:com.intellij.polySymbols.PolySymbolQualifiedName
