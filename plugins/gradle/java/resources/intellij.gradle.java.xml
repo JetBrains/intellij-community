@@ -165,7 +165,7 @@
                      groupBundle="messages.GradleInspectionBundle"
                      enabledByDefault="true" level="WEAK WARNING"
                      implementationClass="org.jetbrains.plugins.gradle.codeInspection.GradleAvoidDependencyNamedArgumentsNotationInspection"
-                     isInternal="true"/>
+                     isInternal="false"/>
 
     <localInspection language="UAST" groupPath="Gradle" shortName="AvoidApplyPluginMethod"
                      bundle="messages.GradleInspectionBundle"
@@ -173,7 +173,7 @@
                      groupBundle="messages.GradleInspectionBundle"
                      enabledByDefault="true" level="WEAK WARNING"
                      implementationClass="org.jetbrains.plugins.gradle.codeInspection.GradleAvoidApplyPluginMethodInspection"
-                     isInternal="true"/>
+                     isInternal="false"/>
 
     <localInspection language="UAST" groupPath="Gradle" shortName="AvoidRepositoriesInBuildGradle"
                      bundle="messages.GradleInspectionBundle"
@@ -181,7 +181,7 @@
                      groupBundle="messages.GradleInspectionBundle"
                      enabledByDefault="false" level="WEAK WARNING"
                      implementationClass="org.jetbrains.plugins.gradle.codeInspection.AvoidRepositoriesInBuildGradleInspection"
-                     isInternal="true"/>
+                     isInternal="false"/>
 
     <localInspection language="UAST" groupPath="Gradle" shortName="AvoidDuplicateDependencies"
                      bundle="messages.GradleInspectionBundle"
@@ -189,7 +189,7 @@
                      groupBundle="messages.GradleInspectionBundle"
                      enabledByDefault="true" level="WEAK WARNING"
                      implementationClass="org.jetbrains.plugins.gradle.codeInspection.GradleAvoidDuplicateDependenciesInspection"
-                     isInternal="true"/>
+                     isInternal="false"/>
 
     <localInspection language="UAST" groupPath="Gradle" shortName="TaskMissingDescription"
                      bundle="messages.GradleInspectionBundle"
@@ -197,7 +197,7 @@
                      groupBundle="messages.GradleInspectionBundle"
                      enabledByDefault="true" level="WEAK WARNING"
                      implementationClass="org.jetbrains.plugins.gradle.codeInspection.GradleTaskMissingDescriptionInspection"
-                     isInternal="true"/>
+                     isInternal="false"/>
 
   </extensions>
 </idea-plugin>
