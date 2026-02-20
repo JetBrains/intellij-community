@@ -197,7 +197,11 @@ internal sealed class WindowMouseListenerSupport(private val source: WindowMouse
 
   protected open fun makeChangeValid(oldBounds: Rectangle, newBounds: Rectangle, view: Component) { }
 
-  protected abstract fun onDraggingStarted(session: WindowListenerSession)
+  protected fun onDraggingStarted(session: WindowListenerSession) {
+    // No "clicked" event after dragging.
+    // On Wayland it used to be different, but was fixed in JBR-9803.
+    session.expectMouseClicked = false
+  }
 
   protected open fun computeOffsetFromInitialLocation(session: WindowListenerSession, event: MouseEvent): Point {
     val location = session.location
@@ -262,10 +266,6 @@ internal sealed class WindowMouseListenerSupport(private val source: WindowMouse
 private class RegularWindowMouseListenerSupport(source: WindowMouseListenerSource) : WindowMouseListenerSupport(source) {
   override fun moveAfterMouseRelease(): Boolean = false
 
-  override fun onDraggingStarted(session: WindowListenerSession) {
-    session.expectMouseClicked = false // after dragging starts, there will be only one "released" event
-  }
-
   override fun jbrMoveSupported(component: Component?): Boolean {
     return (component is Frame || component is Dialog) && JBR.isWindowMoveSupported()
   }
@@ -291,8 +291,6 @@ private class WaylandWindowMouseListenerSupport(source: WindowMouseListenerSourc
       JBR.getRelativePointerMovement().getAccumulatedMouseDeltaAndReset()
     }
   }
-
-  override fun onDraggingStarted(session: WindowListenerSession) { } // on Wayland, whether dragging has started or not, both "released" and "clicked" events will arrive
 
   override fun getResizeCursor(top: Int, left: Int, bottom: Int, right: Int, resizeArea: Insets): Int {
     if (isRelativeMovementMode()) return super.getResizeCursor(top, left, bottom, right, resizeArea)
