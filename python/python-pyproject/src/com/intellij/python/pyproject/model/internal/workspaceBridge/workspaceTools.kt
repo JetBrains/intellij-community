@@ -138,10 +138,18 @@ private suspend fun generatePyProjectTomlEntries(
     }
     usedNamed.add(projectNameAsString)
     val projectName = ProjectName(projectNameAsString)
-    val sourceRootsAndTools = Tool.EP.extensionList.flatMap { tool -> tool.getSrcRoots(toml.toml, root).map { Pair(tool, it) } }.toSet()
+    val sourceRootsAndTools = tools.flatMap { tool -> tool.getSrcRoots(toml.toml, root).map { Pair(tool, it) } }.toSet()
     val sourceRoots = sourceRootsAndTools.map { it.second }.toSet() + findSrc(root)
     participatedTools.addAll(sourceRootsAndTools.map { it.first.id })
     val excludedDirs = allExcludeDirs.filter { it.startsWith(root) }
+    if (participatedTools.isEmpty()) {
+      // If a tool is mentioned as a tool.<toolId> in pyproject.toml, we consider it participated in project configuration
+      for (tool in tools) {
+        if (toml.toml.contains("tool.${tool.id.id}")) {
+          participatedTools.add(tool.id)
+        }
+      }
+    }
     if (participatedTools.isEmpty()) {
       // Try to use build-tool as last resort
       toml.toml.getString("build-system.build-backend")?.let { buildBackend ->
