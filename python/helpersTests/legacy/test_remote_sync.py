@@ -45,6 +45,7 @@ class RemoteSyncTest(HelpersTestCase):
         self.collect_sources(['root1', 'root2', 'root3'])
         self.assertDirLayoutEquals(self.temp_dir, """
         .state.json
+        .success
         root1.zip
         root2.zip
         root3.zip
@@ -75,6 +76,7 @@ class RemoteSyncTest(HelpersTestCase):
 
         self.assertDirLayoutEquals(self.temp_dir, """
         .state.json
+        .success
         root1.zip
         root2.zip
         """)
@@ -83,6 +85,7 @@ class RemoteSyncTest(HelpersTestCase):
         self.collect_sources(['root', 'dir/root'])
         self.assertDirLayoutEquals(self.temp_dir, """
         .state.json
+        .success
         root.zip
         root__1.zip
         """)
@@ -91,6 +94,7 @@ class RemoteSyncTest(HelpersTestCase):
         self.collect_sources(['root', 'root/pkg/nested'])
         self.assertDirLayoutEquals(self.temp_dir, """
         .state.json
+        .success
         nested.zip
         root.zip
         """)
@@ -115,6 +119,7 @@ class RemoteSyncTest(HelpersTestCase):
         self.collect_sources(['root', 'non-existing'])
         self.assertDirLayoutEquals(self.temp_dir, """
         .state.json
+        .success
         root.zip
         """)
 
@@ -122,6 +127,7 @@ class RemoteSyncTest(HelpersTestCase):
         self.collect_sources(['root', 'root.egg'])
         self.assertDirLayoutEquals(self.temp_dir, """
         .state.json
+        .success
         root.zip
         """)
 
