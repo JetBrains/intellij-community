@@ -307,11 +307,13 @@ public abstract class MavenProjectsManager extends MavenSimpleProjectComponent
     myState.originalFiles = tree.getManagedFilesPaths();
     myState.ignoredFiles = new HashSet<>(tree.getIgnoredFilesPaths());
     myState.ignoredPathMasks = tree.getIgnoredFilesPatterns();
+    var profiles = tree.getExplicitProfiles();
+    myState.enabledProfiles = new ArrayList<>(profiles.getEnabledProfiles());
+    myState.disabledProfiles = new ArrayList<>(profiles.getDisabledProfiles());
   }
 
   private static void applyStateToTree(MavenProjectsTree tree, MavenProjectsManager manager) {
-    MavenWorkspaceSettings settings = manager.getWorkspaceSettings();
-    MavenExplicitProfiles explicitProfiles = new MavenExplicitProfiles(settings.enabledProfiles, settings.disabledProfiles);
+    MavenExplicitProfiles explicitProfiles = new MavenExplicitProfiles(manager.myState.enabledProfiles, manager.myState.disabledProfiles);
     tree.resetManagedFilesPathsAndProfiles(manager.myState.originalFiles, explicitProfiles);
     tree.setIgnoredFilesPaths(new ArrayList<>(manager.myState.ignoredFiles));
     tree.setIgnoredFilesPatterns(manager.myState.ignoredPathMasks);
@@ -474,7 +476,7 @@ public abstract class MavenProjectsManager extends MavenSimpleProjectComponent
   }
 
   public @NotNull MavenExplicitProfiles getExplicitProfiles() {
-    return new MavenExplicitProfiles(getWorkspaceSettings().enabledProfiles, getWorkspaceSettings().disabledProfiles);
+    return new MavenExplicitProfiles(getState().enabledProfiles, getState().disabledProfiles);
   }
 
   public @NotNull Collection<String> getAvailableProfiles() {
@@ -660,8 +662,8 @@ public abstract class MavenProjectsManager extends MavenSimpleProjectComponent
   }
 
   public synchronized void setExplicitProfiles(MavenExplicitProfiles profiles) {
-    getWorkspaceSettings().setEnabledProfiles(profiles.getEnabledProfiles());
-    getWorkspaceSettings().setDisabledProfiles(profiles.getDisabledProfiles());
+    myState.enabledProfiles = new ArrayList<>(profiles.getEnabledProfiles());
+    myState.disabledProfiles = new ArrayList<>(profiles.getDisabledProfiles());
     if (isInitialized()) {
       getProjectsTree().setExplicitProfiles(profiles);
     }
