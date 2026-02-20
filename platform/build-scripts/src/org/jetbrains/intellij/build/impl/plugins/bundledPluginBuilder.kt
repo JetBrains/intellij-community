@@ -182,7 +182,10 @@ internal suspend fun buildBundledPlugins(
         context = context,
       ) { layout, _ ->
         if (layout.hasPlatformSpecificResources) {
-          buildPlatformSpecificPluginResources(plugin = layout, targetDirs = platformSpecificPluginDirs, context = context)
+          val pluginDirs = platformSpecificPluginDirs.map {
+            it.first to it.second.resolve(layout.directoryName)
+          }
+          buildPlatformSpecificPluginResources(plugin = layout, pluginDirs = pluginDirs, context = context, isDevMode = false)
         }
         else {
           emptyList()

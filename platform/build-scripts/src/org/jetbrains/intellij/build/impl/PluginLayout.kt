@@ -105,14 +105,25 @@ class PluginLayout(val mainModule: String, @Internal @JvmField val auto: Boolean
   internal var customAssets: PersistentList<CustomAssetDescriptor> = persistentListOf()
     private set
 
+  /**
+   * Called only for bundled plugins. Not called in dev-mode or for non-bundled plugins.
+   */
   internal var platformResourceGenerators: PersistentMap<SupportedDistribution, PersistentList<ResourceGenerator>> = persistentMapOf()
+    private set
+
+  /**
+   * Platform resource generators that are called also in dev-mode (unlike `platformResourceGenerators`).
+   */
+  internal var platformResourceGeneratorsDevMode: PersistentMap<SupportedDistribution, PersistentList<ResourceGenerator>> = persistentMapOf()
     private set
 
   internal var executablePatterns: PersistentMap<SupportedDistribution, PersistentList<String>> = persistentMapOf()
     private set
 
   val hasPlatformSpecificResources: Boolean
-    get() = platformResourceGenerators.isNotEmpty() || customAssets.any { it.platformSpecific != null }
+    get() = platformResourceGenerators.isNotEmpty() ||
+            platformResourceGeneratorsDevMode.isNotEmpty() ||
+            customAssets.any { it.platformSpecific != null }
 
   fun getMainJarName(): String = mainJarName
 
@@ -290,10 +301,16 @@ class PluginLayout(val mainModule: String, @Internal @JvmField val auto: Boolean
       }
     }
 
-    fun withGeneratedPlatformResources(os: OsFamily, arch: JvmArchitecture, libc: LibcImpl, generator: ResourceGenerator) {
+    fun withGeneratedPlatformResources(os: OsFamily, arch: JvmArchitecture, libc: LibcImpl,
+                                       allowInDevMode: Boolean = false, generator: ResourceGenerator) {
       val key = SupportedDistribution(os, arch, libc)
-      val newValue = layout.platformResourceGenerators.get(key)?.let { it + generator } ?: persistentListOf(generator)
-      layout.platformResourceGenerators += key to newValue
+      if (allowInDevMode) {
+        val newValue = layout.platformResourceGeneratorsDevMode.get(key)?.let { it + generator } ?: persistentListOf(generator)
+        layout.platformResourceGeneratorsDevMode += key to newValue
+      } else {
+        val newValue = layout.platformResourceGenerators.get(key)?.let { it + generator } ?: persistentListOf(generator)
+        layout.platformResourceGenerators += key to newValue
+      }
     }
 
     /**

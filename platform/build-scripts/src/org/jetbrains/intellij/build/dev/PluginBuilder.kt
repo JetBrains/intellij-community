@@ -18,9 +18,9 @@ import org.jetbrains.intellij.build.impl.DistributionBuilderState
 import org.jetbrains.intellij.build.impl.PlatformLayout
 import org.jetbrains.intellij.build.impl.PluginLayout
 import org.jetbrains.intellij.build.impl.SupportedDistribution
+import org.jetbrains.intellij.build.impl.buildPlatformSpecificPluginResources
 import org.jetbrains.intellij.build.impl.copyAdditionalPlugins
 import org.jetbrains.intellij.build.impl.getPluginLayoutsByJpsModuleNames
-import org.jetbrains.intellij.build.impl.handleCustomPlatformSpecificAssets
 import org.jetbrains.intellij.build.impl.plugins.buildPlugins
 import org.jetbrains.intellij.build.impl.projectStructureMapping.DistributionFileEntry
 import org.jetbrains.intellij.build.impl.satisfiesBundlingRequirements
@@ -67,11 +67,10 @@ internal suspend fun buildPluginsForDevMode(
       descriptorCacheContainer = platform.descriptorCacheContainer,
       context = context,
     ) { layout, pluginDirOrFile ->
-      handleCustomPlatformSpecificAssets(
-        layout = layout,
-        targetPlatform = targetPlatform,
+      buildPlatformSpecificPluginResources(
+        plugin = layout,
+        pluginDirs = listOf(targetPlatform to pluginDirOrFile),
         context = context,
-        pluginDir = pluginDirOrFile,
         isDevMode = true,
       )
     }
