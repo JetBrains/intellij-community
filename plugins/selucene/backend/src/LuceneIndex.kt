@@ -1,8 +1,5 @@
 package com.intellij.selucene.backend
 
-import com.intellij.openapi.application.writeAction
-import com.intellij.openapi.diagnostic.Logger
-import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.channels.BufferOverflow
@@ -30,9 +27,7 @@ class LuceneIndex(val project: Project, val coroutineScope: CoroutineScope, inde
   private var writer: IndexWriter = createWriter()
 
   //TODO use a separate background thread, that periodically calls ReferenceManager.maybeRefresh()
-  private var searcherManager: SearcherManager = let {
-    SearcherManager(writer, SearcherFactory())
-  }
+  private var searcherManager: SearcherManager = SearcherManager(writer, SearcherFactory())
 
   private fun createWriter(): IndexWriter {
     val analyzer = StandardAnalyzer()
@@ -40,25 +35,22 @@ class LuceneIndex(val project: Project, val coroutineScope: CoroutineScope, inde
     return IndexWriter(directory, config)
   }
 
-  suspend fun processChanges(changes: (IndexWriter) -> Unit) {
-    writeAction {
-      try {
-        changes(writer)
-        val seq_nr = writer.commit()
+  fun processChanges(changes: (IndexWriter) -> Unit) {
+    try {
+      changes(writer)
+      writer.commit()
+    }
+    catch (t: Throwable) {
+      // Best-effort rollback of any uncommitted changes
 
-      }
-      catch (t: Throwable) {
-        // Best-effort rollback of any uncommitted changes
+      writer.rollback()
+      writer.close()
 
-        writer.rollback()
-        writer.close()
+      // Reopen writer + searcher infrastructure so the index can continue operating
+      writer = createWriter()
+      searcherManager = SearcherManager(writer, SearcherFactory())
 
-        // Reopen writer + searcher infrastructure so the index can continue operating
-        writer = createWriter()
-        searcherManager = SearcherManager(writer, SearcherFactory())
-
-        throw t
-      }
+      throw t
     }
     searcherManager.maybeRefresh()
   }
