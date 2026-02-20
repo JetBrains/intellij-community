@@ -85,7 +85,6 @@ class ProjectEntityIndexingService(
   }
 
   override fun workspaceFileIndexChanged(event: WorkspaceFileIndexChangedEvent) {
-    if (!Registry.`is`("use.workspace.file.index.for.partial.scanning")) return
     if (FileBasedIndex.getInstance() !is FileBasedIndexImpl) return
     if (LightEdit.owns(project)) return
 
@@ -165,6 +164,7 @@ class ProjectEntityIndexingService(
     storage: EntityStorage,
     iterators: MutableList<IndexableFilesIterator>,
   ) {
+    val useWfi = Registry.`is`("use.workspace.file.index.for.partial.scanning")
     val libraryOrigins = HashSet<LibraryOrigin>()
 
     for (fileSet in fileSets) {
@@ -174,13 +174,14 @@ class ProjectEntityIndexingService(
       val customData = fileSet.data
       val root = fileSet.root
 
-      if (customData is ModuleRelatedRootData) {
+      if (useWfi && customData is ModuleRelatedRootData) {
         processModuleRoot(fileSet, project, true)?.let(iterators::add)
       }
-      else if (fileSet.kind.isContent) {
+      else if (useWfi && fileSet.kind.isContent) {
         iterators.add(GenericDependencyIterator.forContentRoot(entityPointer, fileSet.recursive, root))
       }
       else {
+        // here we always use WFI
         val entity = entityPointer.resolve(storage) ?: continue
         if (entity is LibraryEntity) {
           val (origin, iterator) = processLibraryEntity(entity, fileSet)
