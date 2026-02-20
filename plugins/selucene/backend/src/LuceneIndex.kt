@@ -45,7 +45,6 @@ class LuceneIndex(val project: Project, val coroutineScope: CoroutineScope, inde
       try {
         changes(writer)
         val seq_nr = writer.commit()
-        LOG.info("Finished processing index changes. Now lucene index is on commit : $seq_nr")
 
       }
       catch (t: Throwable) {
@@ -91,8 +90,6 @@ class LuceneIndex(val project: Project, val coroutineScope: CoroutineScope, inde
   fun search(query: Query): Flow<Pair<ScoreDoc, Document>> {
     val searcher: IndexSearcher = searcherManager.acquire()
 
-    LOG.info("Searching for $query")
-    
     return channelFlow {
       try {
         var after: ScoreDoc? = null
@@ -119,6 +116,5 @@ class LuceneIndex(val project: Project, val coroutineScope: CoroutineScope, inde
 
   companion object {
     const val PAGE_SIZE: Int = 10
-    val LOG: Logger = logger<LuceneIndex>()
   }
 }

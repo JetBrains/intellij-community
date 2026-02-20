@@ -12,11 +12,7 @@ internal class InitLuceneIndex : ProjectActivity {
     // Wait until config is loaded and we can expect `ProjectFileIndex.getInstance()` to return the files to index.
     Observation.awaitConfiguration(project)
     val luceneIndex = FileIndex.getInstance(project)
-    LOG.info("Scheduling Indexing of all files")
+    FileIndex.LOG.info("Scheduling Indexing of all files")
     luceneIndex.scheduleIndexingOp(LuceneFileIndexOperation.IndexAll)
-  }
-
-  companion object {
-    val LOG: Logger = logger<InitLuceneIndex>()
   }
 }

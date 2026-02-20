@@ -5,6 +5,7 @@ import com.intellij.openapi.application.readAction
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.ProjectFileIndex
@@ -99,7 +100,7 @@ internal class FileIndex(val project: Project, val coroutineScope: CoroutineScop
 
             true // continue iteration
           }
-          LOG.debug("Registerred all files for the next lucene index commit.")
+          LOG.debug("Registered all files for the next lucene index commit.")
         }
       }
 
@@ -118,7 +119,7 @@ internal class FileIndex(val project: Project, val coroutineScope: CoroutineScop
             check(Files.exists(Paths.get(file.path))) { "The file at ${file.path} does not exist! We assume file events only returns existing files" }
             check(file.isValid) { "The file at ${file.path} is not Valid! We assume file events only returns valid files" }
             val (term,doc) = getDocument(file)
-            LOG.debug("Updating $term to $doc")
+            LOG.debug {"Updating $term to $doc"}
             writer.updateDocument(term,doc)
           }
 
@@ -152,11 +153,15 @@ internal class FileIndex(val project: Project, val coroutineScope: CoroutineScop
   // TODO figure out why old files no longer show up. They ARE returned from this search function after all.
   //   SeLuceneFilesProvider performs refiltering: val virtualFile = VirtualFileManager.getInstance().findFileByNioPath(Path.of((it.path))) ?: return@collect
   // TODO Store virtual file ID in the index to allow efficient retrieval later.
-  fun search(params: SeParams) = luceneIndex.search(buildQuery(params)).map { (scoreDoc, doc) ->
-    LOG.debug("Search for $params returned $doc with score ${scoreDoc.score}")
-    val name = doc.get(FILE_NAME)
-    val path = doc.get(FILE_ABSOLUTE_PATH)
-    LuceneFileSearchResult(name, path, scoreDoc.score)
+  fun search(params: SeParams) = {
+    val query = buildQuery(params);
+    LOG.debug { "Search for ${params.inputQuery} with ${params.filter} was translated into Lucene Query: $query" }
+    luceneIndex.search(query).map { (scoreDoc, doc) ->
+      LOG.debug { "Search \"${params.inputQuery}\" returned $doc with score ${scoreDoc.score}" }
+      val name = doc.get(FILE_NAME)
+      val path = doc.get(FILE_ABSOLUTE_PATH)
+      LuceneFileSearchResult(name, path, scoreDoc.score)
+    }
   }
 
   companion object {
