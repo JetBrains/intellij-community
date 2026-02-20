@@ -1,15 +1,17 @@
-// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package org.jetbrains.plugins.terminal.shellDetection
+package com.intellij.terminal.backend
 
 import com.intellij.openapi.project.Project
 import com.intellij.platform.eel.provider.LocalEelDescriptor
 import com.intellij.platform.eel.provider.getEelDescriptor
 import com.intellij.platform.ide.impl.wsl.WslEelDescriptor
+import org.jetbrains.plugins.terminal.shellDetection.DetectedShellsEnvironmentInfo
+import org.jetbrains.plugins.terminal.shellDetection.ShellsDetectionResult
 import org.jetbrains.plugins.terminal.shellDetection.TerminalShellsDetectionUtil.LOCAL_ENVIRONMENT_NAME
 import org.jetbrains.plugins.terminal.shellDetection.TerminalShellsDetectionUtil.WSL_ENVIRONMENT_NAME
 import org.jetbrains.plugins.terminal.shellDetection.TerminalShellsDetectionUtil.detectUnixShells
 import org.jetbrains.plugins.terminal.shellDetection.TerminalShellsDetectionUtil.detectWindowsShells
 import org.jetbrains.plugins.terminal.shellDetection.TerminalShellsDetectionUtil.detectWslDistributions
+import org.jetbrains.plugins.terminal.shellDetection.TerminalShellsDetector
 
 /**
  * When the project is opened in the WSL file system, it is worth allowing starting shells from both WSL and the host OS.
