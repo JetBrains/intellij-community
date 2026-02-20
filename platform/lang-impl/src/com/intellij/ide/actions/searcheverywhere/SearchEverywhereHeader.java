@@ -220,6 +220,9 @@ public final class SearchEverywhereHeader {
       result.add(createAllTab(contributors, onChanged));
     }
 
+    SearchEverywhereContributor<?> originalMainFileContributor = ContainerUtil.find(contributors, FilesTabSEContributor::isMainFilesContributor);
+    if (originalMainFileContributor != null) originalMainFileContributor = FilesTabSEContributor.asMainFilesContributorOrNull(originalMainFileContributor);
+
     List<SearchEverywhereContributor<?>> separateTabContributors;
     try {
       separateTabContributors = TabsCustomizationStrategy.getInstance().getSeparateTabContributors(contributors);
@@ -231,9 +234,15 @@ public final class SearchEverywhereHeader {
 
     for (SearchEverywhereContributor<?> contributor : separateTabContributors) {
       try {
-        if (FilesTabSEContributor.isMainFilesContributor(contributor)) {
+        FileSearchEverywhereContributor fileContributor = FilesTabSEContributor.asMainFilesContributorOrNull(contributor);
+        if (fileContributor != null) {
           var otherContributors =
             Stream.concat(Stream.of(contributor), contributors.stream().filter(FilesTabSEContributor::isFilesTabContributor)).toList();
+
+          if (originalMainFileContributor != null && originalMainFileContributor != fileContributor) {
+            fileContributor.linkFilesTabContributorsFrom(otherContributors);
+          }
+
           result.add(createTab(otherContributors, onChanged));
         }
         else {

@@ -156,7 +156,7 @@ class SeProvidersHolder(
       separateTabContributors: MutableMap<SeProviderId, SearchEverywhereContributor<Any>>,
     ) {
       withContext(Dispatchers.EDT) {
-        SearchEverywhereManagerImpl.createContributors(initEvent, project)
+        SearchEverywhereManagerImpl.createContributors(initEvent, project, false)
       }.filterIsInstance<SearchEverywhereContributor<Any>>().forEach {
         allContributors[SeProviderId(it.searchProviderId)] = it
       }

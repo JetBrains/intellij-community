@@ -94,7 +94,7 @@ public final class SearchEverywhereManagerImpl implements SearchEverywhereManage
 
     Project project = initEvent.getProject();
 
-    List<SearchEverywhereContributor<?>> contributors = createContributors(initEvent, project);
+    List<SearchEverywhereContributor<?>> contributors = createContributors(initEvent, project, true);
     SearchEverywhereContributorValidationRule.updateContributorsMap(contributors);
     mySearchEverywhereUI = createView(myProject, contributors, SearchFieldStatisticsCollector.getStartMoment(initEvent));
     contributors.forEach(c -> Disposer.register(mySearchEverywhereUI, c));
@@ -187,7 +187,7 @@ public final class SearchEverywhereManagerImpl implements SearchEverywhereManage
   }
 
   @ApiStatus.Internal
-  public static List<SearchEverywhereContributor<?>> createContributors(@NotNull AnActionEvent initEvent, Project project) {
+  public static List<SearchEverywhereContributor<?>> createContributors(@NotNull AnActionEvent initEvent, Project project, boolean shouldLinkFilesTabContributors) {
     SearchEverywhereMlContributorReplacement.saveInitEvent(initEvent);
     if (project == null) {
       ActionSearchEverywhereContributor.Factory factory = new ActionSearchEverywhereContributor.Factory();
@@ -202,7 +202,39 @@ public final class SearchEverywhereManagerImpl implements SearchEverywhereManage
       }
     }
 
+    if (shouldLinkFilesTabContributors) {
+      linkFilesContributors(res);
+    }
+
     return res;
+  }
+
+  @ApiStatus.Internal
+  public static void linkFilesContributors(List<SearchEverywhereContributor<?>> contributors) {
+    // Find the main FileSearchEverywhereContributor
+    FileSearchEverywhereContributor mainFilesContributor = null;
+    for (SearchEverywhereContributor<?> contributor : contributors) {
+      mainFilesContributor = FilesTabSEContributor.asMainFilesContributorOrNull(contributor);
+      if (mainFilesContributor != null) break;
+    }
+
+    if (mainFilesContributor == null) {
+      return; // No main contributor found (shouldn't happen in normal scenarios)
+    }
+
+    // Find all other FilesTabSEContributors (excluding the main one)
+    List<FilesTabSEContributor> otherFilesContributors = new ArrayList<>();
+    for (SearchEverywhereContributor<?> contributor : contributors) {
+      FilesTabSEContributor unwrapped = FilesTabSEContributor.unwrapFilesTabContributorIfPossible(contributor);
+      if (unwrapped != null && !FilesTabSEContributor.isMainFilesContributor(contributor)) {
+        otherFilesContributors.add(unwrapped);
+      }
+    }
+
+    // Link them
+    if (!otherFilesContributors.isEmpty()) {
+      mainFilesContributor.linkFilesTabContributors(otherFilesContributors);
+    }
   }
 
   private void calcPositionAndShow(@NotNull AnActionEvent initEvent,

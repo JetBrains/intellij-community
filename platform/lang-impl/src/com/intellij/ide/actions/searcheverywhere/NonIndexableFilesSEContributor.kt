@@ -10,7 +10,6 @@ import com.intellij.ide.util.gotoByName.FileTypeRef
 import com.intellij.ide.util.scopeChooser.ScopeDescriptor
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.application.ReadAction
-import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.application.runReadActionBlocking
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.progress.ProgressIndicator
@@ -66,8 +65,14 @@ interface FilesTabSEContributor {
     @ApiStatus.Internal
     @JvmStatic
     fun SearchEverywhereContributor<*>.isMainFilesContributor(): Boolean {
-      return this is FileSearchEverywhereContributor || this is SearchEverywhereContributorWrapper && this.getEffectiveContributor()
-        .isMainFilesContributor()
+      return asMainFilesContributorOrNull() != null
+    }
+
+    @ApiStatus.Internal
+    @JvmStatic
+    fun SearchEverywhereContributor<*>.asMainFilesContributorOrNull(): FileSearchEverywhereContributor? {
+      return this as? FileSearchEverywhereContributor
+             ?: (this as? SearchEverywhereContributorWrapper)?.getEffectiveContributor()?.asMainFilesContributorOrNull()
     }
   }
 }

@@ -4,6 +4,7 @@ package com.intellij.ide.actions.searcheverywhere
 import com.intellij.featureStatistics.FeatureUsageTracker
 import com.intellij.ide.IdeBundle
 import com.intellij.ide.actions.SearchEverywherePsiRenderer
+import com.intellij.ide.actions.searcheverywhere.FilesTabSEContributor.Companion.unwrapFilesTabContributorIfPossible
 import com.intellij.ide.actions.searcheverywhere.SearchEverywhereFiltersStatisticsCollector.FileTypeFilterCollector
 import com.intellij.ide.actions.searcheverywhere.footer.createPsiExtendedInfo
 import com.intellij.ide.util.gotoByName.FileTypeRef
@@ -46,12 +47,28 @@ open class FileSearchEverywhereContributor(event: AnActionEvent, contributorModu
   @Internal
   override val navigationHandler: SearchEverywhereNavigationHandler = FileSearchEverywhereNavigationContributionHandler(project)
 
+  private val linkedFilesTabContributors: MutableList<FilesTabSEContributor> = mutableListOf()
+
   constructor(event: AnActionEvent) : this(event, null)
 
   init {
     val project = event.getRequiredData(CommonDataKeys.PROJECT)
     modelForRenderer = GotoFileModel(project)
     filter = createFileTypeFilter(project)
+  }
+
+  @Internal
+  fun linkFilesTabContributorsFrom(contributors: List<SearchEverywhereContributor<*>>) {
+    val filesTabContributors = contributors.mapNotNull { it.unwrapFilesTabContributorIfPossible() }
+    linkFilesTabContributors(filesTabContributors)
+  }
+
+  @Internal
+  fun linkFilesTabContributors(contributors: List<FilesTabSEContributor>) {
+    linkedFilesTabContributors.clear()
+    linkedFilesTabContributors.addAll(contributors)
+    // Immediately synchronize current scope to linked contributors
+    linkedFilesTabContributors.forEach { it.setScope(myScopeDescriptor) }
   }
 
   companion object {
@@ -83,7 +100,22 @@ open class FileSearchEverywhereContributor(event: AnActionEvent, contributorModu
     return model
   }
 
-  override fun getActions(onChanged: Runnable): List<AnAction> = doGetActions(filter, FileTypeFilterCollector(), onChanged)
+  override fun getActions(onChanged: Runnable): List<AnAction> {
+    val wrappedOnChanged = Runnable {
+      // Propagate scope and hidden types to all linked FilesTabSEContributors
+      val allTypes = getAllFileTypes()
+      val selectedTypes = filter.selectedElements.toSet()
+      val hiddenTypes = allTypes.filter { it !in selectedTypes }
+
+      linkedFilesTabContributors.forEach {
+        it.setScope(myScopeDescriptor)
+        it.setHiddenTypes(hiddenTypes)
+      }
+
+      onChanged.run()
+    }
+    return doGetActions(filter, FileTypeFilterCollector(), wrappedOnChanged)
+  }
 
   final override fun getElementsRenderer(): ListCellRenderer<in Any?> {
     return object : SearchEverywherePsiRenderer(this) {
@@ -142,6 +174,11 @@ open class FileSearchEverywhereContributor(event: AnActionEvent, contributorModu
   override fun isEmptyPatternSupported(): Boolean = true
 
   override fun createExtendedInfo(): @Nls ExtendedInfo? = createPsiExtendedInfo()
+
+  override fun dispose() {
+    super.dispose()
+    linkFilesTabContributors(emptyList())
+  }
 }
 
 @Internal
