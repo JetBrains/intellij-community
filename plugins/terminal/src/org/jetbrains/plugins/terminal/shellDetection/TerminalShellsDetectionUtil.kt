@@ -3,7 +3,9 @@ package org.jetbrains.plugins.terminal.shellDetection
 
 import com.intellij.execution.wsl.WSLDistribution
 import com.intellij.execution.wsl.WslDistributionManager
+import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.platform.eel.EelDescriptor
+import com.intellij.platform.eel.EelExecApi
 import com.intellij.platform.eel.environmentVariables
 import com.intellij.platform.eel.fs.EelFileInfo
 import com.intellij.platform.eel.fs.EelFileSystemApi
@@ -56,7 +58,13 @@ object TerminalShellsDetectionUtil {
     val eelApi = eelDescriptor.toEelApi()
     val shells = mutableListOf<DetectedShellInfo>()
 
-    val envVariables = eelApi.exec.environmentVariables().onlyActual(true).eelIt().await()
+    val envVariables = try {
+      eelApi.exec.environmentVariables().onlyActual(true).eelIt().await()
+    }
+    catch (ex: EelExecApi.EnvironmentVariablesException) {
+      thisLogger().error("Failed to fetch environment variables", ex)
+      return emptyList()
+    }
 
     val systemRoot = envVariables["SystemRoot"]      // C:\\Windows
     val programFiles = envVariables["ProgramFiles"]  // C:\\Program Files
