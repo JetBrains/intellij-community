@@ -178,7 +178,7 @@ class KtParameterHintsProvider : AbstractKtInlayHintsProvider() {
     }
 
     @OptIn(KaExperimentalApi::class)
-    context(_: KaSession)
+    context(session: KaSession)
     private fun collectFromParameters(
         callElement: KtCallElement,
         functionCall: KaFunctionCall<*>,
@@ -217,7 +217,7 @@ class KtParameterHintsProvider : AbstractKtInlayHintsProvider() {
                 continue
             }
 
-            if (argument.isArgumentNamed(symbol)) {
+            if (argument.isArgumentNamed(symbol, session)) {
                 continue
             }
 
@@ -354,7 +354,7 @@ class KtParameterHintsProvider : AbstractKtInlayHintsProvider() {
         text(symbolPsi, targetPsi?.asNavigatablePsiLoad())
     }
 
-    private fun KtValueArgument.isArgumentNamed(symbol: KaValueParameterSymbol): Boolean {
+    private fun KtValueArgument.isArgumentNamed(symbol: KaValueParameterSymbol, session: KaSession): Boolean {
         // avoid cases like "`value =` value"
         val argumentText = this.text
         val symbolName = symbol.name.asString()
@@ -367,7 +367,7 @@ class KtParameterHintsProvider : AbstractKtInlayHintsProvider() {
         while (sibling != null) {
             when(sibling) {
                 is PsiComment -> {
-                    val argumentNameCommentInfo = ArgumentNameCommentInfo(symbol)
+                    val argumentNameCommentInfo = ArgumentNameCommentInfo(symbol, session)
                     return sibling.isExpectedArgumentNameComment(argumentNameCommentInfo)
                 }
                 !is PsiWhiteSpace -> break

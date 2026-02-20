@@ -6585,6 +6585,11 @@ public abstract class LocalInspectionTestGenerated extends AbstractK1LocalInspec
                 runTest("testData/inspectionsLocal/inconsistentCommentForJavaParameter/annotation.kt");
             }
 
+            @TestMetadata("clsParameter.kt")
+            public void testClsParameter() throws Exception {
+                runTest("testData/inspectionsLocal/inconsistentCommentForJavaParameter/clsParameter.kt");
+            }
+
             @TestMetadata("comment.kt")
             public void testComment() throws Exception {
                 runTest("testData/inspectionsLocal/inconsistentCommentForJavaParameter/comment.kt");

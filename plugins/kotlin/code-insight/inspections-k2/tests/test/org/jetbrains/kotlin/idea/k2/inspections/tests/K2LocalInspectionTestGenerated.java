@@ -3697,6 +3697,11 @@ public abstract class K2LocalInspectionTestGenerated extends AbstractK2LocalInsp
                 runTest("../../../idea/tests/testData/inspectionsLocal/inconsistentCommentForJavaParameter/annotation.kt");
             }
 
+            @TestMetadata("clsParameter.kt")
+            public void testClsParameter() throws Exception {
+                runTest("../../../idea/tests/testData/inspectionsLocal/inconsistentCommentForJavaParameter/clsParameter.kt");
+            }
+
             @TestMetadata("comment.kt")
             public void testComment() throws Exception {
                 runTest("../../../idea/tests/testData/inspectionsLocal/inconsistentCommentForJavaParameter/comment.kt");

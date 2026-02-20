@@ -15,6 +15,7 @@ import org.jetbrains.kotlin.analysis.api.resolution.successfulFunctionCallOrNull
 import org.jetbrains.kotlin.analysis.api.resolution.symbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaValueParameterSymbol
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.isJavaSourceOrLibrary
+import org.jetbrains.kotlin.idea.util.realName
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.psi.KtCallElement
@@ -40,7 +41,7 @@ fun KtValueArgument.getBlockCommentWithName(): PsiComment? =
 @ApiStatus.Internal
 class ArgumentNameCommentInfo(val argumentName: Name, val comment: String) {
     @ApiStatus.Internal
-    constructor(symbol: KaValueParameterSymbol): this(symbol.name, symbol.toArgumentNameComment())
+    constructor(symbol: KaValueParameterSymbol, analysisSession: KaSession): this(with(analysisSession) { symbol.realName } ?: symbol.name, symbol.toArgumentNameComment(analysisSession))
 }
 
 typealias NameCommentsByArgument = Map<SmartPsiElementPointer<KtValueArgument>, ArgumentNameCommentInfo>
@@ -50,7 +51,7 @@ typealias NameCommentsByArgument = Map<SmartPsiElementPointer<KtValueArgument>, 
  * is indexed by [KtValueArgument], though the [SmartPsiElementPointer]s need to be dereferenced first. The [SmartPsiElementPointer] allows
  * the map to be stored in applicable intention contexts.
  */
-context(_: KaSession)
+context(session: KaSession)
 fun getArgumentNameComments(element: KtCallElement): NameCommentsByArgument? {
     val arguments = element.getNonLambdaArguments()
     val resolvedCall = element.resolveToCall()?.successfulFunctionCallOrNull() ?: return null
@@ -69,15 +70,17 @@ fun getArgumentNameComments(element: KtCallElement): NameCommentsByArgument? {
         // subsequent varargs.
         .takeWhileInclusive { !it.second.isVararg }
         .associate { (argument, symbol) ->
-            argument.createSmartPointer() to ArgumentNameCommentInfo(symbol)
+            argument.createSmartPointer() to ArgumentNameCommentInfo(symbol, session)
         }
 }
 
 private fun KtCallElement.getNonLambdaArguments(): List<KtValueArgument> =
     valueArguments.filterIsInstance<KtValueArgument>().filterNot { it is KtLambdaArgument }
 
-private fun KaValueParameterSymbol.toArgumentNameComment(): String =
-    canonicalArgumentNameComment(if (isVararg) "...$name" else name.toString())
+private fun KaValueParameterSymbol.toArgumentNameComment(analysisSession: KaSession): String {
+    val realName = with(analysisSession) { realName } ?: name
+    return canonicalArgumentNameComment(if (isVararg) "...$realName" else realName.toString())
+}
 
 @ApiStatus.Internal
 fun PsiComment.isExpectedArgumentNameComment(info: ArgumentNameCommentInfo): Boolean {
