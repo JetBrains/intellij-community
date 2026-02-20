@@ -56,7 +56,6 @@ import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
-import kotlinx.coroutines.flow.mapLatest
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.joinAll
 import kotlinx.coroutines.launch
@@ -232,15 +231,11 @@ class SePopupVm(
     )
 
     if (PreviewExperiment.isExperimentEnabled && previewFetcher != null) {
-      previewConfigurationFlow = combine(currentTabFlow, showPreviewSetting) { tabVm, previewSetting ->
-        tabVm.isPreviewEnabled.getValue() to previewSetting
-      }.mapLatest { (tabPreviewEnabled, previewSetting) ->
-        if (tabPreviewEnabled) {
-          if (previewSetting) SePreviewConfiguration(previewFetcher.project, this::fetchPreview)
+      previewConfigurationFlow = currentTabFlow.flatMapLatest { tabVm ->
+        val tabPreviewEnabled = tabVm.isPreviewEnabled.getValue()
+        showPreviewSetting.map { previewSetting ->
+          if (tabPreviewEnabled && previewSetting) SePreviewConfiguration(previewFetcher.project, this::fetchPreview)
           else SePreviewConfiguration(previewFetcher.project, null)
-        }
-        else {
-          SePreviewConfiguration(previewFetcher.project, null)
         }
       }
     }

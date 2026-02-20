@@ -477,21 +477,22 @@ class SePopupContentPane(
       vm.previewConfigurationFlow.collectLatest { configuration ->
         val isVisible = configuration?.fetchPreview != null
 
-        withContext(Dispatchers.EDT) {
-          usagePreviewPanel?.isVisible = isVisible
+        if (!isVisible) {
+          withContext(Dispatchers.EDT) {
+            usagePreviewPanel?.isVisible = false
+          }
+          return@collectLatest
         }
 
-        if (isVisible) {
-          selectedItemDataFlow.collectLatest { itemData ->
-            withContext(Dispatchers.EDT) {
-              if (itemData != null) {
-                val usageInfos = configuration.fetchPreview(itemData)
-                usagePreviewPanel?.isVisible = true
-                usagePreviewPanel?.updateLayout(configuration.project, usageInfos)
-              }
-              else {
-                usagePreviewPanel?.isVisible = false
-              }
+        selectedItemDataFlow.collectLatest { itemData ->
+          withContext(Dispatchers.EDT) {
+            if (itemData != null) {
+              val usageInfos = configuration.fetchPreview(itemData)
+              usagePreviewPanel?.isVisible = true
+              usagePreviewPanel?.updateLayout(configuration.project, usageInfos)
+            }
+            else {
+              usagePreviewPanel?.isVisible = false
             }
           }
         }
