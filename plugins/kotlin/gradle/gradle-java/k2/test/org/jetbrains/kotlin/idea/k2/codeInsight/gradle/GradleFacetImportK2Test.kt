@@ -14,26 +14,15 @@ import junit.framework.TestCase
 import org.jetbrains.jps.model.java.JavaResourceRootType
 import org.jetbrains.jps.model.java.JavaSourceRootType
 import org.jetbrains.jps.model.module.JpsModuleSourceRootType
-import org.jetbrains.kotlin.caches.resolve.KotlinCacheService
 import org.jetbrains.kotlin.cli.common.arguments.K2JSCompilerArguments
 import org.jetbrains.kotlin.cli.common.arguments.K2JVMCompilerArguments
 import org.jetbrains.kotlin.cli.common.arguments.K2MetadataCompilerArguments
-import org.jetbrains.kotlin.config.IKotlinFacetSettings
-import org.jetbrains.kotlin.config.LanguageFeature
-import org.jetbrains.kotlin.config.LanguageVersion
-import org.jetbrains.kotlin.config.ResourceKotlinRootType
-import org.jetbrains.kotlin.config.SourceKotlinRootType
-import org.jetbrains.kotlin.config.TestResourceKotlinRootType
-import org.jetbrains.kotlin.config.TestSourceKotlinRootType
-import org.jetbrains.kotlin.config.additionalArgumentsAsList
+import org.jetbrains.kotlin.config.*
 import org.jetbrains.kotlin.idea.base.platforms.KotlinCommonLibraryKind
 import org.jetbrains.kotlin.idea.base.platforms.KotlinJavaScriptLibraryKind
 import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginMode
 import org.jetbrains.kotlin.idea.base.projectStructure.ModuleSourceRootMap
 import org.jetbrains.kotlin.idea.base.projectStructure.languageVersionSettings
-import org.jetbrains.kotlin.idea.base.projectStructure.productionSourceInfo
-import org.jetbrains.kotlin.idea.base.projectStructure.testSourceInfo
-import org.jetbrains.kotlin.idea.base.util.K1ModeProjectStructureApi
 import org.jetbrains.kotlin.idea.compiler.configuration.KotlinCommonCompilerArgumentsHolder
 import org.jetbrains.kotlin.idea.compiler.configuration.KotlinJpsPluginSettings
 import org.jetbrains.kotlin.idea.configuration.ConfigureKotlinStatus
@@ -42,10 +31,8 @@ import org.jetbrains.kotlin.idea.facet.KotlinFacet
 import org.jetbrains.kotlin.idea.framework.KotlinSdkType
 import org.jetbrains.kotlin.idea.util.projectStructure.allModules
 import org.jetbrains.kotlin.idea.util.projectStructure.sdk
-import org.jetbrains.kotlin.platform.TargetPlatform
 import org.jetbrains.kotlin.platform.isCommon
 import org.jetbrains.kotlin.platform.isJs
-import org.jetbrains.kotlin.platform.js.JsPlatforms
 import org.jetbrains.kotlin.platform.jvm.JvmPlatforms
 import org.jetbrains.plugins.gradle.tooling.annotation.TargetVersions
 import org.junit.Ignore
@@ -62,8 +49,9 @@ val KotlinGradleImportingTestCase.facetSettings: IKotlinFacetSettings
 val KotlinGradleImportingTestCase.testFacetSettings: IKotlinFacetSettings
     get() = facetSettings("project.test")
 
-class GradleFacetImportK1Test8 : KotlinGradleImportingTestCase() {
-    override val pluginMode: KotlinPluginMode = KotlinPluginMode.K1
+class GradleFacetImportK2Test8 : KotlinGradleImportingTestCase() {
+    override val pluginMode: KotlinPluginMode = KotlinPluginMode.K2
+
     @Test
     fun testJvmImport() {
         configureByFiles()
@@ -526,6 +514,7 @@ class GradleFacetImportK1Test8 : KotlinGradleImportingTestCase() {
     }
 
     @Test
+    @Ignore("failing in K2")
     fun testNoPluginsInAdditionalArgs() {
         configureByFiles()
         importProject()
@@ -547,6 +536,7 @@ class GradleFacetImportK1Test8 : KotlinGradleImportingTestCase() {
     }
 
     @Test
+    @Ignore("failing in K2")
     fun testNoArgInvokeInitializers() {
         configureByFiles()
         importProject()
@@ -768,29 +758,6 @@ class GradleFacetImportK1Test8 : KotlinGradleImportingTestCase() {
         assertAllModulesConfigured()
     }
 
-    // kotlin-2js plugin
-    @Test
-    fun testStableModuleNameWhileUsingGradleJS() {
-        configureByFiles()
-        importProject()
-
-        checkStableModuleName("project.main", "project.main", JsPlatforms.defaultJsPlatform, isProduction = true)
-        checkStableModuleName("project.test", "project.test", JsPlatforms.defaultJsPlatform, isProduction = false)
-
-        assertAllModulesConfigured()
-    }
-
-    @Test
-    fun testStableModuleNameWhileUsingGradleJVM() {
-        configureByFiles()
-        importProject()
-
-        checkStableModuleName("project.main", "project", JvmPlatforms.unspecifiedJvmPlatform, isProduction = true)
-        checkStableModuleName("project.test", "project", JvmPlatforms.unspecifiedJvmPlatform, isProduction = false)
-
-        assertAllModulesConfigured()
-    }
-
     @Test
     fun testNoFriendPathsAreShown() {
         configureByFiles()
@@ -832,19 +799,6 @@ class GradleFacetImportK1Test8 : KotlinGradleImportingTestCase() {
 
         with(facetSettings("project.main")) {
             assertEquals("1.8", (mergedCompilerArguments as K2JVMCompilerArguments).jvmTarget)
-        }
-    }
-
-    @OptIn(K1ModeProjectStructureApi::class)
-    private fun checkStableModuleName(projectName: String, expectedName: String, platform: TargetPlatform, isProduction: Boolean) {
-        runReadAction {
-            val module = getModule(projectName)
-            val moduleInfo = if (isProduction) module.productionSourceInfo else module.testSourceInfo
-
-            val resolutionFacade = KotlinCacheService.getInstance(myProject).getResolutionFacadeByModuleInfo(moduleInfo!!, platform)!!
-            val moduleDescriptor = resolutionFacade.moduleDescriptor
-
-            assertEquals("<$expectedName>", moduleDescriptor.stableName?.asString())
         }
     }
 

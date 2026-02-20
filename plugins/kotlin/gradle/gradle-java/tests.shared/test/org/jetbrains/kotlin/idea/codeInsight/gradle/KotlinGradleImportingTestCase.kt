@@ -119,7 +119,7 @@ abstract class KotlinGradleImportingTestCase : GradleImportingTestCase(),
     }
 
     override val pluginMode: KotlinPluginMode
-        get() = KotlinPluginMode.K1
+        get() = KotlinPluginMode.K2
 
     protected open fun setUpImportStatusCollector() {
         ExternalSystemProgressNotificationManager
