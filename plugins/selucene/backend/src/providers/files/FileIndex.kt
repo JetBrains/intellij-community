@@ -15,11 +15,11 @@ import com.intellij.selucene.backend.LuceneIndex
 import com.intellij.selucene.common.SeLuceneProviderIdUtils
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.ExperimentalCoroutinesApi
-import kotlinx.coroutines.channels.BufferOverflow
+import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.channels.ReceiveChannel
 import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.channelFlow
+import kotlinx.coroutines.flow.consumeAsFlow
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.produceIn
 import kotlinx.coroutines.launch
@@ -49,16 +49,14 @@ internal class FileIndex(val project: Project, val coroutineScope: CoroutineScop
   private val luceneIndex = LuceneIndex(project, coroutineScope, let {
     PathManager.getSystemDir() / "luceneIndex" / SeLuceneProviderIdUtils.LUCENE_FILES
   })
-  private val scheduledIndexingOps =
-    MutableSharedFlow<LuceneFileIndexOperation>(extraBufferCapacity = 5, replay = 1, onBufferOverflow = BufferOverflow.SUSPEND)
-
+  private val scheduledIndexingOps = Channel<LuceneFileIndexOperation>(capacity = Channel.UNLIMITED)
 
   init {
     coroutineScope.launch {
       // Wait until config is loaded and we can expect `ProjectFileIndex.getInstance()` to return the files to index.
       Observation.awaitConfiguration(project)
 
-      scheduledIndexingOps.debounceBatch(1.seconds).collect { ops ->
+      scheduledIndexingOps.consumeAsFlow().debounceBatch(1.seconds).collect { ops ->
         if (ops.size==1) {
           processFileIndexOp(ops.first())
           return@collect
@@ -131,7 +129,12 @@ internal class FileIndex(val project: Project, val coroutineScope: CoroutineScop
   }
 
   fun scheduleIndexingOp(op: LuceneFileIndexOperation) {
-    scheduledIndexingOps.tryEmit(op)
+    // Since the channel is unbounded, the sending must succeed.
+    val r = scheduledIndexingOps.trySend(op)
+    if (r.isFailure) {
+      throw IllegalStateException("The channel failed to send, even though its unbounded!")
+    }
+
   }
 
 
