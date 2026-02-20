@@ -89,6 +89,8 @@ Define required test coverage for the multi-provider Agent Threads stack: source
 - Chat editor tests must cover metadata-backed restore and title refresh semantics:
   - v2 `agent-chat://2/<tabKey>` path parsing,
   - metadata file round-trip for shell command/thread identity/title,
+  - provider-specific tab icon mapping for `codex:*` and `claude:*` identities with unknown-provider fallback,
+  - icon mapping resolved through typed module icon holders (no inline provider icon-path loading in tab provider/widget code),
   - open-tab title refresh via editor presentation updates,
   - archive-triggered close-and-forget behavior for matching thread tabs,
   - immediate metadata deletion on restore validation failure and terminal initialization failure.
@@ -110,6 +112,7 @@ Primary ownership is singular by design to avoid overlap-heavy tests and keep fa
 - Tree rendering and `More` state behavior: `AgentSessionsToolWindowTest`
 - Editor-tab action behavior: `AgentSessionsEditorTabActionsTest`
 - Editor-tab action registration in plugin descriptor: `AgentSessionsGearActionsTest`
+- Chat tab icon-provider mapping + registration: `AgentChatFileEditorProviderTest`
 - Tree UI persisted state round-trip/backward compatibility: `AgentSessionsTreeUiStateServiceTest`
 
 [@test] ../sessions/testSrc/AgentSessionLoadAggregationTest.kt

@@ -1,10 +1,10 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.agent.workbench.sessions.claude
 
+import com.intellij.agent.workbench.chat.icons.AgentWorkbenchChatIcons
 import com.intellij.agent.workbench.sessions.AgentSessionsBundle
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.util.IconLoader
 import com.intellij.openapi.wm.CustomStatusBarWidget
 import com.intellij.openapi.wm.StatusBarWidget
 import com.intellij.openapi.wm.StatusBarWidgetFactory
@@ -73,7 +73,7 @@ internal class ClaudeQuotaStatusBarWidget : CustomStatusBarWidget, Activatable {
 
     private val sessionBar = createBar(sessionBarColor, stripeWidth = 4)
     private val weeklyBar = createBar(weeklyBarColor, stripeWidth = 4)
-    private val iconLabel = JLabel(IconLoader.getIcon("/icons/claude@14x14.svg", ClaudeQuotaStatusBarWidget::class.java))
+    private val iconLabel = JLabel(AgentWorkbenchChatIcons.Claude_14x14)
     private val barsBox = JPanel()
     private var shouldDisplay = false
 

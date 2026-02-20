@@ -68,6 +68,8 @@ Define the Agent Threads tool window as a provider-agnostic, project-scoped sess
   - `Copy Thread ID`.
 - Editor-tab `Archive Thread` must reuse the same provider archive-capability gate as thread-row archive action.
 - Editor-tab `Open in Agent Threads` must call `ensureThreadVisible(path, provider, threadId)` before activating the Agent Threads tool window.
+- Sessions-side provider icon usage (tree/status surfaces) should use typed icon references (`AgentWorkbenchSessionsIcons` / `AgentSessionsIconKeys`) instead of inline path-based icon loading.
+- Editor-tab provider icon ownership remains in `chat` module to avoid introducing a `chat -> sessions` module dependency.
 - User-visible labels for session entities must use `Thread`; `Chat` terminology is reserved for editor-tab/file surface.
 - Archive action requests must be deduplicated per `(path, provider, threadId)` while in flight.
 - Successful archive must optimistically remove the thread from current state and then trigger refresh.

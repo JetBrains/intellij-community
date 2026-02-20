@@ -1,6 +1,7 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.agent.workbench.chat
 
+import com.intellij.icons.AllIcons
 import com.intellij.openapi.application.PathManager
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.Test
@@ -19,6 +20,16 @@ class AgentChatFileEditorProviderTest {
     )
 
     assertThat(file.shellCommand).containsExactly("codex", "resume", "thread-1")
+  }
+
+  @Test
+  fun registersAgentChatFileIconProvider() {
+    val descriptor = checkNotNull(javaClass.classLoader.getResource("intellij.agent.workbench.chat.xml")) {
+      "Module descriptor intellij.agent.workbench.chat.xml is missing"
+    }.readText()
+
+    assertThat(descriptor)
+      .contains("<fileIconProvider implementation=\"com.intellij.agent.workbench.chat.AgentChatFileIconProvider\"/>")
   }
 
   @Test
@@ -236,5 +247,26 @@ class AgentChatFileEditorProviderTest {
     finally {
       store.delete(descriptor.tabKey)
     }
+  }
+
+  @Test
+  fun mapsCodexThreadIdentityToCodexIcon() {
+    val icon = providerIcon(threadIdentity = "codex:thread-1")
+
+    assertThat(icon).isNotEqualTo(AllIcons.Toolwindows.ToolWindowMessages)
+  }
+
+  @Test
+  fun mapsClaudeThreadIdentityToClaudeIcon() {
+    val icon = providerIcon(threadIdentity = "claude:session-1")
+
+    assertThat(icon).isNotEqualTo(AllIcons.Toolwindows.ToolWindowMessages)
+  }
+
+  @Test
+  fun usesFallbackIconForUnknownProviderIdentity() {
+    val icon = providerIcon(threadIdentity = "unknown:thread-1")
+
+    assertThat(icon).isEqualTo(AllIcons.Toolwindows.ToolWindowMessages)
   }
 }
