@@ -6,6 +6,9 @@ import com.intellij.openapi.actionSystem.DataKey;
 import com.intellij.openapi.editor.markup.GutterIconRenderer;
 import com.intellij.openapi.util.NlsContexts.ListItem;
 import com.intellij.xdebugger.Obsolescent;
+import kotlinx.coroutines.flow.Flow;
+import kotlinx.coroutines.flow.MutableStateFlow;
+import kotlinx.coroutines.flow.StateFlowKt;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
@@ -29,7 +32,6 @@ public abstract class XExecutionStack {
 
   public static final XExecutionStack[] EMPTY_ARRAY = new XExecutionStack[0];
   private final @Nls String myDisplayName;
-  private Icon myIcon;
 
   /**
    * @param displayName presentable name of the thread to be shown in the combobox in 'Frames' tab
@@ -44,7 +46,7 @@ public abstract class XExecutionStack {
    */
   protected XExecutionStack(@ListItem @NotNull String displayName, final @Nullable Icon icon) {
     myDisplayName = displayName;
-    myIcon = icon;
+    setIcon(icon);
   }
 
   public final @NotNull @Nls String getDisplayName() {
@@ -55,12 +57,17 @@ public abstract class XExecutionStack {
     return null;
   }
 
+  private MutableStateFlow<@Nullable Icon> myIconFlow = StateFlowKt.MutableStateFlow(null);
+
   public final @Nullable Icon getIcon() {
-    return myIcon;
+    return myIconFlow.getValue();
   }
 
   @ApiStatus.Internal
-  public final void setIcon(Icon icon) { myIcon = icon; }
+  public final void setIcon(Icon icon) { myIconFlow.setValue(icon); }
+
+  @ApiStatus.Experimental
+  public Flow<@Nullable Icon> getIconFlow() { return myIconFlow; }
 
   /**
    * Override this method to provide an icon with optional tooltip and popup actions. This icon will be shown on the editor gutter to the
