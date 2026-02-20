@@ -13,18 +13,21 @@ import com.intellij.debugger.streams.core.trace.impl.interpret.AnyMatchTraceInte
 import com.intellij.debugger.streams.core.trace.impl.interpret.NoneMatchTraceInterpreter
 import com.intellij.debugger.streams.trace.breakpoint.BreakpointPositionResolver
 import com.intellij.debugger.streams.trace.breakpoint.JavaBreakpointPositionResolver
+import com.intellij.debugger.streams.trace.breakpoint.instrumentation.BreakpointBasedFilterOperation
+import com.intellij.debugger.streams.trace.breakpoint.instrumentation.BreakpointBasedMappingOperation
+import com.intellij.debugger.streams.trace.breakpoint.instrumentation.BreakpointBasedToCollectionOperation
 
 /**
  * @author Vitaliy.Bibaev
  */
 class StandardLibrarySupport : JvmLibrarySupportBase() {
   init {
-    addIntermediateOperationsSupport(FilterOperation("filter"),
+    addIntermediateOperationsSupport(BreakpointBasedFilterOperation("filter"),
                                      FilterOperation("limit"),
                                      FilterOperation("skip"),
                                      FilterOperation("peek"),
                                      FilterOperation("onClose"),
-                                     MappingOperation("map"),
+                                     BreakpointBasedMappingOperation("map"),
                                      MappingOperation("mapToInt"),
                                      MappingOperation("mapToLong"),
                                      MappingOperation("mapToDouble"),
@@ -49,7 +52,7 @@ class StandardLibrarySupport : JvmLibrarySupportBase() {
                                     OptionalResultOperation("findAny"),
                                     OptionalResultOperation("findFirst"),
                                     ToCollectionOperation("toArray"),
-                                    ToCollectionOperation("toList"),
+                                    BreakpointBasedToCollectionOperation("toList"),
                                     ToCollectionOperation("collect"))
   }
 

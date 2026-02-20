@@ -3,6 +3,7 @@ package com.intellij.debugger.streams.trace.breakpoint
 
 import com.intellij.debugger.engine.evaluation.EvaluationContextImpl
 import com.intellij.debugger.engine.withDebugContext
+import com.intellij.debugger.impl.ClassLoadingUtils
 import com.intellij.debugger.impl.DebuggerContextImpl
 import com.intellij.debugger.streams.core.StreamDebuggerBundle
 import com.intellij.debugger.streams.core.wrapper.IntermediateStreamCall
@@ -10,6 +11,7 @@ import com.intellij.debugger.streams.core.wrapper.StreamChain
 import com.intellij.debugger.streams.core.wrapper.TerminatorStreamCall
 import com.intellij.debugger.streams.trace.breakpoint.instrumentation.BreakpointBasedHandlerFactory
 import com.intellij.debugger.streams.trace.breakpoint.instrumentation.StreamInstrumentationManager
+import com.intellij.java.debugger.streams.rt.StreamDebuggerUtils
 import com.sun.jdi.Value
 import com.sun.jdi.request.EventRequest
 import com.sun.jdi.request.MethodEntryRequest
@@ -18,6 +20,7 @@ import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.currentCoroutineContext
 import org.jetbrains.annotations.Nls
+import kotlin.jvm.javaClass
 
 sealed class EvaluationResult {
   data class Success(val rawTrace: Value) : EvaluationResult()

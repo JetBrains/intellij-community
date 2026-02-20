@@ -34,6 +34,8 @@ interface ValueContext {
    */
   fun clazz(className: String): ClassType
 
+  fun clazz(cls: Class<*>): ClassType
+
   /**
    * Finds a method by name and JNI signature on a reference type. Throws if not found.
    */
@@ -43,9 +45,9 @@ interface ValueContext {
    * Creates an instance in the target VM and registers it in ObjectStorage.
    */
   fun instance(
-    className: String,
+    cls: Class<*>,
     constructorSignature: String = EMPTY_CTOR_SIGNATURE,
-    args: List<Value?> = emptyList()
+    args: List<Value?> = emptyList(),
   ): ObjectReference
 
   /**

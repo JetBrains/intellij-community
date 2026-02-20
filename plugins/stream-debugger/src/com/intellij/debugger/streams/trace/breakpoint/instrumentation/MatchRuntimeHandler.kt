@@ -6,6 +6,10 @@ import com.intellij.debugger.engine.evaluation.EvaluationContextImpl
 import com.intellij.debugger.streams.core.trace.impl.interpret.ex.UnexpectedValueTypeException
 import com.intellij.debugger.streams.core.wrapper.TerminatorStreamCall
 import com.intellij.debugger.streams.trace.breakpoint.ObjectStorage
+import com.intellij.java.debugger.streams.rt.matchers.DoubleMatcher
+import com.intellij.java.debugger.streams.rt.matchers.IntMatcher
+import com.intellij.java.debugger.streams.rt.matchers.LongMatcher
+import com.intellij.java.debugger.streams.rt.matchers.ObjectMatcher
 import com.sun.jdi.Method
 import com.sun.jdi.ObjectReference
 import com.sun.jdi.Value
@@ -55,8 +59,8 @@ internal class MatchRuntimeHandler(
     val predicateTypeName = argumentTypes.first().name()
     val (matcherClass, matcherSig) = matcherForType(predicateTypeName)
 
-    val before = instance("java.util.LinkedHashMap")
-    val after = instance("java.util.LinkedHashMap")
+    val before = instance(LinkedHashMap::class.java)
+    val after = instance(LinkedHashMap::class.java)
     beforeValuesMap = before
     afterValuesMap = after
 
@@ -85,11 +89,11 @@ internal class MatchRuntimeHandler(
       array(array(info, result), result)
     }
 
-  private fun matcherForType(predicateTypeName: String): Pair<String, String> = when (predicateTypeName) {
-    JAVA_UTIL_FUNCTION_INT_PREDICATE    -> Pair(INT_MATCHER_CLASS_NAME, INT_MATCHER_CONSTRUCTOR_SIGNATURE)
-    JAVA_UTIL_FUNCTION_LONG_PREDICATE   -> Pair(LONG_MATCHER_CLASS_NAME, LONG_MATCHER_CONSTRUCTOR_SIGNATURE)
-    JAVA_UTIL_FUNCTION_DOUBLE_PREDICATE -> Pair(DOUBLE_MATCHER_CLASS_NAME, DOUBLE_MATCHER_CONSTRUCTOR_SIGNATURE)
-    JAVA_UTIL_FUNCTION_PREDICATE        -> Pair(OBJECT_MATCHER_CLASS_NAME, OBJECT_MATCHER_CONSTRUCTOR_SIGNATURE)
+  private fun matcherForType(predicateTypeName: String): Pair<Class<*>, String> = when (predicateTypeName) {
+    JAVA_UTIL_FUNCTION_INT_PREDICATE    -> Pair(IntMatcher::class.java, INT_MATCHER_CONSTRUCTOR_SIGNATURE)
+    JAVA_UTIL_FUNCTION_LONG_PREDICATE   -> Pair(LongMatcher::class.java, LONG_MATCHER_CONSTRUCTOR_SIGNATURE)
+    JAVA_UTIL_FUNCTION_DOUBLE_PREDICATE -> Pair(DoubleMatcher::class.java, DOUBLE_MATCHER_CONSTRUCTOR_SIGNATURE)
+    JAVA_UTIL_FUNCTION_PREDICATE        -> Pair(ObjectMatcher::class.java, OBJECT_MATCHER_CONSTRUCTOR_SIGNATURE)
     else -> throw UnexpectedValueTypeException("Expected Predicate but got $predicateTypeName")
   }
 }

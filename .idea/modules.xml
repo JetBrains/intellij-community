@@ -652,6 +652,7 @@
       <module fileurl="file://$PROJECT_DIR$/java/debugger/shared/intellij.java.debugger.impl.shared.iml" filepath="$PROJECT_DIR$/java/debugger/shared/intellij.java.debugger.impl.shared.iml" />
       <module fileurl="file://$PROJECT_DIR$/java/debugger/memory-agent/intellij.java.debugger.memory.agent.iml" filepath="$PROJECT_DIR$/java/debugger/memory-agent/intellij.java.debugger.memory.agent.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/stream-debugger/intellij.java.debugger.streams.tests.iml" filepath="$PROJECT_DIR$/plugins/stream-debugger/intellij.java.debugger.streams.tests.iml" />
+      <module fileurl="file://$PROJECT_DIR$/plugins/stream-debugger/rt/intellij.java.debugger.streams.rt.iml" filepath="$PROJECT_DIR$/plugins/stream-debugger/rt/intellij.java.debugger.streams.rt.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/java-decompiler/plugin/intellij.java.decompiler.iml" filepath="$PROJECT_DIR$/plugins/java-decompiler/plugin/intellij.java.decompiler.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/java-decompiler/engine/intellij.java.decompiler.engine.iml" filepath="$PROJECT_DIR$/plugins/java-decompiler/engine/intellij.java.decompiler.engine.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/java-decompiler/engine/intellij.java.decompiler.engine.tests.iml" filepath="$PROJECT_DIR$/plugins/java-decompiler/engine/intellij.java.decompiler.engine.tests.iml" />

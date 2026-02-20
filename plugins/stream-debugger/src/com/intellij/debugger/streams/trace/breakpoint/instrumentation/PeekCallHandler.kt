@@ -5,6 +5,7 @@ import com.intellij.debugger.engine.DebuggerManagerThreadImpl
 import com.intellij.debugger.engine.evaluation.EvaluationContextImpl
 import com.intellij.debugger.streams.core.trace.impl.handler.type.GenericType
 import com.intellij.debugger.streams.trace.breakpoint.ObjectStorage
+import com.intellij.java.debugger.streams.rt.collectors.UniversalCollector
 import com.sun.jdi.*
 
 /**
@@ -48,7 +49,7 @@ internal open class PeekCallHandler(
   override fun transformArguments(evaluationContextImpl: EvaluationContextImpl, method: Method, arguments: List<Value?>): List<Value?> = arguments
 
   private fun ValueContext.wrapWithCollector(streamObject: ObjectReference, type: GenericType, isBeforeCall: Boolean): ObjectReference {
-    val valuesMap = instance("java.util.LinkedHashMap")
+    val valuesMap = instance(LinkedHashMap::class.java)
     if (isBeforeCall) {
       beforeValuesMap = valuesMap
     } else {
@@ -58,7 +59,7 @@ internal open class PeekCallHandler(
     val streamTypeInfo = StreamTypeInfo.forType(type.genericTypeName)
     val shouldTick = !isBeforeCall
     val collector = instance(
-      UNIVERSAL_COLLECTOR_CLASS_NAME,
+      UniversalCollector::class.java,
       UNIVERSAL_COLLECTOR_CONSTRUCTOR_SIGNATURE,
       listOf(valuesMap, time, shouldTick.mirror)
     )

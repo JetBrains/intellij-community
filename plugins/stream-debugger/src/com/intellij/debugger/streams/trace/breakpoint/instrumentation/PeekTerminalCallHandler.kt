@@ -17,9 +17,9 @@ import com.sun.jdi.VoidValue
 internal open class PeekTerminalCallHandler(
   objectStorage: ObjectStorage,
   typeBefore: GenericType?,
-  typeAfter: GenericType?,
+  resultType: GenericType?,
   time: ObjectReference
-) : PeekCallHandler(objectStorage, typeBefore, typeAfter, time), TerminalCallHandler {
+) : PeekCallHandler(objectStorage, typeBefore, resultType, time), TerminalCallHandler {
 
   protected var streamResult: Value? = null
 

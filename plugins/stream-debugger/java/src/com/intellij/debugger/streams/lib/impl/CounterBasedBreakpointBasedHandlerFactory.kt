@@ -13,6 +13,7 @@ import com.intellij.debugger.streams.trace.breakpoint.instrumentation.SourceCall
 import com.intellij.debugger.streams.trace.breakpoint.instrumentation.StreamPreparer
 import com.intellij.debugger.streams.trace.breakpoint.instrumentation.TerminalCallHandler
 import com.sun.jdi.ObjectReference
+import java.util.concurrent.atomic.AtomicInteger
 
 /**
  * [BreakpointBasedHandlerFactory] driven by handler-producing functions.
@@ -34,7 +35,7 @@ internal class CounterBasedBreakpointBasedHandlerFactory(
   override fun beforeStreamTracing(evaluationContext: EvaluationContextImpl) {
     DebuggerManagerThreadImpl.assertIsManagerThread()
     time = objectStorage.watch(evaluationContext) {
-      instance("java.util.concurrent.atomic.AtomicInteger")
+      instance(AtomicInteger::class.java)
     }
   }
 

@@ -1,0 +1,17 @@
+### auto-generated section `build intellij.java.debugger.streams.rt` start
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
+
+resourcegroup(
+  name = "rt_resources",
+  srcs = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_library(
+  name = "rt",
+  module_name = "intellij.java.debugger.streams.rt",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
+  resources = [":rt_resources"]
+)
+### auto-generated section `build intellij.java.debugger.streams.rt` end

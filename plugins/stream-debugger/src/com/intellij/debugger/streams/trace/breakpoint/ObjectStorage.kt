@@ -3,12 +3,11 @@ package com.intellij.debugger.streams.trace.breakpoint
 
 import com.intellij.debugger.engine.DebuggerManagerThreadImpl
 import com.intellij.debugger.engine.evaluation.EvaluationContextImpl
-import com.intellij.debugger.impl.DebuggerUtilsEx
+import com.intellij.debugger.impl.ClassLoadingUtils
 import com.intellij.debugger.impl.DebuggerUtilsImpl
 import com.intellij.debugger.streams.trace.breakpoint.instrumentation.ValueContext
 import com.intellij.psi.CommonClassNames
 import com.sun.jdi.ArrayReference
-import com.sun.jdi.ArrayType
 import com.sun.jdi.BooleanValue
 import com.sun.jdi.ClassType
 import com.sun.jdi.DoubleValue
@@ -90,17 +89,18 @@ private class ValueContextImpl(
   override fun clazz(className: String): ClassType =
     evaluationContext.debugProcess.findClass(evaluationContext, className, evaluationContext.classLoader) as ClassType
 
+  override fun clazz(cls: Class<*>): ClassType = ClassLoadingUtils.getHelperClass(cls, evaluationContext)!!
+
   override fun ReferenceType.method(name: String, signature: String): Method =
     DebuggerUtilsImpl.findMethod(this, name, signature)
     ?: error("Cannot find method $name$signature on ${name()}")
 
-  override fun instance(className: String, constructorSignature: String, args: List<Value?>): ObjectReference {
-    val classType = evaluationContext.debugProcess.findClass(
-      evaluationContext,
-      className,
-      evaluationContext.classLoader
-    ) as ClassType
+  override fun instance(cls: Class<*>, constructorSignature: String, args: List<Value?>): ObjectReference {
+    val classType = clazz(cls)
+    return doInstantiateClass(classType, constructorSignature, args)
+  }
 
+  private fun doInstantiateClass(classType: ClassType, constructorSignature: String, args: List<Value?>): ObjectReference {
     val constructor = classType.concreteMethodByName("<init>", constructorSignature)
     val instance = evaluationContext.debugProcess.newInstance(
       evaluationContext,
@@ -118,7 +118,8 @@ private class ValueContextImpl(
   override fun array(componentType: String, size: Int): ArrayReference {
     val arrayClassName = "$componentType[]"
     val arraySize = vm.mirrorOf(size)
-    return instance(arrayClassName, "(I)V", listOf(arraySize)) as ArrayReference
+    val arrayClassType = clazz(arrayClassName)
+    return doInstantiateClass(arrayClassType, "(I)V", listOf(arraySize)) as ArrayReference
   }
 
   override fun array(vararg values: Value?): ArrayReference {

@@ -25,8 +25,8 @@ open class OrderBasedOperation(name: String, orderResolver: ValuesOrderResolver)
                               SimplePeekCallTraceInterpreter(),
                               orderResolver)
 
-class FilterOperation(name: String) : OrderBasedOperation(name, FilterResolver())
-class MappingOperation(name: String) : OrderBasedOperation(name, MapResolver())
+open class FilterOperation(name: String) : OrderBasedOperation(name, FilterResolver())
+open class MappingOperation(name: String) : OrderBasedOperation(name, MapResolver())
 class FlatMappingOperation(name: String) : OrderBasedOperation(name, FlatMapResolver())
 class SortedOperation(name: String) : OrderBasedOperation(name, IdentityResolver())
 

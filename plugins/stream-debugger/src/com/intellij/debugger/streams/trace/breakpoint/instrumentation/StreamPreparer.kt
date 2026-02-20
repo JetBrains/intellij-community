@@ -4,6 +4,7 @@ package com.intellij.debugger.streams.trace.breakpoint.instrumentation
 import com.intellij.debugger.engine.DebuggerManagerThreadImpl
 import com.intellij.debugger.engine.evaluation.EvaluationContextImpl
 import com.intellij.debugger.streams.trace.breakpoint.ObjectStorage
+import com.intellij.java.debugger.streams.rt.collectors.UniversalCollector
 import com.sun.jdi.Method
 import com.sun.jdi.ObjectReference
 import com.sun.jdi.Value
@@ -28,7 +29,7 @@ internal class StreamPreparer(
 
   private fun ValueContext.addTicker(streamObject: ObjectReference): ObjectReference {
     val ticker = instance(
-      UNIVERSAL_COLLECTOR_CLASS_NAME,
+      UniversalCollector::class.java,
       UNIVERSAL_COLLECTOR_CONSTRUCTOR_SIGNATURE,
       listOf(null, time, true.mirror)
     )
