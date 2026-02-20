@@ -90,8 +90,8 @@ kotlin_test_deps(name = "kotlin_test_deps")
 http_file(
     name = "debugger_test_deps_debugger_agent",
     downloaded_file_path = "debugger-agent.jar",
-    sha256 = "e048fb4bf2e9e883681e3070996fe4baf317287b175e09bab31dac799d0f6466",
-    url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/intellij/deps/debugger-agent/1.136/debugger-agent-1.136.jar",
+    sha256 = "417faf0d59cfc6f80adcd4c2352b12b08d25b48c8d55f59dfdf75213eb1ff7cb",
+    url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/intellij/deps/debugger-agent/1.141/debugger-agent-1.141.jar",
 )
 
 jbr_toolchains = use_extension("@community//build:jbr-toolchains.bzl", "jbr_toolchains")
