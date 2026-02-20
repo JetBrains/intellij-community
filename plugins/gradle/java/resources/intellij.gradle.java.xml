@@ -179,7 +179,7 @@
                      bundle="messages.GradleInspectionBundle"
                      key="inspection.display.name.avoid.repositories.in.build.gradle" groupKey="inspection.best.practices"
                      groupBundle="messages.GradleInspectionBundle"
-                     enabledByDefault="true" level="WEAK WARNING"
+                     enabledByDefault="false" level="WEAK WARNING"
                      implementationClass="org.jetbrains.plugins.gradle.codeInspection.AvoidRepositoriesInBuildGradleInspection"
                      isInternal="true"/>
 
