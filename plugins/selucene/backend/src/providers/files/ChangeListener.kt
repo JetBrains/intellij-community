@@ -20,7 +20,7 @@ internal class ChangeListener : AsyncFileListener {
       .filter { project -> project.basePath != null }
 
 
-    val files_to_reindex = events.asSequence().flatMap { event ->
+    val filesToReindex = events.asSequence().flatMap { event ->
       when (event) {
         is VFileCreateEvent -> listOfNotNull(event.file)
         is VFileDeleteEvent -> listOfNotNull(event.file)
@@ -41,10 +41,10 @@ internal class ChangeListener : AsyncFileListener {
     }
       .toList()
 
-    if (files_to_reindex.isEmpty()) { return null }
+    if (filesToReindex.isEmpty()) { return null }
 
     projects.forEach { project ->
-      FileIndex.getInstance(project).scheduleIndexingOp(LuceneFileIndexOperation.ReindexFiles(files_to_reindex))
+      FileIndex.getInstance(project).scheduleIndexingOp(LuceneFileIndexOperation.ReindexFiles(filesToReindex))
     }
 
     return null
