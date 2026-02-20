@@ -63,11 +63,15 @@ import java.nio.file.NoSuchFileException;
 import java.nio.file.Path;
 import java.nio.file.SimpleFileVisitor;
 import java.text.Normalizer;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
 import java.util.Set;
+import java.util.function.BiFunction;
+import java.util.function.Consumer;
+import java.util.function.Function;
 
 import static com.intellij.testFramework.EdtTestUtil.runInEdtAndWait;
 import static com.intellij.util.io.DirectoryContentSpecKt.jarFile;
@@ -925,6 +929,72 @@ public class LocalFileSystemTest extends BareTestFixtureTestCase {
     var root = tempDir.getVirtualFileRoot();
     root.refresh(false, true);
     checkAttributesAreEqual(root, (LocalFileSystemImpl)myFS);
+  }
+
+  @SuppressWarnings("IO_FILE_USAGE")
+  @Test
+  public void testRefreshIoFiles() {
+    LocalFileSystem fs = LocalFileSystem.getInstance();
+    testRefreshFiles(relativePath -> tempDir.newDirectory(relativePath),
+                     relativePath -> tempDir.newFile(relativePath),
+                     (file, child) -> file.toPath().resolve(child).toFile(),
+                     path -> fs.findFileByIoFile(path),
+                     files -> fs.refreshIoFiles(files));
+  }
+
+  @Test
+  public void testRefreshNioFiles() {
+    LocalFileSystem fs = LocalFileSystem.getInstance();
+    testRefreshFiles(relativePath -> tempDir.newDirectoryPath(relativePath),
+                     relativePath -> tempDir.newFileNio(relativePath),
+                     (path, child) -> path.resolve(child),
+                     path -> fs.findFileByNioFile(path),
+                     files -> fs.refreshNioFiles(files));
+  }
+
+  private <T> void testRefreshFiles(Function<String, T> createDir,
+                                    Function<String, T> createFile,
+                                    BiFunction<T, String, T> addPath,
+                                    Function<T, VirtualFile> findFile,
+                                    Consumer<List<T>> refresh) {
+    String dirName = "dir";
+    T directory = createDir.apply("dir");
+    T preloadedFile = createFile.apply(dirName + "/preloaded_file.txt");
+    assertNotNull(findFile.apply(preloadedFile));
+    VirtualFile vDirectory = findFile.apply(directory);
+    assertNotNull(vDirectory);
+
+    vDirectory.getChildren(); // cache children list
+    T newFile = createFile.apply(dirName + "/new_file.txt");
+    T newFile2 = createFile.apply(dirName + "/new_file_2.txt");
+    T deepFile = createFile.apply(dirName + "/a/b/c/d/deep_file.txt");
+    T nonExistingFile = addPath.apply(directory, dirName + "non_existing_file.txt");
+    assertNull(findFile.apply(newFile));
+    assertNull(findFile.apply(newFile2));
+    assertNull(findFile.apply(deepFile));
+
+    final int[] invocationsCount = {0};
+    List<String> names = new ArrayList<>();
+
+    var connection = ApplicationManager.getApplication().getMessageBus().connect(getTestRootDisposable());
+    connection.subscribe(VirtualFileManager.VFS_CHANGES, new BulkFileListener() {
+      @Override
+      public void after(@NotNull List<? extends @NotNull VFileEvent> events) {
+        invocationsCount[0]++;
+        for (VFileEvent event : events) {
+          if (event instanceof VFileCreateEvent) {
+            names.add(event.getFile().getName());
+          }
+        }
+      }
+    });
+
+    refresh.accept(Arrays.asList(preloadedFile, newFile, newFile2, deepFile, nonExistingFile));
+    assertNotNull(findFile.apply(newFile));
+    assertNotNull(findFile.apply(newFile2));
+    assertNotNull(findFile.apply(deepFile));
+    assertThat(names).containsExactly("new_file.txt", "new_file_2.txt", "a");
+    assertEquals(1, invocationsCount[0]);
   }
 
   private static void checkAttributesAreEqual(VirtualFile dir, LocalFileSystemImpl lfs) {

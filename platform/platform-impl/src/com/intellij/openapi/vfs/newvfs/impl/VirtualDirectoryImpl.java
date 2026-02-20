@@ -411,26 +411,39 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
   }
 
   private @Nullable VirtualFileSystemEntry createChildAndFireCreationEvent(@NotNull String childName) {
-    VirtualFile fake = new FakeVirtualFile(this, childName);
-    FileAttributes attributes = fileSystem.getAttributes(fake);
-    if (attributes == null) {
-      return null;
-    }
-
+    FakeVirtualFile fake = new FakeVirtualFile(this, childName);
     String canonicallyCasedName = fileSystem.getCanonicallyCasedName(fake);
-    boolean isDirectory = attributes.isDirectory();
-    boolean isEmptyDirectory = isDirectory && !fileSystem.hasChildren(fake);
-    String symlinkTarget = attributes.isSymLink() ? fileSystem.resolveSymLink(fake) : null;
-    ChildInfo[] children = isEmptyDirectory ? ChildInfo.EMPTY_ARRAY : null;
-    var event = new VFileCreateEvent(REFRESH_REQUESTOR, this, canonicallyCasedName, isDirectory, attributes, symlinkTarget, children);
+
+    VFileCreateEvent event = createCreateEvent(this, fake, canonicallyCasedName, fileSystem);
+
+    if (event == null) {
+      return null; // file does not exist on disk
+    }
     RefreshQueue.getInstance().processEvents(/*async: */ false, List.of(event));
 
     VirtualFileSystemEntry child = findChild(canonicallyCasedName);
     if (child == null) {
-      LOG.warn(this + "/[" + childName + "|" + canonicallyCasedName + "]: exists (attributes: " + attributes + "), " +
+      LOG.warn(this + "/[" + childName + "|" + canonicallyCasedName + "]: exists (attributes: " + fileSystem.getAttributes(fake) + "), " +
                "but somehow still absent after refresh (adopted: " + directoryData.getAdoptedNames() + ")");
     }
     return child;
+  }
+
+  @Nullable
+  public static VFileCreateEvent createCreateEvent(@NotNull VirtualFile directory,
+                                                    @NotNull FakeVirtualFile fakeChild,
+                                                    @NotNull String canonicallyCasedName,
+                                                    @NotNull NewVirtualFileSystem fileSystem) {
+    FileAttributes attributes = fileSystem.getAttributes(fakeChild);
+    if (attributes == null) {
+      return null;
+    }
+
+    boolean isDirectory = attributes.isDirectory();
+    boolean isEmptyDirectory = isDirectory && !fileSystem.hasChildren(fakeChild);
+    String symlinkTarget = attributes.isSymLink() ? fileSystem.resolveSymLink(fakeChild) : null;
+    ChildInfo[] children = isEmptyDirectory ? ChildInfo.EMPTY_ARRAY : null;
+    return new VFileCreateEvent(REFRESH_REQUESTOR, directory, canonicallyCasedName, isDirectory, attributes, symlinkTarget, children);
   }
 
   private void updateCaseSensitivityIfUnknown(@NotNull String childName) {

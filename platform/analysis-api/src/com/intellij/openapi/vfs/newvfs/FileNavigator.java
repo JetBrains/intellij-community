@@ -102,10 +102,12 @@ public interface FileNavigator<F extends VirtualFile> {
       }
 
       F fileBefore = file;
+      boolean navigationToChild = false;
       if ("..".equals(pathElement)) {
         file = navigator.parentOf(file);
       }
       else {
+        navigationToChild = true;
         file = navigator.childOf(file, pathElement);
       }
 
@@ -114,7 +116,7 @@ public interface FileNavigator<F extends VirtualFile> {
       }
 
       if (file == null) {
-        return NavigateResult.unresolved(fileBefore);
+        return NavigateResult.unresolved(fileBefore, navigationToChild ? pathElement : null);
       }
     }
 
@@ -125,26 +127,29 @@ public interface FileNavigator<F extends VirtualFile> {
   class NavigateResult<F extends VirtualFile> {
     /** Final or partial resolution result, depending on {@link #resolvedFully} */
     private final @Nullable F resolvedFile;
+    private final @Nullable String unresolvedChildName;
     private final boolean resolvedFully;
 
     /** Nothing was resolved at all */
     public static <F extends VirtualFile> NavigateResult<F> empty() {
-      return new NavigateResult<>(null,  /*success: */ false);
+      return new NavigateResult<>(null, null,  /*success: */ false);
     }
 
     /** Requested path wasn't fully resolved, here are the best partial result we get */
-    public static <F extends VirtualFile> NavigateResult<F> unresolved(@NotNull F lastResolvedFile) {
-      return new NavigateResult<>(lastResolvedFile, /*success: */ false);
+    public static <F extends VirtualFile> NavigateResult<F> unresolved(@NotNull F lastResolvedFile, @Nullable String unresolvedChildName) {
+      return new NavigateResult<>(lastResolvedFile, unresolvedChildName, /*success: */ false);
     }
 
     /** Requested path was fully resolved */
     public static <F extends VirtualFile> NavigateResult<F> resolved(@NotNull F successfullyResolvedFile) {
-      return new NavigateResult<>(successfullyResolvedFile, /*success: */ true);
+      return new NavigateResult<>(successfullyResolvedFile, null, /*success: */ true);
     }
 
     private NavigateResult(@Nullable F resolvedFile,
+                           @Nullable String unresolvedChildName,
                            boolean resolvedFully) {
       this.resolvedFile = resolvedFile;
+      this.unresolvedChildName = unresolvedChildName;
       this.resolvedFully = resolvedFully;
     }
 
@@ -164,6 +169,10 @@ public interface FileNavigator<F extends VirtualFile> {
         return orElse;
       }
       return resolvedFile;
+    }
+
+    public @Nullable String getUnresolvedChildName() {
+      return unresolvedChildName;
     }
 
     /**
