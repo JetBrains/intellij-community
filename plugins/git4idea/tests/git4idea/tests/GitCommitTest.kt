@@ -1,12 +1,14 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.tests
 
+import com.intellij.notification.NotificationType
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.io.IoTestUtil
 import com.intellij.openapi.vcs.FilePath
 import com.intellij.openapi.vcs.IssueNavigationConfiguration
 import com.intellij.openapi.vcs.IssueNavigationLink
+import com.intellij.openapi.vcs.VcsNotifier
 import com.intellij.platform.eel.provider.asEelPath
 import com.intellij.platform.testFramework.junit5.eel.params.api.DockerTest
 import com.intellij.platform.testFramework.junit5.eel.params.api.EelHolder
@@ -1011,7 +1013,8 @@ internal abstract class GitCommitTestBase(@Suppress("unused") val eelHolder: Eel
     val exceptions = tryCommit(changes).orEmpty()
     assertEquals(exceptions.toString(), 1, exceptions.size)
 
-    val actions = (exceptions.single() as? CommitExceptionWithActions)?.actions ?: emptyList()
+    val notification = VcsNotifier.standardNotification().createNotification("notification content", NotificationType.ERROR)
+    val actions = (exceptions.single() as? CommitExceptionWithActions)?.getActions(notification) ?: emptyList()
     assertEquals(actions.toString(), 1, actions.size)
 
     val action = actions.single()

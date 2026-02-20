@@ -12,6 +12,8 @@ import com.intellij.vcs.log.impl.HashImpl
 import com.intellij.vcs.log.impl.VcsProjectLog
 import git4idea.checkin.GitAmendSpecificCommitSquasher
 import git4idea.log.refreshAndWait
+import git4idea.rebase.GitSquashedCommitsMessage.canAutosquash
+import git4idea.rebase.GitSquashedCommitsMessage.getSubject
 import git4idea.test.GitSingleRepoTest
 import git4idea.test.assertCommitted
 import git4idea.test.assertMessage
@@ -71,7 +73,7 @@ internal class GitCommitAmendSpecificTest : GitSingleRepoTest() {
 
     val newMessage = "new message\n"
     val exceptions = amendSpecificCommit(targetHash, targetMessage, changes, newMessage)
-    exceptions.single() as GitAmendSpecificCommitSquasher.AmendSpecificCommitConflictException
+    val conflictException = exceptions.single() as GitAmendSpecificCommitSquasher.AmendSpecificCommitConflictException
 
     assertChangesWithRefresh {
       modified("a.txt")
@@ -79,6 +81,18 @@ internal class GitCommitAmendSpecificTest : GitSingleRepoTest() {
 
     assertEquals(oldHead, repo.last())
     assertEquals(file("a.txt").read(), updatedContent)
+
+    runBlocking {
+      conflictException.resetToAmendCommit()
+    }
+    refresh()
+    updateChangeListManager()
+
+    repo.assertCommitted {
+      modified("a.txt")
+    }
+    assertNoChanges()
+    assertTrue(canAutosquash(lastMessage(), setOf(getSubject(targetMessage))))
   }
 
   private fun amendSpecificCommit(

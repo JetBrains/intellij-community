@@ -49,7 +49,7 @@ object GitSquashedCommitsMessage {
     return autosquashWith in commitsSubjects
   }
 
-  private fun getSubject(message: String): String = message.lineSequence().first()
+  fun getSubject(message: String): String = message.lineSequence().first()
 
   private fun removeSubject(commitMessage: String): String = commitMessage.substringAfter("\n", "").trim()
 }

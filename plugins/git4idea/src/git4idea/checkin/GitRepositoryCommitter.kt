@@ -2,6 +2,7 @@
 package git4idea.checkin
 
 import com.intellij.execution.process.ProcessOutputTypes
+import com.intellij.notification.Notification
 import com.intellij.notification.NotificationAction
 import com.intellij.notification.NotificationType
 import com.intellij.openapi.components.service
@@ -181,8 +182,9 @@ private class GitEmptyCommitProblemDetector : GitLineEventDetector {
 
 private class GitGpgCommitException(cause: VcsException) :
   VcsException(GitBundle.message("gpg.error.text"), cause), CommitExceptionWithActions {
-  override val actions: List<NotificationAction>
-    get() = listOf(NotificationAction.createSimple(GitBundle.message("gpg.error.see.documentation.link.text")) {
+
+  override fun getActions(notification: Notification): List<NotificationAction> =
+    listOf(NotificationAction.createSimple(GitBundle.message("gpg.error.see.documentation.link.text")) {
       HelpManager.getInstance().invokeHelp(GitBundle.message("gpg.jb.manual.link"))
     })
 }
