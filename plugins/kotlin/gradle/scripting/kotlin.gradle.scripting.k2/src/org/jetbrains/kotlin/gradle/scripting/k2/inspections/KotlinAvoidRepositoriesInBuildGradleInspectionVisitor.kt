@@ -14,10 +14,8 @@ import com.intellij.modcommand.ModNavigate
 import com.intellij.modcommand.ModNothing
 import com.intellij.modcommand.ModPsiUpdater
 import com.intellij.modcommand.Presentation
-import com.intellij.openapi.editor.colors.EditorColors
 import com.intellij.openapi.fileTypes.FileTypeRegistry
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.util.TextRange
 import com.intellij.openapi.vfs.findPsiFile
 import com.intellij.openapi.vfs.refreshAndFindVirtualDirectory
 import com.intellij.openapi.vfs.refreshAndFindVirtualFile
@@ -26,7 +24,6 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiWhiteSpace
 import com.intellij.psi.createSmartPointer
-import com.intellij.psi.util.parentOfType
 import com.intellij.util.asSafely
 import org.gradle.util.GradleVersion
 import org.jetbrains.kotlin.analysis.api.analyze
@@ -194,7 +191,7 @@ private class MoveRepositoriesToSettingsFile(
 
         element.delete()
 
-        val (repositoriesParentBlock, wasRepositoriesParentAdded) = when (repositoriesParentBlockKind) {
+        val repositoriesParentBlock = when (repositoriesParentBlockKind) {
             RepositoriesParentBlockKind.PLUGIN -> settingsFileCopy.findOrAddPluginManagementBlock(psiFactory)
             RepositoriesParentBlockKind.DEPENDENCY -> settingsFileCopy.findOrAddDependencyResolutionManagementBlock(
                 psiFactory,
@@ -202,23 +199,12 @@ private class MoveRepositoriesToSettingsFile(
             )
         }
 
-        val (repositoriesBlock, wasRepositoriesAdded) = repositoriesParentBlock.findOrAddRepositoriesBlock(psiFactory)
+        val repositoriesBlock = repositoriesParentBlock.findOrAddRepositoriesBlock(psiFactory)
 
-        val movedItems = if (!repositoriesBlock.startsWith(itemsToMove)) {
-            repositoriesBlock.appendDistinctSuffix(psiFactory, itemsToMove)
-        } else {
-            emptyList()
-        }
+        if (!repositoriesBlock.startsWith(itemsToMove)) repositoriesBlock.appendDistinctSuffix(psiFactory, itemsToMove)
 
         // move the caret to the last added item
         updater.moveCaretTo(repositoriesBlock.children.lastOrNull() ?: repositoriesBlock)
-        // highlight added lines if any
-        if (wasRepositoriesParentAdded) updater.highlight(repositoriesParentBlock.parentOfType<KtCallExpression>()!!)
-        else if (wasRepositoriesAdded) updater.highlight(repositoriesBlock.parentOfType<KtCallExpression>()!!)
-        else if (movedItems.isNotEmpty()) updater.highlight(
-            TextRange(movedItems.first().textRange.startOffset, movedItems.last().textRange.endOffset),
-            EditorColors.SEARCH_RESULT_ATTRIBUTES
-        )
     }
 
     private fun KtBlockExpression.startsWith(itemsToMove: List<PsiElement>): Boolean {
@@ -262,22 +248,22 @@ private class MoveRepositoriesToSettingsFile(
         return itemsToMove.drop(overlapSize)
     }
 
-    private fun KtFile.findOrAddPluginManagementBlock(psiFactory: KtPsiFactory): Pair<KtBlockExpression, Boolean> {
+    private fun KtFile.findOrAddPluginManagementBlock(psiFactory: KtPsiFactory): KtBlockExpression {
         val pluginManagementName = RepositoriesParentBlockKind.PLUGIN.blockName
         val existingBlock = this.findScriptInitializer(pluginManagementName)?.getBlock()
-        if (existingBlock != null) return existingBlock to false
+        if (existingBlock != null) return existingBlock
         return this.addAfter(psiFactory.createExpression("$pluginManagementName {\n}"), null)
             .apply { parent.addAfter(psiFactory.createNewLine(2), this) }
-            .asSafely<KtCallExpression>()!!.getBlock()!! to true
+            .asSafely<KtCallExpression>()!!.getBlock()!!
     }
 
     private fun KtFile.findOrAddDependencyResolutionManagementBlock(
         psiFactory: KtPsiFactory,
         gradleVersion: GradleVersion
-    ): Pair<KtBlockExpression, Boolean> {
+    ): KtBlockExpression {
         val dependencyResolutionManagementName = RepositoriesParentBlockKind.DEPENDENCY.blockName
         val existingBlock = this.findScriptInitializer(dependencyResolutionManagementName)?.getBlock()
-        if (existingBlock != null) return existingBlock to false
+        if (existingBlock != null) return existingBlock
 
         val anchor = this.findScriptInitializer("plugins")
             ?: this.findScriptInitializer(RepositoriesParentBlockKind.PLUGIN.blockName)
@@ -292,15 +278,15 @@ private class MoveRepositoriesToSettingsFile(
         return scriptBlock.addAfter(dependencyResolutionManagementCall, anchor)
             .apply { scriptBlock.addBefore(psiFactory.createNewLine(2), this) }
             .apply { if (anchor == null && this.nextSibling != null) scriptBlock.addAfter(psiFactory.createNewLine(2), this) }
-            .asSafely<KtCallExpression>()!!.getBlock()!! to true
+            .asSafely<KtCallExpression>()!!.getBlock()!!
     }
 
-    private fun KtBlockExpression.findOrAddRepositoriesBlock(psiFactory: KtPsiFactory): Pair<KtBlockExpression, Boolean> {
+    private fun KtBlockExpression.findOrAddRepositoriesBlock(psiFactory: KtPsiFactory): KtBlockExpression {
         val existingBlock = this.findBlock("repositories")
-        if (existingBlock != null) return existingBlock to false
+        if (existingBlock != null) return existingBlock
         return this.add(psiFactory.createExpression("repositories {\n}"))
             .apply { parent.addBefore(psiFactory.createNewLine(), this) }
-            .asSafely<KtCallExpression>()!!.getBlock()!! to true
+            .asSafely<KtCallExpression>()!!.getBlock()!!
     }
 
 }
