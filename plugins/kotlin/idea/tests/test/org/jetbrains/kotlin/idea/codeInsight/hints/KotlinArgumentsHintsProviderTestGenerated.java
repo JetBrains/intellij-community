@@ -110,6 +110,11 @@ public class KotlinArgumentsHintsProviderTestGenerated extends AbstractKotlinArg
         runTest("testData/codeInsight/hints/arguments/invokeCallsParameterNamesWithContextReceivers.kt");
     }
 
+    @TestMetadata("javaClsParameterNames.kt")
+    public void testJavaClsParameterNames() throws Exception {
+        runTest("testData/codeInsight/hints/arguments/javaClsParameterNames.kt");
+    }
+
     @TestMetadata("javaParameters.kt")
     public void testJavaParameters() throws Exception {
         runTest("testData/codeInsight/hints/arguments/javaParameters.kt");

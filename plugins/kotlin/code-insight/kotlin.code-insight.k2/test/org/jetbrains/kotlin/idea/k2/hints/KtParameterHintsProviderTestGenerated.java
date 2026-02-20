@@ -110,6 +110,11 @@ public class KtParameterHintsProviderTestGenerated extends AbstractKtParameterHi
         runTest("../../idea/tests/testData/codeInsight/hints/arguments/invokeCallsParameterNamesWithContextReceivers.kt");
     }
 
+    @TestMetadata("javaClsParameterNames.kt")
+    public void testJavaClsParameterNames() throws Exception {
+        runTest("../../idea/tests/testData/codeInsight/hints/arguments/javaClsParameterNames.kt");
+    }
+
     @TestMetadata("javaParameters.kt")
     public void testJavaParameters() throws Exception {
         runTest("../../idea/tests/testData/codeInsight/hints/arguments/javaParameters.kt");

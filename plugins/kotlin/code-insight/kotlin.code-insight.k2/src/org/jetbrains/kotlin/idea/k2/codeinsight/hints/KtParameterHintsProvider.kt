@@ -60,6 +60,7 @@ import org.jetbrains.kotlin.idea.codeInsight.hints.SHOW_EXCLUDED_PARAMETERS
 import org.jetbrains.kotlin.idea.codeinsights.impl.base.ArgumentNameCommentInfo
 import org.jetbrains.kotlin.idea.codeinsights.impl.base.isExpectedArgumentNameComment
 import org.jetbrains.kotlin.idea.util.application.isUnitTestMode
+import org.jetbrains.kotlin.idea.util.realName
 import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.psi.KtBlockExpression
 import org.jetbrains.kotlin.psi.KtCallElement
@@ -172,7 +173,7 @@ class KtParameterHintsProvider : AbstractKtInlayHintsProvider() {
                     parameterSymbol to name
                 }
             } else {
-                valueParameters.map { it to it.name }
+                valueParameters.map { it to (it.realName ?: it.name) }
             }
         return valueParametersWithNames
     }
