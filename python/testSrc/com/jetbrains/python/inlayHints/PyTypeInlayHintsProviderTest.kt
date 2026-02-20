@@ -170,6 +170,36 @@ class PyTypeInlayHintsProviderTest : DeclarativeInlayHintsProviderTestCase() {
     """, false, PARAMETER_TYPE_ANNOTATION)
   }
 
+  @TestFor(issues = ["PY-87813"])
+  fun `test parameter type hint skips self cls`() {
+    doTest("""
+      class A:
+          def __new__(cls, a/*<# : int #>*/=1):
+              cls[0]
+          
+          def f(self, a/*<# : int #>*/=1):
+              self[0]
+          
+          @classmethod
+          def c(cls, a/*<# : int #>*/=1):
+              cls[0]
+
+        
+      def f(self/*<# : {__getitem__} #>*/, a/*<# : int #>*/=1):
+          self[0]
+    """, PARAMETER_TYPE_ANNOTATION)
+  }
+
+  fun `test parameter type hint variadic`() {
+    doTest("""
+      def f(*args/*<# : int #>*/, **kwargs/*<# : str #>*/):
+          '''
+          :type args: int
+          :type kwargs: str
+          '''
+    """, PARAMETER_TYPE_ANNOTATION)
+  }
+
   private val allOptions = mapOf(
     REVEAL_TYPE_OPTION_ID to true,
     FUNCTION_RETURN_TYPE_OPTION_ID to true,
