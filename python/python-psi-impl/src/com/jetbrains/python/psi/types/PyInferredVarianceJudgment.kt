@@ -107,6 +107,7 @@ object PyInferredVarianceJudgment {
       collector.usages.contains(COVARIANT) && collector.usages.contains(CONTRAVARIANT) -> INVARIANT
       collector.usages.contains(COVARIANT) -> COVARIANT
       collector.usages.contains(CONTRAVARIANT) -> CONTRAVARIANT
+      collector.usages.contains(BIVARIANT) -> BIVARIANT
       else -> INVARIANT
     }
   }

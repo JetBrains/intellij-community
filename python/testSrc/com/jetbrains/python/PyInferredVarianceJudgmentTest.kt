@@ -139,6 +139,16 @@ internal class PyInferredVarianceJudgmentTest : PyTestCase() {
       """)
   }
 
+  fun `test Generic sub class unused`() {
+    // see comment about bivariance in: PyInferredVarianceJudgment.doGetInferredVariance
+    doTest("T", Variance.BIVARIANT, """
+      class A[S]:
+          ...
+      class B[T](A[T]):
+          def method(self): pass
+      """)
+  }
+
   fun `test Generic class unused TypeVar syntax`() {
     // see comment about bivariance in: PyInferredVarianceJudgment.doGetInferredVariance
     doTest("T])", Variance.BIVARIANT, PyReferenceExpression::class.java, """
