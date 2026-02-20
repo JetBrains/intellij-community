@@ -82,7 +82,8 @@ public class PyModuleDependenciesConfigurable implements UnnamedConfigurable {
   }
 
   private void updateEnabledState() {
-    boolean managed = PyProjectModelSettings.getInstance(myModule.getProject()).getUsePyprojectToml();
+    Boolean pending = myModule.getProject().getUserData(PythonContentEntriesConfigurable.PYPROJECT_TOML_PENDING_KEY);
+    boolean managed = pending != null ? pending : PyProjectModelSettings.getInstance(myModule.getProject()).getUsePyprojectToml();
     myDependenciesList.setEnabled(!managed);
     if (managed) {
       myTitleLabel.setText(PyBundle.message("python.pyproject.toml.dependencies.managed.hint"));
