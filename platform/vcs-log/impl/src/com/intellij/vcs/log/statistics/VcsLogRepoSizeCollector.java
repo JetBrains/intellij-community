@@ -8,6 +8,7 @@ import com.intellij.internal.statistic.eventLog.events.EventFields;
 import com.intellij.internal.statistic.eventLog.events.EventId;
 import com.intellij.internal.statistic.eventLog.events.EventId1;
 import com.intellij.internal.statistic.eventLog.events.EventId2;
+import com.intellij.internal.statistic.eventLog.events.RoundedIntEventField;
 import com.intellij.internal.statistic.eventLog.events.StringEventField;
 import com.intellij.internal.statistic.service.fus.collectors.ProjectUsagesCollector;
 import com.intellij.internal.statistic.service.fus.collectors.UsageDescriptorKeyValidator;
@@ -35,10 +36,14 @@ import java.util.Set;
 
 @ApiStatus.Internal
 public @NonNls class VcsLogRepoSizeCollector extends ProjectUsagesCollector {
-  private static final EventLogGroup GROUP = new EventLogGroup("vcs.log.data", 5);
+  public static final RoundedIntEventField COMMIT_COUNT = EventFields.RoundedInt("commit_count");
+  public static final RoundedIntEventField BRANCHES_COUNT = EventFields.RoundedInt("branches_count");
+  public static final RoundedIntEventField TAGS_COUNT = EventFields.RoundedInt("tags_count");
+
+  private static final EventLogGroup GROUP = new EventLogGroup("vcs.log.data", 6);
   private static final EventId DATA_INITIALIZED = GROUP.registerEvent("dataInitialized");
-  private static final EventId1<Integer> COMMIT_COUNT = GROUP.registerEvent("commit.count", EventFields.Count);
-  private static final EventId1<Integer> BRANCHES_COUNT = GROUP.registerEvent("branches.count", EventFields.Count);
+  private static final EventId1<Integer> COMMIT_COUNT_EVENT = GROUP.registerEvent("commit.count", COMMIT_COUNT);
+  private static final EventId1<Integer> BRANCHES_COUNT_EVENT = GROUP.registerEvent("branches.count", BRANCHES_COUNT);
   private static final EventId1<Integer> USERS_COUNT = GROUP.registerEvent("users.count", EventFields.Count);
   public static final StringEventField VCS_FIELD = new StringEventField("vcs") {
     @Override
@@ -64,8 +69,8 @@ public @NonNls class VcsLogRepoSizeCollector extends ProjectUsagesCollector {
         int branchesCount = VcsLogAggregatedStoredRefsKt.getBranches(dataPack.getRefsModel()).size();
         int usersCount = logData.getAllUsers().size();
         Set<MetricEvent> usages = ContainerUtil.newHashSet(DATA_INITIALIZED.metric());
-        usages.add(COMMIT_COUNT.metric(StatisticsUtil.roundToPowerOfTwo(commitCount)));
-        usages.add(BRANCHES_COUNT.metric(StatisticsUtil.roundToPowerOfTwo(branchesCount)));
+        usages.add(COMMIT_COUNT_EVENT.metric(commitCount));
+        usages.add(BRANCHES_COUNT_EVENT.metric(branchesCount));
         usages.add(USERS_COUNT.metric(StatisticsUtil.roundToPowerOfTwo(usersCount)));
         MultiMap<VcsKey, VirtualFile> groupedRoots = groupRootsByVcs(dataPack.getLogProviders());
         for (VcsKey vcs : groupedRoots.keySet()) {

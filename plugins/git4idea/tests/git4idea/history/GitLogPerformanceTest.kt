@@ -95,6 +95,7 @@ internal class GitLogPerformanceTest : GitPlatformTest() {
     )
     return VcsLogRefresherImpl(
       cs,
+      project,
       logData.storage,
       logData.logProviders,
       VcsLogProgress(project),

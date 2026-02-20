@@ -7,6 +7,7 @@ import com.intellij.openapi.diagnostic.rethrowControlFlowException
 import com.intellij.openapi.diagnostic.trace
 import com.intellij.openapi.progress.checkCanceled
 import com.intellij.openapi.progress.coroutineToIndicator
+import com.intellij.openapi.project.Project
 import com.intellij.openapi.vcs.telemetry.VcsBackendTelemetrySpan.LogData.CompactingCommits
 import com.intellij.openapi.vcs.telemetry.VcsBackendTelemetrySpan.LogData.Initializing
 import com.intellij.openapi.vcs.telemetry.VcsBackendTelemetrySpan.LogData.JoiningMultiRepoCommits
@@ -32,6 +33,8 @@ import com.intellij.vcs.log.graph.GraphCommit
 import com.intellij.vcs.log.graph.GraphCommitImpl
 import com.intellij.vcs.log.impl.RequirementsImpl
 import com.intellij.vcs.log.impl.SimpleLogProviderRequirements
+import com.intellij.vcs.log.statistics.VcsLogPerformanceStatisticsCollector
+import com.intellij.vcs.log.statistics.finishUpdateDataPackActivity
 import it.unimi.dsi.fastutil.ints.IntOpenHashSet
 import kotlinx.coroutines.CoroutineName
 import kotlinx.coroutines.CoroutineScope
@@ -60,6 +63,7 @@ private val LOG = Logger.getInstance(VcsLogRefresherImpl::class.java)
 @ApiStatus.Internal
 class VcsLogRefresherImpl(
   parentCs: CoroutineScope,
+  private val project: Project,
   private val storage: VcsLogStorage,
   private val providers: Map<VirtualFile, VcsLogProvider>,
   private val progress: VcsLogProgress,
@@ -255,6 +259,9 @@ class VcsLogRefresherImpl(
       val currentRefs = dataPack.refsModel.refsByRoot
       var commitCount = recentCommitCount
       repeat(2) {
+        val activity = providers.values.singleOrNull()?.let { singleProvider ->
+          VcsLogPerformanceStatisticsCollector.startUpdateDataPackActivity(project, singleProvider.supportedVcs)
+        }
         val (currentAttemptData, loadTime) = measureTimedValue {
           loadRecentData(prepareRequirements(roots, commitCount, currentRefs))
         }
@@ -277,6 +284,7 @@ class VcsLogRefresherImpl(
             VcsLogGraphDataFactory.buildData(joinedFullLog, allNewRefs, providers, storage, true)
           }
           LOG.trace { "Recent log built in ${buildTime.inWholeMilliseconds} ms" }
+          activity?.finishUpdateDataPackActivity(loadTime, joinTime, buildTime, result)
           return@traceSuspending result
         }
         commitCount *= 5
