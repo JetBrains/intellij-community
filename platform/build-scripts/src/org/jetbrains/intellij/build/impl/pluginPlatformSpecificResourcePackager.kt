@@ -32,7 +32,7 @@ internal suspend fun buildPlatformSpecificPluginResources(
     }
   }
 
-  for ((dist, generators) in plugin.platformResourceGeneratorsDevMode) {
+  for ((dist, generators) in plugin.platformResourceGeneratorsBundledAndDevMode) {
     handlePlatformResourceGenerator(dist, generators, pluginDirs, context)
   }
 
