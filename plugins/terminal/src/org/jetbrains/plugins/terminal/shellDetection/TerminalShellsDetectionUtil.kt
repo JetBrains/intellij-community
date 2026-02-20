@@ -63,15 +63,15 @@ object TerminalShellsDetectionUtil {
     val localAppData = envVariables["LocalAppData"]  // C:\\Users\\<Username>\\AppData\\Local
 
     val powershell = eelApi.exec.where("powershell.exe")
-    if (powershell != null && powershell.startsWith(EelPath.parse("$systemRoot\\System32\\WindowsPowerShell\\", eelDescriptor))) {
+    if (powershell != null && powershell.startsWithIgnoreCase("$systemRoot\\System32\\WindowsPowerShell\\")) {
       shells.add(createShellInfo("Windows PowerShell", powershell.toString(), eelDescriptor = eelDescriptor))
     }
     val cmd = eelApi.exec.where("cmd.exe")
-    if (cmd != null && cmd.startsWith(EelPath.parse("$systemRoot\\System32\\", eelDescriptor))) {
+    if (cmd != null && cmd.startsWithIgnoreCase("$systemRoot\\System32\\")) {
       shells.add(createShellInfo("Command Prompt", cmd.toString(), eelDescriptor = eelDescriptor))
     }
     val pwsh = eelApi.exec.where("pwsh.exe")
-    if (pwsh != null && pwsh.startsWith(EelPath.parse("$programFiles\\PowerShell\\", eelDescriptor))) {
+    if (pwsh != null && pwsh.startsWithIgnoreCase("$programFiles\\PowerShell\\")) {
       shells.add(createShellInfo("PowerShell", pwsh.toString(), eelDescriptor = eelDescriptor))
     }
 
@@ -87,7 +87,7 @@ object TerminalShellsDetectionUtil {
     }
 
     val cmderRoot = envVariables["CMDER_ROOT"]
-    if (cmderRoot != null && cmd != null && cmd.startsWith(EelPath.parse("$systemRoot\\System32\\", eelDescriptor))) {
+    if (cmderRoot != null && cmd != null && cmd.startsWithIgnoreCase("$systemRoot\\System32\\")) {
       val cmderInitBat = EelPath.parse(cmderRoot, eelDescriptor).resolve("vendor\\init.bat")
       if (eelApi.fs.isRegularFile(cmderInitBat)) {
         shells.add(createShellInfo("Cmder", cmd.toString(), listOf("/k", cmderInitBat.toString()), eelDescriptor))
@@ -123,5 +123,9 @@ object TerminalShellsDetectionUtil {
 
   private suspend fun EelFileSystemApi.isRegularFile(path: EelPath): Boolean {
     return stat(path).justResolve().eelIt().getOrNull()?.type is EelFileInfo.Type.Regular
+  }
+
+  private fun EelPath.startsWithIgnoreCase(path: String): Boolean {
+    return toString().startsWith(path, ignoreCase = true)
   }
 }
