@@ -2612,6 +2612,8 @@ f:org.jetbrains.jewel.ui.icons.AllIconsKeys$Breakpoints
 - sf:BreakpointFieldUnsuspendentDisabled:org.jetbrains.jewel.ui.icon.IntelliJIconKey
 - sf:BreakpointMethodUnsuspendentDisabled:org.jetbrains.jewel.ui.icon.IntelliJIconKey
 - sf:BreakpointUnsuspendentDisabled:org.jetbrains.jewel.ui.icon.IntelliJIconKey
+- sf:ConditionalInstrumentation:org.jetbrains.jewel.ui.icon.IntelliJIconKey
+- sf:LoggingInstrumentation:org.jetbrains.jewel.ui.icon.IntelliJIconKey
 - sf:MultipleBreakpointsDisabled:org.jetbrains.jewel.ui.icon.IntelliJIconKey
 - sf:MultipleBreakpointsMuted:org.jetbrains.jewel.ui.icon.IntelliJIconKey
 - <init>():V

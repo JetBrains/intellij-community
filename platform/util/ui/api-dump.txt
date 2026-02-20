@@ -225,6 +225,8 @@ f:com.intellij.icons.AllIcons$Breakpoints
 - sf:BreakpointFieldUnsuspendentDisabled:javax.swing.Icon
 - sf:BreakpointMethodUnsuspendentDisabled:javax.swing.Icon
 - sf:BreakpointUnsuspendentDisabled:javax.swing.Icon
+- sf:ConditionalInstrumentation:javax.swing.Icon
+- sf:LoggingInstrumentation:javax.swing.Icon
 - sf:MultipleBreakpointsDisabled:javax.swing.Icon
 - sf:MultipleBreakpointsMuted:javax.swing.Icon
 - <init>():V
