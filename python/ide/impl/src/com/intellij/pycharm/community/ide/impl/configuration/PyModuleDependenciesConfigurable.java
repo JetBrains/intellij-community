@@ -10,18 +10,23 @@ import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.roots.ModuleOrderEntry;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.OrderEntry;
+import com.intellij.python.pyproject.model.PyProjectModelSettings;
+import com.intellij.ui.AncestorListenerAdapter;
 import com.intellij.ui.CheckBoxList;
 import com.intellij.ui.ToolbarDecorator;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.uiDesigner.core.GridConstraints;
 import com.intellij.uiDesigner.core.GridLayoutManager;
 import com.intellij.util.ui.EditableListModelDecorator;
+import com.intellij.util.ui.UIUtil;
+import com.jetbrains.python.PyBundle;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.DefaultListModel;
 import javax.swing.JComponent;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
+import javax.swing.event.AncestorEvent;
 import java.awt.BorderLayout;
 import java.awt.Insets;
 import java.lang.reflect.Method;
@@ -37,6 +42,7 @@ public class PyModuleDependenciesConfigurable implements UnnamedConfigurable {
   private final JPanel myMainPanel;
   private final JPanel myListHolderPanel;
   private final CheckBoxList<Module> myDependenciesList;
+  private final JBLabel myTitleLabel;
 
   public PyModuleDependenciesConfigurable(Module module) {
     myModule = module;
@@ -66,6 +72,26 @@ public class PyModuleDependenciesConfigurable implements UnnamedConfigurable {
                                                                     (DefaultListModel)myDependenciesList.getModel()));
     decorator.disableRemoveAction();
     myListHolderPanel.add(decorator.createPanel(), BorderLayout.CENTER);
+    myTitleLabel = (JBLabel)myMainPanel.getComponent(0);
+    myMainPanel.addAncestorListener(new AncestorListenerAdapter() {
+      @Override
+      public void ancestorAdded(AncestorEvent event) {
+        updateEnabledState();
+      }
+    });
+  }
+
+  private void updateEnabledState() {
+    boolean managed = PyProjectModelSettings.getInstance(myModule.getProject()).getUsePyprojectToml();
+    myDependenciesList.setEnabled(!managed);
+    if (managed) {
+      myTitleLabel.setText(PyBundle.message("python.pyproject.toml.dependencies.managed.hint"));
+      myTitleLabel.setForeground(UIUtil.getContextHelpForeground());
+    }
+    else {
+      myTitleLabel.setText(PyBundle.message("py.module.dependencies.configurable.list.title"));
+      myTitleLabel.setForeground(UIUtil.getLabelForeground());
+    }
   }
 
   private static Method $$$cachedGetBundleMethod$$$ = null;
