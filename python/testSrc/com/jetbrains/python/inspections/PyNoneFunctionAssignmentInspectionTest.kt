@@ -79,6 +79,27 @@ class PyNoneFunctionAssignmentInspectionTest : PyInspectionTestCase() {
     )
   }
 
+  @TestFor(issues = ["PY-87768"])
+  fun `test lambda expression`() {
+    doTestByText("""
+             def f() -> None:
+                 return None
+             
+             lambda_func = lambda: f()
+             """.trimIndent()
+    )
+  }
+
+  fun `test lambda expression with used return value`() {
+    doTestByText("""
+           def f() -> None:
+               return None
+       
+           lambda_func = lambda: [<weak_warning descr="Function 'f' doesn't return anything">f()</weak_warning>]
+           """.trimIndent()
+    )
+  }
+
   @TestFor(issues = ["PY-80351"])
   fun `test used in other contexts`() {
     doTestByText("""

@@ -10,6 +10,7 @@ import com.jetbrains.python.PyPsiBundle
 import com.jetbrains.python.inspections.quickfix.PyRemoveAssignmentQuickFix
 import com.jetbrains.python.psi.PyAssignmentStatement
 import com.jetbrains.python.psi.PyCallExpression
+import com.jetbrains.python.psi.PyLambdaExpression
 import com.jetbrains.python.psi.PyExpressionStatement
 import com.jetbrains.python.psi.PyFunction
 import com.jetbrains.python.psi.PyParenthesizedExpression
@@ -53,15 +54,17 @@ class PyNoneFunctionAssignmentInspection : PyInspection() {
           PythonSdkUtil.isElementInSkeletons(callable) ||
           callable is PyFunction && callable.hasInheritors()
         }) return
-      val parent = call.parent
-      if (parent is PyAssignmentStatement) {
-        registerProblem(
-          parent, PyPsiBundle.message("INSP.none.function.assignment", callee.name),
-          PyRemoveAssignmentQuickFix()
-        )
-      }
-      else {
-        registerProblem(call, PyPsiBundle.message("INSP.none.function.assignment", callee.name))
+     when (val parent = call.parent) {
+        is PyLambdaExpression -> return
+        is PyAssignmentStatement -> {
+          registerProblem(
+            parent, PyPsiBundle.message("INSP.none.function.assignment", callee.name),
+            PyRemoveAssignmentQuickFix()
+          )
+        }
+        else -> {
+          registerProblem(call, PyPsiBundle.message("INSP.none.function.assignment", callee.name))
+        }
       }
     }
 
