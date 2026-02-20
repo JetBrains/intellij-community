@@ -4,6 +4,7 @@ package com.intellij.execution.sudo
 import com.intellij.execution.CommandLineUtil
 import com.intellij.execution.configurations.GeneralCommandLine
 import com.intellij.execution.configurations.PathEnvironmentVariableUtil
+import com.intellij.execution.process.CapturingProcessHandler
 import com.intellij.execution.util.ExecUtil
 import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.util.text.StringUtil
@@ -14,6 +15,20 @@ import org.jetbrains.annotations.Nls
 
 @ApiStatus.Internal
 open class LocalSudoCommandProvider : SudoCommandProvider {
+  private companion object {
+    private fun canSudoNonInteractively(): Boolean {
+      if (!java.lang.Boolean.getBoolean("ij.sudo.noninteractive.allow")) return false
+      if (!PathEnvironmentVariableUtil.isOnPath("sudo")) return false
+      return try {
+        CapturingProcessHandler(GeneralCommandLine("sudo", "-n", "true"))
+          .runProcess(1_000).exitCode == 0
+      }
+      catch (_: Exception) {
+        false
+      }
+    }
+  }
+
   override fun isAvailable(): Boolean = true
 
   override fun sudoCommand(wrappedCommand: GeneralCommandLine, prompt: @Nls String): GeneralCommandLine? {
@@ -32,6 +47,9 @@ open class LocalSudoCommandProvider : SudoCommandProvider {
                 activate
                 do shell script ${escapedCommand} with prompt "${escapedPrompt}" with administrator privileges without altering line endings
             end tell""".trimIndent())
+      }
+      canSudoNonInteractively() -> {
+        GeneralCommandLine(listOf("sudo", "-n", "--") + envCommand(wrappedCommand) + command)
       }
       PathEnvironmentVariableUtil.isOnPath("gksudo") -> {
         GeneralCommandLine(listOf("gksudo", "--message", prompt, "--") + envCommand(wrappedCommand) + command)
