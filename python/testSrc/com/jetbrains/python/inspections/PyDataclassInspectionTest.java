@@ -420,6 +420,31 @@ public class PyDataclassInspectionTest extends PyInspectionTestCase {
     doTest();
   }
 
+  // PY-60352
+  public void testDataclassMultipleInheritanceAttributeWithDefault() {
+    doTestByText("""
+                   from dataclasses import dataclass
+                   
+                   
+                   @dataclass
+                   class Parent1:
+                       number: int
+                       default: int = 0
+                   
+                   
+                   @dataclass
+                   class Parent2:
+                       number: float
+                   
+                   
+                   @dataclass
+                   class Child(Parent2, Parent1):
+                       pass
+                   
+                   
+                   Child(number=1)""");
+  }
+
   @Override
   protected void doTest() {
     myFixture.copyDirectoryToProject("packages/attr", "attr");

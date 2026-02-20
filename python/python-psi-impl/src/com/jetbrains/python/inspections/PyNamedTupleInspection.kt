@@ -37,23 +37,29 @@ class PyNamedTupleInspection : PyInspection() {
       if ((fieldsProcessor == null || fieldsProcessor.fieldsWithoutDefaultValue.isEmpty()) && !checkInheritedOrder) return
 
       val ancestors = cls.getAncestorClasses(context)
-      val ancestorKinds = ancestors.map {
-        if (!classFieldsFilter(it)) {
+      val attributeNames = mutableSetOf<String>()
+      val ancestorKinds = mutableListOf<Ancestor>()
+      for (ancestor in ancestors.reversed()) {
+        val kind = if (!classFieldsFilter(ancestor)) {
           Ancestor.FILTERED
         }
         else {
-          val processor = processFields(it, fieldsFilter, hasAssignedValue, context)
+          val processor = processFields(ancestor, fieldsFilter, hasAssignedValue, context)
           if (processor.fieldsWithDefaultValue.isNotEmpty()) {
             Ancestor.HAS_FIELD_WITH_DEFAULT_VALUE
           }
-          else if (processor.fieldsWithoutDefaultValue.isNotEmpty()) {
+          else if (processor.fieldsWithoutDefaultValue.isNotEmpty() && !attributeNames.containsAll(processor.fieldsWithoutDefaultValue.map { field -> field.name })) {
             Ancestor.HAS_FIELD_WITHOUT_DEFAULT_VALUE
           }
           else {
             Ancestor.FILTERED
           }
         }
+
+        ancestorKinds.add(kind)
+        attributeNames.addAll(ancestor.classAttributes.mapNotNull { attribute -> attribute.name })
       }
+      ancestorKinds.reverse()
 
       if (checkInheritedOrder) {
         var seenAncestorHavingFieldWithDefaultValue: PyClass? = null
