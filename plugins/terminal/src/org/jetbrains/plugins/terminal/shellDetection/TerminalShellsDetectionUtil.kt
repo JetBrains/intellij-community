@@ -121,7 +121,7 @@ object TerminalShellsDetectionUtil {
     options: List<String> = emptyList(),
     eelDescriptor: EelDescriptor,
   ): DetectedShellInfo {
-    val shellCommand: List<String> = LocalTerminalStartCommandBuilder.convertShellPathToCommand(shellPath)
+    val shellCommand: List<String> = LocalTerminalStartCommandBuilder.convertShellPathToCommand(shellPath, eelDescriptor)
     // The shell command consists of shellPath + some options, like `--login` or `i`.
     // Add them to the resulting options list.
     val addedOptions = shellCommand.drop(1)
