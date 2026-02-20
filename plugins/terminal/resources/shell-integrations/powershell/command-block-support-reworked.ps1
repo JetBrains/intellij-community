@@ -40,16 +40,20 @@ function Global:Prompt() {
   $Success = $Global:?
 
   $Result = ""
-  $CurrentDirectory = (Get-Location).Path
+  $CurrentDirectoryParam = if ($pwd.Provider.Name -eq 'FileSystem') {
+    ";current_directory=$(Global:__JetBrainsIntellijEncode $pwd.ProviderPath)"
+  } else {
+    ""
+  }
   if ($Global:__JetBrainsIntellijState.IsInitialized -eq $false) {
     $Global:__JetBrainsIntellijState.IsInitialized = $true
-    $Result += Global:__JetBrainsIntellijOSC "initialized;current_directory=$(Global:__JetBrainsIntellijEncode $CurrentDirectory)"
+    $Result += Global:__JetBrainsIntellijOSC "initialized$CurrentDirectoryParam"
     $Result += Global:__JetBrainsIntellijGetAliases
   }
   elseif ($Global:__JetBrainsIntellijState.IsCommandRunning -eq $true){
     $Global:__JetBrainsIntellijState.IsCommandRunning = $false
     $ExitCode = if ($Success) { 0 } else { 1 }
-    $Result += Global:__JetBrainsIntellijOSC "command_finished;exit_code=$ExitCode;current_directory=$(Global:__JetBrainsIntellijEncode $CurrentDirectory)"
+    $Result += Global:__JetBrainsIntellijOSC "command_finished;exit_code=$ExitCode$CurrentDirectoryParam"
   }
 
   $Result += Global:__JetBrainsIntellijOSC "prompt_started"
