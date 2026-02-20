@@ -150,15 +150,25 @@ class PyTypeInlayHintsProvider : InlayHintsProvider {
     private fun getInlaysForParameterAnnotations(element: PsiElement, sink: InlayTreeSink, resolveContext: PyResolveContext) {
       val parameter = element as? PyNamedParameter ?: return
 
+      if (parameter.isSelf) return
+
       if (parameter.annotationValue != null || parameter.typeCommentAnnotation != null) return
 
       val typeEvalContext = resolveContext.typeEvalContext
 
-      val parameterType = typeEvalContext.getType(parameter) ?: return
+      val rawParameterType = typeEvalContext.getType(parameter)
+
+      // Unwrap the type of *args and **kwargs parameters to show the element type
+      val parameterType = when {
+                            parameter.isPositionalContainer -> (rawParameterType as? PyCollectionType)?.getIteratedItemType()
+                            parameter.isKeywordContainer -> (rawParameterType as? PyCollectionType)?.elementTypes?.getOrNull(1)
+                            else -> rawParameterType
+                          } ?: return
 
       val typeHint = PythonDocumentationProvider.getTypeHint(parameterType, typeEvalContext)
 
       val offset = parameter.nameIdentifier?.textRange?.endOffset ?: parameter.textRange.endOffset
+
 
       sink.addPresentation(
         position = InlineInlayPosition(offset, true),
