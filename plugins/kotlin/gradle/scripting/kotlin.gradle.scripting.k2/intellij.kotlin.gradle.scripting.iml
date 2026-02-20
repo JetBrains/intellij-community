@@ -94,6 +94,5 @@
     <orderEntry type="module" module-name="intellij.gradle.completion" scope="TEST" />
     <orderEntry type="module" module-name="intellij.gradle.java.toml" />
     <orderEntry type="module" module-name="intellij.gradle.java.properties" scope="TEST" />
-    <orderEntry type="module" module-name="intellij.gradle.java.groovy" />
   </component>
 </module>
