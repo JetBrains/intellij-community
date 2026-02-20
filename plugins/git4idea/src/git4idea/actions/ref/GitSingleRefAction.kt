@@ -105,6 +105,11 @@ abstract class GitSingleRefAction<T : GitReference>(
         repository.workingTreeHolder.getWorkingTrees()
       }
     }
+
+    internal fun getWorkingTreeWithRef(reference: GitReference, repositories: List<GitRepository>, skipCurrentWorkingTree: Boolean): GitWorkingTree? {
+      val repository = repositories.singleOrNull() ?: return null
+      return getWorkingTreeWithRef(reference, repository, skipCurrentWorkingTree)
+    }
   }
 }
 
