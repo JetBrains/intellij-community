@@ -29,7 +29,6 @@ import com.intellij.openapi.roots.libraries.LibraryTable;
 import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vcs.VcsConfiguration;
 import com.intellij.openapi.vcs.changes.VcsIgnoreManager;
 import com.intellij.openapi.vfs.LocalFileSystem;
@@ -60,7 +59,6 @@ import java.util.concurrent.atomic.AtomicInteger;
  */
 public class RootsChangedTest extends JavaModuleTestCase {
   private MyModuleRootListener myModuleRootListener;
-  private boolean useWfiForPartialScanning;
 
   @Override
   protected void setUp() throws Exception {
@@ -70,7 +68,6 @@ public class RootsChangedTest extends JavaModuleTestCase {
     MessageBusConnection connection = myProject.getMessageBus().connect(getTestRootDisposable());
     myModuleRootListener = new MyModuleRootListener(myProject);
     connection.subscribe(ModuleRootListener.TOPIC, myModuleRootListener);
-    useWfiForPartialScanning = Registry.is("use.workspace.file.index.for.partial.scanning");
   }
 
   @Override
@@ -162,11 +159,7 @@ public class RootsChangedTest extends JavaModuleTestCase {
       sdkModificator.commitChanges();
     });
 
-    if (useWfiForPartialScanning) {
-      myModuleRootListener.assertEventsCount(1);
-    } else {
-      myModuleRootListener.assertEventsCount(2);
-    }
+    myModuleRootListener.assertEventsCount(1);
   }
 
   public void testModuleJdkEditing() {
@@ -192,11 +185,8 @@ public class RootsChangedTest extends JavaModuleTestCase {
       final SdkModificator sdkModificator = jdk.getSdkModificator();
       sdkModificator.addRoot(getTempDir().createVirtualDir(), OrderRootType.CLASSES);
       sdkModificator.commitChanges();
-      if (useWfiForPartialScanning) {
-        myModuleRootListener.assertEventsCount(1);
-      } else {
-        myModuleRootListener.assertEventsCount(2);
-      }
+
+      myModuleRootListener.assertEventsCount(1);
 
       final SdkModificator sdkModificator2 = unused.getSdkModificator();
       sdkModificator2.addRoot(getTempDir().createVirtualDir(), OrderRootType.CLASSES);
@@ -220,20 +210,13 @@ public class RootsChangedTest extends JavaModuleTestCase {
       
       Sdk jdk = ProjectJdkTable.getInstance().createSdk("new-jdk", JavaSdk.getInstance());
       ProjectJdkTable.getInstance().addJdk(jdk, getTestRootDisposable());
-      if (useWfiForPartialScanning) {
-        myModuleRootListener.assertEventsCount(1);
-      } else {
-        myModuleRootListener.assertEventsCount(2);
-      }
+
+      myModuleRootListener.assertEventsCount(1);
 
       final SdkModificator sdkModificator = jdk.getSdkModificator();
       sdkModificator.addRoot(getTempDir().createVirtualDir(), OrderRootType.CLASSES);
       sdkModificator.commitChanges();
-      if (useWfiForPartialScanning) {
-        myModuleRootListener.assertEventsCount(1);
-      } else {
-        myModuleRootListener.assertEventsCount(2);
-      }
+      myModuleRootListener.assertEventsCount(1);
     });
   }
 
@@ -272,11 +255,7 @@ public class RootsChangedTest extends JavaModuleTestCase {
       final SdkModificator sdkModificator = jdk.getSdkModificator();
       sdkModificator.addRoot(getTempDir().createVirtualDir(), OrderRootType.CLASSES);
       sdkModificator.commitChanges();
-      if (useWfiForPartialScanning) {
-        myModuleRootListener.assertEventsCount(1);
-      } else {
-        myModuleRootListener.assertEventsCount(2);
-      }
+      myModuleRootListener.assertEventsCount(1);
     });
   }
 
