@@ -88,16 +88,6 @@ internal object CodexTestAppServer {
   private const val ERROR_METHOD_ENV = "CODEX_TEST_ERROR_METHOD"
   private const val ERROR_MESSAGE_ENV = "CODEX_TEST_ERROR_MESSAGE"
   private const val REQUEST_LOG_ENV = "CODEX_TEST_REQUEST_LOG"
-  private const val REQUEST_PAYLOAD_LOG_ENV = "CODEX_TEST_REQUEST_PAYLOAD_LOG"
-  private const val PROMPT_SUGGEST_KIND_ENV = "CODEX_TEST_PROMPT_SUGGEST_KIND"
-  private const val PROMPT_SUGGEST_LIFECYCLE_ENV = "CODEX_TEST_PROMPT_SUGGEST_LIFECYCLE"
-  private const val PROMPT_SUGGEST_LIFECYCLE_STATE_FILE_ENV = "CODEX_TEST_PROMPT_SUGGEST_LIFECYCLE_STATE_FILE"
-  private const val PROMPT_SUGGEST_ERROR_MESSAGE_ENV = "CODEX_TEST_PROMPT_SUGGEST_ERROR_MESSAGE"
-  private const val NOTIFY_METHOD_ENV = "CODEX_TEST_NOTIFY_METHOD"
-  private const val NOTIFY_ON_METHOD_ENV = "CODEX_TEST_NOTIFY_ON_METHOD"
-  private const val NOTIFY_THREAD_ID_ENV = "CODEX_TEST_NOTIFY_THREAD_ID"
-  private const val NOTIFY_THREAD_ID_STYLE_ENV = "CODEX_TEST_NOTIFY_THREAD_ID_STYLE"
-  private const val NOTIFY_ID_ENV = "CODEX_TEST_NOTIFY_ID"
 
   @JvmStatic
   fun main(args: Array<String>) {
@@ -107,22 +97,6 @@ internal object CodexTestAppServer {
     val errorMethod = readEnv(ERROR_METHOD_ENV)
     val errorMessage = readEnv(ERROR_MESSAGE_ENV)
     val requestLogPath = readEnv(REQUEST_LOG_ENV)?.let(Path::of)
-    val requestPayloadLogPath = readEnv(REQUEST_PAYLOAD_LOG_ENV)?.let(Path::of)
-    val promptSuggestKind = readEnv(PROMPT_SUGGEST_KIND_ENV)
-    val promptSuggestLifecycleValues = readEnv(PROMPT_SUGGEST_LIFECYCLE_ENV)
-      ?.split(',')
-      ?.map(String::trim)
-      ?.filter(String::isNotEmpty)
-      ?.toMutableList()
-      ?: mutableListOf()
-    val promptSuggestLifecycleStateFile = readEnv(PROMPT_SUGGEST_LIFECYCLE_STATE_FILE_ENV)?.let(Path::of)
-    val promptSuggestErrorMessage = readEnv(PROMPT_SUGGEST_ERROR_MESSAGE_ENV)
-    val notifyMethod = readEnv(NOTIFY_METHOD_ENV)
-    val notifyOnMethod = readEnv(NOTIFY_ON_METHOD_ENV)
-    val notifyThreadId = readEnv(NOTIFY_THREAD_ID_ENV)
-    val notifyThreadIdStyle = readEnv(NOTIFY_THREAD_ID_STYLE_ENV)
-    val notifyId = readEnv(NOTIFY_ID_ENV)
-    val pendingPromptSuggestionTurns = LinkedHashMap<String, PendingPromptSuggestionTurn>()
     readEnv(CWD_MARKER_ENV)?.let(::writeWorkingDirectoryMarker)
     val reader = BufferedReader(InputStreamReader(System.`in`, StandardCharsets.UTF_8))
     val writer = BufferedWriter(OutputStreamWriter(System.out, StandardCharsets.UTF_8))
@@ -1173,21 +1147,30 @@ private fun updateArchive(id: String?, threads: MutableList<ThreadEntry>, archiv
   }
 }
 
-private fun readEnv(name: String): String? {
-  return System.getenv(name)?.trim()?.takeIf { it.isNotEmpty() }
-}
+  private fun appendRequestLog(path: Path, method: String) {
+    try {
+      path.parent?.let(Files::createDirectories)
+      Files.writeString(
+        path,
+        "$method\n",
+        StandardCharsets.UTF_8,
+        StandardOpenOption.CREATE,
+        StandardOpenOption.WRITE,
+        StandardOpenOption.APPEND,
+      )
+    }
+    catch (_: Throwable) {
+    }
+  }
 
-private fun appendRequestLog(path: Path, method: String) {
-  try {
-    path.parent?.let(Files::createDirectories)
-    Files.writeString(
-      path,
-      "$method\n",
-      StandardCharsets.UTF_8,
-      StandardOpenOption.CREATE,
-      StandardOpenOption.WRITE,
-      StandardOpenOption.APPEND,
-    )
+  private fun writeWorkingDirectoryMarker(marker: String) {
+    try {
+      val markerPath = Path.of(marker)
+      val cwd = System.getProperty("user.dir")
+      Files.writeString(markerPath, cwd, StandardCharsets.UTF_8)
+    }
+    catch (_: Throwable) {
+    }
   }
   catch (_: Throwable) {
   }

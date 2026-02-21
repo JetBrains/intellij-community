@@ -15,6 +15,7 @@ targets:
   - ../../sessions-actions/resources/intellij.agent.workbench.sessions.actions.xml
   - ../../codex/sessions/src/CodexAgentSessionProviderDescriptor.kt
   - ../../codex/sessions/src/backend/CodexSessionBackendSelector.kt
+  - ../../codex/sessions/src/backend/rollout/CodexRolloutRefreshHintsProvider.kt
   - ../../sessions/resources/messages/AgentSessionsBundle.properties
   - ../../chat/testSrc/AgentChatEditorServiceTest.kt
   - ../../chat/testSrc/AgentChatFileEditorLifecycleTest.kt
@@ -35,12 +36,12 @@ Status: Draft
 Date: 2026-03-13
 
 ## Summary
-Define project/worktree `New Thread` behavior in the Swing tree implementation:
+Define project/worktree `New Thread` behavior across tree and editor-tab actions:
 - hover/selection row affordances,
 - quick-create with last used provider,
 - explicit source-project selection in dedicated-frame multi-project editor tabs,
 - provider popup with Standard and YOLO entries,
-- creation-flow deduplication and Codex pending-to-concrete identity rebinding.
+- creation-flow deduplication and Codex pending-to-concrete identity rebinding (strict auto-match + manual bind fallback).
 
 Canonical command mapping is owned by `spec/agent-core-contracts.spec.md`.
 
@@ -50,7 +51,7 @@ Canonical command mapping is owned by `spec/agent-core-contracts.spec.md`.
 - Keep tree and editor-tab new-thread controls consistent in labels, provider order, and mode sections.
 - Keep source-project selection explicit and predictable in dedicated-frame multi-project mode.
 - Prevent duplicate creation from repeated clicks.
-- Keep Codex pending-thread creation flow compatible with rollout-default discovery.
+- Keep Codex pending-thread creation flow compatible with app-server discovery and rollout refresh-hints fallback.
 
 ## Non-goals
 - Aggregation/sorting/paging behavior.
@@ -120,7 +121,16 @@ Canonical command mapping is owned by `spec/agent-core-contracts.spec.md`.
 - Codex new-thread opens must start in pending identity state (`codex:new-*`) with `sessionId = null`.
   [@test] ../../chat/testSrc/AgentChatEditorServiceTest.kt
 
-- App-server backend remains the default discovery source; rollout discovery remains an explicit compatibility override.
+- Pending Codex tabs must persist pending metadata (`pendingCreatedAtMs`, optional `pendingFirstInputAtMs`, optional `pendingLaunchMode`).
+  - Note: rebind matching uses these timestamps for deterministic time windows.
+  [@test] ../../chat/testSrc/AgentChatEditorServiceTest.kt
+
+- Already-concrete top-level Codex tabs must treat exact terminal command `/new` as a request to migrate the open tab to the next concrete thread created for the same path.
+- The open concrete tab must persist `/new` anchor metadata (`newThreadRebindRequestedAtMs`) so refresh can rebind by `tabKey + currentThreadIdentity + request timestamp`.
+  [@test] ../../chat/testSrc/AgentChatFileEditorLifecycleTest.kt
+  [@test] ../../chat/testSrc/AgentChatEditorServiceTest.kt
+
+- App-server backend remains the only Codex discovery source for listing; backend override values are ignored and rollout stays refresh-hints-only fallback.
   [@test] ../../codex/sessions/testSrc/CodexSessionBackendSelectorTest.kt
 
 - Optional app-server mode must surface concrete thread id after first user input.
@@ -160,8 +170,9 @@ Canonical command mapping is owned by `spec/agent-core-contracts.spec.md`.
 - Source-project labels in dedicated-frame editor-tab new-thread popups match the sessions tree, and collisions fall back to full path labels.
 
 ## Data & Backend
-- Codex creation flow starts with pending identity and is resolved asynchronously on provider refresh.
+- Codex creation flow starts with pending identity and is resolved asynchronously from app-server listing plus refresh hints.
 - Concrete identity rebinding updates tab identity and command to resume form.
+- Exact terminal `/new` on an already-concrete top-level Codex tab keeps the same editor tab open while migrating that tab to the newly created concrete thread when a matching refresh-hint candidate appears.
 
 ## Error Handling
 - Provider CLI/app-server failures must continue through provider-specific error paths in existing service flow.

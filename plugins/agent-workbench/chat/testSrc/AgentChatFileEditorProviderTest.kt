@@ -21,16 +21,19 @@ import com.intellij.openapi.util.IconLoader
 import com.intellij.testFramework.common.timeoutRunBlocking
 import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.ui.IconManager
+import com.intellij.util.ui.EmptyIcon
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
+import javax.swing.Icon
 
 @TestApplication
 class AgentChatFileEditorProviderTest {
   @BeforeEach
   fun setUp() {
     clearAgentChatIconCacheForTests()
+    IconLoader.activate()
     IconManager.activate(null)
   }
 
@@ -53,6 +56,48 @@ class AgentChatFileEditorProviderTest {
     )
 
     assertThat(file.shellCommand).containsExactly("codex", "resume", "thread-1")
+  }
+
+  @Test
+  fun startupLaunchSpecOverrideIsConsumedOnceAndNotPersisted() {
+    val file = AgentChatVirtualFile(
+      projectPath = "/work/project-a",
+      threadIdentity = "CODEX:thread-1",
+      shellCommand = listOf("codex", "resume", "thread-1"),
+      shellEnvVariables = mapOf("PATH" to "/usr/local/bin", "TERM" to "xterm-256color"),
+      threadId = "thread-1",
+      threadTitle = "Thread One",
+      subAgentId = null,
+    )
+    file.setStartupLaunchSpecOverride(
+      AgentSessionTerminalLaunchSpec(
+        command = listOf("codex", "--", "-run this"),
+        envVariables = mapOf("PATH" to "/custom/bin", "DISABLE_AUTOUPDATER" to "1"),
+      )
+    )
+
+    val startupLaunchSpec = file.consumeStartupLaunchSpec()
+    assertThat(startupLaunchSpec.command).containsExactly("codex", "--", "-run this")
+    assertThat(startupLaunchSpec.envVariables)
+      .containsExactlyEntriesOf(mapOf("PATH" to "/custom/bin", "TERM" to "xterm-256color", "DISABLE_AUTOUPDATER" to "1"))
+
+    val fallbackLaunchSpec = file.consumeStartupLaunchSpec()
+    assertThat(fallbackLaunchSpec.command).containsExactly("codex", "resume", "thread-1")
+    assertThat(fallbackLaunchSpec.envVariables)
+      .containsExactlyEntriesOf(mapOf("PATH" to "/usr/local/bin", "TERM" to "xterm-256color"))
+    assertThat(file.toSnapshot().runtime.shellCommand).containsExactly("codex", "resume", "thread-1")
+    assertThat(file.toSnapshot().runtime.shellEnvVariables)
+      .containsExactlyEntriesOf(mapOf("PATH" to "/usr/local/bin", "TERM" to "xterm-256color"))
+  }
+
+  @Test
+  fun registersAgentChatFileIconProvider() {
+    val descriptor = checkNotNull(javaClass.classLoader.getResource("intellij.agent.workbench.chat.xml")) {
+      "Module descriptor intellij.agent.workbench.chat.xml is missing"
+    }.readText()
+
+    assertThat(descriptor)
+      .contains("<fileIconProvider implementation=\"com.intellij.agent.workbench.chat.AgentChatFileIconProvider\"/>")
   }
 
   @Test
@@ -203,7 +248,7 @@ class AgentChatFileEditorProviderTest {
   }
 
   @Test
-  fun promotesUnresolvedVirtualFileWhenDescriptorBecomesAvailable() {
+  fun promotesUnresolvedVirtualFileWhenDescriptorBecomesAvailable(): Unit = timeoutRunBlocking {
     val snapshot = AgentChatTabSnapshot.create(
       projectHash = "hash-1",
       projectPath = "/work/project-a",
@@ -221,7 +266,7 @@ class AgentChatFileEditorProviderTest {
     assertThat(unresolved.shellCommand).isEmpty()
 
     val resolved = fileSystem.getOrCreateFile(snapshot)
-    assertThat(resolved).isSameAs(unresolved)
+    assertThat(resolved).isNotSameAs(unresolved)
     assertThat(resolved.projectPath).isEqualTo(snapshot.identity.projectPath)
     assertThat(resolved.threadIdentity).isEqualTo(snapshot.identity.threadIdentity)
     assertThat(resolved.threadId).isEqualTo(snapshot.runtime.threadId)
@@ -291,29 +336,81 @@ class AgentChatFileEditorProviderTest {
   }
 
   @Test
+  fun deleteByThreadWithSubAgentRemovesOnlyMatchingSubAgentStateEntries() {
+    val store = AgentChatTabsStateService(null)
+    val matchingBase = AgentChatTabSnapshot.create(
+      projectHash = "hash-1",
+      projectPath = "/work/project-a",
+      threadIdentity = "codex:thread-1",
+      threadId = "thread-1",
+      threadTitle = "Thread",
+      subAgentId = null,
+      shellCommand = listOf("codex", "resume", "thread-1"),
+    )
+    val matchingSubAgent = AgentChatTabSnapshot.create(
+      projectHash = "hash-1",
+      projectPath = "/work/project-a",
+      threadIdentity = "codex:thread-1",
+      threadId = "sub-alpha",
+      threadTitle = "Thread",
+      subAgentId = "alpha",
+      shellCommand = listOf("codex", "resume", "sub-alpha"),
+    )
+    val otherSubAgent = AgentChatTabSnapshot.create(
+      projectHash = "hash-1",
+      projectPath = "/work/project-a",
+      threadIdentity = "codex:thread-1",
+      threadId = "sub-beta",
+      threadTitle = "Thread",
+      subAgentId = "beta",
+      shellCommand = listOf("codex", "resume", "sub-beta"),
+    )
+
+    store.upsert(matchingBase)
+    store.upsert(matchingSubAgent)
+    store.upsert(otherSubAgent)
+    try {
+      val deleted = store.deleteByThread("/work/project-a", "codex:thread-1", subAgentId = "alpha")
+
+      assertThat(deleted).isEqualTo(1)
+      assertThat(store.load(matchingSubAgent.tabKey)).isNull()
+      assertThat(store.load(matchingBase.tabKey)).isNotNull
+      assertThat(store.load(otherSubAgent.tabKey)).isNotNull
+    }
+    finally {
+      store.delete(matchingBase.tabKey)
+      store.delete(matchingSubAgent.tabKey)
+      store.delete(otherSubAgent.tabKey)
+    }
+  }
+
+  @Test
   fun mapsCodexThreadIdentityToCodexIcon() {
     val icon = providerIcon(threadIdentity = "codex:thread-1")
 
-    assertThat(icon).isNotEqualTo(AllIcons.Toolwindows.ToolWindowMessages)
+    assertThat(icon).isSameAs(agentSessionThreadStatusIcon(AgentSessionProvider.CODEX, AgentThreadActivity.READY))
   }
 
   @Test
   fun mapsClaudeThreadIdentityToClaudeIcon() {
     val icon = providerIcon(threadIdentity = "claude:session-1")
 
-    assertThat(icon).isNotEqualTo(AllIcons.Toolwindows.ToolWindowMessages)
+    assertThat(icon).isSameAs(agentSessionThreadStatusIcon(AgentSessionProvider.CLAUDE, AgentThreadActivity.READY))
   }
 
   @Test
   fun usesFallbackIconForUnknownProviderIdentity() {
     val icon = providerIcon(threadIdentity = "unknown:thread-1", threadActivity = AgentThreadActivity.READY)
+    val expected = agentSessionThreadStatusIcon(AgentSessionProvider.from("unknown"), AgentThreadActivity.READY)
 
-    assertThat(icon).isEqualTo(AllIcons.Toolwindows.ToolWindowMessages)
+    assertThat(icon).isSameAs(expected)
   }
 
   @Test
-  fun usesUnbadgedProviderIconForReadyAndBadgedIconForNonReadyActivity() {
+  fun usesBadgedProviderIconForAllActivities() {
     val readyIcon = providerIcon(threadIdentity = "codex:thread-1", threadActivity = AgentThreadActivity.READY)
+    val processingIcon = providerIcon(threadIdentity = "codex:thread-1", threadActivity = AgentThreadActivity.PROCESSING)
+    val reviewingIcon = providerIcon(threadIdentity = "codex:thread-1", threadActivity = AgentThreadActivity.REVIEWING)
     val unreadIcon = providerIcon(threadIdentity = "codex:thread-1", threadActivity = AgentThreadActivity.UNREAD)
 
     assertThat(readyIcon).isSameAs(agentSessionThreadStatusIcon(AgentSessionProvider.CODEX, AgentThreadActivity.READY))

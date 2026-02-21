@@ -4,7 +4,7 @@ description: Coverage ownership matrix for Swing-based Agent Threads, shared con
 targets:
   - ../sessions/testSrc/*.kt
   - ../chat/testSrc/*.kt
-  - ../codex/sessions/testSrc/*.kt
+  - ../codex/sessions/testSrc/**/*.kt
 ---
 
 # Agent Threads Testing
@@ -29,47 +29,22 @@ This file does not redefine runtime behavior; it maps each contract area to requ
 - Performance benchmarking in default CI path.
 
 ## Requirements
-- Core contract coverage must include:
-  - identity and command mapping,
-  - shared editor-tab popup actions,
-  - archive gate behavior,
-  - visibility primitive persistence.
-  [@test] ../sessions/testSrc/AgentSessionCliTest.kt
-  [@test] ../sessions/testSrc/AgentSessionsEditorTabActionsTest.kt
-  [@test] ../sessions/testSrc/AgentSessionsServiceArchiveIntegrationTest.kt
-  [@test] ../sessions/testSrc/AgentSessionsServiceOnDemandIntegrationTest.kt
-
-- Sessions aggregation/service coverage must include ordering, partial warning, blocking error, unknown counts, refresh bootstrap, on-demand dedup, and refresh concurrency.
+- Core contract coverage must include identity and command mapping, shared editor-tab popup actions, archive gate behavior (including optional unarchive capability contract), and visibility primitive persistence.
+- Archive service coverage must include single-thread archive, multi-target archive with partial provider support, and unarchive restore behavior for supported providers.
+- Sessions aggregation/service coverage must include ordering, partial warning, blocking error, unknown counts, warm-snapshot bootstrap, on-demand dedup, refresh concurrency, and local read-state synchronization.
 - Swing tree rendering coverage must include warning/error precedence, empty-state exclusivity, `More` row exact/unknown behavior, and thread-row metadata presentation (badge + time, no inline status text, tooltip status preserved).
 - Swing tree interaction coverage must include single-click select behavior, activation-open policy, double-click open precedence on openable parent rows, path resolution for `More` rows, and context-menu selection retarget rules.
 - Persisted tree-state coverage must include collapsed-state restoration and expansion parent mapping for selected worktree paths.
-  [@test] ../sessions/testSrc/AgentSessionsSwingTreeStatePersistenceTest.kt
-
-- Persisted UI-state coverage must include visible-count persistence, preview-provider persistence, and legacy provider fallback.
-  [@test] ../sessions/testSrc/AgentSessionsTreeUiStateServiceTest.kt
-
-- New-thread action coverage must include quick-provider eligibility, loading-row suppression, Standard/YOLO popup modeling, dedup, and pending-to-concrete Codex rebinding.
-  [@test] ../sessions/testSrc/AgentSessionsSwingNewSessionActionsTest.kt
-  [@test] ../sessions/testSrc/AgentSessionsLoadingCoordinatorTest.kt
-  [@test] ../chat/testSrc/AgentChatEditorServiceTest.kt
-
-- Tool-window factory coverage must include Swing factory registration and gear action registration.
-  [@test] ../sessions/testSrc/AgentSessionsToolWindowFactorySwingTest.kt
-  [@test] ../sessions/testSrc/AgentSessionsGearActionsTest.kt
-
+- Persisted UI-state coverage must include visible-count persistence, warm-snapshot persistence, and exclusion of transient thread content from tree UI state.
+- New-thread action coverage must include quick-provider eligibility, loading-row exposure, Standard/YOLO popup modeling, dedup, and pending-to-concrete Codex rebinding.
+- Refresh-loading coverage must include per-refreshed-path loading indicators and loading completion semantics (loading is not cleared on first partial provider success).
+- Tool-window factory coverage must include Swing factory registration and title/gear action registration.
+- Tree-popup action coverage must include platform copy group registration (`CopyReferencePopupGroup`) for project/worktree context menus.
 - Dedicated-frame coverage must include gear toggle setting wiring, routing behavior in both modes, and dedicated-project filtering.
-  [@test] ../sessions/testSrc/AgentSessionsGearActionsTest.kt
-  [@test] ../sessions/testSrc/AgentSessionsOpenModeRoutingTest.kt
-
 - Claude quota hint coverage must include visibility/acknowledgement gating and toggle action registration.
-  [@test] ../sessions/testSrc/AgentSessionsSwingQuotaHintTest.kt
-  [@test] ../sessions/testSrc/AgentSessionsClaudeQuotaWidgetActionRegistrationTest.kt
-
 - Chat-editor lifecycle coverage must include protocol v2 restore, state round-trip, lazy initialization, tab title refresh, icon mapping fallback, and archive-triggered close+forget.
 - Codex backend coverage must include raw status-kind parsing, rollout parser/title/activity behavior, watcher behavior (path-scoped + overflow/full-rescan), app-server sub-agent hierarchy/orphan handling, app-server-only backend selection, app-server `thread/read` status-and-flag normalization, response-required/read-tracker behavior, started-thread fallback mapping, app-server-first refresh-hints merge with rollout unread fallback, real-TUI rollout ingestion through the production rollout path, prompt-suggestion streamed turn handling, and prompt-suggestion interrupt cleanup.
 - Codex app-server contract tests must run against mock backend in all environments and real backend when CLI is available.
-  [@test] ../sessions/testSrc/CodexAppServerClientTest.kt
-
 - Real-backend contract assertions must be invariant-based (ordering and archived consistency) and must not depend on user-specific thread IDs.
 - Mock-backend contract assertions must additionally validate deterministic fixture IDs, archive/unarchive mutation behavior, idle-timeout lazy restart, prompt-suggestion transport shape, streamed pre-completion notifications, unrelated-notification filtering, `turn/interrupt` cleanup on timeout or cancellation, interrupted or failed prompt-turn outcomes, and dedicated prompt-suggestion client reset when cleanup cannot confirm terminal completion.
 
@@ -79,13 +54,15 @@ This file does not redefine runtime behavior; it maps each contract area to requ
 - Swing tree rendering: `AgentSessionsSwingTreeRenderingTest`, `AgentSessionsSwingTreeCellRendererTest`
 - Swing tree interaction: `AgentSessionsSwingTreeInteractionTest`
 - Swing tree state persistence: `AgentSessionsSwingTreeStatePersistenceTest`
-- Tree UI persisted state: `AgentSessionsTreeUiStateServiceTest`
+- Tree UI persisted state: `AgentSessionTreeUiStateServiceTest`
+- Warm snapshot persisted state: `AgentSessionWarmStateServiceTest`
+- Shared UI preferences state: `AgentSessionUiPreferencesStateServiceTest`
 - New-thread flow: `AgentSessionsSwingNewSessionActionsTest`, `AgentSessionRefreshCoordinatorTest`, `AgentChatEditorServiceTest`
 - Tool-window factory wiring: `AgentSessionsToolWindowFactorySwingTest`, `AgentSessionsGearActionsTest`
 - Dedicated frame: `AgentSessionsGearActionsTest`, `AgentSessionsOpenModeRoutingTest`
 - Quota hint gating: `AgentSessionsSwingQuotaHintTest`, `AgentSessionsClaudeQuotaWidgetActionRegistrationTest`
 - Chat tab lifecycle: `AgentChatEditorServiceTest`, `AgentChatFileEditorProviderTest`, `AgentChatTabSelectionServiceTest`
-- Codex rollout/app-server selection + hint wiring: `CodexRolloutSessionBackendTest`, `CodexRolloutSessionBackendFileWatchIntegrationTest`, `CodexRolloutSessionsWatcherTest`, `CodexAppServerSessionBackendTest`, `CodexAppServerRefreshHintsProviderTest`, `CodexSessionSourceRefreshHintsTest`, `CodexSessionBackendSelectorTest`, `CodexSessionsPagingLogicTest`, `AgentSessionRefreshCoordinatorTest`
+- Codex rollout/app-server selection + hint wiring: `CodexRolloutSessionBackendTest`, `CodexRolloutSessionBackendFileWatchIntegrationTest`, `CodexRolloutSessionsWatcherTest`, `CodexSessionActivityResolverTest`, `CodexAppServerSessionBackendTest`, `CodexAppServerRefreshHintsProviderTest`, `CodexSessionSourceRefreshHintsTest`, `CodexSessionSourceRolloutIntegrationTest`, `CodexSessionSourceRealTuiIntegrationTest`, `CodexSessionBackendSelectorTest`, `CodexSessionsPagingLogicTest`, `AgentSessionRefreshCoordinatorTest`
 - Codex app-server contract: `CodexAppServerClientTest`
 - Prompt-suggestion AI mapping: `CodexAppServerPromptSuggestionBackendTest`
 
@@ -100,12 +77,14 @@ This file does not redefine runtime behavior; it maps each contract area to requ
 ## Integration Gating
 - Real backend runs only when `codex` CLI is resolvable.
 - `CODEX_BIN` may point to explicit binary; otherwise PATH is used.
+- Real TUI rollout integration also requires PTY support and therefore runs only on macOS/Linux hosts.
 - Mock backend contract suite is mandatory in CI.
 
 ## Isolation
 - Test process must use fresh temp `CODEX_HOME`.
 - Minimal `config.toml` is generated for spawned real backend process.
 - Environment overrides are process-scoped; global environment state is not mutated.
+- Real TUI rollout integration uses a temp trusted project, local mock Responses HTTP server, and no live network/auth dependency.
 
 ## Running Locally
 - `./tests.cmd '-Dintellij.build.test.patterns=com.intellij.agent.workbench.sessions.AgentSessionLoadAggregationTest'`

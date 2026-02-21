@@ -5,15 +5,12 @@ import com.intellij.agent.workbench.common.session.AgentSessionLaunchMode
 import com.intellij.agent.workbench.common.session.AgentSessionProvider
 import com.intellij.agent.workbench.sessions.util.buildAgentSessionEntryLaunchSpec
 import com.intellij.agent.workbench.sessions.util.buildAgentSessionIdentity
-import com.intellij.agent.workbench.sessions.util.buildAgentSessionNewCommand
 import com.intellij.agent.workbench.sessions.util.buildAgentSessionNewIdentity
-import com.intellij.agent.workbench.sessions.util.buildAgentSessionResumeCommand
+import com.intellij.agent.workbench.sessions.util.buildAgentSessionNewLaunchSpec
+import com.intellij.agent.workbench.sessions.util.buildAgentSessionResumeLaunchSpec
 import com.intellij.agent.workbench.sessions.util.isAgentSessionNewIdentity
 import com.intellij.agent.workbench.sessions.util.parseAgentSessionIdentity
 import com.intellij.agent.workbench.sessions.util.resolveAgentSessionId
-import com.intellij.openapi.extensions.ExtensionPointName
-import com.intellij.openapi.project.Project
-import com.intellij.openapi.util.Disposer
 import com.intellij.testFramework.junit5.TestApplication
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test

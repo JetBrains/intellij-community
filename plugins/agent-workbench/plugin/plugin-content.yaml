@@ -16,6 +16,9 @@
 - name: lib/modules/intellij.agent.workbench.codex.sessions.jar
   contentModules:
   - name: intellij.agent.workbench.codex.sessions
+- name: lib/modules/intellij.agent.workbench.common.jar
+  contentModules:
+  - name: intellij.agent.workbench.common
 - name: lib/modules/intellij.agent.workbench.filewatch.jar
   contentModules:
   - name: intellij.agent.workbench.filewatch

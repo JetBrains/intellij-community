@@ -21,9 +21,9 @@ import java.awt.Dimension
 import java.awt.event.MouseEvent
 import javax.swing.Box
 import javax.swing.BoxLayout
+import javax.swing.JComponent
 import javax.swing.JLabel
 import javax.swing.JPanel
-import javax.swing.JComponent
 import javax.swing.JProgressBar
 import javax.swing.Timer
 

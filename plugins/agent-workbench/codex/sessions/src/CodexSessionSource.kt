@@ -38,6 +38,22 @@ internal class CodexSessionSource internal constructor(
   private val appServerRefreshHintsProvider: CodexRefreshHintsProvider,
   private val rolloutRefreshHintsProvider: CodexRefreshHintsProvider,
 ) : BaseAgentSessionSource(provider = AgentSessionProvider.CODEX, canReportExactThreadCount = false) {
+  private val readTracker = ConcurrentHashMap<String, Long>()
+  private val readStateUpdates = MutableSharedFlow<Unit>(extraBufferCapacity = 1)
+  @Volatile private var activeThreadId: String? = null
+
+  constructor(
+    backend: CodexSessionBackend = createDefaultCodexSessionBackend(),
+    sharedAppServerService: SharedCodexAppServerService = service(),
+  ) : this(
+    backend = backend,
+    appServerRefreshHintsProvider = CodexAppServerRefreshHintsProvider(
+      readThreadActivitySnapshot = sharedAppServerService::readThreadActivitySnapshot,
+      notifications = sharedAppServerService.notifications,
+    ),
+    rolloutRefreshHintsProvider = CodexRolloutRefreshHintsProvider(),
+  )
+
   override val supportsUpdates: Boolean
     get() = true
 

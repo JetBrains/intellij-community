@@ -18,7 +18,7 @@ targets:
 # Agent Chat Editor
 
 Status: Draft
-Date: 2026-02-22
+Date: 2026-03-09
 
 ## Summary
 Define how Agent chat tabs are opened, restored, reused, and rendered in editor tabs. This spec owns tab lifecycle and persistence behavior. Shared command mapping and shared editor-tab popup action semantics are owned by `spec/agent-core-contracts.spec.md`.
@@ -41,7 +41,8 @@ Define how Agent chat tabs are opened, restored, reused, and rendered in editor 
   - `editorTabTitleProvider` for Agent chat tabs.
   [@test] ../chat/testSrc/AgentChatFileEditorProviderTest.kt
 
-- Chat editor opening must use `AsyncFileEditorProvider` and terminal reworked frontend integration (`TerminalToolWindowTabsManager`) with `shouldAddToToolWindow(false)`.
+- Chat editor opening must use `AsyncFileEditorProvider`.
+- Terminal integration must use reworked frontend (`TerminalToolWindowTabsManager`) with `shouldAddToToolWindow(false)`.
   [@test] ../chat/testSrc/AgentChatEditorServiceTest.kt
 
 - Chat tabs must reuse an existing tab for the same canonical thread identity (`provider:threadId`) and `subAgentId` when present.
@@ -69,7 +70,7 @@ Define how Agent chat tabs are opened, restored, reused, and rendered in editor 
 - Chat restore must restore all previously open Agent chat tabs, not only the selected one.
   [@test] ../chat/testSrc/AgentChatEditorServiceTest.kt
 
-- Persisted tab-state entries are canonical restore source; legacy descriptor URL format and legacy `<config>/agent-workbench-chat-frame/tabs/*.awchat.json` metadata are out of compatibility scope and may be removed best-effort.
+- Persisted tab-state entries are canonical restore source. Legacy descriptor URL format and `*.awchat.json` metadata are unsupported and may be removed.
   [@test] ../chat/testSrc/AgentChatEditorServiceTest.kt
 
 - Stale or invalid tab-state entries must be pruned periodically.
@@ -80,7 +81,14 @@ Define how Agent chat tabs are opened, restored, reused, and rendered in editor 
   - terminal session starts only on first explicit tab selection/focus.
   [@test] ../chat/testSrc/AgentChatTabSelectionServiceTest.kt
 
+- Disposing an initialized chat editor must always release terminal tab resources:
+  - manager-backed tab content must close through `TerminalToolWindowTabsManager.closeTab`,
+  - detached tab content (no content manager) must still be released.
+  [@test] ../chat/testSrc/AgentChatFileEditorLifecycleTest.kt
+  [@test] ../chat/testSrc/AgentChatTerminalTabCloseTest.kt
+
 - Editor tab title must come from thread title with fallback `Agent Chat`, via `EditorTabTitleProvider` (no virtual-file-name mutation dependency).
+- Tab title must be middle-truncated to 50 characters for presentation; tooltip keeps full title.
   [@test] ../chat/testSrc/AgentChatEditorServiceTest.kt
   [@test] ../chat/testSrc/AgentChatFileEditorProviderTest.kt
 
@@ -127,11 +135,12 @@ Define how Agent chat tabs are opened, restored, reused, and rendered in editor 
 - Restore validation failures and terminal initialization failures must close the tab, delete the corresponding tab-state entry immediately, and surface deduplicated non-blocking warning notifications.
   [@test] ../chat/testSrc/AgentChatEditorServiceTest.kt
 
-- Dedicated-frame vs current-project target frame selection must follow `spec/agent-dedicated-frame.spec.md`.
-  [@test] ../sessions/testSrc/AgentSessionsOpenModeRoutingTest.kt
+- Terminal initialization failures caused by command lookup must include actionable warning text with attempted command and startup `PATH` snapshot when available.
+  [@test] ../chat/testSrc/AgentChatRestoreNotificationServiceTest.kt
 
 - Editor tab actions must include `Bind Pending Thread` for providers that support pending editor-tab rebinding, invoking targeted rebind for the active pending tab only.
   [@test] ../sessions/testSrc/AgentSessionsEditorTabActionsTest.kt
+  [@test] ../chat/testSrc/AgentChatEditorServiceTest.kt
 
 ## User Experience
 - Clicking a thread opens its chat tab.
@@ -147,11 +156,13 @@ Define how Agent chat tabs are opened, restored, reused, and rendered in editor 
 - Invalid project path or project-open failure must not crash UI or open a broken tab.
 - Missing/invalid identity context must fail safely without editor-tab corruption.
 - Restore/initialization warning notifications must be deduplicated per tab+reason for the IDE session.
+- Command lookup failures should expose actionable diagnostics (command + startup `PATH`) without adding fallback launch behavior.
 
 ## Testing / Local Run
 - `./tests.cmd '-Dintellij.build.test.patterns=com.intellij.agent.workbench.chat.AgentChatEditorServiceTest -Dintellij.build.test.main.module=intellij.agent.workbench.plugin.tests'`
 - `./tests.cmd '-Dintellij.build.test.patterns=com.intellij.agent.workbench.chat.AgentChatFileEditorProviderTest'`
 - `./tests.cmd '-Dintellij.build.test.patterns=com.intellij.agent.workbench.chat.AgentChatTabSelectionServiceTest'`
+- `./tests.cmd '-Dintellij.build.test.patterns=com.intellij.agent.workbench.chat.AgentChatRestoreNotificationServiceTest'`
 - `./tests.cmd '-Dintellij.build.test.patterns=com.intellij.agent.workbench.sessions.AgentSessionsOpenModeRoutingTest'`
 
 ## Open Questions / Risks
