@@ -34,6 +34,9 @@
     </extensionPoint>
     <extensionPoint name="initScriptGenerator" interface="org.jetbrains.plugins.gradle.execution.build.GradleInitScriptGenerator"
                     dynamic="true"/>
+    <extensionPoint qualifiedName="org.jetbrains.plugins.gradle.versionCatalogPsiResolver"
+                    interface="org.jetbrains.plugins.gradle.service.resolve.GradleVersionCatalogPsiResolver"
+                    dynamic="true"/>
   </extensionPoints>
 
   <extensions defaultExtensionNs="org.jetbrains.plugins.gradle">
