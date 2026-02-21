@@ -8,6 +8,8 @@ import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.trace
 import com.intellij.openapi.editor.ex.EditorEx
 import com.intellij.terminal.JBTerminalSystemSettingsProviderBase
+import com.intellij.terminal.frontend.view.TerminalKeyEvent
+import com.intellij.terminal.frontend.view.TerminalKeyEventImpl
 import com.intellij.terminal.frontend.view.TerminalView
 import com.intellij.terminal.frontend.view.completion.TerminalCommandCompletionTypingListener
 import com.jediterm.terminal.emulator.mouse.MouseButtonCodes
@@ -15,6 +17,7 @@ import com.jediterm.terminal.emulator.mouse.MouseButtonModifierFlags
 import com.jediterm.terminal.emulator.mouse.MouseFormat
 import com.jediterm.terminal.emulator.mouse.MouseMode
 import kotlinx.coroutines.Deferred
+import kotlinx.coroutines.flow.MutableSharedFlow
 import org.jetbrains.plugins.terminal.block.reworked.TerminalSessionModel
 import org.jetbrains.plugins.terminal.block.reworked.TerminalUsageLocalStorage
 import org.jetbrains.plugins.terminal.block.util.TerminalDataContextUtils.isOutputModelEditor
@@ -37,7 +40,8 @@ import kotlin.math.abs
  * Logic of mouse event handling is copied from [com.jediterm.terminal.model.JediTerminal]
  */
 internal open class TerminalEventsHandlerImpl(
-  private val terminalView: TerminalView,
+  private val keyEventsFlow: MutableSharedFlow<TerminalKeyEvent>,
+  terminalView: TerminalView,
   private val sessionModel: TerminalSessionModel,
   private val editor: EditorEx,
   private val encodingManager: TerminalKeyEncodingManager,
@@ -73,7 +77,7 @@ internal open class TerminalEventsHandlerImpl(
   override fun keyTyped(e: TimedKeyEvent) {
     LOG.trace { "Key typed event received: ${e.original}" }
     val charTyped = e.original.keyChar
-    val beforeTypingCursorOffset = outputModel.cursorOffset
+    val beforeKeyTypedCursorOffset = outputModel.cursorOffset
 
     val selectionModel = editor.selectionModel
     if (selectionModel.hasSelection()) {
@@ -98,17 +102,23 @@ internal open class TerminalEventsHandlerImpl(
     }
 
     syncEditorCaretWithModel(editor, outputModel)
-    completionTypingListener?.onCharTyped(beforeTypingCursorOffset, charTyped)
+    completionTypingListener?.onCharTyped(beforeKeyTypedCursorOffset, charTyped)
+
+    check(keyEventsFlow.tryEmit(TerminalKeyEventImpl(e.original, beforeKeyTypedCursorOffset)))
   }
 
   override fun keyPressed(e: TimedKeyEvent) {
     LOG.trace { "Key pressed event received: ${e.original}" }
+    val beforeKeyPressedCursorOffset = outputModel.cursorOffset
+
     ignoreNextKeyTypedEvent = false
     if (processTerminalKeyPressed(e)) {
       e.original.consume()
       ignoreNextKeyTypedEvent = true
       LOG.trace { "Key event consumed: ${e.original}" }
     }
+
+    check(keyEventsFlow.tryEmit(TerminalKeyEventImpl(e.original, beforeKeyPressedCursorOffset)))
   }
 
   private fun processTerminalKeyPressed(e: TimedKeyEvent): Boolean {
@@ -355,7 +365,7 @@ internal open class TerminalEventsHandlerImpl(
       SwingUtilities.isRightMouseButton(event) -> {
         // we don't handle the right mouse button as it used for the context menu invocation
         MouseButtonCodes.NONE
-      }  
+      }
       event is MouseWheelEvent -> wheelRotationToButtonCode(event.wheelRotation)
       else -> return MouseButtonCodes.NONE
     }
