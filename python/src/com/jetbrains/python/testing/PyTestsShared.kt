@@ -835,124 +835,6 @@ internal sealed class PyTestTargetForConfig(
  * Only one producer is registered with EP, but it uses factory configured by user to produce different configs
  */
 internal class PyTestsConfigurationProducer : AbstractPythonTestConfigurationProducer<PyAbstractTestConfiguration>() {
-  companion object {
-    /**
-     * Creates [ConfigurationTarget] to make  configuration work with provided element.
-     * Also reports working dir what should be set to configuration to work correctly and target PsiElement
-     * @return [targetPath, workingDirectory, targetPsiElement]
-     */
-    internal fun getTargetForConfig(
-      configuration: PyAbstractTestConfiguration,
-      baseElement: PsiElement,
-    ): PyTestTargetForConfig? {
-      var element = baseElement
-      // Go up until we reach top of the file
-      // asking configuration about each element if it is supported or not
-      // If element is supported -- set it as configuration target
-      do {
-        val isDoctestApplicable = isDoctestApplicable(element, configuration.module)
-        if (isDoctestApplicable || configuration.couldBeTestTarget(element)) {
-          val target = createPyTestPythonTarget(element, configuration)
-          if (target != null) {
-            if (isDoctestApplicable) {
-              configuration.additionalArguments += DOCTEST_MODULES_ARG
-            }
-            return target
-          }
-        }
-        element = element.parent ?: break
-      }
-      while (element !is PsiDirectory) // if parent is folder, then we are at file level
-      return null
-    }
-
-    private fun createPyTestPythonTarget(element: PsiElement, configuration: PyAbstractTestConfiguration): PyTestTargetForConfig? {
-      when (element) {
-        is PyQualifiedNameOwner -> { // Function, class, method
-
-          val module = configuration.module ?: return null
-
-          val elementFile = element.containingFile as? PyFile ?: return null
-
-          // If pytest is the selected framework, ensure the file is a pytest test module by default naming
-          if (!PyTestDiscoveryUtil.isPyTestAllowedForFile(module, elementFile)) return null
-
-          val workingDirectory = getDirectoryForFileToBeImportedFrom(elementFile, module) ?: return null
-          val context = QNameResolveContext(ModuleBasedContextAnchor(module),
-                                            evalContext = TypeEvalContext.userInitiated(configuration.project,
-                                                                                        null),
-                                            folderToStart = workingDirectory.virtualFile)
-          val parts = element.tryResolveAndSplit(context) ?: return null
-          val qualifiedName = parts.getElementNamePrependingFile(workingDirectory)
-          return PyTestTargetForConfig.PyTestPythonTarget(qualifiedName.toString(), workingDirectory.virtualFile, parts, element)
-        }
-        is PsiFileSystemItem -> {
-          val virtualFile = element.virtualFile
-
-          val workingDirectory: VirtualFile = when (element) {
-                                                is PyFile -> {
-                                                  val file = element
-                                                  val module = configuration.module
-                                                  if (!PyTestDiscoveryUtil.isPyTestAllowedForFile(module, file)) return null
-                                                  getDirectoryForFileToBeImportedFrom(file, configuration.module)?.virtualFile
-                                                }
-                                                is PsiDirectory -> virtualFile
-                                                else -> return null
-                                              } ?: return null
-          return PyTestTargetForConfig.PyTestPathTarget(virtualFile.path, workingDirectory, element)
-        }
-        else -> return null
-      }
-    }
-
-    /**
-     * Returns test root for this file. Either it is specified explicitly or calculated using following strategy:
-     * Inspect file relative imports, find farthest and return folder with imported file
-     */
-    private fun getDirectoryForFileToBeImportedFrom(file: PyFile, module: Module?): PsiDirectory? {
-      getExplicitlyConfiguredTestRoot(file, true)?.let {
-        return file.manager.findDirectory(it)
-      }
-
-      module?.baseDir?.let {
-        return file.manager.findDirectory(it)
-      }
-
-      val maxRelativeLevel = file.fromImports.map { it.relativeLevel }.maxOrNull() ?: 0
-      var elementFolder = file.parent ?: return null
-      for (i in 1..maxRelativeLevel) {
-        elementFolder = elementFolder.parent ?: return null
-      }
-      return elementFolder
-    }
-
-    private fun isDoctestApplicable(element: PsiElement, module: Module?): Boolean =
-      Registry.`is`("python.run.doctest.via.pytest.configuration") &&
-      TestRunnerService.getInstance(module).selectedFactory is PyTestFactory &&
-      hasDoctestExpression(element)
-
-    private fun hasDoctestExpression(element: PsiElement): Boolean =
-      when (element) {
-        is PyFunction -> {
-          PythonDocTestUtil.isDocTestFunction(element)
-        }
-        is PyClass -> {
-          PythonDocTestUtil.isDocTestClass(element)
-        }
-        is PyFile -> {
-          PythonDocTestUtil.getDocTestCasesFromFile(element).isNotEmpty()
-        }
-        else -> false
-      }
-
-    private fun isDoctestConfiguration(configuration: RunConfiguration): Boolean =
-      configuration.name.contains(DOCTEST_PREFIX) ||
-      (configuration as? PyAbstractTestConfiguration)?.additionalArguments?.contains(DOCTEST_MODULES_ARG) == true
-
-    private const val DOCTEST_MODULES_ARG = "--doctest-modules"
-    private const val DOCTEST_PREFIX = "Doctest via "
-  }
-
   override fun getConfigurationFactory() = PythonTestConfigurationType.getInstance().configurationFactories[0]
 
   override val configurationClass: Class<PyAbstractTestConfiguration> = PyAbstractTestConfiguration::class.java
@@ -1085,3 +967,119 @@ internal class PyTestsConfigurationProducer : AbstractPythonTestConfigurationPro
  * Mark run configuration field with it to enable saving, restoring and form iteraction
  */
 annotation class ConfigField(@param:PropertyKey(resourceBundle = PyBundle.BUNDLE) val localizedName: String)
+
+/**
+ * Creates [ConfigurationTarget] to make  configuration work with provided element.
+ * Also reports working dir what should be set to configuration to work correctly and target PsiElement
+ * @return [targetPath, workingDirectory, targetPsiElement]
+ */
+private fun getTargetForConfig(
+  configuration: PyAbstractTestConfiguration,
+  baseElement: PsiElement,
+): PyTestTargetForConfig? {
+  var element = baseElement
+  // Go up until we reach top of the file
+  // asking configuration about each element if it is supported or not
+  // If element is supported -- set it as configuration target
+  do {
+    val isDoctestApplicable = isDoctestApplicable(element, configuration.module)
+    if (isDoctestApplicable || configuration.couldBeTestTarget(element)) {
+      val target = createPyTestPythonTarget(element, configuration)
+      if (target != null) {
+        if (isDoctestApplicable) {
+          configuration.additionalArguments += DOCTEST_MODULES_ARG
+        }
+        return target
+      }
+    }
+    element = element.parent ?: break
+  }
+  while (element !is PsiDirectory) // if parent is folder, then we are at file level
+  return null
+}
+
+private fun createPyTestPythonTarget(element: PsiElement, configuration: PyAbstractTestConfiguration): PyTestTargetForConfig? {
+  when (element) {
+    is PyQualifiedNameOwner -> { // Function, class, method
+
+      val module = configuration.module ?: return null
+
+      val elementFile = element.containingFile as? PyFile ?: return null
+
+      // If pytest is the selected framework, ensure the file is a pytest test module by default naming
+      if (!PyTestDiscoveryUtil.isPyTestAllowedForFile(module, elementFile)) return null
+
+      val workingDirectory = getDirectoryForFileToBeImportedFrom(elementFile, module) ?: return null
+      val context = QNameResolveContext(ModuleBasedContextAnchor(module),
+                                        evalContext = TypeEvalContext.userInitiated(configuration.project,
+                                                                                    null),
+                                        folderToStart = workingDirectory.virtualFile)
+      val parts = element.tryResolveAndSplit(context) ?: return null
+      val qualifiedName = parts.getElementNamePrependingFile(workingDirectory)
+      return PyTestTargetForConfig.PyTestPythonTarget(qualifiedName.toString(), workingDirectory.virtualFile, parts, element)
+    }
+    is PsiFileSystemItem -> {
+      val virtualFile = element.virtualFile
+
+      val workingDirectory: VirtualFile = when (element) {
+                                            is PyFile -> {
+                                              val file = element
+                                              val module = configuration.module
+                                              if (!PyTestDiscoveryUtil.isPyTestAllowedForFile(module, file)) return null
+                                              getDirectoryForFileToBeImportedFrom(file, configuration.module)?.virtualFile
+                                            }
+                                            is PsiDirectory -> virtualFile
+                                            else -> return null
+                                          } ?: return null
+      return PyTestTargetForConfig.PyTestPathTarget(virtualFile.path, workingDirectory, element)
+    }
+    else -> return null
+  }
+}
+
+/**
+ * Returns test root for this file. Either it is specified explicitly or calculated using following strategy:
+ * Inspect file relative imports, find farthest and return folder with imported file
+ */
+private fun getDirectoryForFileToBeImportedFrom(file: PyFile, module: Module?): PsiDirectory? {
+  getExplicitlyConfiguredTestRoot(file, true)?.let {
+    return file.manager.findDirectory(it)
+  }
+
+  module?.baseDir?.let {
+    return file.manager.findDirectory(it)
+  }
+
+  val maxRelativeLevel = file.fromImports.map { it.relativeLevel }.maxOrNull() ?: 0
+  var elementFolder = file.parent ?: return null
+  for (i in 1..maxRelativeLevel) {
+    elementFolder = elementFolder.parent ?: return null
+  }
+  return elementFolder
+}
+
+private fun isDoctestApplicable(element: PsiElement, module: Module?): Boolean =
+  Registry.`is`("python.run.doctest.via.pytest.configuration") &&
+  TestRunnerService.getInstance(module).selectedFactory is PyTestFactory &&
+  hasDoctestExpression(element)
+
+private fun hasDoctestExpression(element: PsiElement): Boolean =
+  when (element) {
+    is PyFunction -> {
+      PythonDocTestUtil.isDocTestFunction(element)
+    }
+    is PyClass -> {
+      PythonDocTestUtil.isDocTestClass(element)
+    }
+    is PyFile -> {
+      PythonDocTestUtil.getDocTestCasesFromFile(element).isNotEmpty()
+    }
+    else -> false
+  }
+
+private fun isDoctestConfiguration(configuration: RunConfiguration): Boolean =
+  configuration.name.contains(DOCTEST_PREFIX) ||
+  (configuration as? PyAbstractTestConfiguration)?.additionalArguments?.contains(DOCTEST_MODULES_ARG) == true
+
+private const val DOCTEST_MODULES_ARG = "--doctest-modules"
+private const val DOCTEST_PREFIX = "Doctest via "

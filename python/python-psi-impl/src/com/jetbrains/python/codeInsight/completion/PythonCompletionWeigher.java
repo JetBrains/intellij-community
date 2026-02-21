@@ -73,7 +73,7 @@ public final class PythonCompletionWeigher extends CompletionWeigher {
       return WEIGHT_FOR_KEYWORDS;
     }
 
-    if (element.getUserData(PyMultipleArgumentsCompletionContributor.Companion.getMULTIPLE_ARGUMENTS_VARIANT_KEY()) != null) {
+    if (element.getUserData(PyMultipleArgumentsCompletionContributor.Helper.MULTIPLE_ARGUMENTS_VARIANT_KEY) != null) {
       return WEIGHT_FOR_MULTIPLE_ARGUMENTS;
     }
 

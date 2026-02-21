@@ -38,7 +38,7 @@ class PyCharmCommunityToUnifiedScheduleService(val serviceScope: CoroutineScope)
           LOG.info("Skipping promo modal fallback: no open projects")
           return@launch
         }
-        PyCommunityToUnifiedShowPromoActivity.showModalPromo(project)
+        PyCommunityToUnifiedShowPromoActivity.Helper.showModalPromo(project)
       }
       catch (t: Throwable) {
         if (t is CancellationException) throw t

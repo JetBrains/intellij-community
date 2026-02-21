@@ -23,7 +23,7 @@ import org.jetbrains.annotations.NotNull;
 public final class DocStringReferenceContributor extends PsiReferenceContributor {
   @Override
   public void registerReferenceProviders(@NotNull PsiReferenceRegistrar registrar) {
-    registrar.registerReferenceProvider(DocStringTagCompletionContributor.DOCSTRING_PATTERN,
+    registrar.registerReferenceProvider(DocStringTagCompletionContributor.Helper.DOCSTRING_PATTERN,
                                         new DocStringReferenceProvider());
   }
 }

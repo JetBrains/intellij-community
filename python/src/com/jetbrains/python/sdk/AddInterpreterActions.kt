@@ -138,7 +138,7 @@ internal class AddInterpreterOnTargetAction(
   }
 
   override fun createDialog(): TargetEnvironmentWizard? {
-    val wizard = TargetEnvironmentWizard.createWizard(project, targetType, PythonLanguageRuntimeType.getInstance())
+    val wizard = TargetEnvironmentWizard.createWizard(project, targetType, PythonLanguageRuntimeType.Helper.getInstance())
 
     wizard?.let {
       Disposer.register(it.disposable, Disposable {

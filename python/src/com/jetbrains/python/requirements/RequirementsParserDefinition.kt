@@ -45,7 +45,6 @@ class RequirementsParserDefinition : ParserDefinition {
     return com.jetbrains.python.requirements.psi.RequirementsTypes.Factory.createElement(node)
   }
 
-  companion object {
-    val FILE = IFileElementType(RequirementsLanguage.INSTANCE)
-  }
 }
+
+private val FILE = IFileElementType(RequirementsLanguage.INSTANCE)

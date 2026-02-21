@@ -40,8 +40,6 @@ import com.jetbrains.python.codeInsight.typeHints.PyTypeHintFile
 import com.jetbrains.python.codeInsight.typeRepresentation.PyModuleTypeName
 import com.jetbrains.python.codeInsight.typeRepresentation.psi.PyFunctionTypeRepresentation
 import com.jetbrains.python.codeInsight.typing.PyTypeHintProvider.Companion.parseTypeHint
-import com.jetbrains.python.codeInsight.typing.PyTypedDictTypeProvider.Companion.getTypedDictTypeForResolvedElement
-import com.jetbrains.python.codeInsight.typing.PyTypedDictTypeProvider.Companion.isTypedDict
 import com.jetbrains.python.codeInsight.typing.PyTypingTypeProvider.Context
 import com.jetbrains.python.psi.AccessDirection
 import com.jetbrains.python.psi.FutureFeature
@@ -961,7 +959,7 @@ class PyTypingTypeProvider : PyTypeProviderWithCustomContext<Context?>() {
     }
 
     private fun getTypedDictTypeForTarget(referenceTarget: PyTargetExpression, context: TypeEvalContext): PyType? {
-      if (isTypedDict(referenceTarget, context)) {
+      if (PyTypedDictTypeProvider.Helper.isTypedDict(referenceTarget, context)) {
         return PyCustomType(
           TYPED_DICT, null, false, true,
           getInstance(referenceTarget).dictType
@@ -1370,7 +1368,7 @@ class PyTypingTypeProvider : PyTypeProviderWithCustomContext<Context?>() {
         if (anyType != null) {
           return anyType
         }
-        val typedDictType: PyType? = getTypedDictTypeForResolvedElement(
+        val typedDictType: PyType? = PyTypedDictTypeProvider.Helper.getTypedDictTypeForResolvedElement(
           resolved,
           context.typeContext
         )

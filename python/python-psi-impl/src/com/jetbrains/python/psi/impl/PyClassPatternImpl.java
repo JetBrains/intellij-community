@@ -156,9 +156,9 @@ public class PyClassPatternImpl extends PyElementImpl implements PyClassPattern,
     List<String> matchArgs = cls.getOwnMatchArgs();
     if (matchArgs != null) return matchArgs;
 
-    matchArgs = PyNamedTupleTypeProvider.Companion.getGeneratedMatchArgs(type, context);
+    matchArgs = PyNamedTupleTypeProvider.Helper.getGeneratedMatchArgs(type, context);
     if (matchArgs != null) return matchArgs;
-    matchArgs = PyDataclassTypeProvider.Companion.getGeneratedMatchArgs(type, context);
+    matchArgs = PyDataclassTypeProvider.Helper.getGeneratedMatchArgs(type, context);
     if (matchArgs != null) return matchArgs;
 
     for (PyClassLikeType baseType : type.getSuperClassTypes(context)) {

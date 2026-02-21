@@ -22,9 +22,6 @@ class ShowCommandQueueAction(private val consoleView: PythonConsoleView)
                  emptyQueueIcon), DumbAware {
 
   companion object {
-    private val emptyQueueIcon = PythonIcons.Python.CommandQueue
-    private val notEmptyQueueIcon = ExecutionUtil.getLiveIndicator(emptyQueueIcon)
-
     @JvmStatic
     fun isCommandQueueIcon(icon: Icon): Boolean = icon == emptyQueueIcon || icon == notEmptyQueueIcon
   }
@@ -68,3 +65,6 @@ class ShowCommandQueueAction(private val consoleView: PythonConsoleView)
     }
   }
 }
+
+private val emptyQueueIcon = PythonIcons.Python.CommandQueue
+private val notEmptyQueueIcon = ExecutionUtil.getLiveIndicator(emptyQueueIcon)

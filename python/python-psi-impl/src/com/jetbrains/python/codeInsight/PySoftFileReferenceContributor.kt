@@ -179,24 +179,6 @@ open class PySoftFileReferenceContributor : PsiReferenceContributor() {
     }
   }
 
-  companion object {
-    private val FILE_NAME_PATTERNS = linkedSetOf(
-      "path",
-      "file",
-      "filename",
-      "filepath",
-      "pathname",
-      "src",
-      "dst",
-      "dir"
-    )
-
-    private fun matchesPathNamePattern(name: String): Boolean {
-      val nameParts = name.split("_")
-      return nameParts.any { it.lowercase(Locale.getDefault()) in FILE_NAME_PATTERNS }
-    }
-  }
-
   private object PySoftFileReferenceProvider : PsiReferenceProvider() {
     override fun acceptsTarget(target: PsiElement): Boolean = target is PsiFileSystemItem
 
@@ -238,4 +220,20 @@ open class PySoftFileReferenceContributor : PsiReferenceContributor() {
         else -> text
       }
   }
+}
+
+private val FILE_NAME_PATTERNS = linkedSetOf(
+  "path",
+  "file",
+  "filename",
+  "filepath",
+  "pathname",
+  "src",
+  "dst",
+  "dir"
+)
+
+private fun matchesPathNamePattern(name: String): Boolean {
+  val nameParts = name.split("_")
+  return nameParts.any { it.lowercase(Locale.getDefault()) in FILE_NAME_PATTERNS }
 }

@@ -90,87 +90,6 @@ class PyTypingAnnotationInjector : PyInjectorBase() {
     return null
   }
 
-  companion object {
-    private fun isInsideValueOfExplicitTypeAnnotation(expr: PyStringLiteralExpression): Boolean {
-      val assignment = PsiTreeUtil.getParentOfType(expr, PyAssignmentStatement::class.java)
-      if (assignment == null || !PsiTreeUtil.isAncestor(assignment.assignedValue, expr, false)) {
-        return false
-      }
-      return PyTypingTypeProvider.isExplicitTypeAlias(assignment, TypeEvalContext.codeAnalysis(expr.project, expr.containingFile))
-    }
-
-    private fun registerCommentInjection(
-      registrar: MultiHostRegistrar,
-      host: PsiLanguageInjectionHost,
-    ): PyInjectionUtil.InjectionResult {
-      val text = host.text
-      val annotationText = PyTypingTypeProvider.getTypeCommentValue(text)
-      if (annotationText != null) {
-        val language: Language?
-        if (PyTypingTypeProvider.TYPE_IGNORE_PATTERN.matcher(text).matches()) {
-          language = null
-        }
-        else if (isFunctionTypeComment(host)) {
-          language = PyFunctionTypeAnnotationDialect.INSTANCE
-        }
-        else {
-          language = PyTypeHintDialect.INSTANCE
-        }
-        if (language != null) {
-          registrar.startInjecting(language)
-          registrar.addPlace("", "", host, PyTypingTypeProvider.getTypeCommentValueRange(text)!!)
-          registrar.doneInjecting()
-          return PyInjectionUtil.InjectionResult(true, true)
-        }
-      }
-      return PyInjectionUtil.InjectionResult.EMPTY
-    }
-
-    private fun isTypingLiteralArgument(element: PsiElement): Boolean {
-      var parent = element.parent
-      if (parent is PyTupleExpression) parent = parent.parent
-      val subscription = parent as? PySubscriptionExpression ?: return false
-      val operand = subscription.operand as? PyReferenceExpression ?: return false
-      val resolvedNames = resolveLocally(operand)
-      return resolvedNames.any {
-        PyTypingTypeProvider.LITERAL == it || PyTypingTypeProvider.LITERAL_EXT == it
-      }
-    }
-
-    private fun resolveLocally(operand: PyReferenceExpression): List<String> =
-      PyResolveUtil.resolveImportedElementQNameLocally(operand).map { it.toString() }
-
-    private fun isTypingAnnotatedMetadataArgument(
-      element: PsiElement,
-    ): Boolean {
-      val tuple = PyUtil.`as`(element.parent, PyTupleExpression::class.java)
-      if (tuple == null) return false
-      val parent = PyUtil.`as`(tuple.parent, PySubscriptionExpression::class.java)
-      if (parent == null) return false
-
-      val operand = parent.operand as? PyReferenceExpression ?: return false
-      val resolvedNames = resolveLocally(operand)
-      if (resolvedNames.any { PyTypingTypeProvider.ANNOTATED == it || PyTypingTypeProvider.ANNOTATED_EXT == it }) {
-        return tuple.elements[0] !== element
-      }
-      return false
-    }
-
-    private fun isFunctionTypeComment(comment: PsiElement): Boolean {
-      val function = PsiTreeUtil.getParentOfType(comment, PyFunction::class.java)
-      return function != null && function.typeComment === comment
-    }
-
-    private fun isInsideNewStyleTypeVarBound(element: PsiElement): Boolean {
-      return PsiTreeUtil.getParentOfType(element, PyTypeParameter::class.java, true,
-                                         PyTypeParameterListOwner::class.java) != null
-    }
-
-    fun isTypingAnnotation(s: String): Boolean {
-      return PyTypingAliasStubType.RE_TYPE_HINT_LIKE_STRING.toRegex() matches s
-    }
-  }
-
   private fun isTypingCastTypeArgument(
     expr: PyStringLiteralExpression,
   ): Boolean {
@@ -265,4 +184,83 @@ class PyTypingAnnotationInjector : PyInjectorBase() {
     val expectedTypeArg = args[1]
     return PsiTreeUtil.isAncestor(expectedTypeArg, expr, false)
   }
+}
+
+private fun isInsideValueOfExplicitTypeAnnotation(expr: PyStringLiteralExpression): Boolean {
+  val assignment = PsiTreeUtil.getParentOfType(expr, PyAssignmentStatement::class.java)
+  if (assignment == null || !PsiTreeUtil.isAncestor(assignment.assignedValue, expr, false)) {
+    return false
+  }
+  return PyTypingTypeProvider.isExplicitTypeAlias(assignment, TypeEvalContext.codeAnalysis(expr.project, expr.containingFile))
+}
+
+private fun registerCommentInjection(
+  registrar: MultiHostRegistrar,
+  host: PsiLanguageInjectionHost,
+): PyInjectionUtil.InjectionResult {
+  val text = host.text
+  val annotationText = PyTypingTypeProvider.getTypeCommentValue(text)
+  if (annotationText != null) {
+    val language: Language?
+    if (PyTypingTypeProvider.TYPE_IGNORE_PATTERN.matcher(text).matches()) {
+      language = null
+    }
+    else if (isFunctionTypeComment(host)) {
+      language = PyFunctionTypeAnnotationDialect.INSTANCE
+    }
+    else {
+      language = PyTypeHintDialect.INSTANCE
+    }
+    if (language != null) {
+      registrar.startInjecting(language)
+      registrar.addPlace("", "", host, PyTypingTypeProvider.getTypeCommentValueRange(text)!!)
+      registrar.doneInjecting()
+      return PyInjectionUtil.InjectionResult(true, true)
+    }
+  }
+  return PyInjectionUtil.InjectionResult.EMPTY
+}
+
+private fun isTypingLiteralArgument(element: PsiElement): Boolean {
+  var parent = element.parent
+  if (parent is PyTupleExpression) parent = parent.parent
+  val subscription = parent as? PySubscriptionExpression ?: return false
+  val operand = subscription.operand as? PyReferenceExpression ?: return false
+  val resolvedNames = resolveLocally(operand)
+  return resolvedNames.any {
+    PyTypingTypeProvider.LITERAL == it || PyTypingTypeProvider.LITERAL_EXT == it
+  }
+}
+
+private fun resolveLocally(operand: PyReferenceExpression): List<String> =
+  PyResolveUtil.resolveImportedElementQNameLocally(operand).map { it.toString() }
+
+private fun isTypingAnnotatedMetadataArgument(
+  element: PsiElement,
+): Boolean {
+  val tuple = PyUtil.`as`(element.parent, PyTupleExpression::class.java)
+  if (tuple == null) return false
+  val parent = PyUtil.`as`(tuple.parent, PySubscriptionExpression::class.java)
+  if (parent == null) return false
+
+  val operand = parent.operand as? PyReferenceExpression ?: return false
+  val resolvedNames = resolveLocally(operand)
+  if (resolvedNames.any { PyTypingTypeProvider.ANNOTATED == it || PyTypingTypeProvider.ANNOTATED_EXT == it }) {
+    return tuple.elements[0] !== element
+  }
+  return false
+}
+
+private fun isFunctionTypeComment(comment: PsiElement): Boolean {
+  val function = PsiTreeUtil.getParentOfType(comment, PyFunction::class.java)
+  return function != null && function.typeComment === comment
+}
+
+private fun isInsideNewStyleTypeVarBound(element: PsiElement): Boolean {
+  return PsiTreeUtil.getParentOfType(element, PyTypeParameter::class.java, true,
+                                     PyTypeParameterListOwner::class.java) != null
+}
+
+private fun isTypingAnnotation(s: String): Boolean {
+  return PyTypingAliasStubType.RE_TYPE_HINT_LIKE_STRING.toRegex() matches s
 }

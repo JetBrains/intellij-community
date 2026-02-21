@@ -45,7 +45,7 @@ private fun createPythonInterpreterConfigurable(project: Project,
   val targetType: TargetEnvironmentType<TargetEnvironmentConfiguration>? = targetEnvironmentConfiguration?.getTargetType()
   val targetConfigurable = targetType?.createConfigurable(project,
                                                           targetEnvironmentConfiguration,
-                                                          PythonLanguageRuntimeType.getInstance(),
+                                                          PythonLanguageRuntimeType.Helper.getInstance(),
                                                           parentConfigurable)
   return if (targetConfigurable != null) {
     val pythonLanguageRuntimeConfiguration = PythonLanguageRuntimeConfiguration()

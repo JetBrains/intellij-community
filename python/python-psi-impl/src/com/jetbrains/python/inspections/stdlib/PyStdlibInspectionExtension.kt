@@ -33,7 +33,7 @@ class PyStdlibInspectionExtension : PyInspectionExtension() {
     val qualifier = expression.qualifier
     return qualifier != null &&
            expression.referencedName in PyNamedTupleType.getSpecialAttributes(LanguageLevel.forElement(expression)) &&
-           PyNamedTupleTypeProvider.isNamedTuple(context.getType(qualifier), context)
+           PyNamedTupleTypeProvider.Helper.isNamedTuple(context.getType(qualifier), context)
   }
 
   override fun ignoreMethodParameters(function: PyFunction, context: TypeEvalContext): Boolean {

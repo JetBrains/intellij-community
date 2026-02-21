@@ -77,7 +77,9 @@ public abstract class PyBaseConvertCollectionLiteralIntention extends PsiUpdateM
     }
     if (literal != null && isAvailableForCollection(literal)) {
       if (literal instanceof PyTupleExpression) {
-        if (PyTypingTypeProvider.isInsideTypeHint(literal, TypeEvalContext.codeAnalysis(context.project(), context.file()))) return null;
+        if (PyTypingTypeProvider.isInsideTypeHint(literal, TypeEvalContext.codeAnalysis(context.project(), context.file()))) {
+          return null;
+        }
         return Presentation.of(PyPsiBundle.message("INTN.convert.collection.literal", "tuple", myTargetCollectionName));
       }
       else if (literal instanceof PyListLiteralExpression) {
