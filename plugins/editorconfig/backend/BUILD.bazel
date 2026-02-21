@@ -93,6 +93,8 @@ jvm_library(
     "//platform/projectModel-api:projectModel_test_lib",
     "//platform/refactoring",
     "//platform/refactoring:refactoring_test_lib",
+    "//platform/structure-view-impl:structureView-impl",
+    "//platform/structure-view-impl:structureView-impl_test_lib",
     "//platform/testFramework",
     "//platform/testFramework:testFramework_test_lib",
     "//libraries/kotlin/reflect",

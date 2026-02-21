@@ -689,8 +689,6 @@ com.intellij.ide.actions.SearchEverywhereClassifier
 - a:getVirtualFile(java.lang.Object):com.intellij.openapi.vfs.VirtualFile
 - a:isClass(java.lang.Object):Z
 - a:isSymbol(java.lang.Object):Z
-f:com.intellij.ide.actions.ViewStructureAction
-- s:createPopup(com.intellij.openapi.project.Project,com.intellij.openapi.fileEditor.FileEditor):com.intellij.ide.structureView.newStructureView.StructurePopup
 com.intellij.ide.actions.runAnything.activity.RunAnythingProvider
 - sf:EP_NAME:com.intellij.openapi.extensions.ExtensionPointName
 - sf:EXECUTING_CONTEXT:com.intellij.openapi.actionSystem.DataKey
@@ -792,14 +790,25 @@ com.intellij.ide.projectView.impl.nodes.PsiFileSystemItemFilter
 - a:shouldShow(com.intellij.psi.PsiFileSystemItem):Z
 a:com.intellij.ide.scratch.LRUPopupBuilder
 - withPinnedId(java.lang.String):com.intellij.ide.scratch.LRUPopupBuilder
-com.intellij.ide.structureView.newStructureView.TreeActionsOwner
+com.intellij.ide.structureView.StructureViewExtension
+- filterChildren(java.util.Collection,java.util.List):V
+- a:getChildren(com.intellij.psi.PsiElement):com.intellij.ide.structureView.StructureViewTreeElement[]
+- a:getCurrentEditorElement(com.intellij.openapi.editor.Editor,com.intellij.psi.PsiElement):java.lang.Object
+- a:getType():java.lang.Class
+a:com.intellij.ide.structureView.StructureViewFactoryEx
+- com.intellij.ide.structureView.StructureViewFactory
+- <init>():V
+- a:getAllExtensions(java.lang.Class):java.util.Collection
+- s:getInstanceEx(com.intellij.openapi.project.Project):com.intellij.ide.structureView.StructureViewFactoryEx
+- a:getStructureViewWrapper():com.intellij.ide.structureView.StructureViewWrapper
 - a:isActionActive(java.lang.String):Z
-- a:setActionActive(java.lang.String,Z):V
+- a:runWhenInitialized(java.lang.Runnable):V
+- a:setActiveAction(java.lang.String,Z):V
+com.intellij.ide.structureView.StructureViewWrapper
+- a:selectCurrentElement(com.intellij.openapi.fileEditor.FileEditor,com.intellij.openapi.vfs.VirtualFile,Z):Z
 f:com.intellij.ide.util.EditorHelper
 - s:getMaybeInjectedEditor(com.intellij.psi.PsiElement):com.intellij.openapi.editor.Editor
 - s:openInMaybeInjectedEditor(com.intellij.psi.PsiElement):com.intellij.openapi.editor.Editor
-f:com.intellij.ide.util.FileStructurePopup
-- com.intellij.ide.structureView.newStructureView.StructurePopup
 com.intellij.ide.util.PsiElementRenderingInfo
 - s:getComparator(com.intellij.ide.util.PsiElementRenderingInfo):java.util.Comparator
 - getContainerText(com.intellij.psi.PsiElement):java.lang.String
@@ -868,6 +877,15 @@ com.intellij.ide.util.scopeChooser.ScopeDescriptorProvider
 - sf:EMPTY:com.intellij.ide.util.scopeChooser.ScopeDescriptor[]
 - sf:EP_NAME:com.intellij.openapi.extensions.ExtensionPointName
 - a:getScopeDescriptors(com.intellij.openapi.project.Project,com.intellij.openapi.actionSystem.DataContext):com.intellij.ide.util.scopeChooser.ScopeDescriptor[]
+a:com.intellij.ide.util.treeView.AbstractTreeStructureBase
+- com.intellij.ide.util.treeView.AbstractTreeStructure
+- pf:myProject:com.intellij.openapi.project.Project
+- p:<init>(com.intellij.openapi.project.Project):V
+- createDescriptor(java.lang.Object,com.intellij.ide.util.treeView.NodeDescriptor):com.intellij.ide.util.treeView.NodeDescriptor
+- getChildElements(java.lang.Object):java.lang.Object[]
+- getParentElement(java.lang.Object):java.lang.Object
+- a:getProviders():java.util.List
+- isValid(java.lang.Object):Z
 com.intellij.largeFilesEditor.editor.LargeFileEditor
 - com.intellij.openapi.fileEditor.FileEditor
 - sf:LARGE_FILE_EDITOR_KEY:com.intellij.openapi.util.Key

@@ -6,7 +6,7 @@ import com.intellij.database.datagrid.GridUtil;
 import com.intellij.database.datagrid.ModelIndexSet;
 import com.intellij.ide.DataManager;
 import com.intellij.ide.actions.ViewStructureAction;
-import com.intellij.ide.structureView.newStructureView.StructurePopup;
+import com.intellij.platform.structureView.impl.StructurePopup;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.PlatformCoreDataKeys;
 import com.intellij.openapi.fileEditor.FileEditor;

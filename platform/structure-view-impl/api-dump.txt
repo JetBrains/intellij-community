@@ -1,22 +1,8 @@
+f:com.intellij.ide.actions.ViewStructureAction
+- s:createPopup(com.intellij.openapi.project.Project,com.intellij.openapi.fileEditor.FileEditor):com.intellij.platform.structureView.impl.StructurePopup
 f:com.intellij.ide.structureView.StructureViewBundle
 - s:message(java.lang.String,java.lang.Object[]):java.lang.String
 - s:messagePointer(java.lang.String,java.lang.Object[]):java.util.function.Supplier
-com.intellij.ide.structureView.StructureViewExtension
-- filterChildren(java.util.Collection,java.util.List):V
-- a:getChildren(com.intellij.psi.PsiElement):com.intellij.ide.structureView.StructureViewTreeElement[]
-- a:getCurrentEditorElement(com.intellij.openapi.editor.Editor,com.intellij.psi.PsiElement):java.lang.Object
-- a:getType():java.lang.Class
-a:com.intellij.ide.structureView.StructureViewFactoryEx
-- com.intellij.ide.structureView.StructureViewFactory
-- <init>():V
-- a:getAllExtensions(java.lang.Class):java.util.Collection
-- s:getInstanceEx(com.intellij.openapi.project.Project):com.intellij.ide.structureView.StructureViewFactoryEx
-- a:getStructureViewWrapper():com.intellij.ide.structureView.StructureViewWrapper
-- a:isActionActive(java.lang.String):Z
-- a:runWhenInitialized(java.lang.Runnable):V
-- a:setActiveAction(java.lang.String,Z):V
-com.intellij.ide.structureView.StructureViewWrapper
-- a:selectCurrentElement(com.intellij.openapi.fileEditor.FileEditor,com.intellij.openapi.vfs.VirtualFile,Z):Z
 c:com.intellij.ide.structureView.customRegions.CustomRegionTreeElement
 - com.intellij.ide.structureView.StructureViewTreeElement
 - canNavigate():Z
@@ -71,6 +57,11 @@ f:com.intellij.ide.structureView.logical.impl.LogicalStructureViewService$Compan
 com.intellij.ide.structureView.logical.impl.LogicalStructureViewTreeElement
 - com.intellij.ide.structureView.StructureViewTreeElement
 - a:getLogicalAssembledModel():com.intellij.ide.structureView.logical.model.LogicalStructureAssembledModel
+com.intellij.ide.structureView.newStructureView.TreeActionsOwner
+- a:isActionActive(java.lang.String):Z
+- a:setActionActive(java.lang.String,Z):V
+f:com.intellij.ide.util.FileStructurePopup
+- com.intellij.platform.structureView.impl.StructurePopup
 a:com.intellij.ide.util.InheritedMembersNodeProvider
 - com.intellij.ide.util.ActionShortcutProvider
 - com.intellij.ide.util.FileStructureNodeProvider
@@ -80,15 +71,6 @@ a:com.intellij.ide.util.InheritedMembersNodeProvider
 - getName():java.lang.String
 - getPresentation():com.intellij.ide.util.treeView.smartTree.ActionPresentation
 - getShortcut():com.intellij.openapi.actionSystem.Shortcut[]
-a:com.intellij.ide.util.treeView.AbstractTreeStructureBase
-- com.intellij.ide.util.treeView.AbstractTreeStructure
-- pf:myProject:com.intellij.openapi.project.Project
-- p:<init>(com.intellij.openapi.project.Project):V
-- createDescriptor(java.lang.Object,com.intellij.ide.util.treeView.NodeDescriptor):com.intellij.ide.util.treeView.NodeDescriptor
-- getChildElements(java.lang.Object):java.lang.Object[]
-- getParentElement(java.lang.Object):java.lang.Object
-- a:getProviders():java.util.List
-- isValid(java.lang.Object):Z
 Fa:com.intellij.ide.util.treeView.smartTree.CachingChildrenTreeNode
 - com.intellij.ide.util.treeView.AbstractTreeNode
 - canNavigate():Z

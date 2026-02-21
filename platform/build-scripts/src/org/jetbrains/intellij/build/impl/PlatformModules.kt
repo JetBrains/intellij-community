@@ -51,7 +51,6 @@ internal val PLATFORM_CORE_MODULES = java.util.List.of(
   "intellij.platform.lvcs",
   "intellij.platform.macro",
   "intellij.platform.remoteServers.impl",
-  "intellij.platform.structureView.impl",
   "intellij.platform.testRunner",
   "intellij.platform.rd.community",
   "intellij.remoteDev.util",

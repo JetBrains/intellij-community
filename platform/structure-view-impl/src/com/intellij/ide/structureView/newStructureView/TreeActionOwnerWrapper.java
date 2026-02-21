@@ -2,6 +2,7 @@
 package com.intellij.ide.structureView.newStructureView;
 
 import com.intellij.ide.util.treeView.smartTree.TreeAction;
+import com.intellij.platform.structureView.impl.TreeActionsOwnerEx;
 import org.jetbrains.annotations.NotNull;
 
 class TreeActionOwnerWrapper implements TreeActionsOwnerEx {

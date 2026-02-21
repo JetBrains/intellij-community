@@ -1,8 +1,10 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.codeInsight.completion.command.commands
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package com.intellij.platform.structureView.impl.commands
 
 import com.intellij.codeInsight.CodeInsightBundle
 import com.intellij.codeInsight.completion.command.CommandCompletionProviderContext
+import com.intellij.codeInsight.completion.command.commands.ActionCommandProvider
+import com.intellij.codeInsight.completion.command.commands.ActionCompletionCommand
 import com.intellij.ide.actions.ViewStructureAction
 import com.intellij.ide.structureView.impl.common.PsiTreeElementBase
 import com.intellij.ide.util.treeView.AbstractTreeNode

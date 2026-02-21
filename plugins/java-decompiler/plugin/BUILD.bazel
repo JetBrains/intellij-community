@@ -73,6 +73,8 @@ jvm_library(
     "//platform/lang-impl:lang-impl_test_lib",
     "//platform/statistics",
     "//platform/statistics:statistics_test_lib",
+    "//platform/structure-view-impl:structureView-impl",
+    "//platform/structure-view-impl:structureView-impl_test_lib",
   ],
   exports = [
     "//plugins/java-decompiler/engine",

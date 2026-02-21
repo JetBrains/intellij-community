@@ -3,7 +3,6 @@ package com.intellij.internal.retype
 
 import com.intellij.codeInsight.lookup.LookupElement
 import com.intellij.ide.structureView.StructureViewTreeElement
-import com.intellij.ide.structureView.impl.common.PsiTreeElementBase
 import com.intellij.ide.util.treeView.smartTree.TreeElement
 import com.intellij.internal.performance.latencyMap
 import com.intellij.openapi.actionSystem.ActionUpdateThread
@@ -141,7 +140,7 @@ private class RetypeQueue(private val project: Project,
     if (editor.document.textLength < 2000) return  // file is small, retype it all
     val fileEditor = FileEditorManager.getInstance(project).selectedEditor ?: return
     fileEditor.structureViewBuilder?.createStructureView(fileEditor, project)?.use {
-      val root = it.treeModel.root as? PsiTreeElementBase<*> ?: return
+      val root = it.treeModel.root
       val range = findRangeOfSuitableElement(root) ?: return
       editor.selectionModel.setSelection(range.startOffset, range.endOffset)
       editor.caretModel.moveToOffset(range.startOffset)

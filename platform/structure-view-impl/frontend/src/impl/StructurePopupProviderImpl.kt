@@ -1,8 +1,8 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.structureView.frontend.impl
 
-import com.intellij.ide.structureView.newStructureView.StructurePopup
-import com.intellij.ide.structureView.newStructureView.StructurePopupProvider
+import com.intellij.platform.structureView.impl.StructurePopup
+import com.intellij.platform.structureView.impl.StructurePopupProvider
 import com.intellij.ide.util.treeView.AbstractTreeNode
 import com.intellij.openapi.fileEditor.FileEditor
 import com.intellij.openapi.project.Project

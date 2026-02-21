@@ -74,6 +74,7 @@ jvm_library(
     "//platform/forms_rt:java-guiForms-rt",
     "//platform/xdebugger-impl/shared",
     "//platform/xdebugger-impl/ui",
+    "//platform/structure-view-impl:structureView-impl",
     ":libraries_cli-parser_provided",
   ]
 )
@@ -189,6 +190,8 @@ jvm_library(
     "//platform/xdebugger-impl/shared:shared_test_lib",
     "//platform/xdebugger-impl/ui",
     "//platform/xdebugger-impl/ui:ui_test_lib",
+    "//platform/structure-view-impl:structureView-impl",
+    "//platform/structure-view-impl:structureView-impl_test_lib",
   ],
   runtime_deps = [
     "//platform/platform-impl/concurrency:concurrency_test_lib",

@@ -27,6 +27,7 @@ jvm_library(
     "//platform/macro",
     "//platform/projectModel-api:projectModel",
     "//platform/refactoring",
+    "//platform/structure-view-impl:structureView-impl",
     "//platform/workspace/storage",
     "//xml/dom-openapi:dom",
     "//java/openapi:java",

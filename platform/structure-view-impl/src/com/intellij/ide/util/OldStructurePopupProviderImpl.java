@@ -6,7 +6,7 @@ import com.intellij.ide.structureView.StructureViewBuilder;
 import com.intellij.ide.structureView.StructureViewModel;
 import com.intellij.ide.structureView.TreeBasedStructureViewBuilder;
 import com.intellij.ide.structureView.logical.PhysicalAndLogicalStructureViewBuilder;
-import com.intellij.ide.structureView.newStructureView.StructurePopupProvider;
+import com.intellij.platform.structureView.impl.StructurePopupProvider;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
 import com.intellij.ide.util.treeView.smartTree.TreeStructureUtil;
 import com.intellij.idea.AppMode;

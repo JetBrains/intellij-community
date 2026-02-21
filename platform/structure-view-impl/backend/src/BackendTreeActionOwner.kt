@@ -2,11 +2,11 @@
 package com.intellij.platform.structureView.backend
 
 import com.intellij.ide.structureView.newStructureView.TreeActionsOwner
-import com.intellij.ide.structureView.newStructureView.TreeActionsOwnerEx
 import com.intellij.ide.util.FileStructurePopup.getDefaultValue
 import com.intellij.ide.util.treeView.smartTree.Filter
 import com.intellij.ide.util.treeView.smartTree.NodeProvider
 import com.intellij.ide.util.treeView.smartTree.TreeAction
+import com.intellij.platform.structureView.impl.TreeActionsOwnerEx
 import com.intellij.platform.structureView.impl.DelegatingNodeProvider
 
 internal class BackendTreeActionOwner(

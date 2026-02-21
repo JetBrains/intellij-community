@@ -373,10 +373,6 @@ c:com.intellij.codeInsight.actions.VcsFacade
 - *sf:Companion:com.intellij.codeInsight.completion.command.commands.IntentionCommandSkipper$Companion
 - skip(com.intellij.codeInsight.intention.CommonIntentionAction,com.intellij.psi.PsiFile,I):Z
 *f:com.intellij.codeInsight.completion.command.commands.IntentionCommandSkipper$Companion
-*f:com.intellij.codeInsight.completion.command.commands.ViewStructureCompletionCommandProvider
-- com.intellij.codeInsight.completion.command.commands.ActionCommandProvider
-- <init>():V
-- supportNewLineCompletion():Z
 *:com.intellij.codeInsight.daemon.impl.focusMode.FocusModeProvider
 - a:calcFocusZones(com.intellij.psi.PsiFile):java.util.List
 com.intellij.codeInsight.editorActions.CopyPastePreProcessor
@@ -735,10 +731,6 @@ com.intellij.ide.actions.searcheverywhere.SearchListener
 - p:getActionName(com.intellij.psi.PsiDirectory,java.lang.String,java.lang.String):java.lang.String
 - p:getLiveTemplateDefaults(com.intellij.openapi.actionSystem.DataContext,com.intellij.psi.PsiFile):java.util.Map
 - p:postProcess(com.intellij.psi.PsiFile,com.intellij.openapi.actionSystem.DataContext,java.lang.String,java.util.Map):V
-f:com.intellij.ide.impl.StructureViewWrapperImpl
-- com.intellij.ide.structureView.StructureViewWrapper
-- com.intellij.openapi.Disposable
-- *sf:STRUCTURE_VIEW_TARGET_FILE_KEY:com.intellij.openapi.actionSystem.DataKey
 *f:com.intellij.ide.projectView.actions.MarkRootsManager
 - s:commitModel(com.intellij.openapi.module.Module,com.intellij.openapi.roots.ModifiableRootModel):V
 - s:findContentEntry(com.intellij.openapi.roots.ModuleRootModel,com.intellij.openapi.vfs.VirtualFile):com.intellij.openapi.roots.ContentEntry
@@ -749,15 +741,6 @@ com.intellij.ide.projectView.impl.ProjectViewListener
 - sf:EP:com.intellij.openapi.extensions.ExtensionPointName
 - a:createNode(com.intellij.platform.workspace.storage.WorkspaceEntity,com.intellij.openapi.project.Project,com.intellij.ide.projectView.ViewSettings):com.intellij.ide.util.treeView.AbstractTreeNode
 - a:getWorkspaceClass():java.lang.Class
-*:com.intellij.ide.structureView.newStructureView.StructurePopup
-- com.intellij.ide.structureView.newStructureView.TreeActionsOwner
-- com.intellij.openapi.Disposable
-- a:setTitle(java.lang.String):V
-- a:show():V
-*:com.intellij.ide.structureView.newStructureView.TreeActionsOwnerEx
-- com.intellij.ide.structureView.newStructureView.TreeActionsOwner
-- a:isActionActive(com.intellij.ide.util.treeView.smartTree.TreeAction):Z
-- a:setActionActive(com.intellij.ide.util.treeView.smartTree.TreeAction,Z):V
 c:com.intellij.ide.util.scopeChooser.ScopeDescriptor
 - com.intellij.openapi.util.ColoredItem
 - *:needsUserInputForScope():Z

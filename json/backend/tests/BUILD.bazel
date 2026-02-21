@@ -81,6 +81,8 @@ jvm_library(
     "//platform/core-impl:core-impl_test_lib",
     "//platform/util/jdom",
     "//platform/util/jdom:jdom_test_lib",
+    "//platform/structure-view-impl:structureView-impl",
+    "//platform/structure-view-impl:structureView-impl_test_lib",
   ],
   runtime_deps = [
     ":tests",

@@ -10,7 +10,7 @@
                                              implementationClass="com.intellij.codeInsight.completion.command.commands.PsiElementCommentByLineCompletionCommandProvider"/>
     <codeInsight.completion.command.provider language="kotlin"
                                              implementationClass="com.intellij.codeInsight.completion.command.commands.PsiElementCommentByBlockCompletionCommandProvider"/>
-    <codeInsight.completion.command.provider language="kotlin" implementationClass="com.intellij.codeInsight.completion.command.commands.ViewStructureCompletionCommandProvider" order="last"/>
+    <codeInsight.completion.command.provider language="kotlin" implementationClass="com.intellij.platform.structureView.impl.commands.ViewStructureCompletionCommandProvider" order="last"/>
   </extensions>
 
 </idea-plugin>

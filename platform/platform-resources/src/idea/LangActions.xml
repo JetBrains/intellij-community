@@ -269,7 +269,6 @@
       </action>
       <action id="GotoRelated" class="com.intellij.ide.actions.GotoRelatedSymbolAction"/>
       <separator/>
-      <action id="FileStructurePopup" class="com.intellij.ide.actions.ViewStructureAction"/>
       <action id="ShowFilePath" class="com.intellij.ide.actions.ShowFilePathAction">
         <add-to-group group-id="RevealGroup" anchor="last"/>
       </action>

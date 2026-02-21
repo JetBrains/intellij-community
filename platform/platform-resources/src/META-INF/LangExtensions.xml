@@ -614,7 +614,6 @@
     <fileBasedIndex implementation="com.intellij.psi.impl.include.FileIncludeIndex"/>
 
     <syntaxHighlighter factoryClass="com.intellij.openapi.fileTypes.LanguageFileTypeHighlighterProvider"/>
-    <structureViewBuilder factoryClass="com.intellij.ide.highlighter.LanguageStructureViewBuilderProvider"/>
     <registryKey key="logical.structure.enabled"
                  description="Show logical structure in Structure View"
                  defaultValue="true"
@@ -623,8 +622,6 @@
                  description="Show action icons for logical structure nodes"
                  defaultValue="false"
                  restartRequired="false"/>
-
-    <structurePopupProvider implementation="com.intellij.ide.util.OldStructurePopupProviderImpl"/>
 
     <idIndexer filetype="PLAIN_TEXT" implementationClass="com.intellij.psi.impl.cache.impl.id.PlainTextIdIndexer"/>
     <todoIndexer filetype="PLAIN_TEXT" implementationClass="com.intellij.psi.impl.cache.impl.todo.PlainTextTodoIndexer"/>
@@ -705,7 +702,6 @@
     <gotoRelatedProvider implementation="com.intellij.ide.actions.RelatedItemLineMarkerGotoAdapter"/>
 
     <selectInTarget implementation="com.intellij.ide.impl.ProjectViewSelectInGroupTarget"/>
-    <selectInTarget implementation="com.intellij.ide.impl.StructureViewSelectInTarget"/>
     <selectInTarget implementation="com.intellij.ide.impl.ProjectViewSelectInExplorerTarget"/>
 
     <elementLookupRenderer implementation="com.intellij.codeInsight.template.impl.TemplateLookupRenderer"/>
@@ -991,9 +987,6 @@
     <codeStyleSettingsProvider implementation="com.intellij.application.options.GeneralCodeStyleSettingsProvider"/>
     <codeStyleSettingsProvider implementation="com.intellij.application.options.codeStyle.OtherFileTypesCodeStyleOptionsProvider"/>
 
-    <projectService serviceInterface="com.intellij.ide.structureView.StructureViewFactory"
-                    serviceImplementation="com.intellij.ide.structureView.impl.StructureViewFactoryImpl"/>
-    <statistics.counterUsagesCollector implementationClass="com.intellij.ide.structureView.StructureViewEventsCollector"/>
     <projectService serviceInterface="com.intellij.codeInspection.InspectionManager"
                     serviceImplementation="com.intellij.codeInspection.ex.InspectionManagerEx"/>
     <documentationProvider implementation="com.intellij.codeInspection.actions.InspectionDescriptionDocumentationProvider"/>
@@ -1027,9 +1020,6 @@
 
     <toolWindow id="Project" anchor="left" icon="AllIcons.Toolwindows.ToolWindowProject"
                 factoryClass="com.intellij.ide.projectView.impl.ProjectViewToolWindowFactory"/>
-
-    <toolWindow id="Structure" anchor="left" icon="AllIcons.Toolwindows.ToolWindowStructure" secondary="true"
-                factoryClass="com.intellij.ide.structureView.impl.StructureViewToolWindowFactory"/>
 
     <psi.fileReferenceHelper implementation="com.intellij.psi.impl.source.resolve.reference.impl.providers.PsiFileReferenceHelper"/>
     <psi.fileReferenceHelper implementation="com.intellij.psi.impl.source.resolve.reference.impl.providers.JarFileReferenceHelper"/>

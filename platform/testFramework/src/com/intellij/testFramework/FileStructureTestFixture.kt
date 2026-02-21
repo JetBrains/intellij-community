@@ -2,7 +2,7 @@
 package com.intellij.testFramework
 
 import com.intellij.ide.actions.ViewStructureAction
-import com.intellij.ide.structureView.newStructureView.StructurePopupTestExt
+import com.intellij.platform.structureView.impl.StructurePopupTestExt
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.fileEditor.impl.text.TextEditorProvider.Companion.getInstance
 import com.intellij.openapi.project.Project

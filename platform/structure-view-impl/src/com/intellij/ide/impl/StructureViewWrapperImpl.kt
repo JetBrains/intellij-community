@@ -81,7 +81,6 @@ import com.intellij.util.messages.Topic
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.TimerUtil
 import com.intellij.util.ui.UIUtil
-import kotlinx.coroutines.CoroutineName
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.FlowPreview

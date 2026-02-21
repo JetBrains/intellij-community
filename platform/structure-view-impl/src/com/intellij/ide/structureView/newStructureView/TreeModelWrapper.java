@@ -14,6 +14,7 @@ import com.intellij.ide.util.treeView.smartTree.Sorter;
 import com.intellij.ide.util.treeView.smartTree.TreeAction;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.vcs.FileStatus;
+import com.intellij.platform.structureView.impl.TreeActionsOwnerEx;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;

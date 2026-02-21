@@ -39,6 +39,8 @@ jvm_library(
     "//platform/platform-impl/concurrency",
     "//platform/util/coroutines",
     "//platform/remote-topics/shared:rpc-topics",
+    "//platform/lang-impl",
+    "//platform/lang-api:lang",
   ],
   exports = ["//platform/util"]
 )
@@ -78,6 +80,8 @@ jvm_library(
     "//platform/platform-impl/concurrency:concurrency_test_lib",
     "//platform/util/coroutines:coroutines_test_lib",
     "//platform/remote-topics/shared:rpc-topics_test_lib",
+    "//platform/lang-impl:lang-impl_test_lib",
+    "//platform/lang-api:lang_test_lib",
   ]
 )
 ### auto-generated section `build intellij.platform.structureView.impl` end

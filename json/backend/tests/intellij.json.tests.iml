@@ -38,5 +38,6 @@
     <orderEntry type="module" module-name="intellij.platform.syntax.util" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.core.impl" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.util.jdom" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.platform.structureView.impl" scope="TEST" />
   </component>
 </module>

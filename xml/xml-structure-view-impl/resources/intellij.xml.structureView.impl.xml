@@ -1,5 +1,6 @@
 <idea-plugin visibility="public">
   <dependencies>
+    <module name="intellij.platform.structureView.impl"/>
     <module name="intellij.xml.structureView"/>
     <module name="intellij.xml.psi.impl"/>
     <module name="intellij.xml.parser"/>

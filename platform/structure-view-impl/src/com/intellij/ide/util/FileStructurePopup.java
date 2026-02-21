@@ -12,13 +12,13 @@ import com.intellij.ide.TreeExpander;
 import com.intellij.ide.dnd.aware.DnDAwareTree;
 import com.intellij.ide.structureView.ModelListener;
 import com.intellij.ide.structureView.StructureViewModel;
-import com.intellij.ide.structureView.newStructureView.StructurePopup;
-import com.intellij.ide.structureView.newStructureView.StructurePopupTestExt;
+import com.intellij.ide.structureView.newStructureView.TreeActionsOwner;
+import com.intellij.platform.structureView.impl.StructurePopup;
+import com.intellij.platform.structureView.impl.StructurePopupTestExt;
 import com.intellij.ide.structureView.newStructureView.StructureViewComponent;
 import com.intellij.ide.structureView.newStructureView.StructureViewSelectVisitorState;
 import com.intellij.ide.structureView.newStructureView.StructureViewUtil;
 import com.intellij.ide.structureView.newStructureView.TreeActionWrapper;
-import com.intellij.ide.structureView.newStructureView.TreeActionsOwner;
 import com.intellij.ide.structureView.newStructureView.TreeModelWrapper;
 import com.intellij.ide.ui.UISettingsListener;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
@@ -700,8 +700,8 @@ public final class FileStructurePopup implements Disposable, TreeActionsOwner, S
 
   @ApiStatus.Internal
   public static @Nullable Object findClosestPsiElement(@NotNull PsiElement element,
-                                                        @NotNull TreePath adjusted,
-                                                        @NotNull TreeModel treeModel) {
+                                                       @NotNull TreePath adjusted,
+                                                       @NotNull TreeModel treeModel) {
     TextRange range = element.getTextRange();
     if (range == null) return null;
     Object parent = adjusted.getLastPathComponent();

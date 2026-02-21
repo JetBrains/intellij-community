@@ -9,9 +9,9 @@ import com.intellij.ide.DefaultTreeExpander
 import com.intellij.ide.IdeBundle
 import com.intellij.ide.TreeExpander
 import com.intellij.ide.dnd.aware.DnDAwareTree
-import com.intellij.ide.structureView.newStructureView.StructurePopup
-import com.intellij.ide.structureView.newStructureView.StructurePopupTestExt
 import com.intellij.ide.structureView.newStructureView.TreeActionsOwner
+import com.intellij.platform.structureView.impl.StructurePopup
+import com.intellij.platform.structureView.impl.StructurePopupTestExt
 import com.intellij.ide.ui.UISettingsListener
 import com.intellij.ide.util.FileStructurePopupListener
 import com.intellij.ide.util.FileStructurePopupLoadingStateUpdater
