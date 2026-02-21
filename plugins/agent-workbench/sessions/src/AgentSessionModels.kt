@@ -2,6 +2,7 @@
 package com.intellij.agent.workbench.sessions
 
 import androidx.compose.runtime.Immutable
+import com.intellij.agent.workbench.common.AgentThreadActivity
 
 private val AGENT_SESSION_PROVIDER_ID_REGEX = Regex("[a-z][a-z0-9._-]*")
 
@@ -32,13 +33,6 @@ enum class AgentSessionLaunchMode {
   YOLO,
 }
 
-enum class AgentSessionActivity {
-  READY,
-  PROCESSING,
-  REVIEWING,
-  UNREAD,
-}
-
 @Immutable
 data class AgentSubAgent(
   @JvmField val id: String,
@@ -59,7 +53,7 @@ data class AgentSessionThread(
   @JvmField val title: String,
   @JvmField val updatedAt: Long,
   @JvmField val archived: Boolean,
-  @JvmField val activity: AgentSessionActivity = AgentSessionActivity.READY,
+  @JvmField val activity: AgentThreadActivity = AgentThreadActivity.READY,
   val provider: AgentSessionProvider = AgentSessionProvider.CODEX,
   @JvmField val subAgents: List<AgentSubAgent> = emptyList(),
   @JvmField val originBranch: String? = null,

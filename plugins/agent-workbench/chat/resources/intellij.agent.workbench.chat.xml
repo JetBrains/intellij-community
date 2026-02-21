@@ -1,6 +1,7 @@
 <idea-plugin>
   <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
   <dependencies>
+    <module name="intellij.agent.workbench.common"/>
     <module name="intellij.terminal.frontend"/>
   </dependencies>
   <!-- endregion -->

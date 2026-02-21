@@ -2,8 +2,8 @@
 package com.intellij.agent.workbench.codex.sessions
 
 import com.intellij.agent.workbench.sessions.AgentSessionLaunchMode
+import kotlinx.coroutines.runBlocking
 import org.assertj.core.api.Assertions.assertThat
-import org.junit.jupiter.api.Assertions.assertThrows
 import org.junit.jupiter.api.Test
 
 class CodexAgentSessionProviderBridgeTest {
@@ -22,9 +22,23 @@ class CodexAgentSessionProviderBridgeTest {
   }
 
   @Test
-  fun buildNewSessionCommandThrows() {
-    assertThrows(IllegalStateException::class.java) {
-      bridge.buildNewSessionCommand(AgentSessionLaunchMode.STANDARD)
+  fun buildNewSessionCommand() {
+    assertThat(bridge.buildNewSessionCommand(AgentSessionLaunchMode.STANDARD))
+      .containsExactly("codex")
+    assertThat(bridge.buildNewSessionCommand(AgentSessionLaunchMode.YOLO))
+      .containsExactly("codex", "--full-auto")
+  }
+
+  @Test
+  fun createNewSessionReturnsPendingLaunchSpec() {
+    runBlocking {
+      val standard = bridge.createNewSession(path = "/work/project", mode = AgentSessionLaunchMode.STANDARD)
+      assertThat(standard.sessionId).isNull()
+      assertThat(standard.command).containsExactly("codex")
+
+      val yolo = bridge.createNewSession(path = "/work/project", mode = AgentSessionLaunchMode.YOLO)
+      assertThat(yolo.sessionId).isNull()
+      assertThat(yolo.command).containsExactly("codex", "--full-auto")
     }
   }
 }

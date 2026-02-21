@@ -11,7 +11,6 @@ import com.intellij.testFramework.junit5.TestApplication
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertNotEquals
 import org.junit.jupiter.api.Assertions.assertNull
-import org.junit.jupiter.api.Assertions.assertThrows
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
 
@@ -34,6 +33,16 @@ class AgentSessionCliTest {
     assertNull(parseAgentSessionIdentity("codex:"))
     assertNull(parseAgentSessionIdentity(":thread-1"))
     assertNull(parseAgentSessionIdentity("Codex:thread-1"))
+  }
+
+  @Test
+  fun resolveSessionIdExtractsThreadIdFromIdentity() {
+    assertEquals("thread-1", resolveAgentSessionId("codex:thread-1"))
+  }
+
+  @Test
+  fun resolveSessionIdFallsBackForMalformedIdentity() {
+    assertEquals("invalid", resolveAgentSessionId("invalid"))
   }
 
   @Test
@@ -73,15 +82,23 @@ class AgentSessionCliTest {
   }
 
   @Test
-  fun buildNewCodexCommandsThrow() {
+  fun buildNewCodexCommands() {
     withTestBridges {
-      assertThrows(IllegalStateException::class.java) {
-        buildAgentSessionNewCommand(AgentSessionProvider.CODEX, AgentSessionLaunchMode.STANDARD)
-      }
-      assertThrows(IllegalStateException::class.java) {
-        buildAgentSessionNewCommand(AgentSessionProvider.CODEX, AgentSessionLaunchMode.YOLO)
-      }
+      assertEquals(
+        listOf("codex"),
+        buildAgentSessionNewCommand(AgentSessionProvider.CODEX, AgentSessionLaunchMode.STANDARD),
+      )
+      assertEquals(
+        listOf("codex", "--full-auto"),
+        buildAgentSessionNewCommand(AgentSessionProvider.CODEX, AgentSessionLaunchMode.YOLO),
+      )
     }
+  }
+
+  @Test
+  fun resolveSessionIdReturnsBlankForPendingIdentity() {
+    assertEquals("", resolveAgentSessionId("codex:new-123"))
+    assertTrue(isAgentSessionNewIdentity("codex:new-123"))
   }
 
   @Test
@@ -159,8 +176,9 @@ class AgentSessionCliTest {
         return TestBridge(
           provider = AgentSessionProvider.CODEX,
           resumeCommandBuilder = { sessionId -> listOf("codex", "resume", sessionId) },
-          newSessionCommandBuilder = {
-            error("Codex new sessions use thread/start + resume, not direct CLI")
+          newSessionCommandBuilder = { mode ->
+            if (mode == AgentSessionLaunchMode.YOLO) listOf("codex", "--full-auto")
+            else listOf("codex")
           },
           newEntryCommand = listOf("codex"),
         )

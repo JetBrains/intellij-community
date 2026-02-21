@@ -147,12 +147,11 @@ class CodexAppServerClient(
   }
 
   /**
-   * Sends a minimal [turn/start] followed by an immediate [turn/interrupt] for the given thread.
-   * This forces the Codex app-server to flush the session to disk so that `codex resume <id>` can find it.
-   * Without this step, [thread/start] only creates the thread in-memory.
+   * Sends a minimal [turn/start] for the given thread to force persistence so
+   * that `codex resume <id>` can discover it.
    */
   suspend fun persistThread(threadId: String) {
-    val turnId = request(
+    requestUnit(
       method = "turn/start",
       paramsWriter = { generator ->
         generator.writeStartObject()
@@ -166,20 +165,7 @@ class CodexAppServerClient(
         generator.writeEndArray()
         generator.writeEndObject()
       },
-      resultParser = { parser -> protocol.parseTurnStartTurnId(parser) },
-      defaultResult = null,
     )
-    if (turnId != null) {
-      requestUnit(
-        method = "turn/interrupt",
-        paramsWriter = { generator ->
-          generator.writeStartObject()
-          generator.writeStringField("threadId", threadId)
-          generator.writeStringField("turnId", turnId)
-          generator.writeEndObject()
-        },
-      )
-    }
   }
 
   fun shutdown() {

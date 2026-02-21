@@ -63,11 +63,11 @@ Define the Agent Threads tool window as a provider-agnostic, project-scoped sess
 - New-session action behavior (provider options, Codex/Claude command mapping, and Full Auto semantics) is defined in `spec/actions/new-thread.spec.md` and must be used by both project and worktree rows.
 - Thread context menu must expose `Archive` only when the corresponding provider bridge advertises archive capability.
 - Editor tab popup actions for the currently selected Agent chat tab must expose:
-  - `Open in Agent Threads`,
+  - `Select in Agent Threads`,
   - `Archive Thread`,
   - `Copy Thread ID`.
 - Editor-tab `Archive Thread` must reuse the same provider archive-capability gate as thread-row archive action.
-- Editor-tab `Open in Agent Threads` must call `ensureThreadVisible(path, provider, threadId)` before activating the Agent Threads tool window.
+- Editor-tab `Select in Agent Threads` must call `ensureThreadVisible(path, provider, threadId)` before activating the Agent Threads tool window.
 - Sessions-side provider icon usage (tree/status surfaces) should use typed icon references (`AgentWorkbenchSessionsIcons` / `AgentSessionsIconKeys`) instead of inline path-based icon loading.
 - Editor-tab provider icon ownership remains in `chat` module to avoid introducing a `chat -> sessions` module dependency.
 - User-visible labels for session entities must use `Thread`; `Chat` terminology is reserved for editor-tab/file surface.
@@ -95,7 +95,7 @@ Define the Agent Threads tool window as a provider-agnostic, project-scoped sess
 - Provider warning rows are non-blocking and shown inline in the same project/worktree section.
 - Blocking errors show retry action inline.
 - `More...`/`More…` behavior follows `spec/agent-sessions-thread-visibility.spec.md`.
-- Agent chat editor tabs expose `Open in Agent Threads`, `Archive Thread`, and `Copy Thread ID` in editor-tab context menu when a chat tab is selected.
+- Agent chat editor tabs expose `Select in Agent Threads`, `Archive Thread`, and `Copy Thread ID` in editor-tab context menu when a chat tab is selected.
 
 ## Data & Backend
 - Open projects use long-lived provider sessions where available.

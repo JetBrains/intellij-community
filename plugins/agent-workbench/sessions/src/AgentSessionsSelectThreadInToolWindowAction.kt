@@ -8,7 +8,7 @@ import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.wm.ToolWindowManager
 
-internal class AgentSessionsOpenThreadInToolWindowAction : DumbAwareAction {
+internal class AgentSessionsSelectThreadInToolWindowAction : DumbAwareAction {
   private val resolveContext: (AnActionEvent) -> AgentChatThreadEditorTabActionContext?
   private val ensureThreadVisible: (String, AgentSessionProvider, String) -> Unit
   private val activateSessionsToolWindow: (Project) -> Unit
@@ -46,4 +46,3 @@ internal class AgentSessionsOpenThreadInToolWindowAction : DumbAwareAction {
 
   override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.BGT
 }
-

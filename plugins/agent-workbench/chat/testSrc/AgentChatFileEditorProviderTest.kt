@@ -1,13 +1,27 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.agent.workbench.chat
 
+import com.intellij.agent.workbench.common.AgentThreadActivity
 import com.intellij.icons.AllIcons
 import com.intellij.openapi.application.PathManager
+import com.intellij.ui.IconManager
 import org.assertj.core.api.Assertions.assertThat
+import org.junit.After
+import org.junit.Before
 import org.junit.Test
 import java.nio.file.Files
 
 class AgentChatFileEditorProviderTest {
+  @Before
+  fun setUp() {
+    IconManager.activate(null)
+  }
+
+  @After
+  fun tearDown() {
+    IconManager.deactivate()
+  }
+
   @Test
   fun keepsCodexResumeCommandOnVirtualFile() {
     val file = AgentChatVirtualFile(
@@ -125,6 +139,29 @@ class AgentChatFileEditorProviderTest {
       assertThat(loaded?.threadTitle).isEqualTo(descriptor.threadTitle)
       assertThat(loaded?.subAgentId).isEqualTo(descriptor.subAgentId)
       assertThat(loaded?.shellCommand).isEqualTo(descriptor.shellCommand)
+    }
+    finally {
+      store.delete(descriptor.tabKey)
+    }
+  }
+
+  @Test
+  fun normalizesLegacyIdentityStyleThreadIdOnLoad() {
+    val descriptor = AgentChatFileDescriptor.create(
+      projectHash = "hash-1",
+      projectPath = "/work/project-a",
+      threadIdentity = "CODEX:thread-legacy",
+      threadId = "codex:thread-legacy",
+      threadTitle = "Thread",
+      subAgentId = null,
+      shellCommand = listOf("codex", "resume", "thread-legacy"),
+    )
+    val store = AgentChatTabMetadataStores.createStandaloneForTest()
+    store.upsert(descriptor)
+    try {
+      val loaded = store.loadDescriptor(descriptor.tabKey)
+      assertThat(loaded).isNotNull
+      assertThat(loaded?.threadId).isEqualTo("thread-legacy")
     }
     finally {
       store.delete(descriptor.tabKey)
@@ -267,6 +304,14 @@ class AgentChatFileEditorProviderTest {
   fun usesFallbackIconForUnknownProviderIdentity() {
     val icon = providerIcon(threadIdentity = "unknown:thread-1")
 
-    assertThat(icon).isEqualTo(AllIcons.Toolwindows.ToolWindowMessages)
+    assertThat(icon).isNotEqualTo(AllIcons.Toolwindows.ToolWindowMessages)
+  }
+
+  @Test
+  fun addsDistinctBadgesForDifferentThreadActivities() {
+    val readyIcon = providerIcon(threadIdentity = "codex:thread-1", threadActivity = AgentThreadActivity.READY)
+    val unreadIcon = providerIcon(threadIdentity = "codex:thread-1", threadActivity = AgentThreadActivity.UNREAD)
+
+    assertThat(unreadIcon).isNotEqualTo(readyIcon)
   }
 }

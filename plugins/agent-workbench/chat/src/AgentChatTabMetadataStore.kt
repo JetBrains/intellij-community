@@ -278,6 +278,7 @@ internal class AgentChatTabMetadataStore {
     val metadataTabKey = tabKey?.takeIf { it.isNotBlank() } ?: return null
     val metadataIdentity = identity ?: return null
     val metadataRuntime = runtime ?: return null
+    val normalizedThreadId = normalizeThreadId(metadataIdentity.threadIdentity, metadataRuntime.threadId)
 
     return AgentChatTabMetadata(
       version = metadataVersion,
@@ -286,7 +287,7 @@ internal class AgentChatTabMetadataStore {
       projectPath = metadataIdentity.projectPath,
       threadIdentity = metadataIdentity.threadIdentity,
       subAgentId = metadataIdentity.subAgentId,
-      threadId = metadataRuntime.threadId,
+      threadId = normalizedThreadId,
       shellCommand = metadataRuntime.shellCommand,
       title = metadataRuntime.title,
       updatedAt = metadataRuntime.updatedAt,
@@ -485,3 +486,34 @@ private fun AgentChatTabMetadata.toDescriptor(): AgentChatFileDescriptor {
     shellCommand = shellCommand,
   )
 }
+
+private fun normalizeThreadId(threadIdentity: String, threadId: String): String {
+  val parsedIdentity = parseLenientThreadIdentity(threadIdentity) ?: return threadId
+  val parsedThreadId = parseLenientThreadIdentity(threadId) ?: return threadId
+  if (parsedIdentity.threadId != parsedThreadId.threadId) {
+    return threadId
+  }
+  if (!parsedIdentity.providerId.equals(parsedThreadId.providerId, ignoreCase = true)) {
+    return threadId
+  }
+  return parsedIdentity.threadId
+}
+
+private fun parseLenientThreadIdentity(value: String): ParsedThreadIdentity? {
+  val separator = value.indexOf(':')
+  if (separator <= 0 || separator == value.lastIndex) {
+    return null
+  }
+
+  val providerId = value.substring(0, separator).trim()
+  val threadId = value.substring(separator + 1)
+  if (providerId.isEmpty() || threadId.isBlank()) {
+    return null
+  }
+  return ParsedThreadIdentity(providerId = providerId, threadId = threadId)
+}
+
+private data class ParsedThreadIdentity(
+  val providerId: String,
+  val threadId: String,
+)

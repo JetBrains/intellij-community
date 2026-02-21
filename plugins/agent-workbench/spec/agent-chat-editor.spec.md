@@ -3,7 +3,7 @@ name: Agent Chat Editor
 description: Requirements for opening Agent chat tabs from Sessions in dedicated-frame and current-project modes.
 targets:
   - ../chat/src/*.kt
-  - ../chat/src/icons/*.java
+  - ../common/src/icons/*.kt
   - ../chat/resources/intellij.agent.workbench.chat.xml
   - ../chat/resources/messages/AgentChatBundle.properties
   - ../plugin/resources/META-INF/plugin.xml
@@ -62,13 +62,15 @@ Define how thread/sub-agent selections open chat editor tabs. Routing honors ded
   - `codex:*` thread identity uses Codex icon,
   - `claude:*` thread identity uses Claude icon,
   - unknown/invalid provider identity falls back to default Agent chat icon.
-- Editor-tab provider icons must be resolved via chat module typed icon holder (`AgentWorkbenchChatIcons`) instead of inline path-based icon loading in editor-tab provider code.
+- Editor tab icon must include a thread activity badge (`READY`, `PROCESSING`, `REVIEWING`, `UNREAD`) using Session activity semantics.
+- Unknown activity state for chat tabs defaults to `READY`.
+- Editor-tab provider icons must be resolved via shared typed icon holder (`AgentWorkbenchCommonIcons`) instead of inline path-based icon loading in editor-tab provider code.
 - Codex/Claude editor-tab provider icons currently use 14x14 SVG assets; separate dark/size variants are out of scope for this spec revision.
 - Editor-tab popup actions for the selected Agent chat tab must include:
-  - `Open in Agent Threads`;
+  - `Select in Agent Threads`;
   - `Archive Thread` (enabled only when provider supports archive);
   - `Copy Thread ID`.
-- `Open in Agent Threads` from editor-tab popup must ensure thread visibility (`ensureThreadVisible`) before activating Agent Threads tool window.
+- `Select in Agent Threads` from editor-tab popup must ensure thread visibility (`ensureThreadVisible`) before activating Agent Threads tool window.
 - `Archive Thread` from editor-tab popup must delegate to the same archive service flow used by Agent Threads tree actions.
 - Session entity labels must use `Thread`; `Chat` naming is limited to editor-tab/file surface.
 - The shell command used to start chat sessions is provider-specific:
@@ -89,7 +91,7 @@ Define how thread/sub-agent selections open chat editor tabs. Routing honors ded
 - Single click on a sub-agent row opens a separate chat editor tab for that sub-agent.
 - Editor tab name is the thread title; editor icon reflects provider identity with current 14x14 SVG assets.
 - Editor tab icon reflects provider identity (Codex/Claude) with fallback to default Agent chat icon for unknown providers.
-- Editor-tab popup exposes thread lifecycle/navigation actions (`Open in Agent Threads`, `Archive Thread`, `Copy Thread ID`) for selected chat tabs.
+- Editor-tab popup exposes thread lifecycle/navigation actions (`Select in Agent Threads`, `Archive Thread`, `Copy Thread ID`) for selected chat tabs.
 - By default, chat editor opens in a dedicated frame.
 - Users can disable dedicated-frame mode from Advanced Settings to restore current-project-frame behavior.
 - After restart, all previously open chat tabs are restored in their prior project frame context.

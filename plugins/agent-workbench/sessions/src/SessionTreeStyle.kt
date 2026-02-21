@@ -16,12 +16,7 @@ import kotlin.math.roundToLong
 
 @Composable
 internal fun threadIndicatorColor(thread: AgentSessionThread): Color {
-  return when (thread.activity) {
-    AgentSessionActivity.UNREAD -> Color(0xFF4DA3FF)
-    AgentSessionActivity.REVIEWING -> Color(0xFF2FD1C4)
-    AgentSessionActivity.PROCESSING -> Color(0xFFFF9F43)
-    AgentSessionActivity.READY -> Color(0xFF3FE47E)
-  }
+  return Color(thread.activity.argb)
 }
 
 @Composable

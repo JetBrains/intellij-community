@@ -74,7 +74,7 @@ Define required test coverage for the multi-provider Agent Threads stack: source
 - Editor-tab action tests must cover:
   - action registration in `EditorTabPopupMenu`,
   - action visibility/enablement for selected Agent chat tab context,
-  - `Open in Agent Threads` invoking visibility synchronization and tool-window activation,
+  - `Select in Agent Threads` invoking visibility synchronization and tool-window activation,
   - `Archive Thread` delegating to archive flow,
   - `Copy Thread ID` using selected tab thread id.
 - Tree UI state service tests must cover:

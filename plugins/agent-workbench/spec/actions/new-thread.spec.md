@@ -26,7 +26,7 @@ Define project/worktree `New Session` actions (`+` and quick-provider icon) and 
 ## Goals
 - Keep session-creation behavior identical across project and worktree rows.
 - Keep provider/mode semantics explicit and testable.
-- Avoid reintroducing legacy Codex "fresh session without thread id" flow.
+- Keep Codex new-session launch independent from app-server pre-creation.
 
 ## Non-goals
 - Thread loading/sorting/paging behavior.
@@ -46,14 +46,15 @@ Define project/worktree `New Session` actions (`+` and quick-provider icon) and 
 
 - Claude `yolo=false` new-session command must be `claude`.
 - Claude `yolo=true` new-session command must be `claude --dangerously-skip-permissions`.
-- Codex new-session must not use direct `codex`/`--full-auto` command construction for session creation.
+- Codex new-session command construction must use direct CLI launch: `codex` for standard, `codex --full-auto` for YOLO.
   [@test] ../../sessions/testSrc/AgentSessionCliTest.kt
+  [@test] ../../codex/sessions/testSrc/CodexAgentSessionProviderBridgeTest.kt
 
-- Codex new-session must call app-server `thread/start`, persist the new thread id, then open chat with `codex resume <threadId>`.
-- Rollout remains the default thread-discovery backend; this does not change Codex new-session creation flow.
-- Codex `yolo=true` must call `thread/start` with `approvalPolicy="on-request"` and `sandbox="workspace-write"`.
-- Codex `yolo=false` must call `thread/start` with default app-server parameters (no forced approval/sandbox overrides).
-  [@test] ../../sessions/testSrc/CodexAppServerClientTest.kt
+- Codex new-session must open chat in a pending state (`codex:new-*`) with `sessionId = null`; first user input creates the concrete thread in rollout backend.
+- Rollout remains the default thread-discovery backend and is responsible for surfacing the concrete thread id after creation.
+- Provider refresh must rebind pending Codex chat tabs to concrete identities and update shell commands to `codex resume <threadId>`.
+  [@test] ../../chat/testSrc/AgentChatEditorServiceTest.kt
+  [@test] ../../sessions/testSrc/AgentSessionsLoadingCoordinatorTest.kt
 
 - `Codex (Full Auto)` semantics are documented in spec and do not require extra warning text in UI.
 
@@ -63,8 +64,8 @@ Define project/worktree `New Session` actions (`+` and quick-provider icon) and 
 - Popup grouping keeps normal and YOLO choices explicit.
 
 ## Data & Backend
-- Codex action flow uses `SharedCodexAppServerService.createThread(cwd, yolo)` and persists created threads before resume.
-- Codex new-session identity is concrete (`CODEX:<threadId>`), not synthetic `new-*`.
+- Codex action flow launches direct CLI new sessions and starts with pending identity (`CODEX:new-*`).
+- Concrete thread id binding happens asynchronously from rollout refresh and updates the tab to `codex resume <threadId>`.
 
 ## Error Handling
 - Provider CLI/app-server failures must continue using provider-specific error paths in existing service flow.

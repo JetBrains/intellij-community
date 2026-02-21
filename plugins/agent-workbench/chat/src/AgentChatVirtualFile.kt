@@ -1,6 +1,7 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.agent.workbench.chat
 
+import com.intellij.agent.workbench.common.AgentThreadActivity
 import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.vfs.VirtualFileSystem
@@ -37,6 +38,9 @@ internal class AgentChatVirtualFile internal constructor(
   var threadTitle: String = resolveThreadTitle(descriptor.threadTitle)
     private set
 
+  var threadActivity: AgentThreadActivity = AgentThreadActivity.READY
+    private set
+
   @TestOnly
   internal constructor(
     projectPath: String,
@@ -45,6 +49,7 @@ internal class AgentChatVirtualFile internal constructor(
     threadId: String,
     threadTitle: String,
     subAgentId: String?,
+    threadActivity: AgentThreadActivity = AgentThreadActivity.READY,
     projectHash: String = "",
   ) : this(
     fileSystem = AgentChatVirtualFileSystems.createStandaloneForTest(),
@@ -57,7 +62,9 @@ internal class AgentChatVirtualFile internal constructor(
       subAgentId = subAgentId,
       shellCommand = shellCommand,
     ),
-  )
+  ) {
+    this.threadActivity = threadActivity
+  }
 
   init {
     fileType = AgentChatFileType
@@ -89,9 +96,56 @@ internal class AgentChatVirtualFile internal constructor(
     return true
   }
 
+  fun updateThreadActivity(threadActivity: AgentThreadActivity): Boolean {
+    if (this.threadActivity == threadActivity) {
+      LOG.debug {
+        "Skipped tab activity update(identity=$threadIdentity, subAgentId=$subAgentId): unchanged activity=$threadActivity"
+      }
+      return false
+    }
+
+    val oldActivity = this.threadActivity
+    this.threadActivity = threadActivity
+    LOG.debug {
+      "Updated tab activity(identity=$threadIdentity, subAgentId=$subAgentId): oldActivity=$oldActivity newActivity=$threadActivity"
+    }
+    return true
+  }
+
   fun updateCommandAndThreadId(shellCommand: List<String>, threadId: String) {
     this.shellCommand = shellCommand
     this.threadId = threadId
+  }
+
+  fun rebindPendingThread(
+    threadIdentity: String,
+    shellCommand: List<String>,
+    threadId: String,
+    threadTitle: String,
+    threadActivity: AgentThreadActivity,
+  ): Boolean {
+    var changed = false
+    if (this.threadIdentity != threadIdentity) {
+      this.threadIdentity = threadIdentity
+      changed = true
+    }
+    if (this.shellCommand != shellCommand || this.threadId != threadId) {
+      updateCommandAndThreadId(shellCommand = shellCommand, threadId = threadId)
+      changed = true
+    }
+    if (updateThreadTitle(threadTitle)) {
+      changed = true
+    }
+    if (updateThreadActivity(threadActivity)) {
+      changed = true
+    }
+
+    if (changed) {
+      LOG.debug {
+        "Rebound pending tab(identity=$threadIdentity, subAgentId=$subAgentId, threadId=$threadId)"
+      }
+    }
+    return changed
   }
 
   internal fun updateFromDescriptor(descriptor: AgentChatFileDescriptor) {

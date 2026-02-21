@@ -55,7 +55,7 @@ class AgentSessionsGearActionsTest {
     }.readText()
 
     assertThat(descriptor)
-      .contains("id=\"AgentWorkbenchSessions.OpenThreadInAgentThreads\"")
+      .contains("id=\"AgentWorkbenchSessions.SelectThreadInAgentThreads\"")
       .contains("id=\"AgentWorkbenchSessions.ArchiveThreadFromEditorTab\"")
       .contains("id=\"AgentWorkbenchSessions.CopyThreadIdFromEditorTab\"")
       .contains("group-id=\"EditorTabPopupMenu\"")

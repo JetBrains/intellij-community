@@ -97,25 +97,6 @@ internal class CodexAppServerProtocol {
       ?: throw CodexAppServerException("Codex app-server returned thread/start result without thread data")
   }
 
-  fun parseTurnStartTurnId(parser: JsonParser): String? {
-    if (parser.currentToken != JsonToken.START_OBJECT) {
-      parser.skipChildren()
-      return null
-    }
-    var turnId: String? = null
-    forEachObjectField(parser) { fieldName ->
-      if (fieldName == "turn" && parser.currentToken == JsonToken.START_OBJECT) {
-        forEachObjectField(parser) { turnField ->
-          if (turnField == "id") turnId = readStringOrNull(parser)
-          else parser.skipChildren()
-          true
-        }
-      }
-      else parser.skipChildren()
-      true
-    }
-    return turnId
-  }
 }
 
 private fun parseThreadArray(parser: JsonParser, archived: Boolean, threads: MutableList<CodexThread>, cwdFilter: String?) {

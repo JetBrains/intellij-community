@@ -2,6 +2,7 @@
   modules:
   - name: intellij.agent.workbench.plugin
   contentModules:
+  - name: intellij.agent.workbench.common
   - name: intellij.agent.workbench.claude.common
   - name: intellij.agent.workbench.claude.sessions
   - name: intellij.agent.workbench.codex.common

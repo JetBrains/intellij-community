@@ -378,20 +378,28 @@ class CodexAppServerClientTest {
   }
 
   @Test
-  fun persistThreadSendsTurnStartAndCancel(): Unit = runBlocking(Dispatchers.IO) {
+  fun persistThreadSendsTurnStartWithoutInterrupt(): Unit = runBlocking(Dispatchers.IO) {
     val configPath = tempDir.resolve("codex-config.json")
     writeConfig(path = configPath, threads = emptyList())
 
     val backendDir = tempDir.resolve("backend-persist")
     Files.createDirectories(backendDir)
+    val requestLogPath = backendDir.resolve("requests.log")
     val client = createMockClient(
       scope = this,
       tempDir = backendDir,
       configPath = configPath,
+      environmentOverrides = mapOf(
+        "CODEX_TEST_REQUEST_LOG" to requestLogPath.toString(),
+      ),
     )
     try {
       val created = client.createThread()
       client.persistThread(created.id)
+
+      val methods = Files.readAllLines(requestLogPath)
+      assertThat(methods).contains("turn/start")
+      assertThat(methods).doesNotContain("turn/interrupt")
     }
     finally {
       client.shutdown()

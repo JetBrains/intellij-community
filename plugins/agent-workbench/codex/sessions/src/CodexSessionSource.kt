@@ -9,7 +9,7 @@ import com.intellij.agent.workbench.codex.sessions.backend.CodexBackendThread
 import com.intellij.agent.workbench.codex.sessions.backend.CodexSessionActivity
 import com.intellij.agent.workbench.codex.sessions.backend.CodexSessionBackend
 import com.intellij.agent.workbench.codex.sessions.backend.createDefaultCodexSessionBackend
-import com.intellij.agent.workbench.sessions.AgentSessionActivity
+import com.intellij.agent.workbench.common.AgentThreadActivity
 import com.intellij.agent.workbench.sessions.AgentSessionProvider
 import com.intellij.agent.workbench.sessions.AgentSessionThread
 import com.intellij.agent.workbench.sessions.AgentSubAgent
@@ -52,15 +52,15 @@ private fun CodexThread.toAgentSessionThread(activity: CodexSessionActivity): Ag
     provider = AgentSessionProvider.CODEX,
     subAgents = subAgents.map { AgentSubAgent(it.id, it.name) },
     originBranch = gitBranch,
-    activity = activity.toAgentSessionActivity(),
+    activity = activity.toAgentThreadActivity(),
   )
 }
 
-private fun CodexSessionActivity.toAgentSessionActivity(): AgentSessionActivity {
+private fun CodexSessionActivity.toAgentThreadActivity(): AgentThreadActivity {
   return when (this) {
-    CodexSessionActivity.UNREAD -> AgentSessionActivity.UNREAD
-    CodexSessionActivity.REVIEWING -> AgentSessionActivity.REVIEWING
-    CodexSessionActivity.PROCESSING -> AgentSessionActivity.PROCESSING
-    CodexSessionActivity.READY -> AgentSessionActivity.READY
+    CodexSessionActivity.UNREAD -> AgentThreadActivity.UNREAD
+    CodexSessionActivity.REVIEWING -> AgentThreadActivity.REVIEWING
+    CodexSessionActivity.PROCESSING -> AgentThreadActivity.PROCESSING
+    CodexSessionActivity.READY -> AgentThreadActivity.READY
   }
 }

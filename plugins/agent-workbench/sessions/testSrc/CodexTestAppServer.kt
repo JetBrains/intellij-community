@@ -15,6 +15,7 @@ import java.io.OutputStreamWriter
 import java.nio.charset.StandardCharsets
 import java.nio.file.Files
 import java.nio.file.Path
+import java.nio.file.StandardOpenOption
 
 private data class ThreadEntry(
   val id: String,
@@ -48,6 +49,7 @@ internal object CodexTestAppServer {
   private const val CWD_MARKER_ENV = "CODEX_TEST_CWD_MARKER"
   private const val ERROR_METHOD_ENV = "CODEX_TEST_ERROR_METHOD"
   private const val ERROR_MESSAGE_ENV = "CODEX_TEST_ERROR_MESSAGE"
+  private const val REQUEST_LOG_ENV = "CODEX_TEST_REQUEST_LOG"
 
   @JvmStatic
   fun main(args: Array<String>) {
@@ -56,6 +58,7 @@ internal object CodexTestAppServer {
     val threads = loadThreads(configPath)
     val errorMethod = readEnv(ERROR_METHOD_ENV)
     val errorMessage = readEnv(ERROR_MESSAGE_ENV)
+    val requestLogPath = readEnv(REQUEST_LOG_ENV)?.let(Path::of)
     readEnv(CWD_MARKER_ENV)?.let(::writeWorkingDirectoryMarker)
     val reader = BufferedReader(InputStreamReader(System.`in`, StandardCharsets.UTF_8))
     val writer = BufferedWriter(OutputStreamWriter(System.out, StandardCharsets.UTF_8))
@@ -70,6 +73,7 @@ internal object CodexTestAppServer {
         null
       }
       if (request == null) continue
+      requestLogPath?.let { appendRequestLog(it, request.method) }
       if (errorMethod != null && request.method == errorMethod) {
         writeResponse(writer, request.id, ::writeEmptyObject, errorMessage = errorMessage ?: "Forced error")
         continue
@@ -360,6 +364,22 @@ private fun startThread(threads: MutableList<ThreadEntry>): ThreadEntry {
 
   private fun readEnv(name: String): String? {
     return System.getenv(name)?.trim()?.takeIf { it.isNotEmpty() }
+  }
+
+  private fun appendRequestLog(path: Path, method: String) {
+    try {
+      path.parent?.let(Files::createDirectories)
+      Files.writeString(
+        path,
+        "$method\n",
+        StandardCharsets.UTF_8,
+        StandardOpenOption.CREATE,
+        StandardOpenOption.WRITE,
+        StandardOpenOption.APPEND,
+      )
+    }
+    catch (_: Throwable) {
+    }
   }
 
   private fun writeWorkingDirectoryMarker(marker: String) {

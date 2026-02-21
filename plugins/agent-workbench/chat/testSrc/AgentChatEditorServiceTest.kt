@@ -1,5 +1,6 @@
 package com.intellij.agent.workbench.chat
 
+import com.intellij.agent.workbench.common.AgentThreadActivity
 import com.intellij.openapi.extensions.LoadingOrder
 import com.intellij.openapi.fileEditor.FileEditor
 import com.intellij.openapi.fileEditor.FileEditorManager
@@ -105,7 +106,7 @@ class AgentChatEditorServiceTest : FileEditorManagerTestCase() {
     assertThat(EditorTabPresentationUtil.getEditorTabTitle(project, file)).isEqualTo(title)
   }
 
-  fun testUpdateOpenChatTabTitlesRefreshesExistingTabTitle() {
+  fun testUpdateOpenChatTabPresentationRefreshesExistingTabTitleAndActivity() {
     openChatOnEdt(
       threadIdentity = "CODEX:thread-1",
       shellCommand = codexCommand,
@@ -116,25 +117,75 @@ class AgentChatEditorServiceTest : FileEditorManagerTestCase() {
 
     val file = openedChatFiles().single()
     runWithModalProgressBlocking(project, "") {
-      val updatedTabs = updateOpenAgentChatTabTitles(
+      val updatedTabs = updateOpenAgentChatTabPresentation(
         titleByPathAndThreadIdentity = mapOf(
           (projectPath to "CODEX:thread-1") to "Renamed by source update",
+        ),
+        activityByPathAndThreadIdentity = mapOf(
+          (projectPath to "CODEX:thread-1") to AgentThreadActivity.UNREAD,
         ),
       )
       assertThat(updatedTabs).isEqualTo(1)
     }
 
     assertThat(file.threadTitle).isEqualTo("Renamed by source update")
+    assertThat(file.threadActivity).isEqualTo(AgentThreadActivity.UNREAD)
     assertThat(EditorTabPresentationUtil.getEditorTabTitle(project, file)).isEqualTo("Renamed by source update")
 
     runWithModalProgressBlocking(project, "") {
-      val updatedTabs = updateOpenAgentChatTabTitles(
+      val updatedTabs = updateOpenAgentChatTabPresentation(
         titleByPathAndThreadIdentity = mapOf(
           (projectPath to "CODEX:thread-1") to "Renamed by source update",
+        ),
+        activityByPathAndThreadIdentity = mapOf(
+          (projectPath to "CODEX:thread-1") to AgentThreadActivity.UNREAD,
         ),
       )
       assertThat(updatedTabs).isEqualTo(0)
     }
+  }
+
+  fun testRebindOpenPendingChatTabToConcreteThread() {
+    openChatOnEdt(
+      threadIdentity = "CODEX:new-1",
+      shellCommand = listOf("codex"),
+      threadId = "",
+      threadTitle = "New thread",
+      subAgentId = null,
+    )
+
+    val file = openedChatFiles().single()
+    runWithModalProgressBlocking(project, "") {
+      val reboundTabs = rebindOpenAgentChatPendingTabs(
+        targetsByProjectPath = mapOf(
+          projectPath to listOf(
+            AgentChatPendingTabRebindTarget(
+              threadIdentity = "CODEX:thread-3",
+              threadId = "thread-3",
+              shellCommand = listOf("codex", "resume", "thread-3"),
+              threadTitle = "Recovered thread",
+              threadActivity = AgentThreadActivity.UNREAD,
+            )
+          )
+        )
+      )
+      assertThat(reboundTabs).isEqualTo(1)
+    }
+
+    assertThat(file.threadIdentity).isEqualTo("CODEX:thread-3")
+    assertThat(file.threadId).isEqualTo("thread-3")
+    assertThat(file.shellCommand).containsExactly("codex", "resume", "thread-3")
+    assertThat(file.threadTitle).isEqualTo("Recovered thread")
+    assertThat(file.threadActivity).isEqualTo(AgentThreadActivity.UNREAD)
+
+    openChatOnEdt(
+      threadIdentity = "CODEX:thread-3",
+      shellCommand = listOf("codex", "resume", "thread-3"),
+      threadId = "thread-3",
+      threadTitle = "Recovered thread",
+      subAgentId = null,
+    )
+    assertThat(openedChatFiles()).hasSize(1)
   }
 
   fun testDifferentSessionIdentitiesDoNotReuseTab() {

@@ -44,16 +44,21 @@ internal class CodexAgentSessionProviderBridge(
   override fun buildResumeCommand(sessionId: String): List<String> = listOf(CodexCliUtils.CODEX_COMMAND, "resume", sessionId)
 
   override fun buildNewSessionCommand(mode: AgentSessionLaunchMode): List<String> {
-    error("Codex new sessions use thread/start + resume, not direct CLI")
+    return if (mode == AgentSessionLaunchMode.YOLO) {
+      listOf(CodexCliUtils.CODEX_COMMAND, "--full-auto")
+    }
+    else {
+      listOf(CodexCliUtils.CODEX_COMMAND)
+    }
   }
 
   override fun buildNewEntryCommand(): List<String> = listOf(CodexCliUtils.CODEX_COMMAND)
 
+  @Suppress("UNUSED_PARAMETER")
   override suspend fun createNewSession(path: String, mode: AgentSessionLaunchMode): AgentSessionLaunchSpec {
-    val thread = service<SharedCodexAppServerService>().createThread(cwd = path, yolo = mode == AgentSessionLaunchMode.YOLO)
     return AgentSessionLaunchSpec(
-      sessionId = thread.id,
-      command = buildResumeCommand(thread.id),
+      sessionId = null,
+      command = buildNewSessionCommand(mode),
     )
   }
 

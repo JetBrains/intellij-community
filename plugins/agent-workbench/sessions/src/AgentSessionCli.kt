@@ -1,6 +1,8 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.agent.workbench.sessions
 
+import com.intellij.agent.workbench.common.buildAgentThreadIdentity
+import com.intellij.agent.workbench.common.parseAgentThreadIdentity
 import com.intellij.agent.workbench.sessions.providers.AgentSessionProviderBridges
 import java.util.UUID
 
@@ -25,7 +27,7 @@ internal fun buildAgentSessionEntryCommand(provider: AgentSessionProvider): List
 }
 
 internal fun buildAgentSessionIdentity(provider: AgentSessionProvider, sessionId: String): String {
-  return "${provider.value}:$sessionId"
+  return buildAgentThreadIdentity(providerId = provider.value, threadId = sessionId)
 }
 
 internal data class AgentSessionIdentity(
@@ -34,15 +36,27 @@ internal data class AgentSessionIdentity(
 )
 
 internal fun parseAgentSessionIdentity(identity: String): AgentSessionIdentity? {
-  val separator = identity.indexOf(':')
-  if (separator <= 0 || separator == identity.lastIndex) return null
-  val provider = AgentSessionProvider.fromOrNull(identity.substring(0, separator)) ?: return null
-  val sessionId = identity.substring(separator + 1)
-  return AgentSessionIdentity(provider = provider, sessionId = sessionId)
+  val threadIdentity = parseAgentThreadIdentity(identity) ?: return null
+  val provider = AgentSessionProvider.fromOrNull(threadIdentity.providerId) ?: return null
+  return AgentSessionIdentity(provider = provider, sessionId = threadIdentity.threadId)
+}
+
+internal fun isAgentSessionNewIdentity(identity: String): Boolean {
+  val sessionId = parseAgentSessionIdentity(identity)?.sessionId ?: return false
+  return isAgentSessionNewSessionId(sessionId)
+}
+
+internal fun isAgentSessionNewSessionId(sessionId: String): Boolean {
+  return sessionId.startsWith("new-")
+}
+
+internal fun resolveAgentSessionId(identity: String): String {
+  val sessionId = parseAgentSessionIdentity(identity)?.sessionId ?: return identity
+  return sessionId.takeUnless(::isAgentSessionNewSessionId).orEmpty()
 }
 
 internal fun buildAgentSessionNewIdentity(provider: AgentSessionProvider): String {
-  return "${provider.value}:new-${UUID.randomUUID()}"
+  return buildAgentThreadIdentity(providerId = provider.value, threadId = "new-${UUID.randomUUID()}")
 }
 
 internal fun agentSessionCliMissingMessageKey(provider: AgentSessionProvider): String {

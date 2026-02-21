@@ -8,6 +8,7 @@ package com.intellij.agent.workbench.sessions
 import com.intellij.agent.workbench.chat.AgentChatTabSelectionService
 import com.intellij.agent.workbench.chat.closeAndForgetAgentChatsForThread
 import com.intellij.agent.workbench.chat.openChat
+import com.intellij.agent.workbench.common.AgentThreadActivity
 import com.intellij.agent.workbench.sessions.providers.AgentSessionProviderBridges
 import com.intellij.agent.workbench.sessions.providers.AgentSessionSource
 import com.intellij.ide.RecentProjectsManager
@@ -563,15 +564,17 @@ private suspend fun openNewChatInProject(
   command: List<String>,
   title: String,
 ) {
-  openChat(
-    project = project,
-    projectPath = projectPath,
-    threadIdentity = identity,
-    shellCommand = command,
-    threadId = identity,
-    threadTitle = title,
-    subAgentId = null,
-  )
+    val threadId = resolveAgentSessionId(identity)
+    openChat(
+      project = project,
+      projectPath = projectPath,
+      threadIdentity = identity,
+      shellCommand = command,
+      threadId = threadId,
+      threadTitle = title,
+      subAgentId = null,
+      threadActivity = AgentThreadActivity.READY,
+    )
   withContext(Dispatchers.UI) {
     project.serviceAsync<ProjectUtilService>().focusProjectWindow()
   }
@@ -636,6 +639,7 @@ private suspend fun openChatInProject(
       threadId = thread.id,
       threadTitle = thread.title,
       subAgentId = subAgent?.id,
+      threadActivity = thread.activity,
     )
     ProjectUtilService.getInstance(project).focusProjectWindow()
   }

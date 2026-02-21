@@ -43,6 +43,20 @@ class AgentSessionsEditorTabActionsTest {
   }
 
   @Test
+  fun toThreadContextReturnsNullForPendingIdentity() {
+    val editorContext = AgentChatEditorTabActionContext(
+      project = ProjectManager.getInstance().defaultProject,
+      path = normalizeSessionsProjectPath("/tmp/project"),
+      threadIdentity = "codex:new-123",
+      threadId = "new-123",
+    )
+
+    val context = toThreadEditorTabActionContext(editorContext)
+
+    assertThat(context).isNull()
+  }
+
+  @Test
   fun archiveThreadActionVisibleAndEnabledOnlyWhenProviderSupportsArchive() {
     val context = threadContext()
 
@@ -90,14 +104,14 @@ class AgentSessionsEditorTabActionsTest {
   }
 
   @Test
-  fun openInAgentThreadsActionEnsuresVisibilityAndActivatesToolWindow() {
+  fun selectInAgentThreadsActionEnsuresVisibilityAndActivatesToolWindow() {
     val context = threadContext()
     var ensuredPath: String? = null
     var ensuredProvider: AgentSessionProvider? = null
     var ensuredThreadId: String? = null
     var activatedProjectName: String? = null
 
-    val action = AgentSessionsOpenThreadInToolWindowAction(
+    val action = AgentSessionsSelectThreadInToolWindowAction(
       resolveContext = { context },
       ensureThreadVisible = { path, provider, threadId ->
         ensuredPath = path
@@ -155,8 +169,28 @@ class AgentSessionsEditorTabActionsTest {
   }
 
   @Test
+  fun copyThreadIdActionDisabledForPendingIdentity() {
+    val context = AgentChatEditorTabActionContext(
+      project = ProjectManager.getInstance().defaultProject,
+      path = normalizeSessionsProjectPath("/tmp/project"),
+      threadIdentity = "codex:new-123",
+      threadId = "thread-42",
+    )
+    val action = AgentSessionsCopyThreadIdFromEditorTabAction(
+      resolveContext = { context },
+      copyToClipboard = { _ -> error("should not copy pending thread id") },
+    )
+    val event = TestActionEvent.createTestEvent(action)
+
+    action.update(event)
+
+    assertThat(event.presentation.isVisible).isTrue()
+    assertThat(event.presentation.isEnabled).isFalse()
+  }
+
+  @Test
   fun editorTabActionsAreHiddenForNonAgentChatFiles() {
-    val action = AgentSessionsOpenThreadInToolWindowAction(
+    val action = AgentSessionsSelectThreadInToolWindowAction(
       resolveContext = { null },
       ensureThreadVisible = { _, _, _ -> },
       activateSessionsToolWindow = { _ -> },

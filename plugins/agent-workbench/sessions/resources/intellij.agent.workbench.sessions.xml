@@ -3,6 +3,7 @@
 
   <dependencies>
     <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
+    <module name="intellij.agent.workbench.common"/>
     <module name="intellij.agent.workbench.chat"/>
     <module name="intellij.platform.compose"/>
     <!-- endregion -->
@@ -43,14 +44,14 @@
       <action id="AgentWorkbenchSessions.Refresh" class="com.intellij.agent.workbench.sessions.AgentSessionsRefreshAction"/>
     </group>
     <action
-      id="AgentWorkbenchSessions.OpenThreadInAgentThreads"
-      class="com.intellij.agent.workbench.sessions.AgentSessionsOpenThreadInToolWindowAction">
+      id="AgentWorkbenchSessions.SelectThreadInAgentThreads"
+      class="com.intellij.agent.workbench.sessions.AgentSessionsSelectThreadInToolWindowAction">
       <add-to-group group-id="EditorTabPopupMenu" anchor="after" relative-to-action="CopyPaths"/>
     </action>
     <action
       id="AgentWorkbenchSessions.ArchiveThreadFromEditorTab"
       class="com.intellij.agent.workbench.sessions.AgentSessionsArchiveThreadFromEditorTabAction">
-      <add-to-group group-id="EditorTabPopupMenu" anchor="after" relative-to-action="AgentWorkbenchSessions.OpenThreadInAgentThreads"/>
+      <add-to-group group-id="EditorTabPopupMenu" anchor="after" relative-to-action="AgentWorkbenchSessions.SelectThreadInAgentThreads"/>
     </action>
     <action
       id="AgentWorkbenchSessions.CopyThreadIdFromEditorTab"

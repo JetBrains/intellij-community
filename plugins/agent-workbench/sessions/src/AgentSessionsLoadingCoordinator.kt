@@ -1,8 +1,11 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.agent.workbench.sessions
 
+import com.intellij.agent.workbench.chat.AgentChatPendingTabRebindTarget
 import com.intellij.agent.workbench.chat.collectOpenAgentChatProjectPaths
-import com.intellij.agent.workbench.chat.updateOpenAgentChatTabTitles
+import com.intellij.agent.workbench.chat.rebindOpenAgentChatPendingTabs
+import com.intellij.agent.workbench.chat.updateOpenAgentChatTabPresentation
+import com.intellij.agent.workbench.common.AgentThreadActivity
 import com.intellij.agent.workbench.sessions.providers.AgentSessionProviderBridges
 import com.intellij.agent.workbench.sessions.providers.AgentSessionSource
 import com.intellij.openapi.diagnostic.debug
@@ -34,7 +37,13 @@ internal class AgentSessionsLoadingCoordinator(
   private val stateStore: AgentSessionsStateStore,
   private val isRefreshGateActive: suspend () -> Boolean,
   private val openAgentChatProjectPathsProvider: suspend () -> Set<String> = ::collectOpenAgentChatProjectPaths,
-  private val openAgentChatTabTitleUpdater: suspend (Map<Pair<String, String>, String>) -> Int = ::updateOpenAgentChatTabTitles,
+  private val openAgentChatTabPresentationUpdater: suspend (
+    Map<Pair<String, String>, String>,
+    Map<Pair<String, String>, AgentThreadActivity>,
+  ) -> Int = ::updateOpenAgentChatTabPresentation,
+  private val openAgentChatPendingTabBinder: suspend (
+    Map<String, List<AgentChatPendingTabRebindTarget>>,
+  ) -> Int = ::rebindOpenAgentChatPendingTabs,
 ) {
   private val refreshMutex = Mutex()
   private val onDemandMutex = Mutex()
@@ -505,7 +514,6 @@ internal class AgentSessionsLoadingCoordinator(
           queueSizeAfterRequeue = pendingSourceRefreshProviders.size
         }
         LOG.debug {
-          @Suppress("SpellCheckingInspection")
           "Source refresh gate blocked id=$refreshId provider=${provider.value}; requeued (queueSize=$queueSizeAfterRequeue)"
         }
         delay(SOURCE_REFRESH_GATE_RETRY_MS.milliseconds)
@@ -579,7 +587,9 @@ internal class AgentSessionsLoadingCoordinator(
         }
       }
 
-      syncOpenChatTabTitles(provider = provider, outcomes = outcomes, refreshId = refreshId)
+      bindPendingOpenChatTabs(provider = provider, outcomes = outcomes, refreshId = refreshId)
+
+      syncOpenChatTabPresentation(provider = provider, outcomes = outcomes, refreshId = refreshId)
 
       stateStore.update { state ->
         var changed = false
@@ -633,6 +643,45 @@ internal class AgentSessionsLoadingCoordinator(
     }
   }
 
+  private suspend fun bindPendingOpenChatTabs(
+    provider: AgentSessionProvider,
+    outcomes: Map<String, ProviderRefreshOutcome>,
+    refreshId: Long,
+  ) {
+    if (provider != AgentSessionProvider.CODEX) {
+      return
+    }
+
+    val targetsByPath = LinkedHashMap<String, MutableList<AgentChatPendingTabRebindTarget>>()
+    for ((path, outcome) in outcomes) {
+      val threads = outcome.threads ?: continue
+      for (thread in threads) {
+        if (thread.provider != provider) continue
+        val command = runCatching {
+          buildAgentSessionResumeCommand(thread.provider, thread.id)
+        }.getOrDefault(listOf(provider.value, "resume", thread.id))
+        targetsByPath.getOrPut(path) { ArrayList() }.add(
+          AgentChatPendingTabRebindTarget(
+            threadIdentity = buildAgentSessionIdentity(thread.provider, thread.id),
+            threadId = thread.id,
+            shellCommand = command,
+            threadTitle = thread.title,
+            threadActivity = thread.activity,
+          )
+        )
+      }
+    }
+
+    if (targetsByPath.isEmpty()) {
+      return
+    }
+
+    val reboundTabs = openAgentChatPendingTabBinder(targetsByPath)
+    LOG.debug {
+      "Provider refresh id=$refreshId provider=${provider.value} rebound pending chat tabs (reboundTabs=$reboundTabs)"
+    }
+  }
+
   private fun collectLoadedPaths(state: AgentSessionsState): List<String> {
     val paths = LinkedHashSet<String>()
     for (project in state.projects) {
@@ -648,28 +697,34 @@ internal class AgentSessionsLoadingCoordinator(
     return ArrayList(paths)
   }
 
-  private suspend fun syncOpenChatTabTitles(
+  private suspend fun syncOpenChatTabPresentation(
     provider: AgentSessionProvider,
     outcomes: Map<String, ProviderRefreshOutcome>,
     refreshId: Long,
   ) {
     val titleByPathAndThreadIdentity = LinkedHashMap<Pair<String, String>, String>()
+    val activityByPathAndThreadIdentity = LinkedHashMap<Pair<String, String>, AgentThreadActivity>()
     for ((path, outcome) in outcomes) {
       val threads = outcome.threads ?: continue
       for (thread in threads) {
         if (thread.provider != provider) continue
-        titleByPathAndThreadIdentity[path to buildAgentSessionIdentity(thread.provider, thread.id)] = thread.title
+        val identityKey = path to buildAgentSessionIdentity(thread.provider, thread.id)
+        titleByPathAndThreadIdentity[identityKey] = thread.title
+        activityByPathAndThreadIdentity[identityKey] = thread.activity
       }
     }
 
-    if (titleByPathAndThreadIdentity.isEmpty()) {
+    if (titleByPathAndThreadIdentity.isEmpty() && activityByPathAndThreadIdentity.isEmpty()) {
       return
     }
 
-    val updatedTabs = openAgentChatTabTitleUpdater(titleByPathAndThreadIdentity)
+    val updatedTabs = openAgentChatTabPresentationUpdater(
+      titleByPathAndThreadIdentity,
+      activityByPathAndThreadIdentity,
+    )
 
     LOG.debug {
-      "Provider refresh id=$refreshId provider=${provider.value} synchronized open chat tab titles (updatedTabs=$updatedTabs)"
+      "Provider refresh id=$refreshId provider=${provider.value} synchronized open chat tab presentation (updatedTabs=$updatedTabs)"
     }
   }
 

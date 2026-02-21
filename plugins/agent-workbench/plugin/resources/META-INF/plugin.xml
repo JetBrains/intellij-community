@@ -5,6 +5,7 @@
   <description>Agent Workbench - AI-based developement for IntelliJ</description>
   <vendor>JetBrains</vendor>
   <content namespace="jetbrains">
+    <module name="intellij.agent.workbench.common"/>
     <module name="intellij.agent.workbench.json"/>
     <module name="intellij.agent.workbench.claude.common"/>
     <module name="intellij.agent.workbench.claude.sessions"/>

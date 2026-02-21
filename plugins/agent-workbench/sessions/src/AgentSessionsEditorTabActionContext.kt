@@ -38,6 +38,10 @@ internal fun resolveAgentChatThreadEditorTabActionContext(event: AnActionEvent):
 }
 
 internal fun toThreadEditorTabActionContext(editorContext: AgentChatEditorTabActionContext): AgentChatThreadEditorTabActionContext? {
+  if (isAgentSessionNewIdentity(editorContext.threadIdentity)) {
+    return null
+  }
+
   val identity = parseAgentSessionIdentity(editorContext.threadIdentity) ?: return null
   if (identity.sessionId.isBlank()) {
     return null

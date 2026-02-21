@@ -1,6 +1,8 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.agent.workbench.sessions
 
+import com.intellij.agent.workbench.chat.AgentChatPendingTabRebindTarget
+import com.intellij.agent.workbench.common.AgentThreadActivity
 import com.intellij.agent.workbench.sessions.providers.AgentSessionSource
 import com.intellij.testFramework.junit5.TestApplication
 import kotlinx.coroutines.CompletableDeferred
@@ -191,10 +193,11 @@ class AgentSessionsLoadingCoordinatorTest {
   }
 
   @Test
-  fun providerUpdateSynchronizesOpenChatTabTitlesWithoutExplicitRefresh() = runBlocking {
+  fun providerUpdateSynchronizesOpenChatTabPresentationWithoutExplicitRefresh() = runBlocking {
     val updates = MutableSharedFlow<Unit>(replay = 1, extraBufferCapacity = 1)
     var updatedTitle = "Initial title"
     val receivedTitleMaps = mutableListOf<Map<Pair<String, String>, String>>()
+    val receivedActivityMaps = mutableListOf<Map<Pair<String, String>, AgentThreadActivity>>()
 
     val source = ScriptedSessionSource(
       provider = AgentSessionProvider.CODEX,
@@ -214,8 +217,9 @@ class AgentSessionsLoadingCoordinatorTest {
       sessionSourcesProvider = { listOf(source) },
       isRefreshGateActive = { true },
       openChatPathsProvider = { setOf(PROJECT_PATH) },
-      openChatTabTitleUpdater = { titleMap ->
+      openChatTabPresentationUpdater = { titleMap, activityMap ->
         receivedTitleMaps.add(titleMap)
+        receivedActivityMaps.add(activityMap)
         titleMap.size
       },
     ) { coordinator, stateStore ->
@@ -249,6 +253,69 @@ class AgentSessionsLoadingCoordinatorTest {
       waitForCondition {
         receivedTitleMaps.any { it[expectedKey] == "Renamed from source update" }
       }
+      waitForCondition {
+        receivedActivityMaps.any { it[expectedKey] == AgentThreadActivity.READY }
+      }
+    }
+  }
+
+  @Test
+  fun providerUpdateBuildsPendingTabRebindTargetsForCodex() = runBlocking {
+    val updates = MutableSharedFlow<Unit>(replay = 1, extraBufferCapacity = 1)
+    val receivedTargets = mutableListOf<Map<String, List<AgentChatPendingTabRebindTarget>>>()
+
+    val source = ScriptedSessionSource(
+      provider = AgentSessionProvider.CODEX,
+      supportsUpdates = true,
+      updates = updates,
+      listFromClosedProject = { path ->
+        if (path != PROJECT_PATH) {
+          emptyList()
+        }
+        else {
+          listOf(thread(id = "codex-2", updatedAt = 300L, title = "New Codex thread", provider = AgentSessionProvider.CODEX))
+        }
+      },
+    )
+
+    withLoadingCoordinator(
+      sessionSourcesProvider = { listOf(source) },
+      isRefreshGateActive = { true },
+      openChatPathsProvider = { setOf(PROJECT_PATH) },
+      openChatPendingTabBinder = { targets ->
+        receivedTargets.add(targets)
+        1
+      },
+    ) { coordinator, stateStore ->
+      stateStore.replaceProjects(
+        projects = listOf(
+          AgentProjectSessions(
+            path = PROJECT_PATH,
+            name = "Project A",
+            isOpen = true,
+            hasLoaded = true,
+            threads = listOf(thread(id = "codex-1", updatedAt = 100L, provider = AgentSessionProvider.CODEX)),
+          )
+        ),
+        visibleThreadCounts = emptyMap(),
+      )
+
+      coordinator.observeSessionSourceUpdates()
+      updates.tryEmit(Unit)
+
+      waitForCondition {
+        receivedTargets.isNotEmpty()
+      }
+
+      val targets = receivedTargets.last()[PROJECT_PATH]
+      assertThat(targets).isNotNull
+      assertThat(targets!!).hasSize(1)
+      val target = targets.single()
+      assertThat(target.threadIdentity).isEqualTo(buildAgentSessionIdentity(AgentSessionProvider.CODEX, "codex-2"))
+      assertThat(target.threadId).isEqualTo("codex-2")
+      assertThat(target.shellCommand).containsExactly("codex", "resume", "codex-2")
+      assertThat(target.threadTitle).isEqualTo("New Codex thread")
+      assertThat(target.threadActivity).isEqualTo(AgentThreadActivity.READY)
     }
   }
 
@@ -257,7 +324,11 @@ class AgentSessionsLoadingCoordinatorTest {
     projectEntriesProvider: suspend () -> List<ProjectEntry> = { emptyList() },
     isRefreshGateActive: suspend () -> Boolean,
     openChatPathsProvider: suspend () -> Set<String> = { emptySet() },
-    openChatTabTitleUpdater: suspend (Map<Pair<String, String>, String>) -> Int = { 0 },
+    openChatTabPresentationUpdater: suspend (
+      Map<Pair<String, String>, String>,
+      Map<Pair<String, String>, AgentThreadActivity>,
+    ) -> Int = { _, _ -> 0 },
+    openChatPendingTabBinder: suspend (Map<String, List<AgentChatPendingTabRebindTarget>>) -> Int = { _ -> 0 },
     action: suspend (AgentSessionsLoadingCoordinator, AgentSessionsStateStore) -> Unit,
   ) {
     @Suppress("RAW_SCOPE_CREATION")
@@ -273,7 +344,8 @@ class AgentSessionsLoadingCoordinatorTest {
         stateStore = stateStore,
         isRefreshGateActive = isRefreshGateActive,
         openAgentChatProjectPathsProvider = openChatPathsProvider,
-        openAgentChatTabTitleUpdater = openChatTabTitleUpdater,
+        openAgentChatTabPresentationUpdater = openChatTabPresentationUpdater,
+        openAgentChatPendingTabBinder = openChatPendingTabBinder,
       )
       action(coordinator, stateStore)
     }
