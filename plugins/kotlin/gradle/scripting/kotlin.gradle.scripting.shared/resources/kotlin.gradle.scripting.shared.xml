@@ -3,7 +3,6 @@
     <module name="intellij.gradle"/>
     <module name="intellij.kotlin.gradle.tooling"/>
     <module name="intellij.kotlin.base.scripting.shared"/>
-    <module name="intellij.gradle.completion"/>
   </dependencies>
   <extensions defaultExtensionNs="org.jetbrains.plugins.gradle">
     <projectResolve implementation="org.jetbrains.kotlin.gradle.scripting.shared.importing.KotlinDslScriptModelResolver" order="first"/>
