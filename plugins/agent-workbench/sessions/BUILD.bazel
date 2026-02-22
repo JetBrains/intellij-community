@@ -36,7 +36,8 @@ jvm_library(
     "@lib//:jna",
     "//platform/project-frame",
     "//platform/projectModel-impl",
-  ]
+  ],
+  plugins = ["@lib//:compose-plugin"]
 )
 
 jvm_library(
@@ -77,8 +78,16 @@ jvm_library(
     "//platform/testFramework/junit5:junit5_test_lib",
     "//libraries/assertj-core",
     "//platform/project-frame",
+    "//platform/project-frame:project-frame_test_lib",
     "//platform/projectModel-impl",
-  ]
+    "//platform/projectModel-impl:projectModel-impl_test_lib",
+  ],
+  runtime_deps = [
+    "//platform/platform-impl:ide-impl_test_lib",
+    "//platform/ide-core-impl:ide-core-impl_test_lib",
+    "//platform/platform-util-io:ide-util-io_test_lib",
+  ],
+  plugins = ["@lib//:compose-plugin"]
 )
 ### auto-generated section `build intellij.agent.workbench.sessions` end
 

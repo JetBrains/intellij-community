@@ -59,7 +59,8 @@ suspend fun openChat(
   val manager = FileEditorManagerEx.getInstanceExAsync(project)
   val existing = findExistingChat(manager.openFiles, threadIdentity, subAgentId)
   LOG.debug {
-    "openChat(project=${project.name}, path=$projectPath, identity=$threadIdentity, subAgentId=$subAgentId, existing=${existing != null}, title=$threadTitle)"
+    "openChat(project=${project.name}, path=$projectPath, identity=$threadIdentity, " +
+    "subAgentId=$subAgentId, existing=${existing != null}, title=$threadTitle)"
   }
   val tabsService = serviceAsync<AgentChatTabsService>()
   val fileSystem = agentChatVirtualFileSystem()
@@ -80,7 +81,9 @@ suspend fun openChat(
     val activityUpdated = existing.updateThreadActivity(threadActivity)
     tabsService.upsert(existing.toSnapshot())
     LOG.debug {
-      "openChat existing tab update(identity=$threadIdentity, subAgentId=$subAgentId): updated=$updated, currentName=${existing.name}, currentTitle=${existing.threadTitle}"
+      "openChat existing tab update(identity=$threadIdentity, subAgentId=$subAgentId): " +
+      "titleUpdated=$titleUpdated, activityUpdated=$activityUpdated, currentName=${existing.name}," +
+      " currentTitle=${existing.threadTitle}, currentActivity=${existing.threadActivity}"
     }
     else {
       false
@@ -240,7 +243,7 @@ fun rebindOpenPendingAgentChatTabs(
           break
         }
 
-        val target = targets[targetIndex++]
+        val target = targets.get(targetIndex++)
         if (pendingFile.rebindPendingThread(
             threadIdentity = target.threadIdentity,
             shellCommand = target.shellCommand,
@@ -325,10 +328,8 @@ fun rebindOpenPendingAgentChatTabs(
   }
 
   if (updatedSnapshots.isNotEmpty()) {
-    withContext(Dispatchers.IO) {
-      for (snapshot in updatedSnapshots) {
-        tabsService.upsert(snapshot)
-      }
+    for (snapshot in updatedSnapshots) {
+      tabsService.upsert(snapshot)
     }
   }
 
@@ -341,8 +342,8 @@ fun rebindOpenPendingAgentChatTabs(
     outcomesByPath = outcomesByPath,
   )
   LOG.debug {
-    "rebindOpenPendingCodexTabs requestedBindings=${report.requestedBindings}, reboundBindings=${report.reboundBindings}, " +
-    "reboundFiles=${report.reboundFiles}, updatedPresentations=${report.updatedPresentations}, paths=${report.outcomesByPath.size}"
+    "rebindOpenAgentChatPendingTabs reboundTabs=$reboundTabs, updatedPresentations=$updatedPresentations," +
+    " requestedPaths=${targetsByProjectPath.size}"
   }
   return report
 }
@@ -653,7 +654,7 @@ suspend fun updateOpenAgentChatTabPresentation(
 
   LOG.debug {
     "updateOpenAgentChatTabPresentation updatedTabs=$updatedTabs, updatedPresentations=$updatedPresentations," +
-    " requestedTitles=${normalizedTitlesByPathAndThreadIdentity.size}, requestedActivities=${normalizedActivitiesByPathAndThreadIdentity.size}"
+    " requestedTitles=${titleByPathAndThreadIdentity.size}, requestedActivities=${activityByPathAndThreadIdentity.size}"
   }
   return updatedTabs
 }
