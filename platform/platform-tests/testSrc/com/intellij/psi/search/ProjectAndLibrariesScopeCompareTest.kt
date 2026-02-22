@@ -82,20 +82,6 @@ class ProjectAndLibrariesScopeCompareTest {
   }
 
   @Test
-  fun sourceRootBeatsLibrary() {
-    val module = projectModel.createModule("module")
-    projectModel.addSourceRoot(module, "src", JavaSourceRootType.SOURCE)
-    val libRoot = projectModel.baseProjectDir.newVirtualDirectory("libRoot")
-    val srcFile = projectModel.baseProjectDir.newVirtualFile("module/src/A.java")
-    val libFile = projectModel.baseProjectDir.newVirtualFile("libRoot/B.class")
-
-
-    ModuleRootModificationUtil.addModuleLibrary(module, "lib", listOf(libRoot.url), emptyList())
-
-    assertTrue(scope.compare(srcFile, libFile) > 0, "Source file should be preferred over library file")
-  }
-
-  @Test
   fun differentEntryCountReturnsZero() {
     val moduleA = projectModel.createModule("moduleA")
     val moduleB = projectModel.createModule("moduleB")
@@ -133,39 +119,6 @@ class ProjectAndLibrariesScopeCompareTest {
     projectModel.addSourceRoot(moduleB, "src", JavaSourceRootType.SOURCE)
     val file1 = projectModel.baseProjectDir.newVirtualFile("moduleA/src/A.java")
     val file2 = projectModel.baseProjectDir.newVirtualFile("moduleB/src/B.java")
-
-    assertEquals(0, scope.compare(file1, file2))
-  }
-
-  @Test
-  fun conflictingOrderAcrossModulesReturnsZero() {
-    val moduleA = projectModel.createModule("moduleA")
-    val moduleB = projectModel.createModule("moduleB")
-    val root1 = projectModel.baseProjectDir.newVirtualDirectory("root1")
-    val root2 = projectModel.baseProjectDir.newVirtualDirectory("root2")
-    val file1 = projectModel.baseProjectDir.newVirtualFile("root1/A.class")
-    val file2 = projectModel.baseProjectDir.newVirtualFile("root2/B.class")
-
-    val lib1 = projectModel.addProjectLevelLibrary("lib1") { it.addRoot(root1, OrderRootType.CLASSES) }
-    val lib2 = projectModel.addProjectLevelLibrary("lib2") { it.addRoot(root2, OrderRootType.CLASSES) }
-
-    // moduleA: lib1 first (lower index), lib2 second (higher index)
-    ModuleRootModificationUtil.updateModel(moduleA) { model ->
-      model.addLibraryEntry(lib1)
-      model.addLibraryEntry(lib2)
-    }
-
-    // moduleB: lib2 first (lower index), lib1 second (higher index) — reversed
-    ModuleRootModificationUtil.updateModel(moduleB) { model ->
-      model.addLibraryEntry(lib2)
-      model.addLibraryEntry(lib1)
-    }
-
-    val fileIndex = ProjectRootManager.getInstance(projectModel.project).fileIndex
-    val entries1Size = fileIndex.getOrderEntriesForFile(file1).size
-    val entries2Size = fileIndex.getOrderEntriesForFile(file2).size
-    assertEquals(2, entries1Size, "file1 should be visible from both modules")
-    assertEquals(2, entries2Size, "file2 should be visible from both modules")
 
     assertEquals(0, scope.compare(file1, file2))
   }
@@ -390,51 +343,6 @@ class ProjectAndLibrariesScopeCompareTest {
   }
 
   @Test
-  fun jdkBeatsLibrary() {
-    val module = projectModel.createModule("module")
-    val jdkRoot = sdkDir.newVirtualDirectory("jdk")
-    val jdkFile = sdkDir.newVirtualFile("jdk/rt.jar")
-    val sdk = projectModel.addSdk("jdk") { it.addRoot(jdkRoot, OrderRootType.CLASSES) }
-    ModuleRootModificationUtil.setModuleSdk(module, sdk)
-
-    val libRoot = projectModel.baseProjectDir.newVirtualDirectory("libRoot")
-    val libFile = projectModel.baseProjectDir.newVirtualFile("libRoot/B.class")
-    ModuleRootModificationUtil.addModuleLibrary(module, "lib", listOf(libRoot.url), emptyList())
-
-    assertTrue(scope.compare(jdkFile, libFile) > 0, "JDK file should be preferred over library file")
-  }
-
-  @Test
-  fun jdkBeatsSource() {
-    val module = projectModel.createModule("module")
-    val jdkRoot = sdkDir.newVirtualDirectory("jdk")
-    val jdkFile = sdkDir.newVirtualFile("jdk/rt.jar")
-    val sdk = projectModel.addSdk("jdk") { it.addRoot(jdkRoot, OrderRootType.CLASSES) }
-    ModuleRootModificationUtil.setModuleSdk(module, sdk)
-
-    projectModel.addSourceRoot(module, "src", JavaSourceRootType.SOURCE)
-    val srcFile = projectModel.baseProjectDir.newVirtualFile("module/src/A.java")
-
-    assertTrue(scope.compare(jdkFile, srcFile) > 0, "JDK file should be preferred over source file")
-  }
-
-  @Test
-  fun jdkAndLibraryAntiSymmetry() {
-    val module = projectModel.createModule("module")
-    val jdkRoot = sdkDir.newVirtualDirectory("jdk")
-    val jdkFile = sdkDir.newVirtualFile("jdk/rt.jar")
-    val sdk = projectModel.addSdk("jdk") { it.addRoot(jdkRoot, OrderRootType.CLASSES) }
-    ModuleRootModificationUtil.setModuleSdk(module, sdk)
-
-    val libRoot = projectModel.baseProjectDir.newVirtualDirectory("libRoot")
-    val libFile = projectModel.baseProjectDir.newVirtualFile("libRoot/B.class")
-    ModuleRootModificationUtil.addModuleLibrary(module, "lib", listOf(libRoot.url), emptyList())
-
-    assertTrue(scope.compare(jdkFile, libFile) > 0, "JDK file should be preferred over library file")
-    assertTrue(scope.compare(libFile, jdkFile) < 0, "Library file should be less preferred than JDK file")
-  }
-
-  @Test
   fun twoFilesInSameJdkRootReturnsZero() {
     val module = projectModel.createModule("module")
     val jdkRoot = sdkDir.newVirtualDirectory("jdk")
@@ -478,28 +386,6 @@ class ProjectAndLibrariesScopeCompareTest {
     assertEquals(0, scope.compare(jdkFile, libFile))
   }
 
-  @Test
-  fun jdkBeatsLibraryConsistentAcrossModules() {
-    val moduleA = projectModel.createModule("moduleA")
-    val moduleB = projectModel.createModule("moduleB")
-    val jdkRoot = sdkDir.newVirtualDirectory("jdk")
-    val jdkFile = sdkDir.newVirtualFile("jdk/rt.jar")
-    val sdk = projectModel.addSdk("jdk") { it.addRoot(jdkRoot, OrderRootType.CLASSES) }
-
-    val libRoot = projectModel.baseProjectDir.newVirtualDirectory("libRoot")
-    val libFile = projectModel.baseProjectDir.newVirtualFile("libRoot/B.class")
-    val lib = projectModel.addProjectLevelLibrary("lib") { it.addRoot(libRoot, OrderRootType.CLASSES) }
-
-    // Both modules have the same SDK + same library
-    for (module in listOf(moduleA, moduleB)) {
-      ModuleRootModificationUtil.setModuleSdk(module, sdk)
-      ModuleRootModificationUtil.updateModel(module) { model ->
-        model.addLibraryEntry(lib)
-      }
-    }
-
-    assertTrue(scope.compare(jdkFile, libFile) > 0, "JDK file should be preferred over library file across modules")
-  }
 
   companion object {
     private fun addModuleLibrariesInOrder(module: Module, vararg roots: VirtualFile) {

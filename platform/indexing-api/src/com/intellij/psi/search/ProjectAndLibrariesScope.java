@@ -6,12 +6,12 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.module.UnloadedModuleDescription;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.roots.ModuleFileIndex;
-import com.intellij.openapi.roots.ModuleRootManager;
-import com.intellij.openapi.roots.OrderEntry;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.platform.workspace.storage.WorkspaceEntityWithSymbolicId;
+import com.intellij.projectModel.ModuleDependenciesGraphService;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.indexing.IndexingBundle;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
@@ -19,7 +19,7 @@ import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.Collection;
 import java.util.Collections;
-import java.util.List;
+import java.util.Comparator;
 
 /**
  * Scope for all things inside the project: files in the project content plus files in libraries/libraries sources
@@ -40,31 +40,42 @@ public class ProjectAndLibrariesScope extends GlobalSearchScope {
 
   @Override
   public int compare(@NotNull VirtualFile file1, @NotNull VirtualFile file2) {
-    List<OrderEntry> entries1 = myProjectFileIndex.getOrderEntriesForFile(file1);
-    List<OrderEntry> entries2 = myProjectFileIndex.getOrderEntriesForFile(file2);
-    if (entries1.size() != entries2.size()) return 0;
+    Project project = getProject();
+    if (project == null) return 0;
 
-    int res = 0;
-    for (OrderEntry entry1 : entries1) {
-      Module module = entry1.getOwnerModule();
-      ModuleFileIndex moduleFileIndex = ModuleRootManager.getInstance(module).getFileIndex();
-      OrderEntry entry2 = moduleFileIndex.getOrderEntryForFile(file2);
-      if (entry2 == null) {
-        return 0;
-      }
-      else {
-        int aRes = entry2.compareTo(entry1);
-        if (aRes == 0) return 0;
-        if (res == 0) {
-          res = aRes;
-        }
-        else if (res != aRes) {
-          return 0;
-        }
-      }
+    var result = 0;
+    var sdks1 = myProjectFileIndex.findContainingSdks(file1);
+    var sdks2 = myProjectFileIndex.findContainingSdks(file2);
+    if (!sdks1.isEmpty() && (sdks1.size() == sdks2.size())) {
+      result = compareItems(project, sdks1, sdks2);
     }
 
-    return res;
+    var libs1 = myProjectFileIndex.findContainingLibraries(file1);
+    var libs2 = myProjectFileIndex.findContainingLibraries(file2);
+    if (!libs1.isEmpty() && (libs1.size() == libs2.size())) {
+      result = compareItems(project, libs1, libs2);
+    }
+    return result;
+  }
+
+  private static int compareItems(Project project,
+                                  Collection<? extends WorkspaceEntityWithSymbolicId> items1,
+                                  Collection<? extends WorkspaceEntityWithSymbolicId> items2) {
+    int result = 0;
+    var item1 = ContainerUtil.getFirstItem(items1);
+    var item2 = ContainerUtil.getFirstItem(items2);
+    var dependenciesGraph = ModuleDependenciesGraphService.getInstance(project).getModuleDependenciesGraph();
+    var item1Dependants = ContainerUtil.sorted(dependenciesGraph.getLibraryOrSdkDependants(item1.getSymbolicId()),
+                                              Comparator.comparing(dep -> dep.getDependent().getName()));
+    var item2Dependants = ContainerUtil.sorted(dependenciesGraph.getLibraryOrSdkDependants(item2.getSymbolicId()),
+                                              Comparator.comparing(dep -> dep.getDependent().getName()));
+
+    for (var pair : ContainerUtil.zip(item1Dependants, item2Dependants)) {
+      var first = pair.getFirst();
+      var second = pair.getSecond();
+      result = Integer.compare(second.getOrderNumber(), first.getOrderNumber());
+    }
+    return result;
   }
 
   @Override

@@ -15,5 +15,7 @@
     <applicationService serviceImplementation="com.intellij.openapi.roots.libraries.LibraryKindRegistry" open="true"/>
     <applicationService serviceInterface="com.intellij.openapi.roots.ExternalProjectSystemRegistry" open="true"
                         serviceImplementation="com.intellij.openapi.roots.impl.EmptyProjectSystemRegistry"/>
+    <projectService serviceInterface="com.intellij.projectModel.ModuleDependenciesGraphService"
+                    serviceImplementation="com.intellij.workspaceModel.ide.impl.legacyBridge.module.ModuleDependenciesGraphServiceImpl"/>
   </extensions>
 </idea-plugin>

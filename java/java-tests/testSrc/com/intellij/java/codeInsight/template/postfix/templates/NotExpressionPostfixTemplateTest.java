@@ -80,27 +80,6 @@ public class NotExpressionPostfixTemplateTest extends PostfixTemplateTestCase {
     doTest();
   }
 
-  @Override
-  protected void setUp() throws Exception {
-    super.setUp();
-    myFixture.addClass("""
-                         package java.util;
-                         public class Optional<T> {
-                           public static <T> Optional<T> of(T value) { return null; }
-                           public boolean isPresent() { return true; }
-                           public boolean isEmpty() { return false;  }
-                         }""");
-    myFixture.addClass("""
-                         package java.util.stream;
-
-                         import java.util.function.Predicate;
-
-                         public class Stream<T> {
-                           boolean anyMatch(Predicate<? super T> predicate) { return true;}
-                           boolean noneMatch(Predicate<? super T> predicate) { return false;}
-                         }""");
-  }
-
   @NotNull
   @Override
   protected LightProjectDescriptor getProjectDescriptor() {
