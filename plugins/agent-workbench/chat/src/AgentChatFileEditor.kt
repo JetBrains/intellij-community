@@ -17,34 +17,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.UserDataHolderBase
 import com.intellij.terminal.frontend.toolwindow.TerminalToolWindowTab
 import com.intellij.terminal.frontend.toolwindow.TerminalToolWindowTabsManager
-import com.intellij.terminal.frontend.view.TerminalKeyEvent
-import com.intellij.terminal.frontend.view.TerminalView
-import com.intellij.terminal.frontend.view.TerminalViewSessionState
-import com.intellij.util.asDisposable
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.CoroutineStart
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.FlowPreview
-import kotlinx.coroutines.Job
-import kotlinx.coroutines.channels.awaitClose
-import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.callbackFlow
-import kotlinx.coroutines.flow.collectLatest
-import kotlinx.coroutines.flow.debounce
-import kotlinx.coroutines.flow.filter
-import kotlinx.coroutines.flow.first
-import kotlinx.coroutines.flow.map
-import kotlinx.coroutines.flow.merge
-import kotlinx.coroutines.isActive
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
-import kotlinx.coroutines.withTimeoutOrNull
-import kotlinx.coroutines.yield
-import org.jetbrains.plugins.terminal.startup.TerminalProcessType
-import org.jetbrains.plugins.terminal.view.TerminalContentChangeEvent
-import org.jetbrains.plugins.terminal.view.TerminalOutputModel
-import org.jetbrains.plugins.terminal.view.TerminalOutputModelListener
+import kotlinx.coroutines.cancel
 import java.awt.BorderLayout
 import java.awt.event.KeyEvent
 import java.beans.PropertyChangeListener
@@ -120,13 +93,7 @@ internal class AgentChatFileEditor(
 
   override fun dispose() {
     disposed = true
-    codexTuiPatchFoldController?.dispose()
-    codexTuiPatchFoldController = null
-    pendingInitialMessageJob?.cancel()
-    pendingInitialMessageJob = null
-    tab?.let { terminalTab ->
-      terminalTabs.closeTab(project, terminalTab)
-    }
+    tab?.view?.coroutineScope?.cancel()
     tab = null
     component.removeAll()
   }

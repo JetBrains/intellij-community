@@ -17,20 +17,9 @@ private val LOG = logger<AgentChatVirtualFileLog>()
 
 internal class AgentChatVirtualFile internal constructor(
   private val fileSystem: AgentChatVirtualFileSystem,
-  descriptor: AgentChatFileDescriptor,
-) : LightVirtualFile(resolveFileName(descriptor.tabKey)) {
-  val tabKey: String = descriptor.tabKey
-  var projectHash: String = descriptor.projectHash
-    private set
-
-  var projectPath: String = descriptor.projectPath
-    private set
-
-  var threadIdentity: String = descriptor.threadIdentity
-    private set
-
-  var subAgentId: String? = descriptor.subAgentId
-    private set
+  resolution: AgentChatTabResolution,
+) : LightVirtualFile(resolveFileName(resolution.tabKey.value)) {
+  private val key: AgentChatTabKey = resolution.tabKey
 
   val tabKey: String
     get() = key.value
@@ -41,7 +30,19 @@ internal class AgentChatVirtualFile internal constructor(
   var projectPath: String = ""
     private set
 
-  var threadTitle: String = resolveThreadTitle(descriptor.threadTitle)
+  var threadIdentity: String = ""
+    private set
+
+  var subAgentId: String? = null
+    private set
+
+  var shellCommand: List<String> = emptyList()
+    private set
+
+  var threadId: String = ""
+    private set
+
+  var threadTitle: String = resolveThreadTitle("")
     private set
 
   @TestOnly
@@ -57,8 +58,8 @@ internal class AgentChatVirtualFile internal constructor(
     projectHash: String = "",
     initialMessageTimeoutPolicy: AgentInitialMessageTimeoutPolicy = AgentInitialMessageTimeoutPolicy.ALLOW_TIMEOUT_FALLBACK,
   ) : this(
-    fileSystem = AgentChatVirtualFileSystems.createStandaloneForTest(),
-    descriptor = AgentChatFileDescriptor.create(
+    fileSystem = createStandaloneAgentChatVirtualFileSystemForTest(),
+    resolution = AgentChatTabResolution.Resolved(AgentChatTabSnapshot.create(
       projectHash = projectHash,
       projectPath = projectPath,
       threadIdentity = threadIdentity,
@@ -66,14 +67,13 @@ internal class AgentChatVirtualFile internal constructor(
       threadTitle = threadTitle,
       subAgentId = subAgentId,
       shellCommand = shellCommand,
-      shellEnvVariables = shellEnvVariables,
       threadActivity = threadActivity,
-      initialMessageTimeoutPolicy = initialMessageTimeoutPolicy,
     ))
   )
 
+
   init {
-    fileType = AgentChatFileType
+    updateFromResolution(resolution)
     isWritable = false
   }
 
@@ -124,75 +124,20 @@ internal class AgentChatVirtualFile internal constructor(
     this.threadId = threadId
   }
 
-  internal fun updateFromDescriptor(descriptor: AgentChatFileDescriptor) {
-    if (descriptor.threadIdentity.isNotBlank() || descriptor.projectPath.isNotBlank()) {
-      projectHash = descriptor.projectHash
-      projectPath = descriptor.projectPath
-      threadIdentity = descriptor.threadIdentity
-      subAgentId = descriptor.subAgentId
-    }
-    if (descriptor.threadId.isNotBlank() || descriptor.shellCommand.isNotEmpty()) {
-      updateCommandAndThreadId(shellCommand = descriptor.shellCommand, threadId = descriptor.threadId)
-    }
-    if (descriptor.threadTitle.isNotBlank()) {
-      updateThreadTitle(descriptor.threadTitle)
-    }
-  }
-
-  internal fun toDescriptor(): AgentChatFileDescriptor {
-    return AgentChatFileDescriptor(
-      tabKey = tabKey,
-      projectHash = projectHash,
-      projectPath = projectPath,
-      threadIdentity = threadIdentity,
-      shellCommand = shellCommand,
-      shellEnvVariables = shellEnvVariables,
-      threadId = threadId,
-      threadTitle = threadTitle,
-      threadActivity = threadActivity,
-      clearPendingMetadata = true,
-    )
-  }
-
-  fun rebindConcreteThread(
+  fun rebindPendingThread(
     threadIdentity: String,
     shellCommand: List<String>,
-    shellEnvVariables: Map<String, String>,
     threadId: String,
     threadTitle: String,
     threadActivity: AgentThreadActivity,
-  ): Boolean {
-    if (isPendingThread || newThreadRebindRequestedAtMs == null) {
-      return false
-    }
-    return rebindThread(
-      threadIdentity = threadIdentity,
-      shellCommand = shellCommand,
-      shellEnvVariables = shellEnvVariables,
-      threadId = threadId,
-      threadTitle = threadTitle,
-      threadActivity = threadActivity,
-      clearPendingMetadata = false,
-    )
-  }
-
-  private fun rebindThread(
-    threadIdentity: String,
-    shellCommand: List<String>,
-    shellEnvVariables: Map<String, String>,
-    threadId: String,
-    threadTitle: String,
-    threadActivity: AgentThreadActivity,
-    clearPendingMetadata: Boolean,
   ): Boolean {
     var changed = false
     if (this.threadIdentity != threadIdentity) {
       this.threadIdentity = threadIdentity
-      updateThreadCoordinates()
       changed = true
     }
-    if (this.shellCommand != shellCommand || this.shellEnvVariables != shellEnvVariables || this.threadId != threadId) {
-      updateCommandAndThreadId(shellCommand = shellCommand, shellEnvVariables = shellEnvVariables, threadId = threadId)
+    if (this.shellCommand != shellCommand || this.threadId != threadId) {
+      updateCommandAndThreadId(shellCommand = shellCommand, threadId = threadId)
       changed = true
     }
     if (updateThreadTitle(threadTitle)) {
@@ -201,27 +146,10 @@ internal class AgentChatVirtualFile internal constructor(
     if (updateThreadActivity(threadActivity)) {
       changed = true
     }
-    if (
-      clearPendingMetadata &&
-      updatePendingMetadata(pendingCreatedAtMs = null, pendingFirstInputAtMs = null, pendingLaunchMode = null)
-    ) {
-      changed = true
-    }
-    if (updateNewThreadRebindRequestedAtMs(newThreadRebindRequestedAtMs = null)) {
-      changed = true
-    }
-    if (updateInitialMessageMetadata(
-        initialComposedMessage = null,
-        initialMessageToken = null,
-        initialMessageSent = false,
-        initialMessageTimeoutPolicy = AgentInitialMessageTimeoutPolicy.ALLOW_TIMEOUT_FALLBACK,
-      )) {
-      changed = true
-    }
 
     if (changed) {
       LOG.debug {
-        "Rebound tab(identity=$threadIdentity, subAgentId=$subAgentId, threadId=$threadId)"
+        "Rebound pending tab(identity=$threadIdentity, subAgentId=$subAgentId, threadId=$threadId)"
       }
     }
     return changed
@@ -240,42 +168,14 @@ internal class AgentChatVirtualFile internal constructor(
       projectPath = snapshot.identity.projectPath
       threadIdentity = snapshot.identity.threadIdentity
       subAgentId = snapshot.identity.subAgentId
-      updateThreadCoordinates()
     }
-    if (
-      snapshot.runtime.threadId.isNotBlank() ||
-      snapshot.runtime.shellCommand.isNotEmpty() ||
-      snapshot.runtime.shellEnvVariables.isNotEmpty()
-    ) {
-      updateCommandAndThreadId(
-        shellCommand = snapshot.runtime.shellCommand,
-        shellEnvVariables = snapshot.runtime.shellEnvVariables,
-        threadId = snapshot.runtime.threadId,
-      )
+    if (snapshot.runtime.threadId.isNotBlank() || snapshot.runtime.shellCommand.isNotEmpty()) {
+      updateCommandAndThreadId(shellCommand = snapshot.runtime.shellCommand, threadId = snapshot.runtime.threadId)
     }
     if (snapshot.runtime.threadTitle.isNotBlank()) {
       updateThreadTitle(snapshot.runtime.threadTitle)
     }
     updateThreadActivity(snapshot.runtime.threadActivity)
-    updatePendingMetadata(
-      pendingCreatedAtMs = snapshot.runtime.pendingCreatedAtMs,
-      pendingFirstInputAtMs = snapshot.runtime.pendingFirstInputAtMs,
-      pendingLaunchMode = snapshot.runtime.pendingLaunchMode,
-    )
-    updateNewThreadRebindRequestedAtMs(snapshot.runtime.newThreadRebindRequestedAtMs)
-    updateInitialMessageMetadata(
-      initialComposedMessage = snapshot.runtime.initialComposedMessage,
-      initialMessageToken = snapshot.runtime.initialMessageToken,
-      initialMessageSent = snapshot.runtime.initialMessageSent,
-      initialMessageTimeoutPolicy = snapshot.runtime.initialMessageTimeoutPolicy,
-    )
-  }
-
-  private fun updateThreadCoordinates() {
-    val coordinates = resolveAgentChatThreadCoordinates(threadIdentity)
-    provider = coordinates?.provider
-    sessionId = coordinates?.sessionId.orEmpty()
-    isPendingThread = coordinates?.isPending ?: false
   }
 
   internal fun toSnapshot(): AgentChatTabSnapshot {
@@ -291,16 +191,7 @@ internal class AgentChatVirtualFile internal constructor(
         threadId = threadId,
         threadTitle = threadTitle,
         shellCommand = shellCommand,
-        shellEnvVariables = shellEnvVariables,
         threadActivity = threadActivity,
-        pendingCreatedAtMs = pendingCreatedAtMs,
-        pendingFirstInputAtMs = pendingFirstInputAtMs,
-        pendingLaunchMode = pendingLaunchMode,
-        newThreadRebindRequestedAtMs = newThreadRebindRequestedAtMs,
-        initialComposedMessage = initialComposedMessage,
-        initialMessageToken = initialMessageToken,
-        initialMessageSent = initialMessageSent,
-        initialMessageTimeoutPolicy = initialMessageTimeoutPolicy,
       ),
     )
   }

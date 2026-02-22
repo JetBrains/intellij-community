@@ -40,6 +40,7 @@ jvm_library(
   deps = [
     "@lib//:kotlin-stdlib",
     "//libraries/kotlinx/serialization/core",
+    "//libraries/kotlinx/serialization/core:core_test_lib",
     "//platform/analysis-api:analysis",
     "//platform/core-api:core",
     "//platform/core-ui",
@@ -54,7 +55,10 @@ jvm_library(
     "//plugins/terminal/frontend",
     "//platform/testFramework",
     "//platform/testFramework:testFramework_test_lib",
-    "//libraries/junit4",
+    "//platform/testFramework/junit5",
+    "//platform/testFramework/junit5:junit5_test_lib",
+    "//libraries/junit5",
+    "//libraries/junit5:junit5_test_lib",
     "//libraries/assertj-core",
   ]
 )

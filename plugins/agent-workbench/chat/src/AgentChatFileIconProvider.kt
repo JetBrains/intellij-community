@@ -11,13 +11,19 @@ import com.intellij.agent.workbench.sessions.core.providers.withYoloModeBadge
 import com.intellij.ide.FileIconProvider
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.ui.IconManager
 import org.jetbrains.annotations.TestOnly
-import java.util.Locale
+import java.util.concurrent.ConcurrentHashMap
 import javax.swing.Icon
 
 @TestOnly
 internal fun clearAgentChatIconCacheForTests() {
   clearAgentSessionThreadStatusIconCacheForTests()
+}
+
+@TestOnly
+internal fun clearAgentChatIconCacheForTests() {
+  ICON_CACHE.clear()
 }
 
 internal class AgentChatFileIconProvider : FileIconProvider {
