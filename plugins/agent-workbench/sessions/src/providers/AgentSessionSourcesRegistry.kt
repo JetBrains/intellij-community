@@ -69,21 +69,21 @@ private class EpBackedAgentSessionProviderRegistry : AgentSessionProviderRegistr
   override fun sessionSources(): List<AgentSessionSource> {
     return snapshotOrEmpty().sessionSources
   }
+}
 
-  private fun snapshotOrEmpty(): AgentSessionProviderBridgeSnapshot {
-    return try {
-      AGENT_SESSION_PROVIDER_BRIDGE_EP.computeIfAbsent(AgentSessionProviderBridgeSnapshotCacheId::class.java) {
-        buildAgentSessionProviderBridgeSnapshot(AGENT_SESSION_PROVIDER_BRIDGE_EP.extensionList)
-      }
+private fun snapshotOrEmpty(): AgentSessionProviderBridgeSnapshot {
+  return try {
+    AGENT_SESSION_PROVIDER_BRIDGE_EP.computeIfAbsent(AgentSessionProviderBridgeSnapshotCacheId::class.java) {
+      buildAgentSessionProviderBridgeSnapshot(AGENT_SESSION_PROVIDER_BRIDGE_EP.extensionList)
     }
-    catch (t: IllegalStateException) {
-      LOG.debug("Session provider bridge EP is unavailable in this context", t)
-      AgentSessionProviderBridgeSnapshot.EMPTY
-    }
-    catch (t: IllegalArgumentException) {
-      LOG.debug("Session provider bridge EP is unavailable in this context", t)
-      AgentSessionProviderBridgeSnapshot.EMPTY
-    }
+  }
+  catch (t: IllegalStateException) {
+    LOG.debug("Session provider bridge EP is unavailable in this context", t)
+    AgentSessionProviderBridgeSnapshot.EMPTY
+  }
+  catch (t: IllegalArgumentException) {
+    LOG.debug("Session provider bridge EP is unavailable in this context", t)
+    AgentSessionProviderBridgeSnapshot.EMPTY
   }
 }
 

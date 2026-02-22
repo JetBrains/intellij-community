@@ -645,21 +645,6 @@ internal class AgentSessionsLoadingCoordinator(
     }
   }
 
-  private fun collectLoadedPaths(state: AgentSessionsState): List<String> {
-    val paths = LinkedHashSet<String>()
-    for (project in state.projects) {
-      if (project.hasLoaded) {
-        paths.add(project.path)
-      }
-      for (worktree in project.worktrees) {
-        if (worktree.hasLoaded) {
-          paths.add(worktree.path)
-        }
-      }
-    }
-    return ArrayList(paths)
-  }
-
   private suspend fun syncOpenChatTabPresentation(
     provider: AgentSessionProvider,
     outcomes: Map<String, ProviderRefreshOutcome>,
@@ -848,6 +833,21 @@ internal class AgentSessionsLoadingCoordinator(
     }
     return threads.filterNot { thread -> thread.id in suppressedThreadIds }
   }
+}
+
+private fun collectLoadedPaths(state: AgentSessionsState): List<String> {
+  val paths = LinkedHashSet<String>()
+  for (project in state.projects) {
+    if (project.hasLoaded) {
+      paths.add(project.path)
+    }
+    for (worktree in project.worktrees) {
+      if (worktree.hasLoaded) {
+        paths.add(worktree.path)
+      }
+    }
+  }
+  return ArrayList(paths)
 }
 
 private fun resolveErrorMessage(provider: AgentSessionProvider, t: Throwable): String {

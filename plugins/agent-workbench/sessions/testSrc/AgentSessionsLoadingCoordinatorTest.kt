@@ -319,38 +319,39 @@ class AgentSessionsLoadingCoordinatorTest {
     }
   }
 
-  private suspend fun withLoadingCoordinator(
-    sessionSourcesProvider: () -> List<AgentSessionSource>,
-    projectEntriesProvider: suspend () -> List<ProjectEntry> = { emptyList() },
-    isRefreshGateActive: suspend () -> Boolean,
-    openChatPathsProvider: suspend () -> Set<String> = { emptySet() },
-    openChatTabPresentationUpdater: suspend (
-      Map<Pair<String, String>, String>,
-      Map<Pair<String, String>, AgentThreadActivity>,
-    ) -> Int = { _, _ -> 0 },
-    openChatPendingTabBinder: suspend (Map<String, List<AgentChatPendingTabRebindTarget>>) -> Int = { _ -> 0 },
-    action: suspend (AgentSessionsLoadingCoordinator, AgentSessionsStateStore) -> Unit,
-  ) {
-    @Suppress("RAW_SCOPE_CREATION")
-    val scope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
-    val treeUiState = InMemorySessionsTreeUiState()
-    val stateStore = AgentSessionsStateStore(treeUiState)
-    try {
-      val coordinator = AgentSessionsLoadingCoordinator(
-        serviceScope = scope,
-        sessionSourcesProvider = sessionSourcesProvider,
-        projectEntriesProvider = projectEntriesProvider,
-        treeUiState = treeUiState,
-        stateStore = stateStore,
-        isRefreshGateActive = isRefreshGateActive,
-        openAgentChatProjectPathsProvider = openChatPathsProvider,
-        openAgentChatTabPresentationUpdater = openChatTabPresentationUpdater,
-        openAgentChatPendingTabBinder = openChatPendingTabBinder,
-      )
-      action(coordinator, stateStore)
-    }
-    finally {
-      scope.cancel()
-    }
+}
+
+private suspend fun withLoadingCoordinator(
+  sessionSourcesProvider: () -> List<AgentSessionSource>,
+  projectEntriesProvider: suspend () -> List<ProjectEntry> = { emptyList() },
+  isRefreshGateActive: suspend () -> Boolean,
+  openChatPathsProvider: suspend () -> Set<String> = { emptySet() },
+  openChatTabPresentationUpdater: suspend (
+    Map<Pair<String, String>, String>,
+    Map<Pair<String, String>, AgentThreadActivity>,
+  ) -> Int = { _, _ -> 0 },
+  openChatPendingTabBinder: suspend (Map<String, List<AgentChatPendingTabRebindTarget>>) -> Int = { _ -> 0 },
+  action: suspend (AgentSessionsLoadingCoordinator, AgentSessionsStateStore) -> Unit,
+) {
+  @Suppress("RAW_SCOPE_CREATION")
+  val scope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
+  val treeUiState = InMemorySessionsTreeUiState()
+  val stateStore = AgentSessionsStateStore(treeUiState)
+  try {
+    val coordinator = AgentSessionsLoadingCoordinator(
+      serviceScope = scope,
+      sessionSourcesProvider = sessionSourcesProvider,
+      projectEntriesProvider = projectEntriesProvider,
+      treeUiState = treeUiState,
+      stateStore = stateStore,
+      isRefreshGateActive = isRefreshGateActive,
+      openAgentChatProjectPathsProvider = openChatPathsProvider,
+      openAgentChatTabPresentationUpdater = openChatTabPresentationUpdater,
+      openAgentChatPendingTabBinder = openChatPendingTabBinder,
+    )
+    action(coordinator, stateStore)
+  }
+  finally {
+    scope.cancel()
   }
 }

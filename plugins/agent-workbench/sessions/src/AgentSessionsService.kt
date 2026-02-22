@@ -174,19 +174,6 @@ internal class AgentSessionsService private constructor(
     decision
   }
 
-  private fun isSessionsToolWindowVisible(project: Project): Boolean {
-    return ToolWindowManager.getInstance(project)
-      .getToolWindow(AGENT_SESSIONS_TOOL_WINDOW_ID)
-      ?.isVisible == true
-  }
-
-  private fun isAgentChatActive(project: Project): Boolean {
-    return runCatching {
-      val selectionService = project.service<AgentChatTabSelectionService>()
-      selectionService.selectedChatTab.value != null || selectionService.hasOpenChatTabs()
-    }.getOrDefault(false)
-  }
-
   fun refresh() {
     loadingCoordinator.refresh()
   }
@@ -369,6 +356,19 @@ internal class AgentSessionsService private constructor(
   fun loadWorktreeThreadsOnDemand(projectPath: String, worktreePath: String) {
     loadingCoordinator.loadWorktreeThreadsOnDemand(projectPath, worktreePath)
   }
+}
+
+private fun isSessionsToolWindowVisible(project: Project): Boolean {
+  return ToolWindowManager.getInstance(project)
+    .getToolWindow(AGENT_SESSIONS_TOOL_WINDOW_ID)
+    ?.isVisible == true
+}
+
+private fun isAgentChatActive(project: Project): Boolean {
+  return runCatching {
+    val selectionService = project.service<AgentChatTabSelectionService>()
+    selectionService.selectedChatTab.value != null || selectionService.hasOpenChatTabs()
+  }.getOrDefault(false)
 }
 
 private suspend fun openOrFocusProjectInternal(path: String) {

@@ -7,7 +7,7 @@ import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 
 class CodexAgentSessionProviderBridgeTest {
-  private val bridge = CodexAgentSessionProviderBridge()
+  private val bridge = CodexAgentSessionProviderBridge(executablePathProvider = { null })
 
   @Test
   fun buildResumeCommand() {
@@ -40,5 +40,18 @@ class CodexAgentSessionProviderBridgeTest {
       assertThat(yolo.sessionId).isNull()
       assertThat(yolo.command).containsExactly("codex", "--full-auto")
     }
+  }
+
+  @Test
+  fun buildCommandsUseResolvedExecutablePath() {
+    val bridgeWithResolvedPath = CodexAgentSessionProviderBridge(executablePathProvider = { "/opt/homebrew/bin/codex" })
+
+    assertThat(bridgeWithResolvedPath.buildNewEntryCommand()).containsExactly("/opt/homebrew/bin/codex")
+    assertThat(bridgeWithResolvedPath.buildNewSessionCommand(AgentSessionLaunchMode.STANDARD))
+      .containsExactly("/opt/homebrew/bin/codex")
+    assertThat(bridgeWithResolvedPath.buildNewSessionCommand(AgentSessionLaunchMode.YOLO))
+      .containsExactly("/opt/homebrew/bin/codex", "--full-auto")
+    assertThat(bridgeWithResolvedPath.buildResumeCommand("thread-1"))
+      .containsExactly("/opt/homebrew/bin/codex", "resume", "thread-1")
   }
 }

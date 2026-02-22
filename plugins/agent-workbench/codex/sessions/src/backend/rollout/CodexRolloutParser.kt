@@ -81,138 +81,139 @@ internal class CodexRolloutParser(
     )
   }
 
-  private fun reduceEvent(parseState: RolloutParseState, event: RolloutEvent) {
-    parseState.updatedAt = maxTimestamp(parseState.updatedAt, event.timestampMs)
-    parseState.updatedAt = maxTimestamp(parseState.updatedAt, event.sessionTimestampMs)
-    parseState.sessionId = parseState.sessionId ?: event.sessionId
-    parseState.sessionCwd = parseState.sessionCwd ?: event.sessionCwd
-    parseState.gitBranch = parseState.gitBranch ?: event.gitBranch
+}
 
-    val eventTimestamp = event.timestampMs
-    when (event.topLevelType) {
-      "event_msg" -> {
-        when (event.payloadType) {
-          "task_started" -> parseState.processing = true
-          "task_complete", "turn_aborted" -> parseState.processing = false
-          "user_message" -> {
+private fun reduceEvent(parseState: RolloutParseState, event: RolloutEvent) {
+  parseState.updatedAt = maxTimestamp(parseState.updatedAt, event.timestampMs)
+  parseState.updatedAt = maxTimestamp(parseState.updatedAt, event.sessionTimestampMs)
+  parseState.sessionId = parseState.sessionId ?: event.sessionId
+  parseState.sessionCwd = parseState.sessionCwd ?: event.sessionCwd
+  parseState.gitBranch = parseState.gitBranch ?: event.gitBranch
+
+  val eventTimestamp = event.timestampMs
+  when (event.topLevelType) {
+    "event_msg" -> {
+      when (event.payloadType) {
+        "task_started" -> parseState.processing = true
+        "task_complete", "turn_aborted" -> parseState.processing = false
+        "user_message" -> {
+          parseState.latestUserMessageAt = maxTimestamp(parseState.latestUserMessageAt, eventTimestamp)
+          parseState.title = parseState.title ?: extractTitle(event.payloadMessage)
+          val pendingInputAt = parseState.pendingUserInputAt
+          if (pendingInputAt != null && eventTimestamp != null && eventTimestamp >= pendingInputAt) {
+            parseState.pendingUserInputAt = null
+          }
+        }
+
+        "thread_name_updated", "threadNameUpdated" -> {
+          parseState.title = extractThreadName(event.payloadThreadName) ?: parseState.title
+        }
+
+        "agent_message" -> {
+          parseState.latestAgentMessageAt = maxTimestamp(parseState.latestAgentMessageAt, eventTimestamp)
+        }
+      }
+
+      if (event.payloadType?.contains("requestUserInput", ignoreCase = true) == true) {
+        parseState.pendingUserInputAt = maxTimestamp(parseState.pendingUserInputAt ?: Long.MIN_VALUE, eventTimestamp)
+      }
+
+      when (event.itemType) {
+        "enteredReviewMode" -> parseState.reviewing = true
+        "exitedReviewMode" -> parseState.reviewing = false
+      }
+    }
+
+    "response_item" -> {
+      if (event.payloadType == "message") {
+        when (event.payloadRole) {
+          "user" -> {
             parseState.latestUserMessageAt = maxTimestamp(parseState.latestUserMessageAt, eventTimestamp)
-            parseState.title = parseState.title ?: extractTitle(event.payloadMessage)
             val pendingInputAt = parseState.pendingUserInputAt
             if (pendingInputAt != null && eventTimestamp != null && eventTimestamp >= pendingInputAt) {
               parseState.pendingUserInputAt = null
             }
           }
 
-          "thread_name_updated", "threadNameUpdated" -> {
-            parseState.title = extractThreadName(event.payloadThreadName) ?: parseState.title
-          }
-
-          "agent_message" -> {
+          "assistant" -> {
             parseState.latestAgentMessageAt = maxTimestamp(parseState.latestAgentMessageAt, eventTimestamp)
-          }
-        }
-
-        if (event.payloadType?.contains("requestUserInput", ignoreCase = true) == true) {
-          parseState.pendingUserInputAt = maxTimestamp(parseState.pendingUserInputAt ?: Long.MIN_VALUE, eventTimestamp)
-        }
-
-        when (event.itemType) {
-          "enteredReviewMode" -> parseState.reviewing = true
-          "exitedReviewMode" -> parseState.reviewing = false
-        }
-      }
-
-      "response_item" -> {
-        if (event.payloadType == "message") {
-          when (event.payloadRole) {
-            "user" -> {
-              parseState.latestUserMessageAt = maxTimestamp(parseState.latestUserMessageAt, eventTimestamp)
-              val pendingInputAt = parseState.pendingUserInputAt
-              if (pendingInputAt != null && eventTimestamp != null && eventTimestamp >= pendingInputAt) {
-                parseState.pendingUserInputAt = null
-              }
-            }
-
-            "assistant" -> {
-              parseState.latestAgentMessageAt = maxTimestamp(parseState.latestAgentMessageAt, eventTimestamp)
-            }
           }
         }
       }
     }
   }
+}
 
-  private fun parseEvent(parser: JsonParser): RolloutEvent? {
-    return try {
-      if (parser.currentToken != JsonToken.START_OBJECT) return null
+private fun parseEvent(parser: JsonParser): RolloutEvent? {
+  return try {
+    if (parser.currentToken != JsonToken.START_OBJECT) return null
 
-      var topLevelType: String? = null
-      var timestampMs: Long? = null
-      var payloadType: String? = null
-      var payloadRole: String? = null
-      var payloadMessage: String? = null
-      var payloadThreadName: String? = null
-      var sessionId: String? = null
-      var sessionCwd: String? = null
-      var sessionTimestampMs: Long? = null
-      var gitBranch: String? = null
-      var itemType: String? = null
+    var topLevelType: String? = null
+    var timestampMs: Long? = null
+    var payloadType: String? = null
+    var payloadRole: String? = null
+    var payloadMessage: String? = null
+    var payloadThreadName: String? = null
+    var sessionId: String? = null
+    var sessionCwd: String? = null
+    var sessionTimestampMs: Long? = null
+    var gitBranch: String? = null
+    var itemType: String? = null
 
-      forEachObjectField(parser) { fieldName ->
-        when (fieldName) {
-          "timestamp" -> timestampMs = parseIsoTimestamp(readStringOrNull(parser))
-          "type" -> topLevelType = readStringOrNull(parser)
-          "payload" -> {
-            if (parser.currentToken == JsonToken.START_OBJECT) {
-              forEachObjectField(parser) { payloadField ->
-                when (payloadField) {
-                  "type" -> payloadType = readStringOrNull(parser)
-                  "role" -> payloadRole = readStringOrNull(parser)
-                  "message" -> payloadMessage = readStringOrNull(parser)
-                  "thread_name", "threadName" -> payloadThreadName = readStringOrNull(parser)
-                  "id" -> sessionId = readStringOrNull(parser)
-                  "cwd" -> sessionCwd = readStringOrNull(parser)
-                  "timestamp" -> sessionTimestampMs = parseIsoTimestamp(readStringOrNull(parser))
-                  "git" -> {
-                    gitBranch = parseNestedStringField(parser, "branch")
-                  }
-
-                  "item" -> {
-                    itemType = parseNestedStringField(parser, "type")
-                  }
-
-                  else -> parser.skipChildren()
+    forEachObjectField(parser) { fieldName ->
+      when (fieldName) {
+        "timestamp" -> timestampMs = parseIsoTimestamp(readStringOrNull(parser))
+        "type" -> topLevelType = readStringOrNull(parser)
+        "payload" -> {
+          if (parser.currentToken == JsonToken.START_OBJECT) {
+            forEachObjectField(parser) { payloadField ->
+              when (payloadField) {
+                "type" -> payloadType = readStringOrNull(parser)
+                "role" -> payloadRole = readStringOrNull(parser)
+                "message" -> payloadMessage = readStringOrNull(parser)
+                "thread_name", "threadName" -> payloadThreadName = readStringOrNull(parser)
+                "id" -> sessionId = readStringOrNull(parser)
+                "cwd" -> sessionCwd = readStringOrNull(parser)
+                "timestamp" -> sessionTimestampMs = parseIsoTimestamp(readStringOrNull(parser))
+                "git" -> {
+                  gitBranch = parseNestedStringField(parser, "branch")
                 }
-                true
+
+                "item" -> {
+                  itemType = parseNestedStringField(parser, "type")
+                }
+
+                else -> parser.skipChildren()
               }
-            }
-            else {
-              parser.skipChildren()
+              true
             }
           }
-
-          else -> parser.skipChildren()
+          else {
+            parser.skipChildren()
+          }
         }
-        true
-      }
 
-      RolloutEvent(
-        topLevelType = topLevelType,
-        timestampMs = timestampMs,
-        payloadType = payloadType,
-        payloadRole = payloadRole,
-        payloadMessage = payloadMessage,
-        payloadThreadName = payloadThreadName,
-        sessionId = sessionId,
-        sessionCwd = sessionCwd,
-        sessionTimestampMs = sessionTimestampMs,
-        gitBranch = gitBranch,
-        itemType = itemType,
-      )
+        else -> parser.skipChildren()
+      }
+      true
     }
-    catch (_: Throwable) {
-      null
-    }
+
+    RolloutEvent(
+      topLevelType = topLevelType,
+      timestampMs = timestampMs,
+      payloadType = payloadType,
+      payloadRole = payloadRole,
+      payloadMessage = payloadMessage,
+      payloadThreadName = payloadThreadName,
+      sessionId = sessionId,
+      sessionCwd = sessionCwd,
+      sessionTimestampMs = sessionTimestampMs,
+      gitBranch = gitBranch,
+      itemType = itemType,
+    )
+  }
+  catch (_: Throwable) {
+    null
   }
 }
 

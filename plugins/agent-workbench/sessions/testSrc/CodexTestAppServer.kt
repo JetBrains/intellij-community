@@ -352,57 +352,58 @@ private fun startThread(threads: MutableList<ThreadEntry>): ThreadEntry {
   return thread
 }
 
-  private fun updateArchive(id: String?, threads: MutableList<ThreadEntry>, archive: Boolean) {
-    if (id == null) return
-    val thread = threads.firstOrNull { it.id == id } ?: return
-    thread.archived = archive
-    thread.updatedAt = System.currentTimeMillis()
-    if (thread.updatedAtField.isNullOrBlank()) {
-      thread.updatedAtField = "updated_at"
-    }
-  }
+}
 
-  private fun readEnv(name: String): String? {
-    return System.getenv(name)?.trim()?.takeIf { it.isNotEmpty() }
+private fun updateArchive(id: String?, threads: MutableList<ThreadEntry>, archive: Boolean) {
+  if (id == null) return
+  val thread = threads.firstOrNull { it.id == id } ?: return
+  thread.archived = archive
+  thread.updatedAt = System.currentTimeMillis()
+  if (thread.updatedAtField.isNullOrBlank()) {
+    thread.updatedAtField = "updated_at"
   }
+}
 
-  private fun appendRequestLog(path: Path, method: String) {
-    try {
-      path.parent?.let(Files::createDirectories)
-      Files.writeString(
-        path,
-        "$method\n",
-        StandardCharsets.UTF_8,
-        StandardOpenOption.CREATE,
-        StandardOpenOption.WRITE,
-        StandardOpenOption.APPEND,
-      )
-    }
-    catch (_: Throwable) {
-    }
+private fun readEnv(name: String): String? {
+  return System.getenv(name)?.trim()?.takeIf { it.isNotEmpty() }
+}
+
+private fun appendRequestLog(path: Path, method: String) {
+  try {
+    path.parent?.let(Files::createDirectories)
+    Files.writeString(
+      path,
+      "$method\n",
+      StandardCharsets.UTF_8,
+      StandardOpenOption.CREATE,
+      StandardOpenOption.WRITE,
+      StandardOpenOption.APPEND,
+    )
   }
-
-  private fun writeWorkingDirectoryMarker(marker: String) {
-    try {
-      val markerPath = Path.of(marker)
-      val cwd = System.getProperty("user.dir")
-      Files.writeString(markerPath, cwd, StandardCharsets.UTF_8)
-    }
-    catch (_: Throwable) {
-    }
+  catch (_: Throwable) {
   }
+}
 
-  private fun readBooleanOrNull(parser: JsonParser): Boolean? {
-    return when (parser.currentToken) {
-      JsonToken.VALUE_TRUE -> true
-      JsonToken.VALUE_FALSE -> false
-      JsonToken.VALUE_NUMBER_INT -> parser.intValue != 0
-      JsonToken.VALUE_STRING -> parser.text.toBoolean()
-      JsonToken.VALUE_NULL -> null
-      else -> {
-        parser.skipChildren()
-        null
-      }
+private fun writeWorkingDirectoryMarker(marker: String) {
+  try {
+    val markerPath = Path.of(marker)
+    val cwd = System.getProperty("user.dir")
+    Files.writeString(markerPath, cwd, StandardCharsets.UTF_8)
+  }
+  catch (_: Throwable) {
+  }
+}
+
+private fun readBooleanOrNull(parser: JsonParser): Boolean? {
+  return when (parser.currentToken) {
+    JsonToken.VALUE_TRUE -> true
+    JsonToken.VALUE_FALSE -> false
+    JsonToken.VALUE_NUMBER_INT -> parser.intValue != 0
+    JsonToken.VALUE_STRING -> parser.text.toBoolean()
+    JsonToken.VALUE_NULL -> null
+    else -> {
+      parser.skipChildren()
+      null
     }
   }
 }

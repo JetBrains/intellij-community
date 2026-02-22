@@ -196,25 +196,25 @@ internal class AgentSessionsStateStore(
     return visibleThreadCounts
   }
 
-  private fun findThreadIndex(
-    projects: List<AgentProjectSessions>,
-    normalizedPath: String,
-    provider: AgentSessionProvider,
-    threadId: String,
-  ): Int? {
-    val projectThreads = projects.firstOrNull { it.path == normalizedPath }?.threads
-    if (projectThreads != null) {
-      val index = projectThreads.indexOfFirst { it.provider == provider && it.id == threadId }
-      if (index >= 0) return index
-    }
+}
 
-    projects.forEach { project ->
-      val worktreeThreads = project.worktrees.firstOrNull { it.path == normalizedPath }?.threads ?: return@forEach
-      val index = worktreeThreads.indexOfFirst { it.provider == provider && it.id == threadId }
-      if (index >= 0) return index
-    }
-
-    return null
+private fun findThreadIndex(
+  projects: List<AgentProjectSessions>,
+  normalizedPath: String,
+  provider: AgentSessionProvider,
+  threadId: String,
+): Int? {
+  val projectThreads = projects.firstOrNull { it.path == normalizedPath }?.threads
+  if (projectThreads != null) {
+    val index = projectThreads.indexOfFirst { it.provider == provider && it.id == threadId }
+    if (index >= 0) return index
   }
 
+  projects.forEach { project ->
+    val worktreeThreads = project.worktrees.firstOrNull { it.path == normalizedPath }?.threads ?: return@forEach
+    val index = worktreeThreads.indexOfFirst { it.provider == provider && it.id == threadId }
+    if (index >= 0) return index
+  }
+
+  return null
 }

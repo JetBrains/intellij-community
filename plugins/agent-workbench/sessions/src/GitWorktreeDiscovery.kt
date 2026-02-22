@@ -130,33 +130,32 @@ internal object GitWorktreeDiscovery {
     return result
   }
 
-  // ---- private helpers ----
+}
 
-  private fun resolveRepoRootFromDotGitFile(dotGitFile: Path, worktreeDir: Path): String? {
-    val content = dotGitFile.readText()
-    val rawGitDir = parseGitFile(content) ?: return null
-    val gitDirPath = try {
-      val parsed = Path.of(rawGitDir)
-      if (parsed.isAbsolute) parsed else worktreeDir.resolve(parsed).normalize()
-    }
-    catch (_: InvalidPathException) {
-      return null
-    }
-    return resolveRepoRootFromGitDir(gitDirPath.invariantSeparatorsPathString)
+private fun resolveRepoRootFromDotGitFile(dotGitFile: Path, worktreeDir: Path): String? {
+  val content = dotGitFile.readText()
+  val rawGitDir = GitWorktreeDiscovery.parseGitFile(content) ?: return null
+  val gitDirPath = try {
+    val parsed = Path.of(rawGitDir)
+    if (parsed.isAbsolute) parsed else worktreeDir.resolve(parsed).normalize()
   }
+  catch (_: InvalidPathException) {
+    return null
+  }
+  return GitWorktreeDiscovery.resolveRepoRootFromGitDir(gitDirPath.invariantSeparatorsPathString)
+}
 
-  private fun findGitExecutable(): String? {
-    return PathEnvironmentVariableUtil.findExecutableInPathOnAnyOS(GIT_COMMAND)?.absolutePath
-  }
+private fun findGitExecutable(): String? {
+  return PathEnvironmentVariableUtil.findExecutableInPathOnAnyOS(GIT_COMMAND)?.absolutePath
+}
 
-  private fun runGitWorktreeList(gitExecutable: String, directory: Path): String? {
-    val commandLine = GeneralCommandLine(gitExecutable, "worktree", "list", "--porcelain")
-      .withWorkingDirectory(directory)
-    val handler = CapturingProcessHandler(commandLine)
-    val result = handler.runProcess(PROCESS_TIMEOUT_MS.toInt())
-    if (result.isTimeout || result.exitCode != 0) return null
-    return result.stdout
-  }
+private fun runGitWorktreeList(gitExecutable: String, directory: Path): String? {
+  val commandLine = GeneralCommandLine(gitExecutable, "worktree", "list", "--porcelain")
+    .withWorkingDirectory(directory)
+  val handler = CapturingProcessHandler(commandLine)
+  val result = handler.runProcess(PROCESS_TIMEOUT_MS.toInt())
+  if (result.isTimeout || result.exitCode != 0) return null
+  return result.stdout
 }
 
 internal fun shortBranchName(fullRef: String?): String? {

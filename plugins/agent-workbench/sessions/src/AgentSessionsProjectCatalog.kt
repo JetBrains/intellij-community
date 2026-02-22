@@ -86,103 +86,103 @@ internal class AgentSessionsProjectCatalog {
     return resultEntries.sortedBy { it.index }.map { it.value }
   }
 
-  private fun buildWorktreeEntries(
-    openRawEntries: List<ProjectEntry>,
-    discovered: List<GitWorktreeInfo>,
-  ): List<WorktreeEntry> {
-    val openPaths = openRawEntries.mapTo(LinkedHashSet()) { it.path }
-    val result = mutableListOf<WorktreeEntry>()
+}
 
-    for (raw in openRawEntries) {
-      val gitInfo = discovered.firstOrNull { it.path == raw.path }
+private fun buildWorktreeEntries(
+  openRawEntries: List<ProjectEntry>,
+  discovered: List<GitWorktreeInfo>,
+): List<WorktreeEntry> {
+  val openPaths = openRawEntries.mapTo(LinkedHashSet()) { it.path }
+  val result = mutableListOf<WorktreeEntry>()
+
+  for (raw in openRawEntries) {
+    val gitInfo = discovered.firstOrNull { it.path == raw.path }
+    result.add(
+      WorktreeEntry(
+        path = raw.path,
+        name = raw.name,
+        branch = shortBranchName(gitInfo?.branch),
+        project = raw.project,
+      ),
+    )
+  }
+
+  for (info in discovered) {
+    if (info.path !in openPaths && !info.isMain) {
       result.add(
         WorktreeEntry(
-          path = raw.path,
-          name = raw.name,
-          branch = shortBranchName(gitInfo?.branch),
-          project = raw.project,
+          path = info.path,
+          name = worktreeDisplayName(info.path),
+          branch = shortBranchName(info.branch),
+          project = null,
         ),
       )
     }
-
-    for (info in discovered) {
-      if (info.path !in openPaths && !info.isMain) {
-        result.add(
-          WorktreeEntry(
-            path = info.path,
-            name = worktreeDisplayName(info.path),
-            branch = shortBranchName(info.branch),
-            project = null,
-          ),
-        )
-      }
-    }
-
-    return result
   }
 
-  private fun collectRawProjectEntries(): List<ProjectEntry> {
-    val manager = RecentProjectsManager.getInstance() as? RecentProjectsManagerBase
-                  ?: return emptyList()
-    val dedicatedProjectPath = AgentWorkbenchDedicatedFrameProjectManager.dedicatedProjectPath()
-    val openProjects = ProjectManager.getInstance().openProjects
-    val openByPath = LinkedHashMap<String, Project>()
-    for (project in openProjects) {
-      val path = manager.getProjectPath(project)?.invariantSeparatorsPathString
-                 ?: project.basePath?.let(::normalizeAgentWorkbenchPath)
-                 ?: continue
-      if (path == dedicatedProjectPath || AgentWorkbenchDedicatedFrameProjectManager.isDedicatedProjectPath(path)) continue
-      openByPath[path] = project
-    }
-    val seen = LinkedHashSet<String>()
-    val entries = mutableListOf<ProjectEntry>()
-    for (path in manager.getRecentPaths()) {
-      val normalized = normalizeAgentWorkbenchPath(path)
-      if (normalized == dedicatedProjectPath || AgentWorkbenchDedicatedFrameProjectManager.isDedicatedProjectPath(normalized)) continue
-      if (!seen.add(normalized)) continue
-      entries.add(
-        ProjectEntry(
-          path = normalized,
-          name = resolveProjectName(manager, normalized, openByPath[normalized]),
-          project = openByPath[normalized],
-        ),
-      )
-    }
-    for ((path, project) in openByPath) {
-      if (!seen.add(path)) continue
-      entries.add(
-        ProjectEntry(
-          path = path,
-          name = resolveProjectName(manager, path, project),
-          project = project,
-        ),
-      )
-    }
-    return entries
-  }
+  return result
+}
 
-  private fun resolveProjectName(
-    manager: RecentProjectsManagerBase,
-    path: String,
-    project: Project?,
-  ): String {
-    val displayName = manager.getDisplayName(path).takeIf { !it.isNullOrBlank() }
-    if (displayName != null) return displayName
-    val projectName = manager.getProjectName(path)
-    if (projectName.isNotBlank()) return projectName
-    if (project != null) return project.name
-    return resolveProjectNameWithoutManager(path, project)
+private fun collectRawProjectEntries(): List<ProjectEntry> {
+  val manager = RecentProjectsManager.getInstance() as? RecentProjectsManagerBase
+                ?: return emptyList()
+  val dedicatedProjectPath = AgentWorkbenchDedicatedFrameProjectManager.dedicatedProjectPath()
+  val openProjects = ProjectManager.getInstance().openProjects
+  val openByPath = LinkedHashMap<String, Project>()
+  for (project in openProjects) {
+    val path = manager.getProjectPath(project)?.invariantSeparatorsPathString
+               ?: project.basePath?.let(::normalizeAgentWorkbenchPath)
+               ?: continue
+    if (path == dedicatedProjectPath || AgentWorkbenchDedicatedFrameProjectManager.isDedicatedProjectPath(path)) continue
+    openByPath[path] = project
   }
-
-  private fun resolveProjectNameWithoutManager(path: String, project: Project?): String {
-    if (project != null) return project.name
-    val fileName = try {
-      Path.of(path).name
-    }
-    catch (_: InvalidPathException) {
-      null
-    }
-    return fileName ?: FileUtilRt.toSystemDependentName(path)
+  val seen = LinkedHashSet<String>()
+  val entries = mutableListOf<ProjectEntry>()
+  for (path in manager.getRecentPaths()) {
+    val normalized = normalizeAgentWorkbenchPath(path)
+    if (normalized == dedicatedProjectPath || AgentWorkbenchDedicatedFrameProjectManager.isDedicatedProjectPath(normalized)) continue
+    if (!seen.add(normalized)) continue
+    entries.add(
+      ProjectEntry(
+        path = normalized,
+        name = resolveProjectName(manager, normalized, openByPath[normalized]),
+        project = openByPath[normalized],
+      ),
+    )
   }
+  for ((path, project) in openByPath) {
+    if (!seen.add(path)) continue
+    entries.add(
+      ProjectEntry(
+        path = path,
+        name = resolveProjectName(manager, path, project),
+        project = project,
+      ),
+    )
+  }
+  return entries
+}
 
+private fun resolveProjectName(
+  manager: RecentProjectsManagerBase,
+  path: String,
+  project: Project?,
+): String {
+  val displayName = manager.getDisplayName(path).takeIf { !it.isNullOrBlank() }
+  if (displayName != null) return displayName
+  val projectName = manager.getProjectName(path)
+  if (projectName.isNotBlank()) return projectName
+  if (project != null) return project.name
+  return resolveProjectNameWithoutManager(path, project)
+}
+
+private fun resolveProjectNameWithoutManager(path: String, project: Project?): String {
+  if (project != null) return project.name
+  val fileName = try {
+    Path.of(path).name
+  }
+  catch (_: InvalidPathException) {
+    null
+  }
+  return fileName ?: FileUtilRt.toSystemDependentName(path)
 }

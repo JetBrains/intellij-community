@@ -182,51 +182,52 @@ internal class CodexRolloutThreadIndex(
     }
   }
 
-  private fun scanRolloutFiles(sessionsDir: Path): Object2ObjectOpenHashMap<String, RolloutFileStat> {
-    val scannedFiles = Object2ObjectOpenHashMap<String, RolloutFileStat>()
-    Files.walk(sessionsDir).use { stream ->
-      val iterator = stream.iterator()
-      while (iterator.hasNext()) {
-        val candidate = iterator.next()
-        if (!Files.isRegularFile(candidate)) continue
-        val fileName = candidate.fileName?.toString() ?: continue
-        if (!isRolloutFileName(fileName)) continue
-        val lastModifiedNs = try {
-          Files.getLastModifiedTime(candidate).to(TimeUnit.NANOSECONDS)
-        }
-        catch (_: Throwable) {
-          continue
-        }
-        val sizeBytes = try {
-          Files.size(candidate)
-        }
-        catch (_: Throwable) {
-          continue
-        }
+}
 
-        val pathKey = toPathKey(candidate)
-        scannedFiles[pathKey] = RolloutFileStat(
-          pathKey = pathKey,
-          path = candidate,
-          lastModifiedNs = lastModifiedNs,
-          sizeBytes = sizeBytes,
-        )
+private fun scanRolloutFiles(sessionsDir: Path): Object2ObjectOpenHashMap<String, RolloutFileStat> {
+  val scannedFiles = Object2ObjectOpenHashMap<String, RolloutFileStat>()
+  Files.walk(sessionsDir).use { stream ->
+    val iterator = stream.iterator()
+    while (iterator.hasNext()) {
+      val candidate = iterator.next()
+      if (!Files.isRegularFile(candidate)) continue
+      val fileName = candidate.fileName?.toString() ?: continue
+      if (!isRolloutFileName(fileName)) continue
+      val lastModifiedNs = try {
+        Files.getLastModifiedTime(candidate).to(TimeUnit.NANOSECONDS)
       }
-    }
+      catch (_: Throwable) {
+        continue
+      }
+      val sizeBytes = try {
+        Files.size(candidate)
+      }
+      catch (_: Throwable) {
+        continue
+      }
 
-    return scannedFiles
+      val pathKey = toPathKey(candidate)
+      scannedFiles[pathKey] = RolloutFileStat(
+        pathKey = pathKey,
+        path = candidate,
+        lastModifiedNs = lastModifiedNs,
+        sizeBytes = sizeBytes,
+      )
+    }
   }
 
-  private fun toPathKey(path: Path): String {
-    return normalizeRolloutPath(path).invariantSeparatorsPathString
-  }
+  return scannedFiles
+}
 
-  private fun normalizeRolloutPath(path: Path): Path {
-    return runCatching {
-      path.toAbsolutePath().normalize()
-    }.getOrElse {
-      path.normalize()
-    }
+private fun toPathKey(path: Path): String {
+  return normalizeRolloutPath(path).invariantSeparatorsPathString
+}
+
+private fun normalizeRolloutPath(path: Path): Path {
+  return runCatching {
+    path.toAbsolutePath().normalize()
+  }.getOrElse {
+    path.normalize()
   }
 }
 

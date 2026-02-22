@@ -228,46 +228,47 @@ class AgentSessionsServiceArchiveIntegrationTest {
     }
   }
 
-  private fun testCodexBridge(
-    sessionSource: AgentSessionSource,
-    onArchive: suspend (path: String, threadId: String) -> Boolean,
-  ): AgentSessionProviderBridge {
-    return object : AgentSessionProviderBridge {
-      override val provider: AgentSessionProvider
-        get() = AgentSessionProvider.CODEX
+}
 
-      override val displayNameKey: String
-        get() = "toolwindow.provider.codex"
+private fun testCodexBridge(
+  sessionSource: AgentSessionSource,
+  onArchive: suspend (path: String, threadId: String) -> Boolean,
+): AgentSessionProviderBridge {
+  return object : AgentSessionProviderBridge {
+    override val provider: AgentSessionProvider
+      get() = AgentSessionProvider.CODEX
 
-      override val newSessionLabelKey: String
-        get() = "toolwindow.action.new.session.codex"
+    override val displayNameKey: String
+      get() = "toolwindow.provider.codex"
 
-      override val iconId: String
-        get() = AgentSessionProviderIconIds.CODEX
+    override val newSessionLabelKey: String
+      get() = "toolwindow.action.new.session.codex"
 
-      override val sessionSource: AgentSessionSource = sessionSource
+    override val iconId: String
+      get() = AgentSessionProviderIconIds.CODEX
 
-      override val cliMissingMessageKey: String
-        get() = "toolwindow.error.cli"
+    override val sessionSource: AgentSessionSource = sessionSource
 
-      override val supportsArchiveThread: Boolean
-        get() = true
+    override val cliMissingMessageKey: String
+      get() = "toolwindow.error.cli"
 
-      override fun isCliAvailable(): Boolean = true
+    override val supportsArchiveThread: Boolean
+      get() = true
 
-      override fun buildResumeCommand(sessionId: String): List<String> = listOf("codex", "resume", sessionId)
+    override fun isCliAvailable(): Boolean = true
 
-      override fun buildNewSessionCommand(mode: AgentSessionLaunchMode): List<String> = listOf("codex")
+    override fun buildResumeCommand(sessionId: String): List<String> = listOf("codex", "resume", sessionId)
 
-      override fun buildNewEntryCommand(): List<String> = listOf("codex")
+    override fun buildNewSessionCommand(mode: AgentSessionLaunchMode): List<String> = listOf("codex")
 
-      override suspend fun createNewSession(path: String, mode: AgentSessionLaunchMode): AgentSessionLaunchSpec {
-        return AgentSessionLaunchSpec(sessionId = null, command = listOf("codex"))
-      }
+    override fun buildNewEntryCommand(): List<String> = listOf("codex")
 
-      override suspend fun archiveThread(path: String, threadId: String): Boolean {
-        return onArchive(path, threadId)
-      }
+    override suspend fun createNewSession(path: String, mode: AgentSessionLaunchMode): AgentSessionLaunchSpec {
+      return AgentSessionLaunchSpec(sessionId = null, command = listOf("codex"))
+    }
+
+    override suspend fun archiveThread(path: String, threadId: String): Boolean {
+      return onArchive(path, threadId)
     }
   }
 }

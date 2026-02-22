@@ -14,6 +14,7 @@ import com.intellij.openapi.components.service
 
 internal class CodexAgentSessionProviderBridge(
   override val sessionSource: AgentSessionSource = CodexSessionSource(),
+  private val executablePathProvider: () -> String? = CodexCliUtils::findExecutable,
 ) : AgentSessionProviderBridge {
   override val provider: AgentSessionProvider
     get() = AgentSessionProvider.CODEX
@@ -39,20 +40,22 @@ internal class CodexAgentSessionProviderBridge(
   override val supportsArchiveThread: Boolean
     get() = true
 
-  override fun isCliAvailable(): Boolean = CodexCliUtils.isAvailable()
+  override fun isCliAvailable(): Boolean = CodexCliUtils.findExecutable() != null
 
-  override fun buildResumeCommand(sessionId: String): List<String> = listOf(CodexCliUtils.CODEX_COMMAND, "resume", sessionId)
+  private fun codexCommand(): String = executablePathProvider() ?: CodexCliUtils.CODEX_COMMAND
+
+  override fun buildResumeCommand(sessionId: String): List<String> = listOf(codexCommand(), "resume", sessionId)
 
   override fun buildNewSessionCommand(mode: AgentSessionLaunchMode): List<String> {
     return if (mode == AgentSessionLaunchMode.YOLO) {
-      listOf(CodexCliUtils.CODEX_COMMAND, "--full-auto")
+      listOf(codexCommand(), "--full-auto")
     }
     else {
-      listOf(CodexCliUtils.CODEX_COMMAND)
+      listOf(codexCommand())
     }
   }
 
-  override fun buildNewEntryCommand(): List<String> = listOf(CodexCliUtils.CODEX_COMMAND)
+  override fun buildNewEntryCommand(): List<String> = listOf(codexCommand())
 
   @Suppress("UNUSED_PARAMETER")
   override suspend fun createNewSession(path: String, mode: AgentSessionLaunchMode): AgentSessionLaunchSpec {

@@ -37,12 +37,13 @@ internal object ClaudeQuotaStatusBarWidgetSettings {
     _enabledFlow.value = enabled
   }
 
-  private fun readEnabledFromSettings(): Boolean {
-    val factory = findFactory() ?: return false
-    return StatusBarWidgetSettings.getInstance().isEnabled(factory)
-  }
+}
 
-  private fun findFactory(): StatusBarWidgetFactory? {
-    return StatusBarWidgetFactory.EP_NAME.extensionList.firstOrNull { it.id == CLAUDE_QUOTA_WIDGET_ID }
-  }
+private fun readEnabledFromSettings(): Boolean {
+  val factory = findFactory() ?: return false
+  return StatusBarWidgetSettings.getInstance().isEnabled(factory)
+}
+
+private fun findFactory(): StatusBarWidgetFactory? {
+  return StatusBarWidgetFactory.EP_NAME.extensionList.firstOrNull { it.id == CLAUDE_QUOTA_WIDGET_ID }
 }

@@ -203,30 +203,31 @@ class AgentSessionsEditorTabActionsTest {
     assertThat(event.presentation.isEnabledAndVisible).isFalse()
   }
 
-  private fun editorContext(threadId: String): AgentChatEditorTabActionContext {
-    return AgentChatEditorTabActionContext(
-      project = ProjectManager.getInstance().defaultProject,
-      path = normalizeAgentWorkbenchPath("/tmp/project"),
-      threadIdentity = "codex:thread-1",
-      threadId = threadId,
-    )
-  }
+}
 
-  private fun threadContext(): AgentChatThreadEditorTabActionContext {
-    val provider = AgentSessionProvider.CODEX
-    val threadId = "thread-1"
-    return AgentChatThreadEditorTabActionContext(
-      project = ProjectManager.getInstance().defaultProject,
-      path = normalizeAgentWorkbenchPath("/tmp/project"),
+private fun editorContext(threadId: String): AgentChatEditorTabActionContext {
+  return AgentChatEditorTabActionContext(
+    project = ProjectManager.getInstance().defaultProject,
+    path = normalizeAgentWorkbenchPath("/tmp/project"),
+    threadIdentity = "codex:thread-1",
+    threadId = threadId,
+  )
+}
+
+private fun threadContext(): AgentChatThreadEditorTabActionContext {
+  val provider = AgentSessionProvider.CODEX
+  val threadId = "thread-1"
+  return AgentChatThreadEditorTabActionContext(
+    project = ProjectManager.getInstance().defaultProject,
+    path = normalizeAgentWorkbenchPath("/tmp/project"),
+    provider = provider,
+    threadId = threadId,
+    thread = AgentSessionThread(
+      id = threadId,
+      title = "Thread 1",
+      updatedAt = 0L,
+      archived = false,
       provider = provider,
-      threadId = threadId,
-      thread = AgentSessionThread(
-        id = threadId,
-        title = "Thread 1",
-        updatedAt = 0L,
-        archived = false,
-        provider = provider,
-      ),
-    )
-  }
+    ),
+  )
 }

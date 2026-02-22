@@ -376,23 +376,6 @@ class AgentChatEditorServiceTest {
     }
   }
 
-  private suspend fun <T> runInUi(action: suspend () -> T): T {
-    return withContext(Dispatchers.UiWithModelAccess) {
-      action()
-    }
-  }
-
-  private suspend fun waitForCondition(timeoutMs: Long = 5_000, condition: suspend () -> Boolean) {
-    val deadline = System.currentTimeMillis() + timeoutMs
-    while (System.currentTimeMillis() < deadline) {
-      if (condition()) {
-        return
-      }
-      delay(20.milliseconds)
-    }
-    throw AssertionError("Condition was not satisfied within ${timeoutMs}ms")
-  }
-
   private class TestChatFileEditorProvider : FileEditorProvider, DumbAware {
     override fun accept(project: Project, file: VirtualFile): Boolean {
       return file is AgentChatVirtualFile
@@ -408,4 +391,21 @@ class AgentChatEditorServiceTest {
 
     override fun getPolicy(): FileEditorPolicy = FileEditorPolicy.HIDE_OTHER_EDITORS
   }
+}
+
+private suspend fun <T> runInUi(action: suspend () -> T): T {
+  return withContext(Dispatchers.UiWithModelAccess) {
+    action()
+  }
+}
+
+private suspend fun waitForCondition(timeoutMs: Long = 5_000, condition: suspend () -> Boolean) {
+  val deadline = System.currentTimeMillis() + timeoutMs
+  while (System.currentTimeMillis() < deadline) {
+    if (condition()) {
+      return
+    }
+    delay(20.milliseconds)
+  }
+  throw AssertionError("Condition was not satisfied within ${timeoutMs}ms")
 }
