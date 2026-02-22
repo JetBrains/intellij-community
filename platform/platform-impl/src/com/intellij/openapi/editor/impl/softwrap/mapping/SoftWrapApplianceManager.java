@@ -174,8 +174,8 @@ public final class SoftWrapApplianceManager implements Dumpable {
       for (Segment range : ranges) {
         int lastOffset = lastRecalculatedOffset[0];
         if (range.getEndOffset() > lastOffset) {
-          recalculateSoftWraps(new IncrementalCacheUpdateEvent(Math.max(range.getStartOffset(), lastOffset), range.getEndOffset(),
-                                                               myEditor));
+          recalculateSoftWraps(IncrementalCacheUpdateEvent.forVisualChange(Math.max(range.getStartOffset(), lastOffset),
+                                                                           range.getEndOffset(), myEditor));
         }
       }
     }
@@ -210,7 +210,7 @@ public final class SoftWrapApplianceManager implements Dumpable {
     }
     myIsDirty = false;
 
-    recalculateSoftWraps(new IncrementalCacheUpdateEvent(myDocument));
+    recalculateSoftWraps(IncrementalCacheUpdateEvent.forWholeDocument(myDocument));
 
     onRecalculationEnd();
 
@@ -438,7 +438,7 @@ public final class SoftWrapApplianceManager implements Dumpable {
 
   @ApiStatus.Internal
   public void beforeDocumentChange(DocumentEvent event) {
-    myDocumentChangedEvent = new IncrementalCacheUpdateEvent(event, myEditor);
+    myDocumentChangedEvent = IncrementalCacheUpdateEvent.forDocumentChange(event, myEditor);
   }
 
   @ApiStatus.Internal
@@ -448,7 +448,7 @@ public final class SoftWrapApplianceManager implements Dumpable {
     if (processAlsoLineEnd) {
       int lineEndOffset = DocumentUtil.getLineEndOffset(myDocumentChangedEvent.getMandatoryEndOffset(), event.getDocument());
       if (lineEndOffset > myDocumentChangedEvent.getActualEndOffset()) {
-        recalculate(new IncrementalCacheUpdateEvent(lineEndOffset, lineEndOffset, myEditor));
+        recalculate(IncrementalCacheUpdateEvent.forVisualChange(lineEndOffset, lineEndOffset, myEditor));
       }
     }
     myDocumentChangedEvent = null;
