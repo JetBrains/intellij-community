@@ -93,6 +93,9 @@ Define how Agent chat tabs are opened, restored, reused, and rendered in editor 
 - Restore validation failures and terminal initialization failures must close the tab, delete the corresponding tab-state entry immediately, and surface deduplicated non-blocking warning notifications.
   [@test] ../chat/testSrc/AgentChatEditorServiceTest.kt
 
+- Terminal initialization failures caused by command lookup must include actionable warning text with attempted command and startup `PATH` snapshot when available.
+  [@test] ../chat/testSrc/AgentChatRestoreNotificationServiceTest.kt
+
 - Dedicated-frame vs current-project target frame selection must follow `spec/agent-dedicated-frame.spec.md`.
   [@test] ../sessions/testSrc/AgentSessionsOpenModeRoutingTest.kt
 
@@ -114,11 +117,13 @@ Define how Agent chat tabs are opened, restored, reused, and rendered in editor 
 - Invalid project path or project-open failure must not crash UI or open a broken tab.
 - Missing/invalid identity context must fail safely without editor-tab corruption.
 - Restore/initialization warning notifications must be deduplicated per tab+reason for the IDE session.
+- Command lookup failures should expose actionable diagnostics (command + startup `PATH`) without adding fallback launch behavior.
 
 ## Testing / Local Run
 - `./tests.cmd '-Dintellij.build.test.patterns=com.intellij.agent.workbench.chat.AgentChatEditorServiceTest'`
 - `./tests.cmd '-Dintellij.build.test.patterns=com.intellij.agent.workbench.chat.AgentChatFileEditorProviderTest'`
 - `./tests.cmd '-Dintellij.build.test.patterns=com.intellij.agent.workbench.chat.AgentChatTabSelectionServiceTest'`
+- `./tests.cmd '-Dintellij.build.test.patterns=com.intellij.agent.workbench.chat.AgentChatRestoreNotificationServiceTest'`
 - `./tests.cmd '-Dintellij.build.test.patterns=com.intellij.agent.workbench.sessions.AgentSessionsOpenModeRoutingTest'`
 
 ## Open Questions / Risks

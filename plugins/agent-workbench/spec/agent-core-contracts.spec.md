@@ -62,6 +62,10 @@ Define the single source of truth for cross-feature behavior that must stay cons
   [@test] ../sessions/testSrc/AgentSessionCliTest.kt
   [@test] ../codex/sessions/testSrc/CodexAgentSessionProviderBridgeTest.kt
 
+- Canonical provider command mapping must keep bare executable names; executable lookup is resolved by terminal startup environment and provider mapping must not pre-resolve absolute executable paths.
+  [@test] ../sessions/testSrc/AgentSessionCliTest.kt
+  [@test] ../codex/sessions/testSrc/CodexAgentSessionProviderBridgeTest.kt
+
 - Editor-tab popup contract for a selected Agent chat tab must expose exactly these actions:
   - `Select in Agent Threads`
   - `Archive Thread`
