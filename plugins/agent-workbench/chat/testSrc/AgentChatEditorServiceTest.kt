@@ -11,6 +11,7 @@ import com.intellij.openapi.fileEditor.FileEditorProvider
 import com.intellij.openapi.fileEditor.impl.EditorTabPresentationUtil
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.testFramework.common.timeoutRunBlocking
@@ -135,6 +136,26 @@ class AgentChatEditorServiceTest {
     val file = openedChatFiles().single()
     assertThat(file.threadTitle).isEqualTo(title)
     assertThat(editorTabTitle(file)).isEqualTo(title)
+    assertThat(editorTabTooltip(file)).isEqualTo(title)
+  }
+
+  @Test
+  fun testLongTabTitleUsesMiddleTruncationAndTooltipKeepsFullTitle(): Unit = timeoutRunBlocking {
+    val longTitle = "Project setup: " + "a".repeat(180) + " tail"
+
+    openChatInModal(
+      threadIdentity = "CODEX:thread-long-title",
+      shellCommand = listOf("codex", "resume", "thread-long-title"),
+      threadId = "thread-long-title",
+      threadTitle = longTitle,
+      subAgentId = null,
+    )
+
+    val file = openedChatFiles().single()
+    assertThat(file.threadTitle).isEqualTo(longTitle)
+    assertThat(editorTabTitle(file)).isEqualTo(StringUtil.trimMiddle(longTitle, 50))
+    assertThat(editorTabTitle(file)).isNotEqualTo(longTitle)
+    assertThat(editorTabTooltip(file)).isEqualTo(longTitle)
   }
 
   @Test
@@ -373,6 +394,12 @@ class AgentChatEditorServiceTest {
   private suspend fun editorTabTitle(file: AgentChatVirtualFile): String {
     return runInUi {
       EditorTabPresentationUtil.getEditorTabTitle(project, file)
+    }
+  }
+
+  private suspend fun editorTabTooltip(file: AgentChatVirtualFile): String? {
+    return runInUi {
+      AgentChatEditorTabTitleProvider().getEditorTabTooltipText(project, file)
     }
   }
 

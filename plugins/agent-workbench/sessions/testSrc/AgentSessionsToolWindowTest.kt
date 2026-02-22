@@ -213,6 +213,123 @@ class AgentSessionsToolWindowTest {
   }
 
   @Test
+  fun hoveringProjectRowWithLongTitleKeepsQuickCreateSessionActionAccessible() {
+    var createdSessionPath: String? = null
+    var createdSessionProvider: AgentSessionProvider? = null
+    var createdSessionMode: AgentSessionLaunchMode? = null
+    val projectPath = "/work/project-plus"
+    val longProjectName = "Project Plus ".repeat(12).trim()
+    val projects = listOf(
+      AgentProjectSessions(
+        path = projectPath,
+        name = longProjectName,
+        branch = "main",
+        isOpen = false,
+        worktrees = listOf(
+          AgentWorktree(
+            path = "$projectPath/worktree",
+            name = "project-plus-worktree",
+            branch = "feature-x",
+            isOpen = false,
+            hasLoaded = true,
+          ),
+        ),
+      ),
+    )
+
+    composeRule.setContentWithTheme {
+      agentSessionsToolWindowContent(
+        state = AgentSessionsState(projects = projects),
+        onRefresh = {},
+        onOpenProject = {},
+        onCreateSession = { path, provider, mode ->
+          createdSessionPath = path
+          createdSessionProvider = provider
+          createdSessionMode = mode
+        },
+        lastUsedProvider = AgentSessionProvider.CLAUDE,
+      )
+    }
+
+    val quickActionLabel = providerDisplayName(AgentSessionProvider.CLAUDE)
+    composeRule.onAllNodesWithContentDescription(quickActionLabel).assertCountEquals(0)
+
+    composeRule.onNodeWithText("Project Plus", substring = true)
+      .assertIsDisplayed()
+      .performMouseInput { moveTo(center) }
+
+    composeRule.onNodeWithContentDescription(quickActionLabel)
+      .assertIsDisplayed()
+      .performClick()
+
+    composeRule.runOnIdle {
+      assertThat(createdSessionPath).isEqualTo(projectPath)
+      assertThat(createdSessionProvider).isEqualTo(AgentSessionProvider.CLAUDE)
+      assertThat(createdSessionMode).isEqualTo(AgentSessionLaunchMode.STANDARD)
+    }
+  }
+
+  @Test
+  fun hoveringWorktreeRowWithLongTitleKeepsQuickCreateSessionActionAccessible() {
+    var createdSessionPath: String? = null
+    var createdSessionProvider: AgentSessionProvider? = null
+    var createdSessionMode: AgentSessionLaunchMode? = null
+    val now = 1_700_000_000_000L
+    val worktreePath = "/work/project-feature"
+    val longWorktreeName = "project-feature-long-name-".repeat(8).trimEnd('-')
+    val worktreeThread = AgentSessionThread(id = "wt-thread-1", title = "WT Thread", updatedAt = now, archived = false)
+    val projects = listOf(
+      AgentProjectSessions(
+        path = "/work/project-a",
+        name = "Project A",
+        isOpen = true,
+        hasLoaded = true,
+        worktrees = listOf(
+          AgentWorktree(
+            path = worktreePath,
+            name = longWorktreeName,
+            branch = "feature-x",
+            isOpen = false,
+            hasLoaded = true,
+            threads = listOf(worktreeThread),
+          ),
+        ),
+      ),
+    )
+
+    composeRule.setContentWithTheme {
+      agentSessionsToolWindowContent(
+        state = AgentSessionsState(projects = projects),
+        onRefresh = {},
+        onOpenProject = {},
+        onCreateSession = { path, provider, mode ->
+          createdSessionPath = path
+          createdSessionProvider = provider
+          createdSessionMode = mode
+        },
+        lastUsedProvider = AgentSessionProvider.CLAUDE,
+      )
+    }
+
+    val quickActionLabel = providerDisplayName(AgentSessionProvider.CLAUDE)
+    composeRule.onAllNodesWithContentDescription(quickActionLabel).assertCountEquals(0)
+
+    composeRule.onNodeWithText("project-feature-long-name", substring = true)
+      .assertIsDisplayed()
+      .performMouseInput { moveTo(center) }
+
+    composeRule.onNodeWithContentDescription(quickActionLabel)
+      .assertIsDisplayed()
+      .performClick()
+
+    composeRule.runOnIdle {
+      assertThat(createdSessionPath).isEqualTo(worktreePath)
+      assertThat(createdSessionProvider).isEqualTo(AgentSessionProvider.CLAUDE)
+      assertThat(createdSessionMode).isEqualTo(AgentSessionLaunchMode.STANDARD)
+    }
+  }
+
+  @Test
   fun threadRowShowsProviderMarkerForClaude() {
     val now = 1_700_000_000_000L
     val thread = AgentSessionThread(

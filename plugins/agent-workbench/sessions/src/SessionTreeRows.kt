@@ -140,7 +140,7 @@ private fun rememberTreeRowChrome(
   )
 }
 
-@OptIn(ExperimentalJewelApi::class)
+@OptIn(ExperimentalJewelApi::class, ExperimentalFoundationApi::class)
 @Composable
 private fun SelectableLazyItemScope.projectNodeRow(
   project: AgentProjectSessions,
@@ -180,17 +180,24 @@ private fun SelectableLazyItemScope.projectNodeRow(
       verticalAlignment = Alignment.CenterVertically,
       horizontalArrangement = Arrangement.spacedBy(chrome.spacing)
     ) {
+      val projectTitle = project.name
       var titleLayoutResult by remember { mutableStateOf<TextLayoutResult?>(null) }
-      Text(
-        text = project.name.highlightTextSearch(),
-        style = AgentSessionsTextStyles.projectTitle(),
-        maxLines = 1,
-        overflow = TextOverflow.Ellipsis,
-        onTextLayout = { titleLayoutResult = it },
-        modifier = Modifier
-          .weight(1f)
-          .highlightSpeedSearchMatches(titleLayoutResult),
-      )
+      val isTitleOverflowed = titleLayoutResult?.hasVisualOverflow == true
+      Box(modifier = Modifier.weight(1f)) {
+        Tooltip(
+          tooltip = { Text(projectTitle) },
+          enabled = isTitleOverflowed,
+        ) {
+          Text(
+            text = projectTitle.highlightTextSearch(),
+            style = AgentSessionsTextStyles.projectTitle(),
+            maxLines = 1,
+            overflow = TextOverflow.MiddleEllipsis,
+            onTextLayout = { titleLayoutResult = it },
+            modifier = Modifier.highlightSpeedSearchMatches(titleLayoutResult),
+          )
+        }
+      }
       if (project.worktrees.isNotEmpty()) {
         val branchLabel = project.branch ?: AgentSessionsBundle.message("toolwindow.worktree.detached")
         Text(
@@ -240,11 +247,21 @@ private fun SelectableLazyItemScope.threadNodeRow(
   val providerLabel = providerLabel(thread.provider)
   val indicatorColor = if (branchMismatch) JewelTheme.globalColors.text.warning else threadIndicatorColor(thread)
   val archiveLabel = AgentSessionsBundle.message("toolwindow.action.archive")
+  val threadTitle = thread.title
+  var titleLayoutResult by remember { mutableStateOf<TextLayoutResult?>(null) }
+  val isTitleOverflowed = titleLayoutResult?.hasVisualOverflow == true
+  val branchMismatchText = AgentSessionsBundle.message("toolwindow.thread.branch.mismatch", originBranch ?: "")
+  val unifiedTooltipText = when {
+    branchMismatch && isTitleOverflowed -> "$branchMismatchText\n$threadTitle"
+    branchMismatch -> branchMismatchText
+    isTitleOverflowed -> threadTitle
+    else -> null
+  }
   Tooltip(
     tooltip = {
-      Text(AgentSessionsBundle.message("toolwindow.thread.branch.mismatch", originBranch ?: ""))
+      Text(unifiedTooltipText ?: "")
     },
-    enabled = branchMismatch,
+    enabled = unifiedTooltipText != null,
   ) {
     val rowContent: @Composable () -> Unit = {
       Row(
@@ -261,13 +278,12 @@ private fun SelectableLazyItemScope.threadNodeRow(
             .size(threadIndicatorSize())
             .background(indicatorColor, CircleShape)
         )
-        var titleLayoutResult by remember { mutableStateOf<TextLayoutResult?>(null) }
         Text(
-          text = thread.title.highlightTextSearch(),
+          text = threadTitle.highlightTextSearch(),
           style = AgentSessionsTextStyles.threadTitle(),
           color = titleColor,
           maxLines = 1,
-          overflow = TextOverflow.Ellipsis,
+          overflow = TextOverflow.MiddleEllipsis,
           onTextLayout = { titleLayoutResult = it },
           modifier = Modifier
             .weight(1f)
@@ -309,7 +325,7 @@ private fun SelectableLazyItemScope.threadNodeRow(
   }
 }
 
-@OptIn(ExperimentalJewelApi::class)
+@OptIn(ExperimentalJewelApi::class, ExperimentalFoundationApi::class)
 @Composable
 private fun SelectableLazyItemScope.subAgentNodeRow(
   subAgent: AgentSubAgent,
@@ -332,21 +348,27 @@ private fun SelectableLazyItemScope.subAgentNodeRow(
         .background(subAgentIndicatorColor(), CircleShape)
     )
     var titleLayoutResult by remember { mutableStateOf<TextLayoutResult?>(null) }
-    Text(
-      text = displayName.highlightTextSearch(),
-      style = AgentSessionsTextStyles.subAgentTitle(),
-      color = titleColor,
-      maxLines = 1,
-      overflow = TextOverflow.Ellipsis,
-      onTextLayout = { titleLayoutResult = it },
-      modifier = Modifier
-        .weight(1f)
-        .highlightSpeedSearchMatches(titleLayoutResult),
-    )
+    val isTitleOverflowed = titleLayoutResult?.hasVisualOverflow == true
+    Box(modifier = Modifier.weight(1f)) {
+      Tooltip(
+        tooltip = { Text(displayName) },
+        enabled = isTitleOverflowed,
+      ) {
+        Text(
+          text = displayName.highlightTextSearch(),
+          style = AgentSessionsTextStyles.subAgentTitle(),
+          color = titleColor,
+          maxLines = 1,
+          overflow = TextOverflow.MiddleEllipsis,
+          onTextLayout = { titleLayoutResult = it },
+          modifier = Modifier.highlightSpeedSearchMatches(titleLayoutResult),
+        )
+      }
+    }
   }
 }
 
-@OptIn(ExperimentalJewelApi::class)
+@OptIn(ExperimentalJewelApi::class, ExperimentalFoundationApi::class)
 @Composable
 private fun SelectableLazyItemScope.worktreeNodeRow(
   worktree: AgentWorktree,
@@ -368,18 +390,25 @@ private fun SelectableLazyItemScope.worktreeNodeRow(
     verticalAlignment = Alignment.CenterVertically,
     horizontalArrangement = Arrangement.spacedBy(chrome.spacing)
   ) {
+    val worktreeTitle = worktree.name
     var titleLayoutResult by remember { mutableStateOf<TextLayoutResult?>(null) }
-    Text(
-      text = worktree.name.highlightTextSearch(),
-      style = AgentSessionsTextStyles.projectTitle(),
-      color = titleColor,
-      maxLines = 1,
-      overflow = TextOverflow.Ellipsis,
-      onTextLayout = { titleLayoutResult = it },
-      modifier = Modifier
-        .weight(1f)
-        .highlightSpeedSearchMatches(titleLayoutResult),
-    )
+    val isTitleOverflowed = titleLayoutResult?.hasVisualOverflow == true
+    Box(modifier = Modifier.weight(1f)) {
+      Tooltip(
+        tooltip = { Text(worktreeTitle) },
+        enabled = isTitleOverflowed,
+      ) {
+        Text(
+          text = worktreeTitle.highlightTextSearch(),
+          style = AgentSessionsTextStyles.projectTitle(),
+          color = titleColor,
+          maxLines = 1,
+          overflow = TextOverflow.MiddleEllipsis,
+          onTextLayout = { titleLayoutResult = it },
+          modifier = Modifier.highlightSpeedSearchMatches(titleLayoutResult),
+        )
+      }
+    }
     val branchLabel = worktree.branch ?: AgentSessionsBundle.message("toolwindow.worktree.detached")
     Text(
       text = "[$branchLabel]",
