@@ -6533,6 +6533,7 @@ var require_picomatch2 = __commonJS((exports, module) => {
 // ij-mcp-proxy.ts
 import path9 from "path";
 import { cwd, env } from "process";
+import { fileURLToPath } from "url";
 
 // node_modules/zod/v4/core/index.js
 var exports_core2 = {};
@@ -19078,6 +19079,8 @@ class Protocol {
       clearTimeout(info.timeoutId), this._timeoutInfo.delete(messageId);
   }
   async connect(transport) {
+    if (this._transport)
+      throw Error("Already connected to a transport. Call close() before connecting to a new transport, or use a separate Protocol instance per connection.");
     this._transport = transport;
     let _onclose = this.transport?.onclose;
     this._transport.onclose = () => {
@@ -19102,6 +19105,9 @@ class Protocol {
   _onclose() {
     let responseHandlers = this._responseHandlers;
     this._responseHandlers = /* @__PURE__ */ new Map, this._progressHandlers.clear(), this._taskProgressTokens.clear(), this._pendingDebouncedNotifications.clear();
+    for (let controller of this._requestHandlerAbortControllers.values())
+      controller.abort();
+    this._requestHandlerAbortControllers.clear();
     let error48 = McpError.fromError(ErrorCode.ConnectionClosed, "Connection closed");
     this._transport = void 0, this.onclose?.();
     for (let handler of responseHandlers.values())
@@ -19144,12 +19150,16 @@ class Protocol {
       sessionId: capturedTransport?.sessionId,
       _meta: request.params?._meta,
       sendNotification: async (notification) => {
+        if (abortController.signal.aborted)
+          return;
         let notificationOptions = { relatedRequestId: request.id };
         if (relatedTaskId)
           notificationOptions.relatedTask = { taskId: relatedTaskId };
         await this.notification(notification, notificationOptions);
       },
       sendRequest: async (r, resultSchema, options) => {
+        if (abortController.signal.aborted)
+          throw new McpError(ErrorCode.ConnectionClosed, "Request was cancelled");
         let requestOptions = { ...options, relatedRequestId: request.id };
         if (relatedTaskId && !requestOptions.relatedTask)
           requestOptions.relatedTask = { taskId: relatedTaskId };
@@ -20574,34 +20584,14 @@ function createProjectPathManager({
       return;
     let hasSnake = Object.prototype.hasOwnProperty.call(args, "project_path"), hasCamel = Object.prototype.hasOwnProperty.call(args, "projectPath");
     if (desiredKey === "projectPath") {
-      if (hasCamel) {
-        if (hasSnake)
-          delete args.project_path;
-        if (args.projectPath == null)
-          args.projectPath = projectPath;
-        return;
-      }
-      if (hasSnake) {
-        if (args.projectPath = args.project_path, delete args.project_path, args.projectPath == null)
-          args.projectPath = projectPath;
-        return;
-      }
+      if (hasSnake)
+        delete args.project_path;
       args.projectPath = projectPath;
       return;
     }
     if (desiredKey === "project_path") {
-      if (hasSnake) {
-        if (hasCamel)
-          delete args.projectPath;
-        if (args.project_path == null)
-          args.project_path = projectPath;
-        return;
-      }
-      if (hasCamel) {
-        if (args.project_path = args.projectPath, delete args.projectPath, args.project_path == null)
-          args.project_path = projectPath;
-        return;
-      }
+      if (hasCamel)
+        delete args.projectPath;
       args.project_path = projectPath;
     }
   }
@@ -24395,7 +24385,22 @@ function parseEnvSeconds(name, fallbackSeconds) {
 function buildStreamUrl(port) {
   return `http://${defaultHost}:${port}${defaultPath}`;
 }
-var explicitProjectPath = env.JETBRAINS_MCP_PROJECT_PATH, projectPath = explicitProjectPath && explicitProjectPath.length > 0 ? path9.resolve(explicitProjectPath) : path9.resolve(cwd()), defaultProjectPathKey = "project_path", projectPathManager = createProjectPathManager({ projectPath, defaultProjectPathKey }), toolModeInfo = resolveToolMode(env.JETBRAINS_MCP_TOOL_MODE), REPLACED_TOOL_NAMES = getReplacedToolNames(), BASE_BLOCKED_TOOL_NAMES = /* @__PURE__ */ new Set([...BLOCKED_TOOL_NAMES, ...REPLACED_TOOL_NAMES]), searchCapabilities = resolveSearchCapabilities([]).capabilities, readCapabilities = resolveReadCapabilities([]).capabilities;
+function resolveProjectPath(rawValue) {
+  if (!rawValue)
+    return { projectPath: path9.resolve(cwd()) };
+  if (rawValue.startsWith("file://"))
+    try {
+      return { projectPath: path9.resolve(fileURLToPath(new URL(rawValue))) };
+    } catch (error48) {
+      let message = error48 instanceof Error ? error48.message : String(error48);
+      return {
+        projectPath: path9.resolve(rawValue),
+        warning: `Failed to parse JETBRAINS_MCP_PROJECT_PATH as a file URI (${message}); falling back to path resolution.`
+      };
+    }
+  return { projectPath: path9.resolve(rawValue) };
+}
+var explicitProjectPath = env.JETBRAINS_MCP_PROJECT_PATH, projectPathResolution = resolveProjectPath(explicitProjectPath), projectPath = projectPathResolution.projectPath, defaultProjectPathKey = "project_path", projectPathManager = createProjectPathManager({ projectPath, defaultProjectPathKey }), toolModeInfo = resolveToolMode(env.JETBRAINS_MCP_TOOL_MODE), REPLACED_TOOL_NAMES = getReplacedToolNames(), BASE_BLOCKED_TOOL_NAMES = /* @__PURE__ */ new Set([...BLOCKED_TOOL_NAMES, ...REPLACED_TOOL_NAMES]), searchCapabilities = resolveSearchCapabilities([]).capabilities, readCapabilities = resolveReadCapabilities([]).capabilities;
 function blockedToolMessage(toolName) {
   if (toolName === "create_new_file") {
     if (toolModeInfo.mode === TOOL_MODES.CC)
@@ -24425,6 +24430,8 @@ function warn(message) {
   logToFile(message), logProgress(message);
 }
 clearLogFile();
+if (projectPathResolution.warning)
+  warn(projectPathResolution.warning);
 if (toolModeInfo.warning)
   warn(toolModeInfo.warning);
 var streamTransport = createStreamTransport({
