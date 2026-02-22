@@ -12,6 +12,7 @@ import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.event.MockDocumentEvent
 import com.intellij.openapi.editor.ex.EditorEx
 import com.intellij.openapi.editor.impl.EditorImpl
+import com.intellij.openapi.options.advanced.AdvancedSettings
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.isFocusAncestor
 import com.intellij.openapi.util.Disposer
@@ -323,6 +324,7 @@ class TerminalViewImpl(
     listenSearchController()
     listenPanelSizeChanges()
     listenAlternateBufferSwitch()
+    listenApplicationTitleChanges()
 
     val synchronizer = TerminalVfsSynchronizer(
       shellIntegrationDeferred,
@@ -457,6 +459,19 @@ class TerminalViewImpl(
 
           if (terminalWasFocused) {
             IdeFocusManager.getInstance(project).requestFocus(terminalPanel.preferredFocusableComponent, true)
+          }
+        }
+      }
+    }
+  }
+
+  private fun listenApplicationTitleChanges() {
+    coroutineScope.launch {
+      sessionModel.terminalState.collect { state ->
+        if (state.windowTitle.isNotBlank() && AdvancedSettings.getBoolean("terminal.show.application.title")) {
+          title.change {
+            @Suppress("HardCodedStringLiteral")
+            applicationTitle = state.windowTitle
           }
         }
       }
