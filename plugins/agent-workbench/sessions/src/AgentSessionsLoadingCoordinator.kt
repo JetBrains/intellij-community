@@ -1,4 +1,6 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+@file:Suppress("ReplaceGetOrSet")
+
 package com.intellij.agent.workbench.sessions
 
 import com.intellij.agent.workbench.chat.AgentChatPendingTabRebindTarget
@@ -758,7 +760,7 @@ internal class AgentSessionsLoadingCoordinator(
     originalPath: String,
   ): AgentSessionSourceLoadResult {
     return try {
-      val prefetched = prefetchedByProvider[source.provider]?.get(normalizedPath)
+      val prefetched = prefetchedByProvider.get(source.provider)?.get(normalizedPath)
       val threads = applyArchiveSuppressions(
         path = normalizedPath,
         provider = source.provider,

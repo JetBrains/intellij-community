@@ -5,20 +5,19 @@ import java.nio.file.InvalidPathException
 import java.nio.file.Path
 import kotlin.io.path.invariantSeparatorsPathString
 
-fun normalizeAgentWorkbenchPath(path: String): String {
+fun parseAgentWorkbenchPathOrNull(path: String): Path? {
   return try {
-    Path.of(path).invariantSeparatorsPathString
-  }
-  catch (_: InvalidPathException) {
-    path
-  }
-}
-
-fun normalizeAgentWorkbenchPathOrNull(path: String): String? {
-  return try {
-    Path.of(path).invariantSeparatorsPathString
+    Path.of(path)
   }
   catch (_: InvalidPathException) {
     null
   }
+}
+
+fun normalizeAgentWorkbenchPath(path: String): String {
+  return parseAgentWorkbenchPathOrNull(path)?.invariantSeparatorsPathString ?: path
+}
+
+fun normalizeAgentWorkbenchPathOrNull(path: String): String? {
+  return parseAgentWorkbenchPathOrNull(path)?.invariantSeparatorsPathString
 }

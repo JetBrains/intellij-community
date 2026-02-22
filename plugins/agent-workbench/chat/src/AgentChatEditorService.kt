@@ -1,4 +1,6 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+@file:Suppress("ReplaceGetOrSet")
+
 package com.intellij.agent.workbench.chat
 
 // @spec community/plugins/agent-workbench/spec/agent-chat-editor.spec.md
@@ -44,7 +46,8 @@ suspend fun openChat(
   val manager = FileEditorManagerEx.getInstanceExAsync(project)
   val existing = findExistingChat(manager.openFiles, threadIdentity, subAgentId)
   LOG.debug {
-    "openChat(project=${project.name}, path=$projectPath, identity=$threadIdentity, subAgentId=$subAgentId, existing=${existing != null}, title=$threadTitle)"
+    "openChat(project=${project.name}, path=$projectPath, identity=$threadIdentity, " +
+    "subAgentId=$subAgentId, existing=${existing != null}, title=$threadTitle)"
   }
   val tabsService = serviceAsync<AgentChatTabsService>()
   val fileSystem = agentChatVirtualFileSystem()
@@ -65,7 +68,9 @@ suspend fun openChat(
     val activityUpdated = existing.updateThreadActivity(threadActivity)
     tabsService.upsert(existing.toSnapshot())
     LOG.debug {
-      "openChat existing tab update(identity=$threadIdentity, subAgentId=$subAgentId): titleUpdated=$titleUpdated, activityUpdated=$activityUpdated, currentName=${existing.name}, currentTitle=${existing.threadTitle}, currentActivity=${existing.threadActivity}"
+      "openChat existing tab update(identity=$threadIdentity, subAgentId=$subAgentId): " +
+      "titleUpdated=$titleUpdated, activityUpdated=$activityUpdated, currentName=${existing.name}," +
+      " currentTitle=${existing.threadTitle}, currentActivity=${existing.threadActivity}"
     }
     if (titleUpdated || activityUpdated) {
       manager.updateFilePresentation(existing)
@@ -146,7 +151,7 @@ suspend fun rebindOpenAgentChatPendingTabs(
           break
         }
 
-        val target = targets[targetIndex++]
+        val target = targets.get(targetIndex++)
         if (pendingFile.rebindPendingThread(
             threadIdentity = target.threadIdentity,
             shellCommand = target.shellCommand,
@@ -173,15 +178,14 @@ suspend fun rebindOpenAgentChatPendingTabs(
   }
 
   if (updatedSnapshots.isNotEmpty()) {
-    withContext(Dispatchers.IO) {
-      for (snapshot in updatedSnapshots) {
-        tabsService.upsert(snapshot)
-      }
+    for (snapshot in updatedSnapshots) {
+      tabsService.upsert(snapshot)
     }
   }
 
   LOG.debug {
-    "rebindOpenAgentChatPendingTabs reboundTabs=$reboundTabs, updatedPresentations=$updatedPresentations, requestedPaths=${targetsByProjectPath.size}"
+    "rebindOpenAgentChatPendingTabs reboundTabs=$reboundTabs, updatedPresentations=$updatedPresentations," +
+    " requestedPaths=${targetsByProjectPath.size}"
   }
   return reboundTabs
 }
@@ -249,7 +253,8 @@ suspend fun updateOpenAgentChatTabPresentation(
   }
 
   LOG.debug {
-    "updateOpenAgentChatTabPresentation updatedTabs=$updatedTabs, updatedPresentations=$updatedPresentations, requestedTitles=${titleByPathAndThreadIdentity.size}, requestedActivities=${activityByPathAndThreadIdentity.size}"
+    "updateOpenAgentChatTabPresentation updatedTabs=$updatedTabs, updatedPresentations=$updatedPresentations," +
+    " requestedTitles=${titleByPathAndThreadIdentity.size}, requestedActivities=${activityByPathAndThreadIdentity.size}"
   }
   return updatedTabs
 }
