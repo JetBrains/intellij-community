@@ -6,10 +6,10 @@ package com.intellij.agent.workbench.chat
 import com.intellij.openapi.fileEditor.FileEditor
 import com.intellij.openapi.fileEditor.FileEditorState
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.UserDataHolderBase
 import com.intellij.terminal.frontend.toolwindow.TerminalToolWindowTab
 import com.intellij.terminal.frontend.toolwindow.TerminalToolWindowTabsManager
+import kotlinx.coroutines.cancel
 import java.awt.BorderLayout
 import java.beans.PropertyChangeListener
 import javax.swing.JComponent
@@ -51,8 +51,9 @@ internal class AgentChatFileEditor(
 
   override fun dispose() {
     disposed = true
-    tab?.let { Disposer.dispose(it.content) }
+    tab?.view?.coroutineScope?.cancel()
     tab = null
+    component.removeAll()
   }
 
   private fun ensureInitialized() {

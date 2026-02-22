@@ -58,10 +58,16 @@ Projects
 
 ## Specifications
 
-Detailed requirements and testing contracts are documented in the spec files:
+Detailed requirements and testing contracts are documented in `spec/`.
 
-- [Agent Threads Tool Window](spec/agent-sessions.spec.md) - Requirements for the Sessions tool window UI, session management, and user interactions
-- [Testing Contract](spec/agent-sessions-testing.spec.md) - Testing strategy, UI coverage requirements, and verification criteria
+- [Core Contracts](spec/agent-core-contracts.spec.md) - Canonical cross-feature contracts: identity, command mapping, shared editor-tab actions, and shared visibility primitives.
+- [Agent Threads Tool Window](spec/agent-sessions.spec.md) - Provider aggregation, load/refresh lifecycle, deduplication, and project/worktree tree behavior.
+- [Agent Threads Visibility and More Row](spec/agent-sessions-thread-visibility.spec.md) - Deterministic visibility rendering and More-row precedence rules.
+- [Agent Chat Editor](spec/agent-chat-editor.spec.md) - Chat tab lifecycle, persistence/restore, lazy terminal initialization, titles/icons.
+- [Agent Chat Dedicated Frame](spec/agent-dedicated-frame.spec.md) - Dedicated-frame mode routing, lifecycle, shortcut semantics, and filtering.
+- [Codex Sessions Rollout Source](spec/agent-sessions-codex-rollout-source.spec.md) - Rollout-default Codex discovery, watcher semantics, backend selector, and app-server write interoperability.
+- [Agent Sessions New-Session Actions](spec/actions/new-thread.spec.md) - New-thread UX, provider/YOLO selection, creation dedup, pending-thread rebinding.
+- [Testing Contract](spec/agent-sessions-testing.spec.md) - Coverage ownership matrix and required contract test suites.
 
 ## Test All
 

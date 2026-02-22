@@ -9,6 +9,7 @@ import com.intellij.agent.workbench.chat.AgentChatTabSelectionService
 import com.intellij.agent.workbench.chat.closeAndForgetAgentChatsForThread
 import com.intellij.agent.workbench.chat.openChat
 import com.intellij.agent.workbench.common.AgentThreadActivity
+import com.intellij.agent.workbench.common.normalizeAgentWorkbenchPath
 import com.intellij.agent.workbench.sessions.providers.AgentSessionProviderBridges
 import com.intellij.agent.workbench.sessions.providers.AgentSessionSource
 import com.intellij.ide.RecentProjectsManager
@@ -191,13 +192,10 @@ internal class AgentSessionsService private constructor(
   }
 
   fun openOrFocusProject(path: String) {
-    val normalized = normalizePath(path)
-    val key = buildOpenProjectActionKey(normalized)
-    actionGate.launch(
-      scope = serviceScope,
-      key = key,
-      policy = SingleFlightPolicy.DROP,
-      onDrop = { LOG.debug("Dropped duplicate open project action for $normalized") },
+    val normalizedPath = normalizeAgentWorkbenchPath(path)
+    launchDropAction(
+      key = buildOpenProjectActionKey(normalizedPath),
+      droppedActionMessage = "Dropped duplicate open project action for $normalizedPath",
     ) {
       openOrFocusProjectInternal(path)
     }
@@ -221,42 +219,32 @@ internal class AgentSessionsService private constructor(
   }
 
   fun openChatThread(path: String, thread: AgentSessionThread, currentProject: Project? = null) {
-    val normalized = normalizePath(path)
-    val key = buildOpenThreadActionKey(path = normalized, thread = thread)
+    val normalizedPath = normalizeAgentWorkbenchPath(path)
     markClaudeQuotaHintEligible(thread.provider)
-    actionGate.launch(
-      scope = serviceScope,
-      key = key,
-      policy = SingleFlightPolicy.DROP,
+    launchDropAction(
+      key = buildOpenThreadActionKey(path = normalizedPath, thread = thread),
+      droppedActionMessage = "Dropped duplicate open thread action for $normalizedPath:${thread.provider}:${thread.id}",
       progress = dedicatedFrameOpenProgressRequest(currentProject),
-      onDrop = {
-        LOG.debug("Dropped duplicate open thread action for $normalized:${thread.provider}:${thread.id}")
-      },
     ) {
-      val worktreeBranch = stateStore.findWorktreeBranch(normalized)
+      val worktreeBranch = stateStore.findWorktreeBranch(normalizedPath)
       val originBranch = thread.originBranch
       if (worktreeBranch != null && originBranch != null && originBranch != worktreeBranch && !isBranchMismatchDialogSuppressed()) {
         val proceed = withContext(Dispatchers.EDT) {
           showBranchMismatchDialog(originBranch, worktreeBranch)
         }
-        if (!proceed) return@launch
+        if (!proceed) return@launchDropAction
       }
       openChat(path = path, thread = thread, subAgent = null, serviceScope = serviceScope)
     }
   }
 
   fun openChatSubAgent(path: String, thread: AgentSessionThread, subAgent: AgentSubAgent, currentProject: Project? = null) {
-    val normalized = normalizePath(path)
-    val key = buildOpenSubAgentActionKey(path = normalized, thread = thread, subAgent = subAgent)
+    val normalizedPath = normalizeAgentWorkbenchPath(path)
     markClaudeQuotaHintEligible(thread.provider)
-    actionGate.launch(
-      scope = serviceScope,
-      key = key,
-      policy = SingleFlightPolicy.DROP,
+    launchDropAction(
+      key = buildOpenSubAgentActionKey(path = normalizedPath, thread = thread, subAgent = subAgent),
+      droppedActionMessage = "Dropped duplicate open sub-agent action for $normalizedPath:${thread.provider}:${thread.id}:${subAgent.id}",
       progress = dedicatedFrameOpenProgressRequest(currentProject),
-      onDrop = {
-        LOG.debug("Dropped duplicate open sub-agent action for $normalized:${thread.provider}:${thread.id}:${subAgent.id}")
-      },
     ) {
       openChat(path = path, thread = thread, subAgent = subAgent, serviceScope = serviceScope)
     }
@@ -268,89 +256,79 @@ internal class AgentSessionsService private constructor(
     mode: AgentSessionLaunchMode = AgentSessionLaunchMode.STANDARD,
     currentProject: Project? = null,
   ) {
-    val normalized = normalizePath(path)
-    val key = buildCreateSessionActionKey(normalized, provider, mode)
+    val normalizedPath = normalizeAgentWorkbenchPath(path)
     markClaudeQuotaHintEligible(provider)
-    actionGate.launch(
-      scope = serviceScope,
-      key = key,
-      policy = SingleFlightPolicy.DROP,
+    launchDropAction(
+      key = buildCreateSessionActionKey(normalizedPath, provider, mode),
+      droppedActionMessage = "Dropped duplicate create session action for $normalizedPath:$provider:mode=$mode",
       progress = dedicatedFrameOpenProgressRequest(currentProject),
-      onDrop = {
-        LOG.debug("Dropped duplicate create session action for $normalized:$provider:mode=$mode")
-      },
     ) {
       service<AgentSessionsTreeUiStateService>().setLastUsedProvider(provider)
 
       val bridge = AgentSessionProviderBridges.find(provider)
       if (bridge == null) {
         logMissingProviderBridge(provider)
-        loadingCoordinator.appendProviderUnavailableWarning(normalized, provider)
-        return@launch
+        loadingCoordinator.appendProviderUnavailableWarning(normalizedPath, provider)
+        return@launchDropAction
       }
       if (mode !in bridge.supportedLaunchModes) {
         LOG.warn("Session provider bridge ${provider.value} does not support launch mode $mode")
-        loadingCoordinator.appendProviderUnavailableWarning(normalized, provider)
-        return@launch
+        loadingCoordinator.appendProviderUnavailableWarning(normalizedPath, provider)
+        return@launchDropAction
       }
 
-      val launchSpec = bridge.createNewSession(path = normalized, mode = mode)
+      val launchSpec = bridge.createNewSession(path = normalizedPath, mode = mode)
       val identity = launchSpec.sessionId?.let { sessionId ->
         buildAgentSessionIdentity(provider, sessionId)
       } ?: buildAgentSessionNewIdentity(provider)
 
-      openNewChat(path = normalized, identity = identity, command = launchSpec.command, serviceScope = serviceScope)
+      openNewChat(path = normalizedPath, identity = identity, command = launchSpec.command, serviceScope = serviceScope)
     }
   }
 
   fun archiveThread(path: String, thread: AgentSessionThread) {
-    val normalized = normalizePath(path)
-    val key = buildArchiveThreadActionKey(path = normalized, thread = thread)
-    actionGate.launch(
-      scope = serviceScope,
-      key = key,
-      policy = SingleFlightPolicy.DROP,
-      onDrop = {
-        LOG.debug("Dropped duplicate archive thread action for $normalized:${thread.provider}:${thread.id}")
-      },
+    val normalizedPath = normalizeAgentWorkbenchPath(path)
+    launchDropAction(
+      key = buildArchiveThreadActionKey(path = normalizedPath, thread = thread),
+      droppedActionMessage = "Dropped duplicate archive thread action for $normalizedPath:${thread.provider}:${thread.id}",
     ) {
       val bridge = AgentSessionProviderBridges.find(thread.provider)
       if (bridge == null) {
         logMissingProviderBridge(thread.provider)
-        loadingCoordinator.appendProviderUnavailableWarning(normalized, thread.provider)
-        return@launch
+        loadingCoordinator.appendProviderUnavailableWarning(normalizedPath, thread.provider)
+        return@launchDropAction
       }
       if (!bridge.supportsArchiveThread) {
         LOG.warn("Session provider bridge ${thread.provider.value} does not support archive")
-        loadingCoordinator.appendProviderUnavailableWarning(normalized, thread.provider)
-        return@launch
+        loadingCoordinator.appendProviderUnavailableWarning(normalizedPath, thread.provider)
+        return@launchDropAction
       }
 
       val archived = try {
-        bridge.archiveThread(path = normalized, threadId = thread.id)
+        bridge.archiveThread(path = normalizedPath, threadId = thread.id)
       }
       catch (t: Throwable) {
         if (t is CancellationException) {
           throw t
         }
         LOG.warn("Failed to archive thread ${thread.provider}:${thread.id}", t)
-        loadingCoordinator.appendProviderUnavailableWarning(normalized, thread.provider)
-        return@launch
+        loadingCoordinator.appendProviderUnavailableWarning(normalizedPath, thread.provider)
+        return@launchDropAction
       }
 
       if (!archived) {
-        loadingCoordinator.appendProviderUnavailableWarning(normalized, thread.provider)
-        return@launch
+        loadingCoordinator.appendProviderUnavailableWarning(normalizedPath, thread.provider)
+        return@launchDropAction
       }
 
       if (thread.provider == AgentSessionProvider.CODEX) {
-        loadingCoordinator.suppressArchivedThread(path = normalized, provider = thread.provider, threadId = thread.id)
+        loadingCoordinator.suppressArchivedThread(path = normalizedPath, provider = thread.provider, threadId = thread.id)
       }
-      stateStore.removeThread(normalized, thread.provider, thread.id)
+      stateStore.removeThread(normalizedPath, thread.provider, thread.id)
 
       val threadIdentity = buildAgentSessionIdentity(thread.provider, thread.id)
       try {
-        archiveChatCleanup(normalized, threadIdentity)
+        archiveChatCleanup(normalizedPath, threadIdentity)
       }
       catch (t: Throwable) {
         if (t is CancellationException) {
@@ -368,6 +346,22 @@ internal class AgentSessionsService private constructor(
     }
   }
 
+  private fun launchDropAction(
+    key: String,
+    droppedActionMessage: String,
+    progress: SingleFlightProgressRequest? = null,
+    block: suspend () -> Unit,
+  ) {
+    actionGate.launch(
+      scope = serviceScope,
+      key = key,
+      policy = SingleFlightPolicy.DROP,
+      progress = progress,
+      onDrop = { LOG.debug(droppedActionMessage) },
+      block = block,
+    )
+  }
+
   fun loadProjectThreadsOnDemand(path: String) {
     loadingCoordinator.loadProjectThreadsOnDemand(path)
   }
@@ -378,7 +372,7 @@ internal class AgentSessionsService private constructor(
 }
 
 private suspend fun openOrFocusProjectInternal(path: String) {
-  val normalized = normalizePath(path)
+  val normalized = normalizeAgentWorkbenchPath(path)
   val openProject = findOpenProject(normalized)
   if (openProject != null) {
     withContext(Dispatchers.EDT) {
@@ -403,7 +397,7 @@ private suspend fun openChat(
   shellCommandOverride: List<String>? = null,
   serviceScope: CoroutineScope,
 ) {
-  val normalized = normalizePath(path)
+  val normalized = normalizeAgentWorkbenchPath(path)
   if (AgentChatOpenModeSettings.openInDedicatedFrame()) {
     openChatInDedicatedFrame(
       path = normalized,
@@ -673,7 +667,7 @@ private suspend fun openDedicatedFrameProject(
 
 private fun findOpenProject(path: String): Project? {
   val manager = RecentProjectsManager.getInstance() as? RecentProjectsManagerBase ?: return null
-  val normalized = normalizePath(path)
+  val normalized = normalizeAgentWorkbenchPath(path)
   return ProjectManager.getInstance().openProjects.firstOrNull { project ->
     resolveProjectPath(manager, project) == normalized
   }
@@ -681,7 +675,7 @@ private fun findOpenProject(path: String): Project? {
 
 private fun resolveProjectPath(manager: RecentProjectsManagerBase, project: Project): String? {
   return manager.getProjectPath(project)?.invariantSeparatorsPathString
-         ?: project.basePath?.let(::normalizePath)
+         ?: project.basePath?.let { normalizeAgentWorkbenchPath(it) }
 }
 
 private fun isBranchMismatchDialogSuppressed(): Boolean {
@@ -704,10 +698,6 @@ private fun showBranchMismatchDialog(originBranch: String, currentBranch: String
     })
     .asWarning()
     .ask(null as Project?)
-}
-
-private fun normalizePath(path: String): String {
-  return normalizeSessionsProjectPath(path)
 }
 
 internal data class AgentSessionLoadResult(

@@ -2,6 +2,7 @@
 package com.intellij.agent.workbench.sessions
 
 import com.intellij.agent.workbench.chat.AgentChatTabSelectionService
+import com.intellij.agent.workbench.common.normalizeAgentWorkbenchPath
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
@@ -26,7 +27,7 @@ internal fun resolveAgentChatEditorTabActionContext(event: AnActionEvent): Agent
   val selectedChatTab = project.service<AgentChatTabSelectionService>().selectedChatTab.value ?: return null
   return AgentChatEditorTabActionContext(
     project = project,
-    path = normalizeSessionsProjectPath(selectedChatTab.projectPath),
+    path = normalizeAgentWorkbenchPath(selectedChatTab.projectPath),
     threadIdentity = selectedChatTab.threadIdentity,
     threadId = selectedChatTab.threadId,
   )

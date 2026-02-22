@@ -1,93 +1,142 @@
 ---
 name: Codex Sessions Rollout Source
-description: Codex thread list source and activity indicators for Agent Threads.
+description: Requirements for Codex thread discovery, activity derivation, backend selection, and archive/write interoperability.
 targets:
-  - ../sessions/src/providers/codex/*.kt
-  - ../codex/common/src/CodexAppServerClient.kt
   - ../codex/sessions/src/**/*.kt
-  - ../sessions/src/SessionTreeStyle.kt
+  - ../codex/common/src/CodexAppServerClient.kt
+  - ../sessions/src/CodexSessionsCompatibility.kt
   - ../sessions/src/AgentSessionModels.kt
+  - ../sessions/src/SessionTreeStyle.kt
   - ../sessions/src/AgentSessionsService.kt
-  - ../sessions/testSrc/*.kt
   - ../codex/sessions/testSrc/*.kt
+  - ../sessions/testSrc/CodexAppServerClientTest.kt
 ---
 
 # Codex Sessions Rollout Source
 
 Status: Draft
-Date: 2026-02-16
+Date: 2026-02-22
 
 ## Summary
-Codex thread discovery for Agent Threads defaults to rollout files under `~/.codex/sessions` instead of app-server `thread/list`. The source computes thread activity (`unread`, `reviewing`, `processing`, `ready`) and maps it to indicator colors. Existing app-server loading remains available behind an alternative `SessionBackend` implementation. Title extraction semantics are aligned with Codex rollout parsing behavior. Archive operations route through app-server `thread/archive`, and the shared app-server process is started lazily and stopped on idle timeout.
+Define Codex thread-list behavior where discovery defaults to rollout files under `~/.codex/sessions`, while write/archive operations continue to use app-server RPC. This spec owns rollout parsing, watcher semantics, backend selection, and Codex activity derivation.
 
 ## Goals
-- Make Codex thread indicators reflect real activity based on rollout data.
-- Keep app-server implementation in code as an alternate backend.
-- Support archive action for rollout-discovered threads without changing list backend default.
-- Keep rollout backend changes independent from new-session action semantics.
+- Keep Codex thread indicators aligned with rollout activity data.
+- Keep app-server implementation available as explicit compatibility backend.
+- Support archive operations for rollout-discovered threads through shared app-server write path.
+- Keep backend policy independent from new-thread UI contracts.
 
 ## Non-goals
-- Archived session browsing or unarchive actions.
-- Claude behavior changes.
-- Realtime push status updates from app-server notifications.
+- Archived-thread browsing or unarchive UX.
+- Claude backend behavior.
+- Polling-based refresh loops.
 
 ## Requirements
-- Introduce `CodexSessionBackend` interface (singular naming) for Codex thread loading.
-- Provide `CodexRolloutSessionBackend` as default backend and keep `CodexAppServerSessionBackend` as alternate.
-- Keep backend implementations separated by package:
-  - `com.intellij.agent.workbench.codex.sessions.backend.rollout`
-  - `com.intellij.agent.workbench.codex.sessions.backend.appserver`
-- Backend selection must default to rollout and only switch to app-server when `agent.workbench.codex.sessions.backend=app-server` is explicitly set.
-- Unknown backend override values must log a warning and fall back to rollout.
-- Rollout backend must scan only `~/.codex/sessions/**/rollout-*.jsonl`.
-- Rollout change detection must use `AgentWorkbenchDirectoryWatcher` (prop/io.methvin watcher stack); Java NIO `WatchService` must not be used in this backend.
-- Rollout updates must be strictly event-driven and must not rely on periodic polling timers.
-- Rollout backend must filter sessions by normalized `cwd` matching project/worktree path.
-- Rollout backend must support multi-path prefetch and return per-path filtered thread lists from a shared scan.
-- Rollout cache invalidation must be path-scoped for watcher-reported rollout file changes; full cache rescan is allowed only for overflow/ambiguous directory events.
+- Codex session listing must be implemented behind `CodexSessionBackend` interface.
+  [@test] ../codex/sessions/testSrc/CodexSessionBackendSelectorTest.kt
+
+- `CodexRolloutSessionBackend` must be default backend; `CodexAppServerSessionBackend` must remain available as alternate backend.
+  [@test] ../codex/sessions/testSrc/CodexSessionBackendSelectorTest.kt
+
+- Backend selection must switch to app-server only when `agent.workbench.codex.sessions.backend=app-server` is explicitly set.
+  [@test] ../codex/sessions/testSrc/CodexSessionBackendSelectorTest.kt
+
+- Unknown backend override values must log warning and fall back to rollout.
+  [@test] ../codex/sessions/testSrc/CodexSessionBackendSelectorTest.kt
+
+- Rollout backend scan scope must be limited to `~/.codex/sessions/**/rollout-*.jsonl`.
+  [@test] ../codex/sessions/testSrc/CodexRolloutSessionBackendTest.kt
+
+- Rollout change detection must use `AgentWorkbenchDirectoryWatcher` stack; Java NIO `WatchService` must not be used.
+  [@test] ../codex/sessions/testSrc/CodexRolloutSessionsWatcherTest.kt
+
+- Rollout refresh behavior must be event-driven; periodic polling timers are not allowed.
+  [@test] ../codex/sessions/testSrc/CodexRolloutSessionsWatcherTest.kt
+
+- Rollout backend must filter sessions by normalized `cwd` matching requested project/worktree path.
+  [@test] ../codex/sessions/testSrc/CodexRolloutSessionBackendTest.kt
+
+- Multi-path prefetch must use a shared scan and return per-path filtered thread lists.
+  [@test] ../codex/sessions/testSrc/CodexRolloutSessionBackendTest.kt
+
+- Cache invalidation must be path-scoped for rollout file changes; full rescan is allowed only for overflow/ambiguous directory events.
+  [@test] ../codex/sessions/testSrc/CodexRolloutSessionsWatcherTest.kt
+
 - Path-scoped invalidation must force reparse of dirty rollout paths even when file size and mtime are unchanged.
-- Non-rollout file events under `~/.codex/sessions` must still trigger event-driven refresh (without forced full reparse) so atomic temp/rename write patterns are observed without polling.
-- Thread id must come from `session_meta.payload.id` (not rollout filename).
-- Rollout backend must skip files missing `session_meta.payload.id` (no filename fallback).
-- Title extraction must use the first qualifying `event_msg` with `payload.type=user_message`.
-- `event_msg` with `payload.type=thread_name_updated` and non-blank `payload.thread_name` must override previously derived title.
-- Title extraction must strip `## My request for Codex:` when present and use the text after the marker.
-- Title extraction must ignore session-prefix user messages starting with `<environment_context>` or `<turn_aborted>` (case-insensitive, leading whitespace ignored).
-- Title extraction must trim and whitespace-normalize text, then apply bounded title trim.
-- If no qualifying title is found, title must fall back to `Thread <id-prefix>`.
-- Thread activity precedence must be: `unread` > `reviewing` > `processing` > `ready`.
-- Session tree indicator colors must match CodexMonitor classes:
-  - `unread`: blue (`#4DA3FF`)
-  - `reviewing`: teal (`#2FD1C4`)
-  - `processing`: orange (`#FF9F43`)
-  - `ready`: green (`#3FE47E`)
-- New-session action semantics (including Codex `Codex (Full Auto)` parameters) are defined in `spec/actions/new-thread.spec.md` and are backend-invariant.
-- Existing thread open behavior remains `codex resume <threadId>`.
-- Codex archive action must use app-server `thread/archive` and pass `threadId`.
+  [@test] ../codex/sessions/testSrc/CodexRolloutSessionBackendFileWatchIntegrationTest.kt
+
+- Non-rollout file events under `~/.codex/sessions` must still trigger event-driven refresh (without forced full reparse) to support atomic temp/rename write patterns.
+  [@test] ../codex/sessions/testSrc/CodexRolloutSessionBackendFileWatchIntegrationTest.kt
+
+- Thread id source must be `session_meta.payload.id`; rollout filename fallback is forbidden.
+  [@test] ../codex/sessions/testSrc/CodexRolloutSessionBackendTest.kt
+
+- Files missing `session_meta.payload.id` must be skipped.
+  [@test] ../codex/sessions/testSrc/CodexRolloutSessionBackendTest.kt
+
+- Title extraction must use first qualifying `event_msg` with `payload.type=user_message`.
+  [@test] ../codex/sessions/testSrc/CodexRolloutSessionBackendTest.kt
+
+- `thread_name_updated` messages with non-blank `payload.thread_name` must override derived title.
+  [@test] ../codex/sessions/testSrc/CodexRolloutSessionBackendTest.kt
+
+- Title normalization must strip `## My request for Codex:` marker when present, ignore session-prefix messages (`<environment_context>`, `<turn_aborted>`), normalize whitespace, and apply bounded trim.
+  [@test] ../codex/sessions/testSrc/CodexRolloutSessionBackendTest.kt
+
+- If no qualifying title is found, fallback title must be `Thread <id-prefix>`.
+  [@test] ../codex/sessions/testSrc/CodexRolloutSessionBackendTest.kt
+
+- Activity precedence must be `unread > reviewing > processing > ready`.
+  [@test] ../codex/sessions/testSrc/CodexRolloutSessionBackendTest.kt
+
+- Session-tree indicator colors for Codex activity must map to:
+  - unread: `#4DA3FF`,
+  - reviewing: `#2FD1C4`,
+  - processing: `#FF9F43`,
+  - ready: `#3FE47E`.
+  [@test] ../codex/sessions/testSrc/CodexRolloutSessionBackendTest.kt
+
 - Codex provider bridge must advertise archive capability and route archive calls through shared app-server service.
-- Shared app-server client process must start lazily on first request.
-- Shared app-server client process must stop after configurable idle timeout once no requests are in flight.
-- Default app-server idle timeout must be 60 seconds; tests may set shorter values.
+  [@test] ../codex/sessions/testSrc/CodexAgentSessionProviderBridgeTest.kt
+  [@test] ../sessions/testSrc/CodexAppServerClientTest.kt
+
+- Shared app-server process must start lazily on first request.
+  [@test] ../sessions/testSrc/CodexAppServerClientTest.kt
+
+- Shared app-server process must stop after configurable idle timeout when no requests are in flight; default timeout is 60 seconds.
+  [@test] ../sessions/testSrc/CodexAppServerClientTest.kt
+
+- Paging seed logic must guard against cursor loops and no-progress iterations; it must terminate safely without infinite looping and preserve already collected thread results.
+  [@test] ../codex/sessions/testSrc/CodexSessionsPagingLogicTest.kt
+
+- New-thread and resume command mapping must follow `spec/agent-core-contracts.spec.md`.
+  [@test] ../sessions/testSrc/AgentSessionCliTest.kt
+
+## User Experience
+- Codex activity indicators should reflect recent rollout activity consistently.
+- Archive action remains available for Codex threads discovered from rollout source.
 
 ## Data & Backend
-- Rollout backend computes `updatedAt` from latest event timestamp with file mtime fallback.
-- Rollout backend derives title from the first qualifying `event_msg.user_message`, using Codex marker stripping and session-prefix filtering rules.
-- `response_item` entries contribute to unread/activity timing but do not provide title source data.
-- Rollout backend prefetch for multiple paths uses one filesystem scan and groups parsed threads by normalized `cwd`.
-- Rollout backend carries branch from session meta when present; no branch fallback source is used.
-- `CodexSessionSource` maps rollout backend data directly and does not use `CodexSessionBranchStore` fallback.
-- Codex thread listing remains rollout-backed by default; write operations (`thread/start`, `thread/archive`, and persistence calls) use app-server RPC.
+- `updatedAt` derives from latest event timestamp with file mtime fallback.
+- `response_item` contributes to activity timing but not title source extraction.
+- Branch value comes from rollout session metadata when present; no branch fallback store is used.
+- Listing stays rollout-backed by default; write operations (`thread/start`, `thread/archive`, persistence calls) remain app-server RPC.
+
+## Error Handling
+- Invalid override values must not disable Codex listing; fallback to rollout must apply.
+- Parse failures must isolate to failing files and preserve valid thread rows from other files.
+- Watcher overflow events may trigger full rescan to recover correctness.
 
 ## Testing / Local Run
 - `./tests.cmd '-Dintellij.build.test.patterns=com.intellij.agent.workbench.codex.sessions.CodexRolloutSessionBackendTest'`
 - `./tests.cmd '-Dintellij.build.test.patterns=com.intellij.agent.workbench.codex.sessions.CodexRolloutSessionBackendFileWatchIntegrationTest'`
 - `./tests.cmd '-Dintellij.build.test.patterns=com.intellij.agent.workbench.codex.sessions.CodexRolloutSessionsWatcherTest'`
+- `./tests.cmd '-Dintellij.build.test.patterns=com.intellij.agent.workbench.codex.sessions.CodexSessionBackendSelectorTest'`
 
-[@test] ../codex/sessions/testSrc/CodexRolloutSessionBackendTest.kt
-[@test] ../codex/sessions/testSrc/CodexRolloutSessionBackendFileWatchIntegrationTest.kt
-[@test] ../codex/sessions/testSrc/CodexRolloutSessionsWatcherTest.kt
+## Open Questions / Risks
+- Cross-platform filesystem event differences can still produce edge-case rescan spikes under heavy write churn.
 
 ## References
+- `spec/agent-core-contracts.spec.md`
 - `spec/agent-sessions.spec.md`
-- `spec/agent-chat-editor.spec.md`
 - `spec/actions/new-thread.spec.md`

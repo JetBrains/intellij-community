@@ -44,27 +44,27 @@ internal class AgentChatFileEditorProvider : AsyncFileEditorProvider {
   override fun getEditorTypeId(): String = "agent.workbench-chat-editor"
 
   override fun getPolicy(): FileEditorPolicy = FileEditorPolicy.HIDE_DEFAULT_EDITOR
+}
 
-  private fun createChatEditor(project: Project, file: AgentChatVirtualFile): FileEditor {
-    val validationError = validate(file)
-    if (validationError != null) {
-      forgetAgentChatTabMetadata(file.tabKey)
-      AgentChatRestoreNotificationService.reportRestoreFailure(project, file, validationError)
-      if (!project.isDisposed) {
-        FileEditorManager.getInstance(project).closeFile(file)
-      }
-      return AgentChatUnavailableFileEditor(file)
+private fun createChatEditor(project: Project, file: AgentChatVirtualFile): FileEditor {
+  val validationError = validate(file)
+  if (validationError != null) {
+    forgetAgentChatTabMetadata(file.tabKey)
+    AgentChatRestoreNotificationService.reportRestoreFailure(project, file, validationError)
+    if (!project.isDisposed) {
+      FileEditorManager.getInstance(project).closeFile(file)
     }
-    return AgentChatFileEditor(project = project, file = file)
+    return AgentChatUnavailableFileEditor(file)
   }
+  return AgentChatFileEditor(project = project, file = file)
+}
 
-  private fun validate(file: AgentChatVirtualFile): String? {
-    return when {
-      file.projectPath.isBlank() -> AgentChatBundle.message("chat.restore.validation.project.path")
-      file.threadIdentity.isBlank() -> AgentChatBundle.message("chat.restore.validation.thread.identity")
-      file.shellCommand.isEmpty() -> AgentChatBundle.message("chat.restore.validation.shell.command")
-      else -> null
-    }
+private fun validate(file: AgentChatVirtualFile): String? {
+  return when {
+    file.projectPath.isBlank() -> AgentChatBundle.message("chat.restore.validation.project.path")
+    file.threadIdentity.isBlank() -> AgentChatBundle.message("chat.restore.validation.thread.identity")
+    file.shellCommand.isEmpty() -> AgentChatBundle.message("chat.restore.validation.shell.command")
+    else -> null
   }
 }
 

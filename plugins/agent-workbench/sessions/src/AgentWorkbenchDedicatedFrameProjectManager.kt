@@ -3,6 +3,7 @@ package com.intellij.agent.workbench.sessions
 
 // @spec community/plugins/agent-workbench/spec/agent-dedicated-frame.spec.md
 
+import com.intellij.agent.workbench.common.normalizeAgentWorkbenchPath
 import com.intellij.diagnostic.WindowsDefenderChecker
 import com.intellij.ide.RecentProjectsManager
 import com.intellij.ide.RecentProjectsManagerBase
@@ -16,7 +17,6 @@ import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import java.nio.file.Files
-import java.nio.file.InvalidPathException
 import java.nio.file.Path
 import kotlin.io.path.invariantSeparatorsPathString
 
@@ -46,13 +46,13 @@ internal object AgentWorkbenchDedicatedFrameProjectManager {
   }
 
   fun isDedicatedProjectPath(path: String): Boolean {
-    return normalizePath(path) == dedicatedProjectPath()
+    return normalizeAgentWorkbenchPath(path) == dedicatedProjectPath()
   }
 
   fun isDedicatedProject(project: Project): Boolean {
     val projectPath =
       (RecentProjectsManager.getInstance() as? RecentProjectsManagerBase)?.getProjectPath(project)?.invariantSeparatorsPathString
-      ?: project.basePath?.let(::normalizePath)
+      ?: project.basePath?.let { normalizeAgentWorkbenchPath(it) }
       ?: return false
     return isDedicatedProjectPath(projectPath)
   }
@@ -61,14 +61,5 @@ internal object AgentWorkbenchDedicatedFrameProjectManager {
     (serviceAsync<RecentProjectsManager>() as RecentProjectsManagerBase).setProjectHidden(project, true)
     TrustedProjects.setProjectTrusted(project, true)
     TipAndTrickManager.DISABLE_TIPS_FOR_PROJECT.set(project, true)
-  }
-
-  private fun normalizePath(path: String): String {
-    return try {
-      Path.of(path).invariantSeparatorsPathString
-    }
-    catch (_: InvalidPathException) {
-      path
-    }
   }
 }

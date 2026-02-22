@@ -9,6 +9,7 @@ import com.intellij.ide.FileIconProvider
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.ui.IconManager
+import org.jetbrains.annotations.TestOnly
 import java.util.concurrent.ConcurrentHashMap
 import javax.swing.Icon
 
@@ -18,6 +19,11 @@ private data class AgentChatIconKey(
 )
 
 private val ICON_CACHE = ConcurrentHashMap<AgentChatIconKey, Icon>()
+
+@TestOnly
+internal fun clearAgentChatIconCacheForTests() {
+  ICON_CACHE.clear()
+}
 
 internal class AgentChatFileIconProvider : FileIconProvider {
   override fun getIcon(file: VirtualFile, flags: Int, project: Project?): Icon? {

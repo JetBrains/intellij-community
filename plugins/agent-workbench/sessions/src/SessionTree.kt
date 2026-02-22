@@ -10,6 +10,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import com.intellij.agent.workbench.chat.AgentChatTabSelection
+import com.intellij.agent.workbench.common.normalizeAgentWorkbenchPath
 import org.jetbrains.jewel.foundation.ExperimentalJewelApi
 import org.jetbrains.jewel.foundation.lazy.tree.Tree
 import org.jetbrains.jewel.foundation.lazy.tree.TreeGeneratorScope
@@ -382,10 +383,10 @@ internal fun resolveSelectedSessionTreeId(
 ): SessionTreeId? {
   if (selection == null) return null
   val identity = parseAgentSessionIdentity(selection.threadIdentity) ?: return null
-  val normalizedPath = normalizeSessionsProjectPath(selection.projectPath)
+  val normalizedPath = normalizeAgentWorkbenchPath(selection.projectPath)
 
   val worktreeMatch = projects.firstNotNullOfOrNull { project ->
-    project.worktrees.firstOrNull { normalizeSessionsProjectPath(it.path) == normalizedPath }?.let { worktree -> project to worktree }
+    project.worktrees.firstOrNull { normalizeAgentWorkbenchPath(it.path) == normalizedPath }?.let { worktree -> project to worktree }
   }
   if (worktreeMatch != null) {
     val (project, worktree) = worktreeMatch
@@ -398,7 +399,7 @@ internal fun resolveSelectedSessionTreeId(
     )
   }
 
-  val project = projects.firstOrNull { normalizeSessionsProjectPath(it.path) == normalizedPath } ?: return null
+  val project = projects.firstOrNull { normalizeAgentWorkbenchPath(it.path) == normalizedPath } ?: return null
   return resolveProjectSelection(
     project = project,
     provider = identity.provider,

@@ -1,6 +1,7 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.agent.workbench.sessions
 
+import com.intellij.agent.workbench.common.normalizeAgentWorkbenchPath
 import com.intellij.openapi.project.ProjectManager
 import com.intellij.testFramework.TestActionEvent
 import com.intellij.testFramework.junit5.TestApplication
@@ -13,7 +14,7 @@ class AgentSessionsEditorTabActionsTest {
   fun toThreadContextFromEditorContext() {
     val editorContext = AgentChatEditorTabActionContext(
       project = ProjectManager.getInstance().defaultProject,
-      path = normalizeSessionsProjectPath("/tmp/project"),
+      path = normalizeAgentWorkbenchPath("/tmp/project"),
       threadIdentity = "codex:thread-1",
       threadId = "thread-1",
     )
@@ -32,7 +33,7 @@ class AgentSessionsEditorTabActionsTest {
   fun toThreadContextReturnsNullForInvalidIdentity() {
     val editorContext = AgentChatEditorTabActionContext(
       project = ProjectManager.getInstance().defaultProject,
-      path = normalizeSessionsProjectPath("/tmp/project"),
+      path = normalizeAgentWorkbenchPath("/tmp/project"),
       threadIdentity = "invalid-identity",
       threadId = "thread-1",
     )
@@ -46,7 +47,7 @@ class AgentSessionsEditorTabActionsTest {
   fun toThreadContextReturnsNullForPendingIdentity() {
     val editorContext = AgentChatEditorTabActionContext(
       project = ProjectManager.getInstance().defaultProject,
-      path = normalizeSessionsProjectPath("/tmp/project"),
+      path = normalizeAgentWorkbenchPath("/tmp/project"),
       threadIdentity = "codex:new-123",
       threadId = "new-123",
     )
@@ -172,7 +173,7 @@ class AgentSessionsEditorTabActionsTest {
   fun copyThreadIdActionDisabledForPendingIdentity() {
     val context = AgentChatEditorTabActionContext(
       project = ProjectManager.getInstance().defaultProject,
-      path = normalizeSessionsProjectPath("/tmp/project"),
+      path = normalizeAgentWorkbenchPath("/tmp/project"),
       threadIdentity = "codex:new-123",
       threadId = "thread-42",
     )
@@ -205,7 +206,7 @@ class AgentSessionsEditorTabActionsTest {
   private fun editorContext(threadId: String): AgentChatEditorTabActionContext {
     return AgentChatEditorTabActionContext(
       project = ProjectManager.getInstance().defaultProject,
-      path = normalizeSessionsProjectPath("/tmp/project"),
+      path = normalizeAgentWorkbenchPath("/tmp/project"),
       threadIdentity = "codex:thread-1",
       threadId = threadId,
     )
@@ -216,7 +217,7 @@ class AgentSessionsEditorTabActionsTest {
     val threadId = "thread-1"
     return AgentChatThreadEditorTabActionContext(
       project = ProjectManager.getInstance().defaultProject,
-      path = normalizeSessionsProjectPath("/tmp/project"),
+      path = normalizeAgentWorkbenchPath("/tmp/project"),
       provider = provider,
       threadId = threadId,
       thread = AgentSessionThread(

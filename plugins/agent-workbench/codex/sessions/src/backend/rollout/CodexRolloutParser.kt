@@ -7,6 +7,7 @@ import com.fasterxml.jackson.core.JsonParser
 import com.fasterxml.jackson.core.JsonToken
 import com.intellij.agent.workbench.codex.common.CodexThread
 import com.intellij.agent.workbench.codex.common.forEachObjectField
+import com.intellij.agent.workbench.codex.common.normalizeRootPath
 import com.intellij.agent.workbench.codex.common.readStringOrNull
 import com.intellij.agent.workbench.codex.sessions.backend.CodexBackendThread
 import com.intellij.agent.workbench.codex.sessions.backend.CodexSessionActivity

@@ -2,6 +2,7 @@
 package com.intellij.agent.workbench.chat
 
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.components.service
 import com.intellij.openapi.vfs.DeprecatedVirtualFileSystem
 import com.intellij.openapi.vfs.NonPhysicalFileSystem
 import com.intellij.openapi.vfs.VirtualFile
@@ -15,10 +16,8 @@ internal class AgentChatVirtualFileSystem : DeprecatedVirtualFileSystem(), NonPh
   override fun getProtocol(): String = AGENT_CHAT_PROTOCOL
 
   override fun findFileByPath(path: String): VirtualFile? {
-    val tabKey = AgentChatFileDescriptor.parsePath(path) ?: return null
-    val metadataStore = AgentChatTabMetadataStores.getInstance()
-    val descriptor = metadataStore.loadDescriptor(tabKey) ?: AgentChatFileDescriptor.unresolved(tabKey)
-    return getOrCreateFile(descriptor)
+    val resolution = service<AgentChatTabsService>().resolveFromPath(path) ?: return null
+    return getOrCreateFile(resolution)
   }
 
   override fun refresh(asynchronous: Boolean) = Unit
@@ -27,29 +26,40 @@ internal class AgentChatVirtualFileSystem : DeprecatedVirtualFileSystem(), NonPh
     return findFileByPath(path)
   }
 
-  fun getOrCreateFile(descriptor: AgentChatFileDescriptor): AgentChatVirtualFile {
-    val stableKey = descriptor.stableKey()
+  fun getOrCreateFile(snapshot: AgentChatTabSnapshot): AgentChatVirtualFile {
+    return getOrCreateFile(AgentChatTabResolution.Resolved(snapshot))
+  }
+
+  fun getOrCreateFile(resolution: AgentChatTabResolution): AgentChatVirtualFile {
+    val stableKey = resolution.tabKey.value
     val file = filesByStableKey.computeIfAbsent(stableKey) {
-      AgentChatVirtualFile(fileSystem = this, descriptor = descriptor)
+      AgentChatVirtualFile(fileSystem = this, resolution = resolution)
     }
-    file.updateFromDescriptor(descriptor)
+    file.updateFromResolution(resolution)
     return file
+  }
+
+  fun forgetFile(tabKey: String): Boolean {
+    return filesByStableKey.remove(tabKey) != null
+  }
+
+  @TestOnly
+  fun clearFilesForTests() {
+    filesByStableKey.clear()
   }
 
 }
 
 internal const val AGENT_CHAT_PROTOCOL: String = "agent-chat"
 
-internal object AgentChatVirtualFileSystems {
-  fun getInstance(): AgentChatVirtualFileSystem {
-    checkNotNull(ApplicationManager.getApplication()) {
-      "AgentChatVirtualFileSystem requires an initialized application"
-    }
-    val fileSystem = VirtualFileManager.getInstance().getFileSystem(AGENT_CHAT_PROTOCOL)
-    return (fileSystem as? AgentChatVirtualFileSystem)
-      ?: error("AgentChatVirtualFileSystem is not registered for protocol $AGENT_CHAT_PROTOCOL")
+internal fun agentChatVirtualFileSystem(): AgentChatVirtualFileSystem {
+  checkNotNull(ApplicationManager.getApplication()) {
+    "AgentChatVirtualFileSystem requires an initialized application"
   }
-
-  @TestOnly
-  fun createStandaloneForTest(): AgentChatVirtualFileSystem = AgentChatVirtualFileSystem()
+  val fileSystem = VirtualFileManager.getInstance().getFileSystem(AGENT_CHAT_PROTOCOL)
+  return (fileSystem as? AgentChatVirtualFileSystem)
+    ?: error("AgentChatVirtualFileSystem is not registered for protocol $AGENT_CHAT_PROTOCOL")
 }
+
+@TestOnly
+internal fun createStandaloneAgentChatVirtualFileSystemForTest(): AgentChatVirtualFileSystem = AgentChatVirtualFileSystem()

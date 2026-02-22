@@ -1,10 +1,11 @@
 ---
 name: Agent Threads Visibility and More Row
-description: Deterministic rules for thread row visibility and More-row rendering in Agent Threads.
+description: Deterministic rendering and persisted visibility rules for thread rows and More-row behavior in Agent Threads.
 targets:
   - ../sessions/src/AgentSessionModels.kt
   - ../sessions/src/SessionTree.kt
   - ../sessions/src/SessionTreeRows.kt
+  - ../sessions/src/SessionTreeState.kt
   - ../sessions/resources/messages/AgentSessionsBundle.properties
   - ../sessions/testSrc/AgentSessionsToolWindowTest.kt
   - ../sessions/testSrc/AgentSessionsServiceRefreshIntegrationTest.kt
@@ -14,68 +15,90 @@ targets:
 # Agent Threads Visibility and More Row
 
 Status: Draft
-Date: 2026-02-16
+Date: 2026-02-22
 
 ## Summary
-Define one consistent visibility model for project/worktree thread rows so empty state, warning/error rows, and `More` rows never conflict.
+Define deterministic visibility rules for project/worktree thread rows so empty state, warning/error rows, and `More` rows never conflict. Shared visibility primitive semantics are canonical in `spec/agent-core-contracts.spec.md`; this spec owns rendering and precedence behavior.
 
 ## Goals
 - Keep row visibility deterministic after refresh and on-demand loads.
-- Support both exact and unknown hidden-thread counts.
-- Avoid contradictory rows (`No recent activity yet.` together with warnings/errors/More).
+- Support exact-count and unknown-count hidden-thread states.
+- Prevent contradictory rows for the same node.
 
 ## Non-goals
 - Provider-side pagination strategy.
-- Changing default visible step size.
+- Aggregation/source-loading behavior.
+- Command mapping or editor-tab contracts.
 
 ## Requirements
-- Initial visible thread count per path is `DEFAULT_VISIBLE_THREAD_COUNT` (3).
-- Visible thread count lookup order per normalized path is:
-  - in-memory runtime `visibleThreadCounts` entry,
-  - persisted tree UI state visible count,
-  - default value (`DEFAULT_VISIBLE_THREAD_COUNT`).
-- For project rows, show `More` row only when `project.threads.size > visibleCount`.
-- For worktree rows, show `More` row only when `worktree.threads.size > visibleCount`.
-- If `hasUnknownThreadCount=true` for the corresponding node, `More` row must render without count (`toolwindow.action.more`).
-- If `hasUnknownThreadCount=false`, `More` row must render with count (`toolwindow.action.more.count`) using `threads.size - visibleCount`.
-- `No recent activity yet.` row is shown only when:
-  - `hasLoaded=true`,
-  - no project-level threads are visible,
-  - no visible worktree rows with content/loading/error/warnings,
-  - no project error,
-  - no provider warnings.
-- Project/worktree error rows take precedence over provider warning and empty rows.
-- Clicking a `More` row must increase visible count for that path by +3.
-- Clicking a `More` row must persist that +3 increment to tree UI state for the same normalized path.
-- `ensureThreadVisible(path, provider, threadId)` must raise visible count in +3 steps until the target thread is visible and persist the increment.
-- Refresh bootstrap must restore persisted visible counts greater than default for known project/worktree paths.
-- Persisted visibility keys must use normalized paths so `/path` and `/path/` resolve to one entry.
-- Tree-side `More` click handling must not issue backend calls directly; it only updates visibility state.
+- Initial visible-thread count per normalized path must be `DEFAULT_VISIBLE_THREAD_COUNT` (`3`).
+  [@test] ../sessions/testSrc/AgentSessionsToolWindowTest.kt
 
-[@test] ../sessions/testSrc/AgentSessionsToolWindowTest.kt
-[@test] ../sessions/testSrc/AgentSessionsServiceRefreshIntegrationTest.kt
-[@test] ../sessions/testSrc/AgentSessionsServiceOnDemandIntegrationTest.kt
+- Visible-thread count lookup order per normalized path must be:
+  - in-memory runtime entry,
+  - persisted tree UI state entry,
+  - default value.
+  [@test] ../sessions/testSrc/AgentSessionsServiceRefreshIntegrationTest.kt
+  [@test] ../sessions/testSrc/AgentSessionsTreeUiStateServiceTest.kt
+
+- For project rows, render `More` only when `project.threads.size > visibleCount`.
+  [@test] ../sessions/testSrc/AgentSessionsToolWindowTest.kt
+
+- For worktree rows, render `More` only when `worktree.threads.size > visibleCount`.
+  [@test] ../sessions/testSrc/AgentSessionsToolWindowTest.kt
+
+- When `hasUnknownThreadCount=true` for the node, `More` must render without explicit count (`toolwindow.action.more`).
+  [@test] ../sessions/testSrc/AgentSessionsToolWindowTest.kt
+
+- When `hasUnknownThreadCount=false`, `More` must render with explicit hidden count (`toolwindow.action.more.count`) using `threads.size - visibleCount`.
+  [@test] ../sessions/testSrc/AgentSessionsToolWindowTest.kt
+
+- `No recent activity yet.` must render only when:
+  - `hasLoaded=true`,
+  - no visible project threads,
+  - no visible worktree rows with content/loading/error/warnings,
+  - no project-level error,
+  - no provider warnings.
+  [@test] ../sessions/testSrc/AgentSessionsToolWindowTest.kt
+
+- Project/worktree error rows must take precedence over warning and empty rows.
+  [@test] ../sessions/testSrc/AgentSessionsToolWindowTest.kt
+
+- `showMoreThreads(path)` and `ensureThreadVisible(path, provider, threadId)` must follow increment/persistence contract defined in `spec/agent-core-contracts.spec.md`.
+  [@test] ../sessions/testSrc/AgentSessionsServiceOnDemandIntegrationTest.kt
+  [@test] ../sessions/testSrc/AgentSessionsToolWindowTest.kt
+
+- Refresh bootstrap must restore persisted visible-thread counts above default for known project/worktree paths.
+  [@test] ../sessions/testSrc/AgentSessionsServiceRefreshIntegrationTest.kt
+
+- Persisted visibility key normalization must follow `spec/agent-core-contracts.spec.md`.
+  [@test] ../sessions/testSrc/AgentSessionsTreeUiStateServiceTest.kt
+
+- Tree-side `More` click handling must not trigger backend loads directly; it only updates local visibility state.
+  [@test] ../sessions/testSrc/AgentSessionsServiceOnDemandIntegrationTest.kt
 
 ## User Experience
-- Exact count case: `More (N)`.
-- Unknown count case: `More…`.
-- Empty row is muted helper text and mutually exclusive with `More` for the same node.
-- Non-default per-path thread visibility must persist across refresh/reopen for the same normalized path.
+- Exact-count case renders `More (N)`.
+- Unknown-count case renders `More…`.
+- Empty helper row is mutually exclusive with `More`, warning, and error rows for the same node.
+- Non-default visibility persists across refresh and reopen for the same normalized path.
 
 ## Data & Backend
-- Unknown-count state is produced by the service aggregation layer (`hasUnknownThreadCount`), not by tree rendering logic.
-- Tree rendering consumes already-sorted thread lists and does no reordering.
+- Unknown-count state is produced by service aggregation layer (`hasUnknownThreadCount`), not tree rendering.
+- Tree rendering consumes pre-sorted thread lists and performs no additional ordering.
 
 ## Error Handling
-- If load fails, error/warning presentation follows service state and visibility rules above.
-- Visibility updates from `More` must be safe when state changes between clicks (no crashes on missing nodes).
+- Visibility updates must remain safe when underlying state changes between interactions.
+- Error/warning display must follow precedence rules without conflicting helper rows.
 
 ## Testing / Local Run
 - `./tests.cmd '-Dintellij.build.test.patterns=com.intellij.agent.workbench.sessions.AgentSessionsToolWindowTest'`
 - `./tests.cmd '-Dintellij.build.test.patterns=com.intellij.agent.workbench.sessions.AgentSessionsServiceRefreshIntegrationTest'`
+- `./tests.cmd '-Dintellij.build.test.patterns=com.intellij.agent.workbench.sessions.AgentSessionsServiceOnDemandIntegrationTest'`
 
 ## Open Questions / Risks
-- If future providers expose precise totals independently of loaded rows, UI may need richer count semantics than current hidden-row based count.
+- If providers begin exposing exact remote totals independent of loaded rows, count semantics may require richer model than current hidden-row math.
 
 ## References
+- `spec/agent-core-contracts.spec.md`
 - `spec/agent-sessions.spec.md`

@@ -1,6 +1,7 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.agent.workbench.sessions
 
+import com.intellij.agent.workbench.common.normalizeAgentWorkbenchPath
 import com.intellij.ide.RecentProjectsManager
 import com.intellij.ide.RecentProjectsManagerBase
 import com.intellij.openapi.project.Project
@@ -128,7 +129,7 @@ internal class AgentSessionsProjectCatalog {
     val openByPath = LinkedHashMap<String, Project>()
     for (project in openProjects) {
       val path = manager.getProjectPath(project)?.invariantSeparatorsPathString
-                 ?: project.basePath?.let(::normalizePath)
+                 ?: project.basePath?.let(::normalizeAgentWorkbenchPath)
                  ?: continue
       if (path == dedicatedProjectPath || AgentWorkbenchDedicatedFrameProjectManager.isDedicatedProjectPath(path)) continue
       openByPath[path] = project
@@ -136,7 +137,7 @@ internal class AgentSessionsProjectCatalog {
     val seen = LinkedHashSet<String>()
     val entries = mutableListOf<ProjectEntry>()
     for (path in manager.getRecentPaths()) {
-      val normalized = normalizePath(path)
+      val normalized = normalizeAgentWorkbenchPath(path)
       if (normalized == dedicatedProjectPath || AgentWorkbenchDedicatedFrameProjectManager.isDedicatedProjectPath(normalized)) continue
       if (!seen.add(normalized)) continue
       entries.add(
@@ -184,12 +185,4 @@ internal class AgentSessionsProjectCatalog {
     return fileName ?: FileUtilRt.toSystemDependentName(path)
   }
 
-  private fun normalizePath(path: String): String {
-    return try {
-      Path.of(path).invariantSeparatorsPathString
-    }
-    catch (_: InvalidPathException) {
-      path
-    }
-  }
 }

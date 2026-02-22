@@ -1,4 +1,6 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+@file:Suppress("RAW_RUN_BLOCKING")
+
 package com.intellij.testFramework.junit5.fixture
 
 import com.intellij.execution.RunManager
@@ -6,18 +8,24 @@ import com.intellij.ide.impl.OpenProjectTask
 import com.intellij.ide.impl.ProjectUtil
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.Application
-import com.intellij.openapi.application.EDT
+import com.intellij.openapi.application.UiWithModelAccess
 import com.intellij.openapi.application.edtWriteAction
 import com.intellij.openapi.application.readAction
-import com.intellij.openapi.application.writeIntentReadAction
+import com.intellij.openapi.application.writeAction
 import com.intellij.openapi.components.ComponentManager
+import com.intellij.openapi.components.ComponentManagerEx
 import com.intellij.openapi.components.serviceAsync
+import com.intellij.openapi.components.serviceIfCreated
 import com.intellij.openapi.diagnostic.fileLogger
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.fileEditor.FileEditorManager
+import com.intellij.openapi.fileEditor.FileEditorManagerKeys
 import com.intellij.openapi.fileEditor.OpenFileDescriptor
+import com.intellij.openapi.fileEditor.ex.FileEditorProviderManager
 import com.intellij.openapi.fileEditor.impl.EditorHistoryManager
+import com.intellij.openapi.fileEditor.impl.FileEditorManagerImpl
+import com.intellij.openapi.fileEditor.impl.FileEditorProviderManagerImpl
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.project.Project
@@ -36,16 +44,20 @@ import com.intellij.openapi.vfs.refreshAndFindVirtualFileOrDirectory
 import com.intellij.platform.eel.fs.EelFileSystemApi.CreateTemporaryEntryOptions
 import com.intellij.platform.eel.getOrThrow
 import com.intellij.platform.eel.provider.asNioPath
+import com.intellij.platform.util.coroutines.childScope
 import com.intellij.project.stateStore
 import com.intellij.psi.PsiDirectory
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiManager
 import com.intellij.testFramework.common.EditorCaretTestUtil
+import com.intellij.testFramework.common.runAll
 import com.intellij.testFramework.replaceService
+import com.intellij.ui.docking.DockManager
 import com.intellij.util.io.createDirectories
 import com.intellij.util.io.delete
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.NonNls
 import org.jetbrains.annotations.TestOnly
@@ -343,9 +355,9 @@ fun TestFixture<PsiFile>.editorFixture(): TestFixture<Editor> = testFixture { _ 
   val psiFile = this@editorFixture.init()
   val project = psiFile.project
   val file = psiFile.virtualFile
-  val editor = withContext(Dispatchers.EDT) {
+  val editor = withContext(Dispatchers.UiWithModelAccess) {
     val fileEditorManager = project.serviceAsync<FileEditorManager>()
-    writeIntentReadAction {
+    writeAction {
       val editor = fileEditorManager.openTextEditor(OpenFileDescriptor(project, file), true)
       requireNotNull(editor)
 
@@ -358,8 +370,11 @@ fun TestFixture<PsiFile>.editorFixture(): TestFixture<Editor> = testFixture { _ 
     }
   }
   initialized(editor) {
-    withContext(Dispatchers.EDT) {
-      project.serviceAsync<FileEditorManager>().closeFile(file)
+    withContext(Dispatchers.UiWithModelAccess) {
+      val fileEditorManager = project.serviceAsync<FileEditorManager>()
+      writeAction {
+        fileEditorManager.closeFile(file)
+      }
     }
     val editorHistoryManager = project.serviceAsync<EditorHistoryManager>()
     readAction {
@@ -368,6 +383,75 @@ fun TestFixture<PsiFile>.editorFixture(): TestFixture<Editor> = testFixture { _ 
         editorHistoryManager.removeFile(file)
       }
     }
+  }
+}
+
+/**
+ * Creates [FileEditorManagerImpl] fixture for [project][TestFixture].
+ *
+ * This is a JUnit 5 fixture alternative to `FileEditorManagerTestCase`.
+ */
+@TestOnly
+fun TestFixture<Project>.fileEditorManagerFixture(initDockableContentFactory: Boolean = false): TestFixture<FileEditorManagerImpl> = testFixture {
+  val project = this@fileEditorManagerFixture.init()
+  project.putUserData(FileEditorManagerKeys.ALLOW_IN_LIGHT_PROJECT, true)
+
+  val manager = FileEditorManagerImpl(project, (project as ComponentManagerEx).getCoroutineScope().childScope("FileEditorManagerFixture"))
+  if (initDockableContentFactory) {
+    manager.initDockableContentFactory()
+  }
+
+  val disposable = Disposer.newDisposable()
+  project.replaceService(FileEditorManager::class.java, manager, disposable)
+  val providerManager = FileEditorProviderManager.getInstance() as FileEditorProviderManagerImpl
+  runBlocking {
+    withContext(Dispatchers.UiWithModelAccess) {
+      providerManager.clearSelectedProviders()
+      val dockContainerCount = DockManager.getInstance(project).containers.size
+      check(dockContainerCount == 1) {
+        "The previous test didn't clear the state (containers: $dockContainerCount)"
+      }
+    }
+  }
+
+  initialized(manager) {
+    runAll(
+      {
+        runBlocking {
+          withContext(Dispatchers.UiWithModelAccess) {
+            writeAction {
+              manager.closeAllFiles()
+            }
+          }
+        }
+      },
+      {
+        runBlocking {
+          withContext(Dispatchers.UiWithModelAccess) {
+            project.serviceIfCreated<EditorHistoryManager>()?.removeAllFiles()
+          }
+        }
+      },
+      {
+        runBlocking {
+          withContext(Dispatchers.UiWithModelAccess) {
+            providerManager.clearSelectedProviders()
+          }
+        }
+      },
+      { Disposer.dispose(disposable) },
+      {
+        runBlocking {
+          withContext(Dispatchers.UiWithModelAccess) {
+            val dockContainers = project.serviceIfCreated<DockManager>()?.containers.orEmpty()
+            val dockContainerCount = dockContainers.size
+            check(dockContainerCount <= 1) {
+              "The previous test didn't clear the state (containers: $dockContainerCount)"
+            }
+          }
+        }
+      },
+    )
   }
 }
 
