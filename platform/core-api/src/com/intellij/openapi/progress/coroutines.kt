@@ -9,7 +9,7 @@ import com.intellij.openapi.application.Application
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.contextModality
-import com.intellij.openapi.application.runReadAction
+import com.intellij.openapi.application.runReadActionBlocking
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.util.Computable
@@ -50,7 +50,7 @@ private val LOG = Logger.getInstance("#com.intellij.openapi.progress")
 
 /**
  * Checks whether the coroutine is active, and throws [CancellationException] if the coroutine is canceled.
- * This function might suspend if the coroutine is paused,
+ * This function might suspend if the coroutine is paused
  * or yield if the coroutine has a lower priority while a higher priority task is running.
  *
  * @throws CancellationException if the coroutine is canceled. The exception is also thrown if the coroutine is canceled while suspended.
@@ -111,7 +111,7 @@ suspend fun checkCanceled() {
  * }, progress);
  * ```
  *
- * #### Running a coroutine inside a code which is run under job
+ * #### Running a coroutine inside a code which is run under the job
  * ```
  * launch { // given a coroutine
  *   readAction { // suspending read action installs job to the thread context
@@ -123,8 +123,8 @@ suspend fun checkCanceled() {
  * }
  * ```
  *
- * @throws ProcessCanceledException if [current indicator][ProgressManager.getGlobalProgressIndicator] is cancelled
- * or [current job][Cancellation.currentJob] is cancelled
+ * @throws ProcessCanceledException if [current indicator][ProgressManager.getGlobalProgressIndicator] is canceled
+ * or [current job][Cancellation.currentJob] is canceled
  * @see coroutineToIndicator
  * @see runBlocking
  */
@@ -180,7 +180,7 @@ private fun <T> runBlockingCancellable(allowOrphan: Boolean, compensateParalleli
 // reducing service stacktraces by inlining
 private inline fun <T> wrapInReadActionIfCurrentlyWriteAction(crossinline action: () -> T): T {
   return if (ApplicationManager.getApplication().isWriteAccessAllowed) {
-    runReadAction {
+    runReadActionBlocking {
       action()
     }
   }
@@ -565,7 +565,7 @@ private class JobDependentIndicator(modalityState: ModalityState): BridgeJobIndi
 fun <T> jobToIndicator(job: Job, indicator: ProgressIndicator, action: () -> T): T {
   try {
     return ProgressManager.getInstance().runProcess(Computable {
-      // Register handler inside runProcess to avoid cancelling the indicator before even starting the progress.
+      // Register a handler inside runProcess to avoid cancelling the indicator before even starting the progress.
       // If the Job was canceled while runProcess was preparing,
       // then CompletionHandler is invoked right away and cancels the indicator.
       @OptIn(InternalCoroutinesApi::class)

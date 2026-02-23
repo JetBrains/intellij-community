@@ -42,7 +42,11 @@ fun <T> runReadAction(runnable: () -> T): T = runReadActionBlocking(runnable)
  */
 @RequiresBlockingContext
 fun <T> runReadActionBlocking(runnable: () -> T): T {
-  return ApplicationManager.getApplication().runReadAction(Computable(runnable))
+  val application = ApplicationManager.getApplication()
+  if (application.isReadAllowedButNotWrite()) {
+    return runnable()
+  }
+  return application.runReadAction(Computable(runnable))
 }
 
 /**
@@ -75,4 +79,8 @@ fun runInEdt(modalityState: ModalityState? = null, runnable: () -> Unit) {
 @Obsolete
 fun invokeLater(modalityState: ModalityState? = null, runnable: () -> Unit) {
   ApplicationManager.getApplication().invokeLater({ runnable() }, modalityState ?: ModalityState.defaultModalityState())
+}
+
+internal fun Application.isReadAllowedButNotWrite(): Boolean {
+  return isReadAccessAllowed && !isWriteAccessAllowed
 }

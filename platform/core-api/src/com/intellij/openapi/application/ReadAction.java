@@ -16,6 +16,8 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.concurrent.Callable;
 
+import static com.intellij.openapi.application.ActionsKt.isReadAllowedButNotWrite;
+
 /**
  * See <a href="https://plugins.jetbrains.com/docs/intellij/threading-model.html">Threading Model</a>
  *
@@ -85,11 +87,16 @@ public abstract class ReadAction<T> extends BaseActionRunnable<T> {
    */
   @RequiresBlockingContext
   public static <T, E extends Throwable> T computeBlocking(@NotNull ThrowableComputable<T, E> action) throws E {
-    return ApplicationManager.getApplication().runReadAction(action);
+    Application application = ApplicationManager.getApplication();
+    if (isReadAllowedButNotWrite(application)) {
+      return action.compute();
+    }
+
+    return application.runReadAction(action);
   }
 
   /**
-   * Runs the specified computation in a blocking read action (as opposed to {@link com.intellij.openapi.application.NonBlockingReadAction}).
+   * Runs the specified computation in a blocking read action (as opposed to {@link NonBlockingReadAction}).
    * Can be called from any thread. Do not get canceled if a write action is pending, executed at most once.
    * <p>
    * Avoid usage in background threads as it will likely cause UI freezes.
@@ -105,7 +112,13 @@ public abstract class ReadAction<T> extends BaseActionRunnable<T> {
   @SuppressWarnings("SSBasedInspection") // to not replace application call to ReadAction.compute
   @RequiresBlockingContext
   public static <E extends Throwable> void runBlocking(@NotNull ThrowableRunnable<E> action) throws E {
-    ApplicationManager.getApplication().runReadAction((ThrowableComputable<Object, E>)() -> {
+    Application application = ApplicationManager.getApplication();
+    if (isReadAllowedButNotWrite(application)) {
+      action.run();
+      return;
+    }
+
+    application.runReadAction((ThrowableComputable<Object, E>)() -> {
       action.run();
       return null;
     });
