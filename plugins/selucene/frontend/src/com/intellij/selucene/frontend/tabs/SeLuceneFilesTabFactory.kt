@@ -16,7 +16,13 @@ class SeLuceneFilesTabFactory : SeTabFactory {
   override val id: String
     get() = SeLuceneProviderIdUtils.LUCENE_FILES
 
-  override suspend fun getTab(scope: CoroutineScope, project: Project?, session: SeSession, initEvent: AnActionEvent, registerShortcut: (AnAction) -> Unit): SeTab? {
+  override suspend fun getTab(
+    scope: CoroutineScope,
+    project: Project?,
+    session: SeSession,
+    initEvent: AnActionEvent,
+    registerShortcut: (AnAction) -> Unit,
+  ): SeTab? {
     if (project == null) return null
     val delegate = SeTabDelegate(project,
                                  session,

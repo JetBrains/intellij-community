@@ -53,23 +53,25 @@ internal class FileIndex(val project: Project, val coroutineScope: CoroutineScop
       // Wait until config is loaded and we can expect `ProjectFileIndex.getInstance()` to return the files to index.
       Observation.awaitConfiguration(project)
 
-      scheduledIndexingOps.consumeAsFlow().debounceBatch(1.seconds).collect { ops ->
-        if (ops.size==1) {
-          processFileIndexOp(ops.first())
-          return@collect
-        }
+        scheduledIndexingOps.consumeAsFlow().debounceBatch(1.seconds).collect { ops ->
+          if (ops.size == 1) {
+            processFileIndexOp(ops.first())
+            return@collect
+          }
 
-        if (ops.any{ it is LuceneFileIndexOperation.IndexAll}) {
-          // If ANY one of the ops is a reindexing request, we can also drop all other updates, as the updated state will be picked up by the reindexing anyways.
-          processFileIndexOp(LuceneFileIndexOperation.IndexAll)
-        } else {
-          // Since all others are ReindexFiles, we can merge them to reduce the number of times indexing runs:
-          val merged_files = ops.asSequence()
-            .filterIsInstance<LuceneFileIndexOperation.ReindexFiles>()
-            .flatMap { it.addedFiles }
-            .toList()
+          if (ops.any { it is LuceneFileIndexOperation.IndexAll }) {
+            // If ANY one of the ops is a reindexing request, we can also drop all other updates, as the updated state will be picked up by the reindexing anyways.
+            processFileIndexOp(LuceneFileIndexOperation.IndexAll)
+          }
+          else {
+            // Since all others are ReindexFiles, we can merge them to reduce the number of times indexing runs:
+            val merged_files = ops.asSequence()
+              .filterIsInstance<LuceneFileIndexOperation.ReindexFiles>()
+              .flatMap { it.addedFiles }
+              .toList()
 
-          processFileIndexOp(LuceneFileIndexOperation.ReindexFiles(merged_files))
+            processFileIndexOp(LuceneFileIndexOperation.ReindexFiles(merged_files))
+          }
         }
       }
     }
@@ -102,7 +104,7 @@ internal class FileIndex(val project: Project, val coroutineScope: CoroutineScop
 
       is LuceneFileIndexOperation.ReindexFiles -> {
         val fileIndex = ProjectFileIndex.getInstance(project)
-        val files = readAction { op.addedFiles.filter{fileIndex.isInProject(it)} }
+        val files = readAction { op.addedFiles.filter { fileIndex.isInProject(it) } }
 
         if (files.isEmpty()) return
 
@@ -114,9 +116,9 @@ internal class FileIndex(val project: Project, val coroutineScope: CoroutineScop
 
             check(Files.exists(Paths.get(file.path))) { "The file at ${file.path} does not exist! We assume file events only returns existing files" }
             check(file.isValid) { "The file at ${file.path} is not Valid! We assume file events only returns valid files" }
-            val (term,doc) = getDocument(file)
-            LOG.debug {"Updating $term to $doc"}
-            writer.updateDocument(term,doc)
+            val (term, doc) = getDocument(file)
+            LOG.debug { "Updating $term to $doc" }
+            writer.updateDocument(term, doc)
           }
 
           LOG.debug("Reindexed all updated files for the next lucene index commit.")
@@ -153,7 +155,7 @@ internal class FileIndex(val project: Project, val coroutineScope: CoroutineScop
     val query = buildQuery(params)
     LOG.debug { "Search for ${params.inputQuery} with ${params.filter} was translated into Lucene Query: $query" }
     return luceneIndex.search(query).map { (scoreDoc, doc) ->
-      LOG.debug { "Search \"${params.inputQuery}\" returned $doc with score ${scoreDoc.score}" }
+      //LOG.debug { "Search \"${params.inputQuery}\" returned $doc with score ${scoreDoc.score}" }
       val name = doc.get(FILE_NAME)
       val path = doc.get(FILE_ABSOLUTE_PATH)
       LuceneFileSearchResult(name, path, scoreDoc.score)
@@ -179,6 +181,7 @@ internal class FileIndex(val project: Project, val coroutineScope: CoroutineScop
       tokenizedField.setTokenized(true)
       tokenizedField.setIndexOptions(IndexOptions.DOCS_AND_FREQS_AND_POSITIONS)
 
+      // TODO store filename and virtualFile.getPresentablePath(), use the virtualFile.getURL() as the identifier.
       val fields = listOf(
         //Field(FILE_SOURCE_ROOT_PATH, fileInfo.sourceRootPath, tokenizedField),
         //StringField(FILE_CONTENT_ROOT_PATH, fileInfo.contentRootPath, Field.Store.YES),
@@ -193,13 +196,12 @@ internal class FileIndex(val project: Project, val coroutineScope: CoroutineScop
 
       return Pair(term, document)
     }
-
-
   }
 }
 
 sealed class LuceneFileIndexOperation {
   data object IndexAll : LuceneFileIndexOperation()
+
   //TODO how to represent deleted files?
   data class ReindexFiles(val addedFiles: List<VirtualFile>) : LuceneFileIndexOperation()
 }

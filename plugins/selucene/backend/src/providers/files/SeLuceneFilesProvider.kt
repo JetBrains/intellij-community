@@ -54,7 +54,8 @@ class SeLuceneFileItem(
   private fun buildTargetPresentation(psi: PsiFile?): TargetPresentation {
     return if (psi != null) {
       presentationRenderer.computePresentation(psi)
-    } else {
+    }
+    else {
       TargetPresentation.builder(file.presentableName)
         .icon(file.fileType.icon)
         .presentation()
@@ -63,7 +64,7 @@ class SeLuceneFileItem(
 
   private fun buildFileItemMatchers(psi: PsiFileSystemItem): ItemMatchers {
     val matcher = NameUtil.buildMatcherWithFallback("*$inputQuery", "*$inputQuery", MatchingMode.IGNORE_CASE)
-    val matchers =  ItemMatchers(matcher, null)
+    val matchers = ItemMatchers(matcher, null)
 
     return GotoFileModel.convertToFileItemMatchers(matchers, psi, fileModel)
   }

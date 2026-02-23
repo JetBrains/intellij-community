@@ -27,7 +27,8 @@ internal class ChangeListener : AsyncFileListener {
         is VFileCopyEvent -> listOfNotNull(event.file)
         // TODO somehow inform the FileIndex that the moved/renamed file is gone. Currently it only adds the new file to the index.
         is VFileMoveEvent -> {
-          listOfNotNull(event.oldParent.findChild(event.file.name), event.file)}
+          listOfNotNull(event.oldParent.findChild(event.file.name), event.file)
+        }
         is VFilePropertyChangeEvent -> {
           if (event.propertyName == VirtualFile.PROP_NAME) {
             listOfNotNull(event.file) // Both old and new location use the same VFile reference
@@ -41,7 +42,9 @@ internal class ChangeListener : AsyncFileListener {
     }
       .toList()
 
-    if (filesToReindex.isEmpty()) { return null }
+    if (filesToReindex.isEmpty()) {
+      return null
+    }
 
     projects.forEach { project ->
       FileIndex.getInstance(project).scheduleIndexingOp(LuceneFileIndexOperation.ReindexFiles(filesToReindex))

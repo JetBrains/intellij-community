@@ -25,6 +25,7 @@ import kotlin.io.path.div
 
 
 class LuceneIndex(val project: Project, val coroutineScope: CoroutineScope, indexName: String) {
+
   private val indexPath: Path = let {
     project.getProjectDataPath("luceneIndex") / indexName
   }

@@ -24,6 +24,7 @@ class SeLuceneFilesTab(private val delegate: SeTabDelegate) : SeTab {
   override suspend fun getFilterEditor(): SeFilterEditor? = null
   override suspend fun itemSelected(item: SeItemData, modifiers: Int, searchText: String): Boolean =
     delegate.itemSelected(item, modifiers, searchText)
+
   override suspend fun canBeShownInFindResults(): Boolean = false
   override suspend fun performExtendedAction(item: SeItemData): Boolean = false
   override suspend fun isPreviewEnabled(): Boolean = delegate.isPreviewEnabled()
