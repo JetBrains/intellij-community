@@ -1466,6 +1466,10 @@ plugins/repository-search
 plugins/repository-search/common
 plugins/repository-search/completion
 plugins/restructuredtext
+plugins/search-everywhere-lucene
+plugins/search-everywhere-lucene/backend
+plugins/search-everywhere-lucene/common
+plugins/search-everywhere-lucene/frontend
 plugins/search-everywhere-ml
 plugins/search-everywhere-ml/ranking/core
 plugins/search-everywhere-ml/ranking/ext
@@ -1473,10 +1477,6 @@ plugins/search-everywhere-ml/ranking/java
 plugins/search-everywhere-ml/ranking/vcs
 plugins/search-everywhere-ml/ranking/yaml
 plugins/search-everywhere-ml/typos
-plugins/selucene
-plugins/selucene/backend
-plugins/selucene/common
-plugins/selucene/frontend
 plugins/settings-repository
 plugins/settings-sync/jba
 plugins/settings-sync/settingsSync.performanceTesting

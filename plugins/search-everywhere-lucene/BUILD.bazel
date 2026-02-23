@@ -1,0 +1,38 @@
+### auto-generated section `build intellij.searchEverywhereLucene.plugin` start
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
+
+resourcegroup(
+  name = "searchEverywhereLucene-plugin_resources",
+  srcs = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_library(
+  name = "searchEverywhereLucene-plugin",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  resources = [":searchEverywhereLucene-plugin_resources"]
+)
+### auto-generated section `build intellij.searchEverywhereLucene.plugin` end
+
+### auto-generated section `build intellij.searchEverywhereLucene.plugin.main` start
+jvm_library(
+  name = "searchEverywhereLucene-plugin-main",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  runtime_deps = [
+    "//plugins/search-everywhere-lucene:searchEverywhereLucene-plugin",
+    "//plugins/search-everywhere-lucene/common",
+    "//plugins/search-everywhere-lucene/frontend",
+    "//plugins/search-everywhere-lucene/backend",
+  ]
+)
+
+jvm_library(
+  name = "searchEverywhereLucene-plugin-main_test_lib",
+  module_name = "intellij.searchEverywhereLucene.plugin.main",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  runtime_deps = [":searchEverywhereLucene-plugin-main"]
+)
+### auto-generated section `build intellij.searchEverywhereLucene.plugin.main` end

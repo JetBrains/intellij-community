@@ -1,0 +1,25 @@
+<idea-plugin>
+  <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
+  <dependencies>
+    <module name="intellij.libraries.lucene.common"/>
+    <module name="intellij.platform.backend"/>
+    <module name="intellij.platform.rpc.backend"/>
+    <module name="intellij.platform.searchEverywhere"/>
+    <module name="intellij.searchEverywhereLucene.common"/>
+  </dependencies>
+  <!-- endregion -->
+
+  <extensions defaultExtensionNs="com.intellij">
+    <searchEverywhere.itemsProviderFactory
+      implementation="com.intellij.searchEverywhereLucene.backend.providers.files.SearchEverywhereLuceneFilesProviderFactory"/>
+    <vfs.asyncListener implementation="com.intellij.searchEverywhereLucene.backend.providers.files.ChangeListener"/>
+    <backgroundPostStartupActivity implementation="com.intellij.searchEverywhereLucene.backend.providers.files.InitLuceneIndex"/>
+  </extensions>
+
+  <actions resource-bundle="messages.searchEverywhereLuceneBackendBundle">
+    <action id="Se.IndexFiles"
+            class="com.intellij.searchEverywhereLucene.backend.providers.files.debugActions.IndexFilesForLuceneAction"
+            icon="AllIcons.Actions.BuildLoadChanges"/>
+  </actions>
+
+</idea-plugin>
