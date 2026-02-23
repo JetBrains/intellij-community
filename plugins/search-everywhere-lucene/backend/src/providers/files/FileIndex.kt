@@ -93,6 +93,7 @@ internal class FileIndex(val project: Project, val coroutineScope: CoroutineScop
 
         val fileIndex = ProjectFileIndex.getInstance(project)
 
+        //TODO there can be duplicate files in here, but I dont think its a problem?
         val files = mutableListOf<VirtualFile>()
 
         readAction {
@@ -112,7 +113,7 @@ internal class FileIndex(val project: Project, val coroutineScope: CoroutineScop
             val (_, doc) = getDocument(file)
             writer.addDocument(doc)
           }
-          LOG.debug("Registered all files for the next lucene index commit.")
+          LOG.debug {"Registered all ${files.size} files for the next lucene index commit." }
         }
       }
 
@@ -122,7 +123,7 @@ internal class FileIndex(val project: Project, val coroutineScope: CoroutineScop
 
         if (files.isEmpty()) return
 
-        LOG.debug("Reindexing files:")
+        LOG.debug {"Reindexing  ${files.size} files:" }
 
 
         luceneIndex.processChanges { writer ->

@@ -34,7 +34,6 @@ class LuceneIndex(val project: Project, val coroutineScope: CoroutineScope, inde
   private val directory = FSDirectory.open(indexPath)
   private var writer: IndexWriter = createWriter()
 
-  //TODO use a separate background thread, that periodically calls ReferenceManager.maybeRefresh()
   private var searcherManager: SearcherManager = SearcherManager(writer, SearcherFactory())
 
   //TODO implement some recovery logic when index creation fails.
