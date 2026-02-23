@@ -74,7 +74,7 @@ class SeLuceneFilesProvider(private val project: Project) : SeItemsProvider {
   override val displayName: @Nls String get() = "Lucene Files"
 
   private val fileModel = GotoFileModel(project)
-  private val presentationRenderer = SearchEverywherePsiRenderer(project)
+  private val presentationRenderer = SearchEverywherePsiRenderer(this)
 
   override suspend fun collectItems(params: SeParams, collector: SeItemsProvider.Collector) {
     if (params.inputQuery.isEmpty()) return
