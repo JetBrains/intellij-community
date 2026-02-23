@@ -2,7 +2,7 @@
 package com.intellij.agent.workbench.chat
 
 import com.intellij.agent.workbench.common.normalizeAgentWorkbenchPath
-import com.intellij.agent.workbench.sessions.AgentThreadQuickStartService
+import com.intellij.agent.workbench.sessions.core.AgentThreadQuickStartService
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectManager
 import com.intellij.testFramework.TestActionEvent

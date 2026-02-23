@@ -2,6 +2,8 @@
 package com.intellij.agent.workbench.sessions
 
 import androidx.compose.runtime.Immutable
+import com.intellij.agent.workbench.sessions.core.AgentSessionProvider
+import com.intellij.agent.workbench.sessions.core.AgentSessionThread
 
 @Immutable
 data class AgentSessionThreadPreview(

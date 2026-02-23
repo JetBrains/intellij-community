@@ -22,6 +22,10 @@ import androidx.compose.ui.graphics.takeOrElse
 import androidx.compose.ui.unit.dp
 import com.intellij.agent.workbench.chat.AgentChatTabSelectionService
 import com.intellij.agent.workbench.sessions.claude.ClaudeQuotaStatusBarWidgetSettings
+import com.intellij.agent.workbench.sessions.core.AgentSessionLaunchMode
+import com.intellij.agent.workbench.sessions.core.AgentSessionProvider
+import com.intellij.agent.workbench.sessions.core.AgentSessionThread
+import com.intellij.agent.workbench.sessions.core.AgentSubAgent
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import kotlinx.coroutines.delay

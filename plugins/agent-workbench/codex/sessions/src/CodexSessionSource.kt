@@ -10,10 +10,10 @@ import com.intellij.agent.workbench.codex.sessions.backend.CodexSessionActivity
 import com.intellij.agent.workbench.codex.sessions.backend.CodexSessionBackend
 import com.intellij.agent.workbench.codex.sessions.backend.createDefaultCodexSessionBackend
 import com.intellij.agent.workbench.common.AgentThreadActivity
-import com.intellij.agent.workbench.sessions.AgentSessionProvider
-import com.intellij.agent.workbench.sessions.AgentSessionThread
-import com.intellij.agent.workbench.sessions.AgentSubAgent
-import com.intellij.agent.workbench.sessions.providers.BaseAgentSessionSource
+import com.intellij.agent.workbench.sessions.core.AgentSessionProvider
+import com.intellij.agent.workbench.sessions.core.AgentSessionThread
+import com.intellij.agent.workbench.sessions.core.AgentSubAgent
+import com.intellij.agent.workbench.sessions.core.providers.BaseAgentSessionSource
 import com.intellij.openapi.project.Project
 import kotlinx.coroutines.flow.Flow
 

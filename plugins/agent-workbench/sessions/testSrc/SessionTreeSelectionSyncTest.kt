@@ -2,6 +2,9 @@
 package com.intellij.agent.workbench.sessions
 
 import com.intellij.agent.workbench.chat.AgentChatTabSelection
+import com.intellij.agent.workbench.sessions.core.AgentSessionProvider
+import com.intellij.agent.workbench.sessions.core.AgentSessionThread
+import com.intellij.agent.workbench.sessions.core.AgentSubAgent
 import com.intellij.testFramework.junit5.TestApplication
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertNull

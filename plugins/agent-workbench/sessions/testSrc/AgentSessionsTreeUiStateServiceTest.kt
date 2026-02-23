@@ -1,5 +1,6 @@
 package com.intellij.agent.workbench.sessions
 
+import com.intellij.agent.workbench.sessions.core.AgentSessionProvider
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNull

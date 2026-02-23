@@ -30,7 +30,7 @@
       id="claude.quota"
       implementation="com.intellij.agent.workbench.sessions.claude.ClaudeQuotaStatusBarWidgetFactory"/>
     <applicationService
-      serviceInterface="com.intellij.agent.workbench.sessions.AgentThreadQuickStartService"
+      serviceInterface="com.intellij.agent.workbench.sessions.core.AgentThreadQuickStartService"
       serviceImplementation="com.intellij.agent.workbench.sessions.AgentThreadQuickStartServiceImpl"/>
   </extensions>
 

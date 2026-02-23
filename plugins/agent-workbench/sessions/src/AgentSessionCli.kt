@@ -3,7 +3,9 @@ package com.intellij.agent.workbench.sessions
 
 import com.intellij.agent.workbench.common.buildAgentThreadIdentity
 import com.intellij.agent.workbench.common.parseAgentThreadIdentity
-import com.intellij.agent.workbench.sessions.providers.AgentSessionProviderBridges
+import com.intellij.agent.workbench.sessions.core.AgentSessionLaunchMode
+import com.intellij.agent.workbench.sessions.core.AgentSessionProvider
+import com.intellij.agent.workbench.sessions.core.providers.AgentSessionProviderBridges
 import java.util.UUID
 
 internal class AgentSessionProviderUnavailableException(provider: AgentSessionProvider) :

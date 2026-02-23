@@ -7,6 +7,7 @@ import androidx.compose.ui.graphics.isSpecified
 import androidx.compose.ui.graphics.takeOrElse
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import com.intellij.agent.workbench.sessions.core.AgentSessionThread
 import org.jetbrains.jewel.foundation.theme.JewelTheme
 import org.jetbrains.jewel.ui.theme.simpleListItemStyle
 import org.jetbrains.jewel.ui.theme.treeStyle

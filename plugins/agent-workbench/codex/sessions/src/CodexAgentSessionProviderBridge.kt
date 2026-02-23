@@ -4,12 +4,12 @@ package com.intellij.agent.workbench.codex.sessions
 import com.intellij.agent.workbench.codex.common.CodexCliNotFoundException
 import com.intellij.agent.workbench.codex.common.CodexCliUtils
 import com.intellij.agent.workbench.codex.sessions.backend.appserver.SharedCodexAppServerService
-import com.intellij.agent.workbench.sessions.AgentSessionLaunchMode
-import com.intellij.agent.workbench.sessions.AgentSessionProvider
-import com.intellij.agent.workbench.sessions.AgentSessionProviderIconIds
-import com.intellij.agent.workbench.sessions.providers.AgentSessionLaunchSpec
-import com.intellij.agent.workbench.sessions.providers.AgentSessionProviderBridge
-import com.intellij.agent.workbench.sessions.providers.AgentSessionSource
+import com.intellij.agent.workbench.sessions.core.AgentSessionLaunchMode
+import com.intellij.agent.workbench.sessions.core.AgentSessionProvider
+import com.intellij.agent.workbench.sessions.core.AgentSessionProviderIconIds
+import com.intellij.agent.workbench.sessions.core.providers.AgentSessionLaunchSpec
+import com.intellij.agent.workbench.sessions.core.providers.AgentSessionProviderBridge
+import com.intellij.agent.workbench.sessions.core.providers.AgentSessionSource
 import com.intellij.openapi.components.serviceAsync
 
 internal class CodexAgentSessionProviderBridge(

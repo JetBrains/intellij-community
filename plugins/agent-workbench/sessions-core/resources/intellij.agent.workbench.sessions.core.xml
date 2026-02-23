@@ -8,7 +8,7 @@
   <extensionPoints>
     <extensionPoint
       qualifiedName="com.intellij.agent.workbench.sessionProviderBridge"
-      interface="com.intellij.agent.workbench.sessions.providers.AgentSessionProviderBridge"
+      interface="com.intellij.agent.workbench.sessions.core.providers.AgentSessionProviderBridge"
       dynamic="true"/>
   </extensionPoints>
 </idea-plugin>
