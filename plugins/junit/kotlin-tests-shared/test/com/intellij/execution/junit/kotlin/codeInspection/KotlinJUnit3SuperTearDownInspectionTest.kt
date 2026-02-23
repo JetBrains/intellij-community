@@ -23,8 +23,8 @@ abstract class KotlinJUnit3SuperTearDownInspectionTest : JUnit3SuperTearDownInsp
     override fun configureModule(module: Module, model: ModifiableRootModel, contentEntry: ContentEntry) {
       super.configureModule(module, model, contentEntry)
       ConfigLibraryUtil.addLibrary(model, "KotlinJavaRuntime") {
-        addRoot(KotlinArtifacts.kotlinStdlibPath, OrderRootType.CLASSES)
-        addRoot(KotlinArtifacts.kotlinStdlibSourcesPath, OrderRootType.SOURCES)
+        addRoot(KotlinArtifacts.kotlinStdlib, OrderRootType.CLASSES)
+        addRoot(KotlinArtifacts.kotlinStdlibSources, OrderRootType.SOURCES)
       }
     }
   }

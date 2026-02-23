@@ -32,7 +32,6 @@ import java.io.IOException
 import java.io.InputStream
 import java.net.URL
 import java.nio.file.Files
-import java.nio.file.Path
 import java.nio.file.Paths
 import kotlin.io.path.exists
 
@@ -183,14 +182,14 @@ object KotlinArtifactsDownloader {
             .distinct()
     }
 
-    fun downloadMavenArtifact(groupId: String, artifactId: String, version: String, suffix: String = ".jar"): Path? {
+    fun downloadMavenArtifact(groupId: String, artifactId: String, version: String, suffix: String = ".jar"): File? {
         check(isRunningFromSources) {
             "${::downloadArtifactForIdeFromSources.name} must be called only for IDE running from sources or tests. " +
                     "Use ${::downloadMavenArtifacts.name} when run in production"
         }
         // In cooperative development artifacts are already downloaded and stored in $PROJECT_DIR$/../build/repo
         KotlinMavenUtils.findArtifact(groupId, artifactId, version, suffix)?.let {
-            return it
+            return it.toFile()
         }
 
         val fileName = "$artifactId-$version$suffix"
@@ -219,11 +218,11 @@ object KotlinArtifactsDownloader {
             check(artifact.exists()) { "$artifact should be downloaded" }
         }
 
-        return artifact
+        return artifact.toFile()
     }
 
     @JvmOverloads
-    fun downloadArtifactForIdeFromSources(artifactId: String, version: String, suffix: String = ".jar"): Path? {
+    fun downloadArtifactForIdeFromSources(artifactId: String, version: String, suffix: String = ".jar"): File? {
         return downloadMavenArtifact(KOTLIN_MAVEN_GROUP_ID, artifactId, version, suffix)
     }
 

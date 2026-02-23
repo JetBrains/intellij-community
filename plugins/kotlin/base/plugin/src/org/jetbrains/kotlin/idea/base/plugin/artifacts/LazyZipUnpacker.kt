@@ -5,7 +5,6 @@ import com.intellij.util.io.Decompressor
 import com.intellij.util.io.DigestUtil
 import com.intellij.util.io.hashToHexString
 import java.io.File
-import java.nio.file.Path
 import java.security.MessageDigest
 
 internal class LazyZipUnpacker(private val destination: File) : AbstractLazyFileOutputProducer<File, Unit>(
@@ -25,14 +24,9 @@ internal class LazyZipUnpacker(private val destination: File) : AbstractLazyFile
         DigestUtil.updateContentHash(messageDigest, input.toPath(), buffer)
     }
 
-    fun lazyUnpack(zip: File): File {
-        return lazyProduceOutput(zip, Unit).singleOrNull()
-            ?: error("${LazyZipUnpacker::produceOutput.name} returns only single element")
-    }
+    fun lazyUnpack(zip: File) = lazyProduceOutput(zip, Unit).singleOrNull()
+        ?: error("${LazyZipUnpacker::produceOutput.name} returns only single element")
 
-    fun lazyUnpack(zip: Path): Path {
-        return lazyUnpack(zip.toFile()).toPath()
-    }
     fun getUnpackedIfUpToDateOrNull(zip: File): File? = getOutputIfUpToDateOrEmpty(zip).ifEmpty { return null }.singleOrNull()
         ?: error("${LazyZipUnpacker::produceOutput.name} returns only single element")
 }

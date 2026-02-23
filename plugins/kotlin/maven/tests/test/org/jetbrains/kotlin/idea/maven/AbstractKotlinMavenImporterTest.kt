@@ -56,6 +56,7 @@ import org.jetbrains.kotlin.idea.formatter.KotlinObsoleteStyleGuide
 import org.jetbrains.kotlin.idea.formatter.KotlinOfficialStyleGuide
 import org.jetbrains.kotlin.idea.formatter.kotlinCodeStyleDefaults
 import org.jetbrains.kotlin.idea.framework.KotlinSdkType
+import org.jetbrains.kotlin.idea.jps.toJpsVersionAgnosticKotlinBundledPath
 import org.jetbrains.kotlin.idea.notification.asText
 import org.jetbrains.kotlin.idea.notification.catchNotificationTextAsync
 import org.jetbrains.kotlin.idea.notification.catchNotificationsAsync
@@ -3646,12 +3647,12 @@ abstract class AbstractKotlinMavenImporterTest(private val createStdProjectFolde
             assertModules("project")
             assertEquals(
                 listOf(
-                    KotlinArtifacts.allopenCompilerPluginPath,
-                    KotlinArtifacts.kotlinxSerializationCompilerPluginPath,
-                    KotlinArtifacts.lombokCompilerPluginPath,
-                    KotlinArtifacts.noargCompilerPluginPath,
-                    KotlinArtifacts.samWithReceiverCompilerPluginPath,
-                ).map { it.toString() },
+                    KotlinArtifacts.allopenCompilerPlugin,
+                    KotlinArtifacts.kotlinxSerializationCompilerPlugin,
+                    KotlinArtifacts.lombokCompilerPlugin,
+                    KotlinArtifacts.noargCompilerPlugin,
+                    KotlinArtifacts.samWithReceiverCompilerPlugin,
+                ).map { it.toJpsVersionAgnosticKotlinBundledPath() },
                 facetSettings.compilerArguments?.pluginClasspaths?.sorted()
             )
         }
