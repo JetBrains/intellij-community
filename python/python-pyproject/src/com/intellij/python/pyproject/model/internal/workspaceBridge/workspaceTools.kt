@@ -209,9 +209,8 @@ private suspend fun createProjectModel(
 ): ImmutableEntityStorage = withContext(Dispatchers.Default) {
   val virtualFileUrlManager = project.workspaceModel.getVirtualFileUrlManager()
   val storage = MutableEntityStorage.create()
-  val entitySource = createEntitySource(project)
   for (pyProject in graph) {
-    val moduleEntity = storage addEntity ModuleEntity(pyProject.name.name, emptyList(), entitySource) {
+    val moduleEntity = storage addEntity ModuleEntity(pyProject.name.name, emptyList(), createEntitySource(project)) {
       dependencies += ModuleSourceDependency
       for (moduleName in pyProject.dependencies) {
         dependencies += ModuleDependency(ModuleId(moduleName.name), true, DependencyScope.COMPILE, false)
@@ -304,6 +303,7 @@ private class ModuleAnchor(moduleEntity: ModuleEntity) {
     (theOnlyContentRoot != null && theOnlyContentRoot.url == o.theOnlyContentRoot?.url)
 }
 
+// Warning: this entity must be unique for each model, it can't be reused
 internal fun createEntitySource(project: Project): EntitySource {
   val moduleRoot =
     project.stateStore.projectBasePath.resolve(DIRECTORY_STORE_FOLDER).toVirtualFileUrl(project.workspaceModel.getVirtualFileUrlManager())
