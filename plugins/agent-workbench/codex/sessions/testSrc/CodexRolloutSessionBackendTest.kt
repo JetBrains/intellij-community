@@ -189,6 +189,73 @@ class CodexRolloutSessionBackendTest {
   }
 
   @Test
+  fun foldsSubAgentThreadSpawnUnderParentThread() {
+    runBlocking {
+      val projectDir = tempDir.resolve("project-subagent")
+      Files.createDirectories(projectDir)
+      val sessionsRoot = tempDir.resolve("sessions").resolve("2026").resolve("02").resolve("14")
+      writeRollout(
+        file = sessionsRoot.resolve("rollout-parent.jsonl"),
+        lines = listOf(
+          sessionMetaLine(timestamp = "2026-02-14T16:00:00.000Z", id = "session-parent", cwd = projectDir),
+          """{"timestamp":"2026-02-14T16:00:01.000Z","type":"event_msg","payload":{"type":"user_message","message":"Parent thread title"}}""",
+        ),
+      )
+      writeRollout(
+        file = sessionsRoot.resolve("rollout-subagent.jsonl"),
+        lines = listOf(
+          subAgentSessionMetaLine(
+            timestamp = "2026-02-14T16:01:00.000Z",
+            id = "session-subagent",
+            cwd = projectDir,
+            parentThreadId = "session-parent",
+          ),
+          """{"timestamp":"2026-02-14T16:01:01.000Z","type":"event_msg","payload":{"type":"user_message","message":"review the agent threads for rollout nesting"}}""",
+        ),
+      )
+
+      val backend = CodexRolloutSessionBackend(codexHomeProvider = { tempDir })
+      val threads = backend.listThreads(path = projectDir.toString(), openProject = null)
+
+      assertThat(threads).hasSize(1)
+      val parentThread = threads.single()
+      assertThat(parentThread.thread.id).isEqualTo("session-parent")
+      assertThat(parentThread.thread.subAgents).hasSize(1)
+      val subAgent = parentThread.thread.subAgents.single()
+      assertThat(subAgent.id).isEqualTo("session-subagent")
+      assertThat(subAgent.name).isEqualTo("review the agent threads for rollout nesting")
+    }
+  }
+
+  @Test
+  fun keepsSubAgentThreadTopLevelWhenParentIsMissing() {
+    runBlocking {
+      val projectDir = tempDir.resolve("project-subagent-missing-parent")
+      Files.createDirectories(projectDir)
+      writeRollout(
+        file = tempDir.resolve("sessions").resolve("2026").resolve("02").resolve("14")
+          .resolve("rollout-subagent-only.jsonl"),
+        lines = listOf(
+          subAgentSessionMetaLine(
+            timestamp = "2026-02-14T17:00:00.000Z",
+            id = "session-subagent-only",
+            cwd = projectDir,
+            parentThreadId = "missing-parent",
+          ),
+          """{"timestamp":"2026-02-14T17:00:01.000Z","type":"event_msg","payload":{"type":"user_message","message":"sub-agent fallback thread"}}""",
+        ),
+      )
+
+      val backend = CodexRolloutSessionBackend(codexHomeProvider = { tempDir })
+      val threads = backend.listThreads(path = projectDir.toString(), openProject = null)
+
+      assertThat(threads).hasSize(1)
+      assertThat(threads.single().thread.id).isEqualTo("session-subagent-only")
+      assertThat(threads.single().thread.subAgents).isEmpty()
+    }
+  }
+
+  @Test
   fun prefetchThreadsMapsPerResolvedPath() {
     runBlocking {
       val projectA = tempDir.resolve("project-prefetch-a")
@@ -651,6 +718,10 @@ private fun sessionMetaLine(timestamp: String, id: String, cwd: Path): String {
 private fun sessionMetaLineWithoutId(cwd: Path): String {
   val timestamp = "2026-02-13T10:00:00.000Z"
   return """{"timestamp":"$timestamp","type":"session_meta","payload":{"timestamp":"$timestamp","cwd":"${cwd.toString().replace("\\", "\\\\")}"}}"""
+}
+
+private fun subAgentSessionMetaLine(timestamp: String, id: String, cwd: Path, parentThreadId: String): String {
+  return """{"timestamp":"$timestamp","type":"session_meta","payload":{"id":"$id","timestamp":"$timestamp","cwd":"${cwd.toString().replace("\\", "\\\\")}","source":{"subagent":{"thread_spawn":{"parent_thread_id":"$parentThreadId","depth":1}}}}}"""
 }
 
 private fun writeRollout(file: Path, lines: List<String>) {

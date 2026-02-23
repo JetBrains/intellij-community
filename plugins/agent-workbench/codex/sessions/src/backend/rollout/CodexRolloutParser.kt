@@ -68,6 +68,7 @@ internal class CodexRolloutParser(
 
     return ParsedRolloutThread(
       normalizedCwd = normalizedCwd,
+      parentThreadId = state.parentThreadId,
       thread = CodexBackendThread(
         thread = CodexThread(
           id = resolvedSessionId,
@@ -88,6 +89,7 @@ private fun reduceEvent(parseState: RolloutParseState, event: RolloutEvent) {
   parseState.updatedAt = maxTimestamp(parseState.updatedAt, event.sessionTimestampMs)
   parseState.sessionId = parseState.sessionId ?: event.sessionId
   parseState.sessionCwd = parseState.sessionCwd ?: event.sessionCwd
+  parseState.parentThreadId = parseState.parentThreadId ?: event.parentThreadId
   parseState.gitBranch = parseState.gitBranch ?: event.gitBranch
 
   val eventTimestamp = event.timestampMs
@@ -157,6 +159,7 @@ private fun parseEvent(parser: JsonParser): RolloutEvent? {
     var sessionId: String? = null
     var sessionCwd: String? = null
     var sessionTimestampMs: Long? = null
+    var parentThreadId: String? = null
     var gitBranch: String? = null
     var itemType: String? = null
 
@@ -177,6 +180,10 @@ private fun parseEvent(parser: JsonParser): RolloutEvent? {
                 "timestamp" -> sessionTimestampMs = parseIsoTimestamp(readStringOrNull(parser))
                 "git" -> {
                   gitBranch = parseNestedStringField(parser, "branch")
+                }
+
+                "source" -> {
+                  parentThreadId = parseSubAgentParentThreadId(parser) ?: parentThreadId
                 }
 
                 "item" -> {
@@ -208,6 +215,7 @@ private fun parseEvent(parser: JsonParser): RolloutEvent? {
       sessionId = sessionId,
       sessionCwd = sessionCwd,
       sessionTimestampMs = sessionTimestampMs,
+      parentThreadId = parentThreadId,
       gitBranch = gitBranch,
       itemType = itemType,
     )
@@ -219,6 +227,7 @@ private fun parseEvent(parser: JsonParser): RolloutEvent? {
 
 internal data class ParsedRolloutThread(
   @JvmField val normalizedCwd: String,
+  @JvmField val parentThreadId: String?,
   @JvmField val thread: CodexBackendThread,
 )
 
@@ -232,6 +241,7 @@ private data class RolloutEvent(
   @JvmField val sessionId: String?,
   @JvmField val sessionCwd: String?,
   @JvmField val sessionTimestampMs: Long?,
+  @JvmField val parentThreadId: String?,
   @JvmField val gitBranch: String?,
   @JvmField val itemType: String?,
 )
@@ -239,6 +249,7 @@ private data class RolloutEvent(
 private data class RolloutParseState(
   @JvmField var sessionId: String? = null,
   @JvmField var sessionCwd: String? = null,
+  @JvmField var parentThreadId: String? = null,
   @JvmField var gitBranch: String? = null,
   @JvmField var title: String? = null,
   @JvmField var updatedAt: Long = 0L,
@@ -310,6 +321,50 @@ private fun parseNestedStringField(parser: JsonParser, fieldName: String): Strin
     }
     else {
       parser.skipChildren()
+    }
+    true
+  }
+  return result
+}
+
+private fun parseSubAgentParentThreadId(parser: JsonParser): String? {
+  if (parser.currentToken != JsonToken.START_OBJECT) {
+    parser.skipChildren()
+    return null
+  }
+
+  var result: String? = null
+  forEachObjectField(parser) { sourceField ->
+    when (sourceField) {
+      "subagent", "sub_agent" -> {
+        result = parseNestedParentThreadId(parser) ?: result
+      }
+
+      else -> parser.skipChildren()
+    }
+    true
+  }
+  return result
+}
+
+private fun parseNestedParentThreadId(parser: JsonParser): String? {
+  if (parser.currentToken != JsonToken.START_OBJECT) {
+    parser.skipChildren()
+    return null
+  }
+
+  var result: String? = null
+  forEachObjectField(parser) { nestedField ->
+    when (nestedField) {
+      "thread_spawn", "threadSpawn" -> {
+        result = parseNestedParentThreadId(parser) ?: result
+      }
+
+      "parent_thread_id", "parentThreadId" -> {
+        result = readStringOrNull(parser)?.trim()?.takeIf { it.isNotEmpty() } ?: result
+      }
+
+      else -> parser.skipChildren()
     }
     true
   }
