@@ -99,6 +99,8 @@
 *f:org.jetbrains.jewel.markdown.MarkdownBlock$CodeBlock$FencedCodeBlock
 - org.jetbrains.jewel.markdown.MarkdownBlock$CodeBlock
 - sf:$stable:I
+- <init>(java.lang.String,java.lang.String,Z):V
+- b:<init>(java.lang.String,java.lang.String,Z,I,kotlin.jvm.internal.DefaultConstructorMarker):V
 - equals(java.lang.Object):Z
 - getContent():java.lang.String
 - f:getLanguage():java.lang.String

@@ -54,8 +54,18 @@ public sealed interface MarkdownBlock {
         @ApiStatus.Experimental
         @ExperimentalJewelApi
         @GenerateDataFunctions
-        public class FencedCodeBlock internal constructor(override val content: String, public val language: String?) :
-            CodeBlock {
+        public class FencedCodeBlock(
+            override val content: String,
+            public val language: String?,
+            @Suppress("UNUSED_PARAMETER", "ConstructorParameterNaming") _dummy: Boolean = false,
+        ) : CodeBlock {
+            @Suppress("UnusedPrivateProperty")
+            @Deprecated("Kept strictly for binary compatibility.", level = DeprecationLevel.HIDDEN)
+            public constructor(
+                content: String,
+                mimeType: MimeType?,
+            ) : this(content = content, language = null, _dummy = false)
+
             @Deprecated("mimeType has been discontinued in favor of `language`.")
             public val mimeType: MimeType? = MimeType.Known.fromMarkdownLanguageName(language.orEmpty())
 
