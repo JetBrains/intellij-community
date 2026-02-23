@@ -440,6 +440,7 @@ internal suspend fun XExecutionStack.toRpc(coroutineScope: CoroutineScope, sessi
   return XExecutionStackDto(
     id,
     stack.displayName,
+    stack.icon?.rpcId(),
     stack.iconFlow.map { it?.rpcId() }.toRpc(),
     stack.xExecutionStackDescriptorAsync?.asDeferred(),
     stack.topFrameAsync.thenApply { frame ->
