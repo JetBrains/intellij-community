@@ -88,18 +88,25 @@ internal class FileIndex(val project: Project, val coroutineScope: CoroutineScop
         LOG.debug("Indexing all files")
 
         val fileIndex = ProjectFileIndex.getInstance(project)
-        luceneIndex.processChanges { writer ->
-          writer.deleteAll()
+
+        val files = mutableListOf<VirtualFile>()
+
+        readAction {
           fileIndex.iterateContent { file ->
             if (!file.isDirectory) {
-
-              check(Files.exists(Paths.get(file.path))) { "The file at ${file.path} does not exist! We assume fileIndex.iterateContent only returns existing files" }
-              check(file.isValid) { "The file at ${file.path} is not Valid! We assume fileIndex.iterateContent only returns valid files" }
-              val (_,doc) = getDocument(file)
-              writer.addDocument(doc)
+              files.add(file)
             }
-
             true // continue iteration
+          }
+        }
+
+        luceneIndex.processChanges { writer ->
+          writer.deleteAll()
+          files.forEach { file ->
+            check(Files.exists(Paths.get(file.path))) { "The file at ${file.path} does not exist! We assume fileIndex.iterateContent only returns existing files" }
+            check(file.isValid) { "The file at ${file.path} is not Valid! We assume fileIndex.iterateContent only returns valid files" }
+            val (_, doc) = getDocument(file)
+            writer.addDocument(doc)
           }
           LOG.debug("Registered all files for the next lucene index commit.")
         }
