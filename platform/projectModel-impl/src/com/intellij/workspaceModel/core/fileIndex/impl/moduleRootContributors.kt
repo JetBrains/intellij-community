@@ -6,12 +6,14 @@ import com.intellij.java.workspace.entities.JavaResourceRootPropertiesEntity
 import com.intellij.java.workspace.entities.JavaSourceRootPropertiesEntity
 import com.intellij.java.workspace.entities.asJavaResourceRoot
 import com.intellij.java.workspace.entities.asJavaSourceRoot
+import com.intellij.java.workspace.entities.javaSettings
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.platform.backend.workspace.virtualFile
 import com.intellij.platform.workspace.jps.entities.ContentRootEntity
 import com.intellij.platform.workspace.jps.entities.SourceRootEntity
 import com.intellij.platform.workspace.jps.entities.SourceRootTypeId
+import com.intellij.platform.workspace.jps.entities.sourceRoots
 import com.intellij.platform.workspace.storage.EntityStorage
 import com.intellij.workspaceModel.core.fileIndex.DependencyDescription
 import com.intellij.workspaceModel.core.fileIndex.WorkspaceFileIndexContributor
@@ -34,13 +36,6 @@ class ContentRootFileIndexContributor : WorkspaceFileIndexContributor<ContentRoo
       registrar.registerExclusionPatterns(entity.url, entity.excludedPatterns, entity)
     }
   }
-
-  override val dependenciesOnOtherEntities: List<DependencyDescription<ContentRootEntity>>
-    get() = listOf(
-      DependencyDescription.OnArbitraryEntity(JavaModuleSettingsEntity::class.java) {
-        it.module.contentRoots.asSequence()
-      }
-    )
 }
 
 class SourceRootFileIndexContributor : WorkspaceFileIndexContributor<SourceRootEntity>, PlatformInternalWorkspaceFileIndexContributor {
@@ -48,7 +43,8 @@ class SourceRootFileIndexContributor : WorkspaceFileIndexContributor<SourceRootE
     get() = SourceRootEntity::class.java
 
   override fun registerFileSets(entity: SourceRootEntity, registrar: WorkspaceFileSetRegistrar, storage: EntityStorage) {
-    val module = entity.contentRoot.module.findModule(storage)
+    val moduleEntity = entity.contentRoot.module
+    val module = moduleEntity.findModule(storage)
     if (module != null) {
       val contentRoot = entity.contentRoot.url.virtualFile
       val kind = if (SourceRootTypeRegistry.getInstance().findTypeById(entity.rootTypeId)?.isForTests == true) WorkspaceFileKind.TEST_CONTENT else WorkspaceFileKind.CONTENT
@@ -57,8 +53,17 @@ class SourceRootFileIndexContributor : WorkspaceFileIndexContributor<SourceRootE
       val packagePrefix = javaProperties?.packagePrefix
                           ?: resourceProperties?.relativeOutputPath?.replace('/', '.')
                           ?: ""
+      val languageLevel = moduleEntity.javaSettings?.languageLevelId
       val forGeneratedSources = javaProperties != null && javaProperties.generated || resourceProperties != null && resourceProperties.generated
-      registrar.registerFileSet(entity.url, kind, entity, ModuleSourceRootData(module, contentRoot, entity.rootTypeId, packagePrefix, forGeneratedSources))
+      val customData = ModuleSourceRootData(
+        module = module,
+        customContentRoot = contentRoot,
+        rootTypeId = entity.rootTypeId,
+        packagePrefix = packagePrefix,
+        forGeneratedSources = forGeneratedSources,
+        languageLevelId = languageLevel,
+      )
+      registrar.registerFileSet(entity.url, kind, entity, customData)
       registrar.registerExclusionPatterns(entity.url, entity.contentRoot.excludedPatterns, entity)
     }
   }
@@ -67,7 +72,10 @@ class SourceRootFileIndexContributor : WorkspaceFileIndexContributor<SourceRootE
     get() = listOf(
       DependencyDescription.OnParent(ContentRootEntity::class.java) { it.sourceRoots.asSequence() },
       DependencyDescription.OnChild(JavaSourceRootPropertiesEntity::class.java) { it.sourceRoot },
-      DependencyDescription.OnChild(JavaResourceRootPropertiesEntity::class.java) { it.sourceRoot }
+      DependencyDescription.OnChild(JavaResourceRootPropertiesEntity::class.java) { it.sourceRoot },
+      DependencyDescription.OnArbitraryEntity(JavaModuleSettingsEntity::class.java) {
+        it.module.sourceRoots.asSequence()
+      }
     )
 }
 
@@ -112,5 +120,7 @@ internal data class ModuleSourceRootData(
   override val customContentRoot: VirtualFile?,
   val rootTypeId: SourceRootTypeId,
   override val packagePrefix: String,
-  val forGeneratedSources: Boolean
+  val forGeneratedSources: Boolean,
+  // This property is required for correct equals when computing the diff in the WorkspaceFileIndex
+  val languageLevelId: String?,
 ) : ModuleContentOrSourceRootData, ModuleOrLibrarySourceRootData, JvmPackageRootDataInternal

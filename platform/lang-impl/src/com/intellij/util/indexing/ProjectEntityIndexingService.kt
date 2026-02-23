@@ -93,18 +93,13 @@ class ProjectEntityIndexingService(
     }
 
     val registeredIndexableFileSets = event.registeredFileSets.filter { it.kind.isIndexable }
-    val removedIndexableFileSets = event.removedFileSets.filter { it.kind.isIndexable }
+    val runScanning = event.removedExclusions.isNotEmpty() || registeredIndexableFileSets.isNotEmpty()
 
-    if (registeredIndexableFileSets.isNotEmpty()
-        || removedIndexableFileSets.isNotEmpty()
-        || event.removedExclusions.isNotEmpty()
-    ) {
+    if (runScanning) {
       if (invalidateProjectFilterIfFirstScanningNotRequested(project)) return
 
       val event = WorkspaceFileIndexChangedEvent(
-        removedFileSets = removedIndexableFileSets,
         registeredFileSets = registeredIndexableFileSets,
-        storageBefore = event.storageBefore,
         storageAfter = event.storageAfter,
         removedExclusions = event.removedExclusions,
       )
@@ -130,7 +125,7 @@ class ProjectEntityIndexingService(
     val iterators = ArrayList<IndexableFilesIterator>()
     val wfi = WorkspaceFileIndex.getInstance(project)
 
-    val removedExclusions = event.removedExclusions.mapNotNull { wfi.findFileSet(it, true, true, true, true, true, true, true); }
+    val removedExclusions = event.removedExclusions.mapNotNull { wfi.findFileSet(it, true, true, false, true, true, false, true); }
     generateIteratorsFromWFIChangedEvent(event.registeredFileSets, event.storageAfter, iterators)
     generateIteratorsFromWFIChangedEvent(removedExclusions, event.storageAfter, iterators)
 

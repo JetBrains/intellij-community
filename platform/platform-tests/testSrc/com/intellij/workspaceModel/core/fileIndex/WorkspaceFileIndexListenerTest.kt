@@ -23,9 +23,9 @@ import com.intellij.workspaceModel.core.fileIndex.impl.WorkspaceFileIndexImpl
 import com.intellij.workspaceModel.ide.NonPersistentEntitySource
 import kotlinx.coroutines.runBlocking
 import org.junit.jupiter.api.BeforeEach
-import org.junit.jupiter.api.Disabled
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.extension.RegisterExtension
+import java.util.concurrent.atomic.AtomicInteger
 import kotlin.test.assertEquals
 
 @TestApplication
@@ -69,7 +69,6 @@ class WorkspaceFileIndexListenerTest {
       it.addEntity(parent)
     }
 
-    assertEquals(0, listener.removedRoots.size)
     assertEquals(1, listener.registeredFileSets.size)
 
     assertEquals(parentEntityRoot,
@@ -92,7 +91,6 @@ class WorkspaceFileIndexListenerTest {
     model.update("Add parent") {
       it.addEntity(parent)
     }
-    assertEquals(0, listener.removedRoots.size)
     assertEquals(1, listener.registeredFileSets.size)
 
     val parentEntity = model.currentSnapshot.entities(ParentTestEntity::class.java).first()
@@ -101,15 +99,11 @@ class WorkspaceFileIndexListenerTest {
       storage.removeEntity(parentEntity)
     }
 
-    assertEquals(1, listener.removedRoots.size)
     assertEquals(1, listener.registeredFileSets.size)
-    assertEquals(parentEntityRoot,
-                 listener.removedRoots.first().root.toVirtualFileUrl(model.getVirtualFileUrlManager()))
 
   }
 
   @Test
-  @Disabled("We don't deduplicate events on entities change")
   fun `events are deduplicated`() = runBlocking {
     val listener = MyWorkspaceFileIndexListener()
     projectModel.project.messageBus.connect().subscribe(WorkspaceFileIndexListener.TOPIC, listener)
@@ -123,7 +117,6 @@ class WorkspaceFileIndexListenerTest {
     model.update("Add IndexingTestEntity with two roots") {
       it.addEntity(IndexingTestEntity(listOf(indexable1, indexable2), emptyList(), NonPersistentEntitySource))
     }
-    assertEquals(0, listener.removedRoots.size)
     assertEquals(2, listener.registeredFileSets.size)
 
     listener.clear()
@@ -134,7 +127,6 @@ class WorkspaceFileIndexListenerTest {
       storage.replaceBySource({ it is NonPersistentEntitySource}, replacement)
     }
 
-    assertEquals(1, listener.removedRoots.size) // indexable1 was removed
     assertEquals(1, listener.registeredFileSets.size) // only indexable3 was added, indexable2 stayed the same
   }
 
@@ -153,7 +145,6 @@ class WorkspaceFileIndexListenerTest {
     model.update("Add IndexingTestEntity with two roots") {
       it.addEntity(IndexingTestEntity(listOf(indexable1, indexable2), emptyList(), NonPersistentEntitySource))
     }
-    assertEquals(0, listener.removedRoots.size)
     assertEquals(2, listener.registeredFileSets.size)
 
     listener.clear()
@@ -164,26 +155,106 @@ class WorkspaceFileIndexListenerTest {
       storage.replaceBySource({ it is NonPersistentEntitySource}, replacement)
     }
 
-    assertEquals(2, listener.removedRoots.size)
     assertEquals(2, listener.registeredFileSets.size)
+  }
+
+  @Test
+  fun `excluded file sets are deduplicated`() = runBlocking {
+    val listener = MyWorkspaceFileIndexListener()
+    projectModel.project.messageBus.connect().subscribe(WorkspaceFileIndexListener.TOPIC, listener)
+
+    val model = WorkspaceModel.getInstance(projectModel.project)
+
+    val root = projectModel.baseProjectDir.newVirtualDirectory("exclDedupRoot").toVirtualFileUrl(model.getVirtualFileUrlManager())
+    val excl1 = projectModel.baseProjectDir.newVirtualDirectory("excl1").toVirtualFileUrl(model.getVirtualFileUrlManager())
+    val excl2 = projectModel.baseProjectDir.newVirtualDirectory("excl2").toVirtualFileUrl(model.getVirtualFileUrlManager())
+    val excl3 = projectModel.baseProjectDir.newVirtualDirectory("excl3").toVirtualFileUrl(model.getVirtualFileUrlManager())
+
+    model.update("Add IndexingTestEntity with excluded roots") {
+      it.addEntity(IndexingTestEntity(listOf(root), listOf(excl1, excl2), NonPersistentEntitySource))
+    }
+
+    listener.clear()
+
+    model.update("Replace with different excluded roots") { storage ->
+      val replacement = MutableEntityStorage.create()
+      replacement addEntity IndexingTestEntity(listOf(root), listOf(excl2, excl3), NonPersistentEntitySource)
+      storage.replaceBySource({ it is NonPersistentEntitySource }, replacement)
+    }
+
+    assertEquals(0, listener.registeredFileSets.size) // root was deduplicated
+    assertEquals(1, listener.removedExclusions.size) // only excl1 was removed, excl2 was deduplicated
+  }
+
+  @Test
+  fun `excluded file sets from different entity types are not deduplicated`() = runBlocking {
+    val listener = MyWorkspaceFileIndexListener()
+    projectModel.project.messageBus.connect().subscribe(WorkspaceFileIndexListener.TOPIC, listener)
+
+    val model = WorkspaceModel.getInstance(projectModel.project)
+
+    val root = projectModel.baseProjectDir.newVirtualDirectory("exclDiffTypeRoot").toVirtualFileUrl(model.getVirtualFileUrlManager())
+    val excl1 = projectModel.baseProjectDir.newVirtualDirectory("exclDiffType1").toVirtualFileUrl(model.getVirtualFileUrlManager())
+
+    model.update("Add IndexingTestEntity with excluded root") {
+      it.addEntity(IndexingTestEntity(listOf(root), listOf(excl1), NonPersistentEntitySource))
+    }
+
+    listener.clear()
+
+    model.update("Replace with IndexingTestEntity2") { storage ->
+      val replacement = MutableEntityStorage.create()
+      replacement addEntity IndexingTestEntity2(listOf(root), listOf(excl1), NonPersistentEntitySource)
+      storage.replaceBySource({ it is NonPersistentEntitySource }, replacement)
+    }
+
+    assertEquals(1, listener.registeredFileSets.size)
+  }
+
+  @Test
+  fun `no event is fired when entity is replaced with identical configuration`() = runBlocking {
+    val listener = MyWorkspaceFileIndexListener()
+    projectModel.project.messageBus.connect().subscribe(WorkspaceFileIndexListener.TOPIC, listener)
+
+    val model = WorkspaceModel.getInstance(projectModel.project)
+
+    val root = projectModel.baseProjectDir.newVirtualDirectory("noEventRoot").toVirtualFileUrl(model.getVirtualFileUrlManager())
+    val excl1 = projectModel.baseProjectDir.newVirtualDirectory("noEventExcl1").toVirtualFileUrl(model.getVirtualFileUrlManager())
+
+    model.update("Add IndexingTestEntity") {
+      it.addEntity(IndexingTestEntity(listOf(root), listOf(excl1), NonPersistentEntitySource))
+    }
+
+    listener.clear()
+
+    model.update("Replace with identical entity") { storage ->
+      val replacement = MutableEntityStorage.create()
+      replacement addEntity IndexingTestEntity(listOf(root), listOf(excl1), NonPersistentEntitySource)
+      storage.replaceBySource({ it is NonPersistentEntitySource }, replacement)
+    }
+
+    assertEquals(0, listener.eventCount.get()) // no event fired because everything was deduplicated
   }
 
   private class MyWorkspaceFileIndexListener : WorkspaceFileIndexListener {
     val registeredFileSets = ConcurrentCollectionFactory.createConcurrentSet<WorkspaceFileSet>()
-    val removedRoots = ConcurrentCollectionFactory.createConcurrentSet<WorkspaceFileSet>()
+    val removedExclusions = ConcurrentCollectionFactory.createConcurrentSet<VirtualFile>()
+    val eventCount = AtomicInteger(0)
 
     override fun workspaceFileIndexChanged(event: WorkspaceFileIndexChangedEvent) {
+      eventCount.incrementAndGet()
       event.registeredFileSets.forEach {
         registeredFileSets.add(it)
       }
-      event.removedFileSets.forEach {
-        removedRoots.add(it)
+      event.removedExclusions.forEach {
+        removedExclusions.add(it)
       }
     }
 
     fun clear() {
       registeredFileSets.clear()
-      removedRoots.clear()
+      removedExclusions.clear()
+      eventCount.set(0)
     }
   }
 
