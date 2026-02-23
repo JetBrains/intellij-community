@@ -18,6 +18,9 @@ import org.jetbrains.kotlin.psi.KtReturnExpression
 import org.jetbrains.kotlin.psi.psiUtil.anyDescendantOfType
 import org.jetbrains.kotlin.psi.psiUtil.forEachDescendantOfType
 import org.jetbrains.kotlin.idea.codeinsight.utils.dereferenceValidPointers
+import org.jetbrains.kotlin.idea.codeinsight.utils.findRelevantLoopForExpression
+import org.jetbrains.kotlin.psi.KtContinueExpression
+import org.jetbrains.kotlin.psi.KtForExpression
 import org.jetbrains.kotlin.idea.references.mainReference
 import org.jetbrains.kotlin.psi.KtNameReferenceExpression
 import org.jetbrains.kotlin.psi.KtParameter
@@ -27,6 +30,7 @@ import org.jetbrains.kotlin.psi.psiUtil.getStrictParentOfType
 @ApiStatus.Internal
 object ForLoopUtils {
     internal typealias ReturnsToReplace = List<SmartPsiElementPointer<KtReturnExpression>>
+    internal typealias ContinuesToReplace = List<SmartPsiElementPointer<KtContinueExpression>>
 
     context(_: KaSession)
     internal fun KtLambdaExpression.computeReturnsToReplace(): ReturnsToReplace {
@@ -41,10 +45,20 @@ object ForLoopUtils {
         }
     }
 
+    internal fun KtForExpression.computeContinuesToReplace(): ContinuesToReplace {
+        val body = body ?: return emptyList()
+        return buildList {
+            body.forEachDescendantOfType<KtContinueExpression> { continueExpr ->
+                if (findRelevantLoopForExpression(continueExpr) == this@computeContinuesToReplace) {
+                    add(continueExpr.createSmartPointer())
+                }
+            }
+        }
+    }
+
     internal fun suggestLoopName(lambda: KtLambdaExpression): String =
         KotlinNameSuggester.suggestNameByName("loop") { candidate ->
-            val b = !lambda.anyDescendantOfType<KtLabeledExpression> { it.getLabelName() == candidate }
-            b
+            !lambda.anyDescendantOfType<KtLabeledExpression> { it.getLabelName() == candidate }
         }
 
     context(_: KaSession)
@@ -104,5 +118,17 @@ object ForLoopUtils {
             }
         }
         return needLoopLabel
+    }
+
+    internal fun replaceContinuesWithReturn(continuesToReplace: ContinuesToReplace, labelName: String, factory: KtPsiFactory): Boolean {
+        var needsLabel = false
+        for (continueExpr in continuesToReplace.dereferenceValidPointers()) {
+            val isInsideNestedLambda = continueExpr.getStrictParentOfType<KtLambdaExpression>() != null
+            continueExpr.replace(factory.createExpression("return@$labelName"))
+            if (isInsideNestedLambda) {
+                needsLabel = true
+            }
+        }
+        return needsLabel
     }
 }

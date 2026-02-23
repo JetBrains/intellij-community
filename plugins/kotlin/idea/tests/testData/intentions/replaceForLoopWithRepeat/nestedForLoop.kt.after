@@ -1,0 +1,8 @@
+// WITH_STDLIB
+fun foo() {
+    repeat(2) { i ->
+        for (j in 0..<3) {
+            println("Nested loop: $i, $j")
+        }
+    }
+}
