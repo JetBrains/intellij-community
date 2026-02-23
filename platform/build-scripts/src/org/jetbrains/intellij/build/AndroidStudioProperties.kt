@@ -47,9 +47,6 @@ class AndroidStudioProperties(home: Path) : BaseIdeaProperties() {
       "intellij.c",
       "intellij.cidr.debugger",
       "intellij.cidr.base",
-      // We bundle the WebP plugin because we encourage WebP image assets on Android.
-      // See for example https://developer.android.com/studio/write/convert-webp.
-      "intellij.webp",
     )
 
     private val EXCLUDED_PLUGINS = listOf(
