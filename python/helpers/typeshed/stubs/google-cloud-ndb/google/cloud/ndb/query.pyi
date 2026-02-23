@@ -88,6 +88,25 @@ AND = ConjunctionNode
 OR = DisjunctionNode
 
 class QueryOptions(_options.ReadOptions):
+    __slots__ = (
+        "kind",
+        "ancestor",
+        "filters",
+        "order_by",
+        "orders",
+        "distinct_on",
+        "group_by",
+        "namespace",
+        "project",
+        "database",
+        "keys_only",
+        "limit",
+        "offset",
+        "start_cursor",
+        "end_cursor",
+        "projection",
+        "callback",
+    )
     project: Incomplete
     namespace: Incomplete
     database: str | None

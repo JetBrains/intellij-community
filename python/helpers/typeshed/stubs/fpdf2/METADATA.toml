@@ -1,6 +1,7 @@
 version = "2.8.4"
 upstream_repository = "https://github.com/py-pdf/fpdf2"
 requires = ["Pillow>=10.3.0"]
+obsolete_since = "2.8.6" # Released on 2026-02-19
 
 [tool.stubtest]
 stubtest_requirements = ["cryptography"]

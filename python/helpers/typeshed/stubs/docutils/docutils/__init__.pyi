@@ -15,6 +15,7 @@ class _VersionInfo(NamedTuple):
     release: bool
 
 class VersionInfo(_VersionInfo):
+    __slots__ = ()
     def __new__(
         cls, major: int = 0, minor: int = 0, micro: int = 0, releaselevel: str = "final", serial: int = 0, release: bool = True
     ) -> Self: ...

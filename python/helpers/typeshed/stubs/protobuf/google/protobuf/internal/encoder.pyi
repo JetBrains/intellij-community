@@ -6,10 +6,18 @@ from google.protobuf.descriptor import FieldDescriptor
 _Sizer: TypeAlias = Callable[[int, bool, bool], int]
 
 Int32Sizer: _Sizer
+Int64Sizer: _Sizer
+EnumSizer: _Sizer
 UInt32Sizer: _Sizer
+UInt64Sizer: _Sizer
 SInt32Sizer: _Sizer
+SInt64Sizer: _Sizer
 Fixed32Sizer: _Sizer
+SFixed32Sizer: _Sizer
+FloatSizer: _Sizer
 Fixed64Sizer: _Sizer
+SFixed64Sizer: _Sizer
+DoubleSizer: _Sizer
 BoolSizer: _Sizer
 
 def StringSizer(field_number: int, is_repeated: bool, is_packed: bool) -> _Sizer: ...
@@ -23,8 +31,12 @@ def TagBytes(field_number: int, wire_type: int) -> bytes: ...
 _Encoder: TypeAlias = Callable[[Callable[[bytes], int], bytes, bool], int]
 
 Int32Encoder: _Encoder
+Int64Encoder: _Encoder
+EnumEncoder: _Encoder
 UInt32Encoder: _Encoder
+UInt64Encoder: _Encoder
 SInt32Encoder: _Encoder
+SInt64Encoder: _Encoder
 Fixed32Encoder: _Encoder
 Fixed64Encoder: _Encoder
 SFixed32Encoder: _Encoder

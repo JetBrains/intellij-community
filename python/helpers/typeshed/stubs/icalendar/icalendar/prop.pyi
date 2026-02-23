@@ -72,6 +72,7 @@ class vBoolean(int):
     def from_ical(cls, ical: ICAL_TYPE) -> bool: ...
 
 class vText(str):
+    __slots__ = ("encoding", "params")
     encoding: str
     params: Parameters
     def __new__(cls, value: ICAL_TYPE, encoding: str = "utf-8", params: SupportsKeysAndGetItem[str, str] = {}) -> Self: ...
@@ -83,6 +84,7 @@ class vText(str):
     RELTYPE: property
 
 class vCalAddress(str):
+    __slots__ = ("params",)
     params: Parameters
     def __new__(cls, value: ICAL_TYPE, encoding: str = "utf-8", params: SupportsKeysAndGetItem[str, str] = {}) -> Self: ...
     def to_ical(self) -> bytes: ...
@@ -213,6 +215,7 @@ class vPeriod(TimeBase):
     FBTYPE: property
 
 class vWeekday(str):
+    __slots__ = ("params", "relative", "weekday")
     week_days: Final[CaselessDict[int]]
     weekday: Literal["SU", "MO", "TU", "WE", "TH", "FR", "SA"] | None
     relative: int | None
@@ -223,6 +226,7 @@ class vWeekday(str):
     def from_ical(cls, ical: ICAL_TYPE) -> Self: ...
 
 class vFrequency(str):
+    __slots__ = ("params",)
     frequencies: Final[CaselessDict[str]]
     params: Parameters
     def __new__(cls, value: ICAL_TYPE, encoding: str = "utf-8", params: SupportsKeysAndGetItem[str, str] = {}) -> Self: ...
@@ -285,6 +289,7 @@ class vTime(TimeBase):
     def from_ical(ical: ICAL_TYPE) -> datetime.time: ...
 
 class vUri(str):
+    __slots__ = ("params",)
     params: Parameters
     def __new__(cls, value: ICAL_TYPE, encoding: str = "utf-8", params: SupportsKeysAndGetItem[str, str] = {}) -> Self: ...
     def to_ical(self) -> bytes: ...
@@ -313,6 +318,7 @@ class vUTCOffset:
     def __hash__(self) -> int: ...
 
 class vInline(str):
+    __slots__ = ("params",)
     params: Parameters
     def __new__(cls, value: ICAL_TYPE, encoding: str = "utf-8", params: SupportsKeysAndGetItem[str, str] = {}) -> Self: ...
     def to_ical(self) -> bytes: ...

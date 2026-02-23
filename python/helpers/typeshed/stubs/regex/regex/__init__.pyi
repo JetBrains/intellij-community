@@ -10,6 +10,7 @@ __all__ = [
     "finditer",
     "fullmatch",
     "match",
+    "prefixmatch",
     "purge",
     "search",
     "split",
