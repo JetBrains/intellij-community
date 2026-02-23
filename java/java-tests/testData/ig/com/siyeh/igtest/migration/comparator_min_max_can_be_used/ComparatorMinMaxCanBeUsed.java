@@ -95,10 +95,15 @@ class ComparatorMinMaxCanBeUsed {
     if (comp.compare(a, b) == 0) r = a; else r = b;
     System.out.println(r);
   }
+  
+  void testWithPureCall(Comparator<String> comp, String a, String b) {
+    // Side effects in compare arguments
+    String r1 = <warning descr="Can be replaced with 'Comparator.max()'">comp.compare(a.trim(), b.trim()) > 0 ? a.trim() : b.trim()</warning>;
+  }
 
   void testNoWarning(Comparator<String> comp, String a, String b) {
     // Side effects in compare arguments
-    String r1 = <warning descr="Can be replaced with 'Comparator.max()'">comp.compare(a.trim(), b.trim()) > 0 ? a.trim() : b.trim()</warning>;
+    String r1 = comp.compare(process(a), process(b)) > 0 ? process(a) : process(b);
     // Non-matching branches
     String r2 = comp.compare(a, b) > 0 ? a : "default";
     // Comparison to non-zero
@@ -111,4 +116,6 @@ class ComparatorMinMaxCanBeUsed {
     // Branches swapped with unrelated expressions
     String r6 = comp.compare(a, b) > 0 ? b : b;
   }
+  
+  native String process(String s);
 }

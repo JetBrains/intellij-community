@@ -153,8 +153,11 @@ public final class ComparatorMinMaxCanBeUsedInspection extends BaseInspection {
     if (!thenIsFirst && !thenIsSecond) return null;
 
     String methodName = RelationType.GE.isSubRelation(relationType) == thenIsFirst ? "max" : "min";
+    // Need to flip arguments to preserve the semantics precisely if equality is not included into condition,
+    // as for equal `a` and `b`, `compare(a, b) > 0 ? a : b` returns `b` while `max(a, b)` return `a`.
+    boolean flip = !relationType.isSubRelation(RelationType.EQ);
 
-    return new MinMaxInfo(qualifier, args[0], args[1], methodName);
+    return new MinMaxInfo(qualifier, args[flip ? 1 : 0], args[flip ? 0 : 1], methodName);
   }
 
   private static class ComparatorMinMaxVisitor extends BaseInspectionVisitor {
