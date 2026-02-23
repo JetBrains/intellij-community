@@ -34,6 +34,7 @@ import com.intellij.util.Processor;
 import com.intellij.util.Processors;
 import com.intellij.util.SmartList;
 import com.intellij.util.ThrowableConvertor;
+import com.intellij.util.concurrency.annotations.RequiresBackgroundThread;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.Stack;
 import com.intellij.util.indexing.impl.IndexDebugProperties;
@@ -492,6 +493,7 @@ public abstract class FileBasedIndexEx extends FileBasedIndex {
   }
 
   @Override
+  @RequiresBackgroundThread(generateAssertion = false)
   public <K, V> boolean processFilesContainingAnyKey(@NotNull ID<K, V> indexId,
                                                      @NotNull Collection<? extends K> dataKeys,
                                                      @NotNull GlobalSearchScope filter,
