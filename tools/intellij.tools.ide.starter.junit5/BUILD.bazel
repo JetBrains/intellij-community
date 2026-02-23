@@ -38,8 +38,7 @@ jvm_library(
     "@lib//:junit5Launcher-provided",
     "//tools/intellij.tools.ide.util.common:ide-util-common",
     "@lib//:opentelemetry",
-  ],
-  runtime_deps = ["//platform/testFramework/junit5"]
+  ]
 )
 
 jvm_library(
@@ -70,6 +69,8 @@ jvm_library(
     "@lib//:opentelemetry",
     "//platform/core-api:core",
     "//platform/util",
+    "//platform/testFramework/junit5",
+    "//platform/testFramework/junit5:junit5_test_lib",
   ]
 )
 ### auto-generated section `build intellij.tools.ide.starter.junit5` end
