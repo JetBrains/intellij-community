@@ -3,14 +3,9 @@ package com.intellij.agent.workbench.chat
 
 // @spec community/plugins/agent-workbench/spec/agent-chat-editor.spec.md
 
-import com.intellij.agent.workbench.common.AgentWorkbenchActionIds
-import com.intellij.agent.workbench.sessions.core.AgentSessionProvider
-import com.intellij.agent.workbench.sessions.core.providers.AgentSessionProviderBehaviors
 import com.intellij.openapi.actionSystem.ActionGroup
 import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.actionSystem.DefaultActionGroup
-import com.intellij.openapi.application.EDT
-import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.fileEditor.FileEditor
 import com.intellij.openapi.fileEditor.FileEditorState
 import com.intellij.openapi.project.Project
@@ -26,6 +21,8 @@ import javax.swing.JComponent
 import javax.swing.JPanel
 import kotlin.time.Duration.Companion.milliseconds
 
+private const val NEW_THREAD_FROM_EDITOR_TAB_ACTION_ID = "AgentWorkbenchChat.NewThreadFromEditorTab"
+
 internal class AgentChatFileEditor(
   private val project: Project,
   private val file: AgentChatVirtualFile,
@@ -34,31 +31,10 @@ internal class AgentChatFileEditor(
 ) : UserDataHolderBase(), FileEditor {
   private val component = JPanel(BorderLayout())
   private val editorTabActions: ActionGroup? by lazy {
-    val actionManager = ActionManager.getInstance()
-    val providerActionIds = file.provider
-      ?.let { provider -> AgentSessionProviderBehaviors.find(provider)?.editorTabActionIds }
-      .orEmpty()
-    val actions = buildList {
-      listOf(
-        NEW_THREAD_QUICK_FROM_EDITOR_TAB_ACTION_ID,
-        NEW_THREAD_POPUP_FROM_EDITOR_TAB_ACTION_ID,
-      ).forEach { actionId ->
-        actionManager.getAction(actionId)?.let(::add)
-      }
-      providerActionIds.forEach { actionId ->
-        actionManager.getAction(actionId)?.let(::add)
-      }
-    }
-    if (actions.isEmpty()) {
-      return@lazy null
-    }
-    if (actions.size == 1) {
-      val singleAction = actions.single()
-      return@lazy singleAction as? ActionGroup ?: DefaultActionGroup(singleAction)
-    }
-    DefaultActionGroup(actions)
+    val action = ActionManager.getInstance().getAction(NEW_THREAD_FROM_EDITOR_TAB_ACTION_ID) ?: return@lazy null
+    action as? ActionGroup ?: DefaultActionGroup(action)
   }
-  private var tab: AgentChatTerminalTab? = null
+  private var tab: TerminalToolWindowTab? = null
   private var initializationStarted: Boolean = false
   private var disposed: Boolean = false
   private var pendingInitialMessageJob: Job? = null
@@ -74,6 +50,8 @@ internal class AgentChatFileEditor(
   }
 
   override fun getName(): String = file.threadTitle
+
+  override fun getTabActions(): ActionGroup? = editorTabActions
 
   override fun setState(state: FileEditorState) = Unit
 

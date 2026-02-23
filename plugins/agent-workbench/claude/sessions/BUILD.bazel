@@ -25,13 +25,8 @@ jvm_library(
     "//platform/platform-util-io:ide-util-io",
     "//plugins/agent-workbench/filewatch",
     "//plugins/agent-workbench/claude/common",
-    "//plugins/agent-workbench/common",
-    "//plugins/agent-workbench/json",
     "//plugins/agent-workbench/sessions-core:agent-workbench-sessions-core",
-    "//libraries/jackson/jackson",
-    "@lib//:jna",
-  ],
-  runtime_deps = ["//plugins/agent-workbench/sessions-actions:agent-workbench-sessions-actions"]
+  ]
 )
 
 jvm_library(
@@ -51,13 +46,9 @@ jvm_library(
     "//platform/platform-util-io:ide-util-io",
     "//plugins/agent-workbench/filewatch",
     "//plugins/agent-workbench/claude/common",
-    "//plugins/agent-workbench/common",
-    "//plugins/agent-workbench/common:common_test_lib",
-    "//plugins/agent-workbench/json",
-    "//plugins/agent-workbench/json:json_test_lib",
+    "//plugins/agent-workbench/claude/common:common_test_lib",
     "//plugins/agent-workbench/sessions-core:agent-workbench-sessions-core",
-    "//libraries/jackson/jackson",
-    "@lib//:jna",
+    "//plugins/agent-workbench/sessions-core:agent-workbench-sessions-core_test_lib",
     "//libraries/junit5",
     "//platform/testFramework",
     "//platform/testFramework:testFramework_test_lib",

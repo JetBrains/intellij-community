@@ -60,6 +60,7 @@ jvm_library(
     "//plugins/agent-workbench/common",
     "//plugins/agent-workbench/common:common_test_lib",
     "//plugins/agent-workbench/sessions-core:agent-workbench-sessions-core",
+    "//plugins/agent-workbench/sessions-core:agent-workbench-sessions-core_test_lib",
     "//platform/projectModel-api:projectModel",
     "//platform/util",
     "//platform/platform-util-io:ide-util-io",

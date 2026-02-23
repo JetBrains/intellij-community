@@ -18,9 +18,6 @@ jvm_library(
     "//plugins/agent-workbench/claude/common",
     "//plugins/agent-workbench/codex/common",
     "//plugins/agent-workbench/sessions-core:agent-workbench-sessions-core",
-    "//plugins/agent-workbench/prompt",
-    "//plugins/agent-workbench/prompt-vcs:agent-workbench-prompt-vcs",
-    "//plugins/agent-workbench/prompt-testrunner:agent-workbench-prompt-testrunner",
     "//plugins/agent-workbench/sessions",
     "//plugins/agent-workbench/sessions-actions:agent-workbench-sessions-actions",
     "//plugins/agent-workbench/sessions-toolwindow:agent-workbench-sessions-toolwindow",
@@ -39,7 +36,17 @@ jvm_library(
     "@lib//:junit5",
     "@lib//:junit5Suites",
   ],
-  runtime_deps = [":plugin"]
+  runtime_deps = [
+    ":plugin",
+    "//plugins/agent-workbench/common:common_test_lib",
+    "//plugins/agent-workbench/chat:chat_test_lib",
+    "//plugins/agent-workbench/claude/common:common_test_lib",
+    "//plugins/agent-workbench/codex/common:common_test_lib",
+    "//plugins/agent-workbench/sessions-core:agent-workbench-sessions-core_test_lib",
+    "//plugins/agent-workbench/sessions:sessions_test_lib",
+    "//plugins/agent-workbench/codex/sessions:sessions_test_lib",
+    "//plugins/agent-workbench/claude/sessions:sessions_test_lib",
+  ]
 )
 ### auto-generated section `build intellij.agent.workbench.plugin` end
 

@@ -43,12 +43,7 @@
     <orderEntry type="module" module-name="intellij.platform.ide.util.io" />
     <orderEntry type="module" module-name="intellij.agent.workbench.filewatch" />
     <orderEntry type="module" module-name="intellij.agent.workbench.claude.common" />
-    <orderEntry type="module" module-name="intellij.agent.workbench.common" />
-    <orderEntry type="module" module-name="intellij.agent.workbench.json" />
-    <orderEntry type="module" module-name="intellij.agent.workbench.sessions.actions" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.agent.workbench.sessions.core" />
-    <orderEntry type="module" module-name="intellij.libraries.jackson" />
-    <orderEntry type="library" name="jna" level="project" />
     <orderEntry type="module" module-name="intellij.libraries.junit5" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.testFramework" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.testFramework.junit5" scope="TEST" />

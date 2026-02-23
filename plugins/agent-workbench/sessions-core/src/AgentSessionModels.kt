@@ -1,8 +1,7 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.agent.workbench.sessions.core
+package com.intellij.agent.workbench.sessions
 
 import com.intellij.agent.workbench.common.AgentThreadActivity
-import com.intellij.openapi.util.NlsSafe
 
 private val AGENT_SESSION_PROVIDER_ID_REGEX = Regex("[a-z][a-z0-9._-]*")
 
@@ -34,8 +33,8 @@ enum class AgentSessionLaunchMode {
 }
 
 data class AgentSubAgent(
-  @JvmField val id: @NlsSafe String,
-  @JvmField val name: @NlsSafe String,
+  @JvmField val id: String,
+  @JvmField val name: String,
 )
 
 data class AgentSessionThread(
@@ -44,7 +43,7 @@ data class AgentSessionThread(
   @JvmField val updatedAt: Long,
   @JvmField val archived: Boolean,
   @JvmField val activity: AgentThreadActivity = AgentThreadActivity.READY,
-  val provider: AgentSessionProvider,
+  val provider: AgentSessionProvider = AgentSessionProvider.CODEX,
   @JvmField val subAgents: List<AgentSubAgent> = emptyList(),
   @JvmField val originBranch: String? = null,
 )

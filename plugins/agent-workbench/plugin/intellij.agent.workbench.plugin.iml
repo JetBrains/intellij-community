@@ -37,9 +37,6 @@
     <orderEntry type="module" module-name="intellij.agent.workbench.claude.common" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.agent.workbench.codex.common" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.agent.workbench.sessions.core" scope="RUNTIME" />
-    <orderEntry type="module" module-name="intellij.agent.workbench.prompt" scope="RUNTIME" />
-    <orderEntry type="module" module-name="intellij.agent.workbench.prompt.vcs" scope="RUNTIME" />
-    <orderEntry type="module" module-name="intellij.agent.workbench.prompt.testrunner" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.agent.workbench.sessions" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.agent.workbench.sessions.actions" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.agent.workbench.sessions.toolwindow" scope="RUNTIME" />

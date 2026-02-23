@@ -4,10 +4,6 @@
   <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
   <dependencies>
     <module name="intellij.agent.workbench.claude.common"/>
-    <module name="intellij.agent.workbench.common"/>
-    <module name="intellij.agent.workbench.filewatch"/>
-    <module name="intellij.agent.workbench.json"/>
-    <module name="intellij.agent.workbench.sessions.actions"/>
     <module name="intellij.agent.workbench.sessions.core"/>
   </dependencies>
   <!-- endregion -->
