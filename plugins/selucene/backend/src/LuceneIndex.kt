@@ -42,6 +42,15 @@ class LuceneIndex(val project: Project, val coroutineScope: CoroutineScope, inde
     return IndexWriter(directory, config)
   }
 
+
+  /**
+   * Executes a function that modifies an `IndexWriter` and ensures the changes are committed or rolled back in case of failure.
+   * This method handles writer state management, including reopening the writer and refreshing the associated searcher.
+   *
+   *
+   * @param changes A lambda function that takes an `IndexWriter` as an argument. It is not marked suspend, to ensure that indexing is not
+   *                interrupted by coroutine context switches.
+   */
   fun processChanges(changes: (IndexWriter) -> Unit) {
     try {
       changes(writer)
@@ -62,26 +71,26 @@ class LuceneIndex(val project: Project, val coroutineScope: CoroutineScope, inde
     searcherManager.maybeRefresh()
   }
 
-  suspend fun createIndex(initial_entities: List<Document>) {
+  fun createIndex(initial_entities: List<Document>) {
     processChanges {
       writer.deleteAll()
       writer.addDocuments(initial_entities)
     }
   }
 
-  suspend fun addDocuments(entities: List<Document>) {
+  fun addDocuments(entities: List<Document>) {
     processChanges {
       writer.addDocuments(entities)
     }
   }
 
-  suspend fun updateDocuments(updated_docs: List<Pair<Term, Document>>) {
+  fun updateDocuments(updated_docs: List<Pair<Term, Document>>) {
     processChanges {
       updated_docs.forEach { (term, doc) -> writer.updateDocument(term, doc) }
     }
   }
 
-  suspend fun clearIndex() {
+  fun clearIndex() {
     processChanges { writer.deleteAll() }
   }
 
