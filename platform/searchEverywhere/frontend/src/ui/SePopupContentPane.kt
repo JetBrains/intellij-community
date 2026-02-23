@@ -36,6 +36,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.popup.JBPopup
 import com.intellij.openapi.ui.popup.JBPopupFactory
 import com.intellij.openapi.ui.popup.ListItemDescriptorAdapter
+import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.SystemInfoRt
 import com.intellij.openapi.util.registry.Registry
@@ -1156,7 +1157,9 @@ class SePopupContentPane(
     quickDocPopup?.takeIf { it.isVisible }?.cancel()
   }
 
-  override fun dispose() {}
+  override fun dispose() {
+    usagePreviewPanel?.let { Disposer.dispose(it) }
+  }
 
   companion object {
     const val DEFAULT_FROZEN_VISIBLE_PART: Double = 1.1
