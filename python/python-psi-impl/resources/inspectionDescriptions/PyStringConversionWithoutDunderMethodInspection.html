@@ -1,0 +1,22 @@
+<html>
+<body>
+<p>Reports when a type that doesn't define <code>__str__</code>, <code>__repr__</code>, or <code>__format__</code>
+  is converted to a string. The default string representation may not be useful for debugging or display purposes.</p>
+<p><b>Example:</b></p>
+<pre><code>
+class A:
+    pass
+
+str(A())  # Result: "&lt;__main__.A object at 0x...&gt;"
+</code></pre>
+<p>Consider defining one of these methods to provide a meaningful string representation:</p>
+<pre><code>
+class A:
+    def __str__(self):
+        return "A instance"
+    
+    def __repr__(self):
+        return "A()"
+</code></pre>
+</body>
+</html>
