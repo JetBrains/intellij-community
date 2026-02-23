@@ -675,6 +675,10 @@ object DefaultUiPluginManagerController : UiPluginManagerController {
     }
   }
 
+  override fun markPluginsAsDisabled(pluginIds: List<PluginId>) {
+    PluginEnabler.HEADLESS.disableById(pluginIds.toSet())
+  }
+
   override fun setEnableStateForDependencies(
     sessionId: String,
     descriptorIds: Set<PluginId>,

@@ -43,6 +43,7 @@ interface PluginManagerApi : RemoteApi<Unit> {
   suspend fun closeSession(sessionId: String)
   suspend fun setEnabledState(sessionId: String, pluginIds: List<PluginId>, enable: Boolean)
   suspend fun enablePlugins(sessionId: String, ids: List<PluginId>, bool: Boolean, id: ProjectId?): SetEnabledStateResult
+  suspend fun markPluginsAsDisabled(pluginIds: List<PluginId>)
   suspend fun isBundledUpdate(pluginIds: List<PluginId>): Boolean
   suspend fun isPluginRequiresUltimateButItIsDisabled(sessionId: String, pluginId: PluginId): Boolean
   suspend fun hasPluginRequiresUltimateButItsDisabled(ids: List<PluginId>): Boolean

@@ -147,6 +147,15 @@ class UiPluginManager {
     return getController().enablePlugins(sessionId, descriptorIds, enable, project)
   }
 
+  /**
+   * Marks the plugins with provided IDs as disabled.
+   * If the IDE is running in remove development mode, this will affect both backend and the frontend processes.
+   * Note that this function doesn't actually unload the plugins. The changes will take effect after the IDE restarts.
+   */
+  fun markPluginsAsDisabled(pluginIds: List<PluginId>) {
+    getController().markPluginsAsDisabled(pluginIds)
+  }
+
   suspend fun prepareToUninstall(pluginsToUninstall: List<PluginId>): PrepareToUninstallResult {
     return getController().prepareToUninstall(pluginsToUninstall)
   }
