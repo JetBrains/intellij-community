@@ -45,10 +45,10 @@ internal class MultiChooserListModelTest {
     model.add(listOf("item1", "item2"))
 
     assertThat(model.isChosen("item1")).isFalse()
-    model.toggleChosen(0)
+    model.toggleChosen("item1")
     assertThat(model.isChosen("item1")).isTrue()
 
-    model.toggleChosen(0)
+    model.toggleChosen("item1")
     assertThat(model.isChosen("item1")).isFalse()
   }
 
@@ -90,22 +90,15 @@ internal class MultiChooserListModelTest {
   }
 
   @Test
-  fun `test toggle chosen with negative index`() {
+  fun `test toggle chosen with nonexistent item`() {
     val model = MultiChooserListModel<String>()
     model.add(listOf("item1"))
 
-    model.toggleChosen(-1)
+    model.toggleChosen("nonexistent")
     assertThat(model.isChosen("item1")).isFalse()
   }
 
-  @Test
-  fun `test toggle chosen with out of bounds index`() {
-    val model = MultiChooserListModel<String>()
-    model.add(listOf("item1"))
 
-    model.toggleChosen(5)
-    assertThat(model.isChosen("item1")).isFalse()
-  }
 
   @Test
   fun `test get chosen items preserves order`() {
@@ -154,7 +147,7 @@ internal class MultiChooserListModelTest {
       }
     })
 
-    model.toggleChosen(0)
+    model.toggleChosen("item1")
     assertThat(eventFired).isTrue()
     assertThat(eventType).isEqualTo(ListDataEvent.CONTENTS_CHANGED)
   }
