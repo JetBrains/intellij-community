@@ -270,7 +270,7 @@ final class VcsRootDetectorImpl implements VcsRootDetector {
                                             @NotNull VcsRootChecker checker) {
     if (!maybeRoot.isInLocalFileSystem()) return null;
     if (!checker.isRoot(maybeRoot)) return null;
-    if (dirToCheckForIgnore != null && checker.isIgnored(maybeRoot, dirToCheckForIgnore)) return null;
+    if (dirToCheckForIgnore != null && checker.isIgnored(myProject, maybeRoot, dirToCheckForIgnore)) return null;
 
     AbstractVcs vcs = ProjectLevelVcsManager.getInstance(myProject).findVcsByName(checker.getSupportedVcs().getName());
     if (vcs == null) return null;

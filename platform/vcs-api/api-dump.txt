@@ -497,6 +497,7 @@ a:com.intellij.openapi.vcs.VcsRootChecker
 - areChildrenValidMappings():Z
 - detectProjectMappings(com.intellij.openapi.project.Project,java.util.Collection,java.util.Set):java.util.Collection
 - a:getSupportedVcs():com.intellij.openapi.vcs.VcsKey
+- isIgnored(com.intellij.openapi.project.Project,com.intellij.openapi.vfs.VirtualFile,com.intellij.openapi.vfs.VirtualFile):Z
 - isIgnored(com.intellij.openapi.vfs.VirtualFile,com.intellij.openapi.vfs.VirtualFile):Z
 - isRoot(com.intellij.openapi.vfs.VirtualFile):Z
 - isRoot(java.lang.String):Z
