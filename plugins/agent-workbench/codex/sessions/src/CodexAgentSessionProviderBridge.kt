@@ -10,7 +10,7 @@ import com.intellij.agent.workbench.sessions.AgentSessionProviderIconIds
 import com.intellij.agent.workbench.sessions.providers.AgentSessionLaunchSpec
 import com.intellij.agent.workbench.sessions.providers.AgentSessionProviderBridge
 import com.intellij.agent.workbench.sessions.providers.AgentSessionSource
-import com.intellij.openapi.components.service
+import com.intellij.openapi.components.serviceAsync
 
 internal class CodexAgentSessionProviderBridge(
   override val sessionSource: AgentSessionSource = CodexSessionSource(),
@@ -39,6 +39,9 @@ internal class CodexAgentSessionProviderBridge(
   override val supportsArchiveThread: Boolean
     get() = true
 
+  override val supportsUnarchiveThread: Boolean
+    get() = true
+
   override fun isCliAvailable(): Boolean = CodexCliUtils.findExecutable() != null
 
   override fun buildResumeCommand(sessionId: String): List<String> = listOf(CodexCliUtils.CODEX_COMMAND, "resume", sessionId)
@@ -63,7 +66,12 @@ internal class CodexAgentSessionProviderBridge(
   }
 
   override suspend fun archiveThread(path: String, threadId: String): Boolean {
-    service<SharedCodexAppServerService>().archiveThread(threadId)
+    serviceAsync<SharedCodexAppServerService>().archiveThread(threadId)
+    return true
+  }
+
+  override suspend fun unarchiveThread(path: String, threadId: String): Boolean {
+    serviceAsync<SharedCodexAppServerService>().unarchiveThread(threadId)
     return true
   }
 

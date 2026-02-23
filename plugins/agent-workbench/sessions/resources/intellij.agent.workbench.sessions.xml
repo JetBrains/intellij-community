@@ -17,6 +17,8 @@
       icon="AllIcons.Toolwindows.ToolWindowMessages"
       canCloseContents="false"
       factoryClass="com.intellij.agent.workbench.sessions.AgentSessionsToolWindowFactory"/>
+    <notificationGroup id="Agent Workbench Sessions" displayType="BALLOON" bundle="messages.AgentSessionsBundle"
+                       key="notification.group.agent.workbench.sessions"/>
     <advancedSetting
       id="agent.workbench.chat.open.in.dedicated.frame"
       default="true"

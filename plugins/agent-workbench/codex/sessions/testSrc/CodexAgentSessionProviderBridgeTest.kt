@@ -30,6 +30,11 @@ class CodexAgentSessionProviderBridgeTest {
   }
 
   @Test
+  fun supportsUnarchiveThread() {
+    assertThat(bridge.supportsUnarchiveThread).isTrue()
+  }
+
+  @Test
   fun createNewSessionReturnsPendingLaunchSpec() {
     runBlocking {
       val standard = bridge.createNewSession(path = "/work/project", mode = AgentSessionLaunchMode.STANDARD)

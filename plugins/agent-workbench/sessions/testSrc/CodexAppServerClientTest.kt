@@ -334,6 +334,53 @@ class CodexAppServerClientTest {
   }
 
   @Test
+  fun unarchiveThreadMovesThreadFromArchivedToActiveList(): Unit = runBlocking(Dispatchers.IO) {
+    val workingDir = tempDir.resolve("project-unarchive")
+    Files.createDirectories(workingDir)
+    val configPath = workingDir.resolve("codex-config.json")
+    writeConfig(
+      path = configPath,
+      threads = listOf(
+        ThreadSpec(
+          id = "thread-1",
+          title = "Thread 1",
+          cwd = workingDir.toString(),
+          updatedAt = 1_700_000_005_000L,
+          archived = true,
+        ),
+        ThreadSpec(
+          id = "thread-2",
+          title = "Thread 2",
+          cwd = workingDir.toString(),
+          updatedAt = 1_700_000_004_000L,
+          archived = false,
+        ),
+      ),
+    )
+    val backendDir = tempDir.resolve("backend-unarchive")
+    Files.createDirectories(backendDir)
+    val client = createMockClient(
+      scope = this,
+      tempDir = backendDir,
+      configPath = configPath,
+    )
+    try {
+      val beforeUnarchive = client.listThreads(archived = true)
+      assertThat(beforeUnarchive.map { it.id }).contains("thread-1")
+
+      client.unarchiveThread("thread-1")
+
+      val active = client.listThreads(archived = false)
+      val archived = client.listThreads(archived = true)
+      assertThat(active.map { it.id }).contains("thread-1", "thread-2")
+      assertThat(archived.map { it.id }).doesNotContain("thread-1")
+    }
+    finally {
+      client.shutdown()
+    }
+  }
+
+  @Test
   fun idleTimeoutStopsLazyStartedProcess(): Unit = runBlocking(Dispatchers.IO) {
     val workingDir = tempDir.resolve("project-idle-timeout")
     Files.createDirectories(workingDir)

@@ -7,7 +7,10 @@ import androidx.compose.foundation.focusable
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import com.intellij.agent.workbench.chat.AgentChatTabSelection
 import com.intellij.agent.workbench.common.normalizeAgentWorkbenchPath
@@ -34,6 +37,9 @@ internal fun sessionTree(
   onOpenSubAgent: (String, AgentSessionThread, AgentSubAgent) -> Unit,
   onCreateSession: (String, AgentSessionProvider, AgentSessionLaunchMode) -> Unit = { _, _, _ -> },
   onArchiveThread: (String, AgentSessionThread) -> Unit = { _, _ -> },
+  onArchiveThreads: (List<ArchiveThreadTarget>) -> Unit = { targets ->
+    targets.forEach { target -> onArchiveThread(target.path, target.thread) }
+  },
   canArchiveThread: (AgentSessionThread) -> Boolean = { false },
   treeUiState: SessionsTreeUiState,
   lastUsedProvider: AgentSessionProvider? = null,
@@ -55,6 +61,8 @@ internal fun sessionTree(
     onWorktreeExpanded = onWorktreeExpanded,
   )
   val treeState = stateHolder.treeState
+  val pointerEventActions = remember(treeState) { SessionTreePointerEventActions(treeState) }
+  var selectedArchiveTargets by remember { mutableStateOf<List<ArchiveThreadTarget>>(emptyList()) }
   val autoOpenNodes = remember(projects, visibleProjectCount, treeUiState) {
     projects.take(visibleProjectCount)
       .filter {
@@ -111,6 +119,9 @@ internal fun sessionTree(
       nodeText = { element -> sessionTreeNodeText(element.data) },
       style = treeStyle,
       onElementClick = { element ->
+        if (!pointerEventActions.consumeShouldOpenOnClick(element.id)) {
+          return@SpeedSearchableTree
+        }
         when (val node = element.data) {
           is SessionTreeNode.Project -> {
             onOpenProject(node.project.path)
@@ -145,20 +156,43 @@ internal fun sessionTree(
         }
       },
       onElementDoubleClick = {},
-      onSelectionChange = {},
+      onSelectionChange = { selectedElements ->
+        selectedArchiveTargets = resolveSelectedArchiveThreadTargets(selectedElements)
+      },
+      pointerEventActions = pointerEventActions,
     ) { element ->
       sessionTreeNodeContent(
         element = element,
         onOpenProject = onOpenProject,
         onRefresh = onRefresh,
         onCreateSession = onCreateSession,
-        onArchiveThread = onArchiveThread,
+        onArchiveThreads = onArchiveThreads,
+        selectedArchiveTargets = selectedArchiveTargets,
         canArchiveThread = canArchiveThread,
         lastUsedProvider = lastUsedProvider,
         nowProvider = nowProvider,
       )
     }
   }
+}
+
+private fun resolveSelectedArchiveThreadTargets(
+  selectedElements: List<Tree.Element<SessionTreeNode>>,
+): List<ArchiveThreadTarget> {
+  val targetsByKey = LinkedHashMap<String, ArchiveThreadTarget>()
+  selectedElements.forEach { element ->
+    val node = element.data as? SessionTreeNode.Thread ?: return@forEach
+    val path = when (val id = element.id) {
+      is SessionTreeId.WorktreeThread -> id.worktreePath
+      is SessionTreeId.Thread -> id.projectPath
+      else -> node.project.path
+    }
+    val normalizedPath = normalizeAgentWorkbenchPath(path)
+    val target = ArchiveThreadTarget(path = normalizedPath, thread = node.thread)
+    val key = "$normalizedPath:${node.thread.provider}:${node.thread.id}"
+    targetsByKey.putIfAbsent(key, target)
+  }
+  return targetsByKey.values.toList()
 }
 
 private fun buildSessionTree(

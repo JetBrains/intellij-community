@@ -16,6 +16,9 @@ import com.intellij.agent.workbench.sessions.providers.AgentSessionSource
 import com.intellij.ide.impl.OpenProjectTask
 import com.intellij.ide.impl.ProjectUtilService
 import com.intellij.ide.util.PropertiesComponent
+import com.intellij.notification.NotificationAction
+import com.intellij.notification.NotificationGroupManager
+import com.intellij.notification.NotificationType
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.UI
@@ -50,7 +53,9 @@ private const val OPEN_PROJECT_ACTION_KEY_PREFIX = "project-open"
 private const val CREATE_SESSION_ACTION_KEY_PREFIX = "session-create"
 private const val OPEN_THREAD_ACTION_KEY_PREFIX = "thread-open"
 private const val OPEN_SUB_AGENT_ACTION_KEY_PREFIX = "subagent-open"
-private const val ARCHIVE_THREAD_ACTION_KEY_PREFIX = "thread-archive"
+private const val ARCHIVE_THREADS_ACTION_KEY_PREFIX = "threads-archive"
+private const val UNARCHIVE_THREADS_ACTION_KEY_PREFIX = "threads-unarchive"
+private const val AGENT_SESSIONS_NOTIFICATION_GROUP_ID = "Agent Workbench Sessions"
 private val CODEX_ARCHIVE_REFRESH_DELAY = 1.seconds
 
 @Service(Service.Level.APP)
@@ -271,48 +276,125 @@ internal class AgentSessionsService private constructor(
   }
 
   fun archiveThread(path: String, thread: AgentSessionThread) {
-    val normalizedPath = normalizeAgentWorkbenchPath(path)
+    archiveThreads(listOf(ArchiveThreadTarget(path = path, thread = thread)))
+  }
+
+  fun archiveThreads(targets: List<ArchiveThreadTarget>) {
+    val normalizedTargets = normalizeArchiveTargets(targets)
+    if (normalizedTargets.isEmpty()) {
+      return
+    }
     launchDropAction(
-      key = buildArchiveThreadActionKey(path = normalizedPath, thread = thread),
-      droppedActionMessage = "Dropped duplicate archive thread action for $normalizedPath:${thread.provider}:${thread.id}",
+      key = buildArchiveThreadsActionKey(normalizedTargets),
+      droppedActionMessage = "Dropped duplicate archive threads action for ${normalizedTargets.size} targets",
     ) {
-      val bridge = AgentSessionProviderBridges.find(thread.provider)
-      if (bridge == null) {
-        logMissingProviderBridge(thread.provider)
-        loadingCoordinator.appendProviderUnavailableWarning(normalizedPath, thread.provider)
+      val outcome = archiveTargetsInternal(normalizedTargets)
+      if (outcome.archivedTargets.isEmpty()) {
         return@launchDropAction
       }
-      if (!bridge.supportsArchiveThread) {
-        LOG.warn("Session provider bridge ${thread.provider.value} does not support archive")
-        loadingCoordinator.appendProviderUnavailableWarning(normalizedPath, thread.provider)
+      if (outcome.requiresCodexRefreshDelay) {
+        delay(CODEX_ARCHIVE_REFRESH_DELAY)
+      }
+      refresh()
+      showArchiveNotification(outcome)
+    }
+  }
+
+  internal fun unarchiveThreads(targets: List<ArchiveThreadTarget>) {
+    val normalizedTargets = normalizeArchiveTargets(targets)
+    if (normalizedTargets.isEmpty()) {
+      return
+    }
+    launchDropAction(
+      key = buildUnarchiveThreadsActionKey(normalizedTargets),
+      droppedActionMessage = "Dropped duplicate unarchive threads action for ${normalizedTargets.size} targets",
+    ) {
+      var anyUnarchived = false
+      var requiresCodexRefreshDelay = false
+      normalizedTargets.forEach { target ->
+        val provider = target.thread.provider
+        val bridge = AgentSessionProviderBridges.find(provider)
+        if (bridge == null) {
+          logMissingProviderBridge(provider)
+          return@forEach
+        }
+        if (!bridge.supportsUnarchiveThread) {
+          return@forEach
+        }
+
+        val unarchived = try {
+          bridge.unarchiveThread(path = target.path, threadId = target.thread.id)
+        }
+        catch (t: Throwable) {
+          if (t is CancellationException) {
+            throw t
+          }
+          LOG.warn("Failed to unarchive thread ${provider}:${target.thread.id}", t)
+          false
+        }
+        if (!unarchived) {
+          return@forEach
+        }
+
+        anyUnarchived = true
+        if (provider == AgentSessionProvider.CODEX) {
+          loadingCoordinator.unsuppressArchivedThread(path = target.path, provider = provider, threadId = target.thread.id)
+          requiresCodexRefreshDelay = true
+        }
+      }
+      if (!anyUnarchived) {
         return@launchDropAction
+      }
+      if (requiresCodexRefreshDelay) {
+        delay(CODEX_ARCHIVE_REFRESH_DELAY)
+      }
+      refresh()
+    }
+  }
+
+  private suspend fun archiveTargetsInternal(targets: List<ArchiveThreadTarget>): ArchiveBatchOutcome {
+    val archivedTargets = ArrayList<ArchiveThreadTarget>(targets.size)
+    val undoTargets = ArrayList<ArchiveThreadTarget>()
+    var requiresCodexRefreshDelay = false
+
+    targets.forEach { target ->
+      val provider = target.thread.provider
+      val bridge = AgentSessionProviderBridges.find(provider)
+      if (bridge == null) {
+        logMissingProviderBridge(provider)
+        loadingCoordinator.appendProviderUnavailableWarning(target.path, provider)
+        return@forEach
+      }
+      if (!bridge.supportsArchiveThread) {
+        return@forEach
       }
 
       val archived = try {
-        bridge.archiveThread(path = normalizedPath, threadId = thread.id)
+        bridge.archiveThread(path = target.path, threadId = target.thread.id)
       }
       catch (t: Throwable) {
         if (t is CancellationException) {
           throw t
         }
-        LOG.warn("Failed to archive thread ${thread.provider}:${thread.id}", t)
-        loadingCoordinator.appendProviderUnavailableWarning(normalizedPath, thread.provider)
-        return@launchDropAction
+        LOG.warn("Failed to archive thread ${provider}:${target.thread.id}", t)
+        loadingCoordinator.appendProviderUnavailableWarning(target.path, provider)
+        return@forEach
       }
 
       if (!archived) {
-        loadingCoordinator.appendProviderUnavailableWarning(normalizedPath, thread.provider)
-        return@launchDropAction
+        loadingCoordinator.appendProviderUnavailableWarning(target.path, provider)
+        return@forEach
       }
 
-      if (thread.provider == AgentSessionProvider.CODEX) {
-        loadingCoordinator.suppressArchivedThread(path = normalizedPath, provider = thread.provider, threadId = thread.id)
+      if (provider == AgentSessionProvider.CODEX) {
+        loadingCoordinator.suppressArchivedThread(path = target.path, provider = provider, threadId = target.thread.id)
+        requiresCodexRefreshDelay = true
       }
-      stateStore.removeThread(normalizedPath, thread.provider, thread.id)
+      stateStore.removeThread(target.path, provider, target.thread.id)
 
-      val threadIdentity = buildAgentSessionIdentity(thread.provider, thread.id)
+      val threadIdentity = buildAgentSessionIdentity(provider, target.thread.id)
       try {
-        archiveChatCleanup(normalizedPath, threadIdentity)
+        archiveChatCleanup(target.path, threadIdentity)
       }
       catch (t: Throwable) {
         if (t is CancellationException) {
@@ -320,15 +402,66 @@ internal class AgentSessionsService private constructor(
         }
         // Archive is already successful at provider level; cleanup is best-effort and must not
         // resurrect the thread in UI by short-circuiting state update/refresh.
-        LOG.warn("Failed to clean archived thread chat metadata for ${thread.provider}:${thread.id}", t)
+        LOG.warn("Failed to clean archived thread chat metadata for ${provider}:${target.thread.id}", t)
       }
 
-      if (thread.provider == AgentSessionProvider.CODEX) {
-        delay(CODEX_ARCHIVE_REFRESH_DELAY)
+      archivedTargets.add(target)
+      if (bridge.supportsUnarchiveThread) {
+        undoTargets.add(target)
       }
-      refresh()
+    }
+
+    return ArchiveBatchOutcome(
+      archivedTargets = archivedTargets,
+      undoTargets = undoTargets,
+      requiresCodexRefreshDelay = requiresCodexRefreshDelay,
+    )
+  }
+
+  private fun normalizeArchiveTargets(targets: List<ArchiveThreadTarget>): List<ArchiveThreadTarget> {
+    val normalizedByKey = LinkedHashMap<String, ArchiveThreadTarget>()
+    targets.forEach { target ->
+      val normalizedPath = normalizeAgentWorkbenchPath(target.path)
+      val normalizedTarget = if (normalizedPath == target.path) target else target.copy(path = normalizedPath)
+      val key = archiveTargetKey(normalizedTarget)
+      normalizedByKey.putIfAbsent(key, normalizedTarget)
+    }
+    return normalizedByKey.values.toList()
+  }
+
+  private fun showArchiveNotification(outcome: ArchiveBatchOutcome) {
+    if (ApplicationManager.getApplication().isUnitTestMode) {
+      return
+    }
+    runCatching {
+      val notification = NotificationGroupManager.getInstance()
+        .getNotificationGroup(AGENT_SESSIONS_NOTIFICATION_GROUP_ID)
+        .createNotification(
+          AgentSessionsBundle.message("toolwindow.notification.archive.title"),
+          AgentSessionsBundle.message("toolwindow.notification.archive.body", outcome.archivedTargets.size),
+          NotificationType.INFORMATION,
+        )
+      if (outcome.undoTargets.isNotEmpty()) {
+        val undoTargets = outcome.undoTargets.toList()
+        notification.addAction(
+          NotificationAction.createSimpleExpiring(
+            AgentSessionsBundle.message("toolwindow.notification.archive.undo"),
+          ) {
+            unarchiveThreads(undoTargets)
+          }
+        )
+      }
+      notification.notify(null)
+    }.onFailure { error ->
+      LOG.warn("Failed to show Agent Threads archive notification", error)
     }
   }
+
+  private data class ArchiveBatchOutcome(
+    @JvmField val archivedTargets: List<ArchiveThreadTarget>,
+    @JvmField val undoTargets: List<ArchiveThreadTarget>,
+    @JvmField val requiresCodexRefreshDelay: Boolean,
+  )
 
   private fun launchDropAction(
     key: String,
@@ -418,8 +551,18 @@ private fun buildOpenSubAgentActionKey(path: String, thread: AgentSessionThread,
   return "$OPEN_SUB_AGENT_ACTION_KEY_PREFIX:$path:${thread.provider}:${thread.id}:${subAgent.id}"
 }
 
-private fun buildArchiveThreadActionKey(path: String, thread: AgentSessionThread): String {
-  return "$ARCHIVE_THREAD_ACTION_KEY_PREFIX:$path:${thread.provider}:${thread.id}"
+private fun buildArchiveThreadsActionKey(targets: List<ArchiveThreadTarget>): String {
+  val targetsKey = targets.map(::archiveTargetKey).sorted().joinToString("|")
+  return "$ARCHIVE_THREADS_ACTION_KEY_PREFIX:$targetsKey"
+}
+
+private fun buildUnarchiveThreadsActionKey(targets: List<ArchiveThreadTarget>): String {
+  val targetsKey = targets.map(::archiveTargetKey).sorted().joinToString("|")
+  return "$UNARCHIVE_THREADS_ACTION_KEY_PREFIX:$targetsKey"
+}
+
+private fun archiveTargetKey(target: ArchiveThreadTarget): String {
+  return "${target.path}:${target.thread.provider}:${target.thread.id}"
 }
 
 private fun logMissingProviderBridge(provider: AgentSessionProvider) {

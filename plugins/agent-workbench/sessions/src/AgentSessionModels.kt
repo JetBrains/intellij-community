@@ -12,6 +12,12 @@ data class AgentSessionThreadPreview(
 )
 
 @Immutable
+internal data class ArchiveThreadTarget(
+  @JvmField val path: String,
+  @JvmField val thread: AgentSessionThread,
+)
+
+@Immutable
 internal data class AgentSessionProviderWarning(
   val provider: AgentSessionProvider,
   @JvmField val message: String,

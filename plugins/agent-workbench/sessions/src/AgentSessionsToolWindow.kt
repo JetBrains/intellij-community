@@ -85,6 +85,7 @@ internal fun agentSessionsToolWindow(currentProject: Project) {
     onOpenSubAgent = { path, thread, subAgent -> service.openChatSubAgent(path, thread, subAgent, currentProject) },
     onCreateSession = { path, provider, mode -> service.createNewSession(path, provider, mode, currentProject) },
     onArchiveThread = { path, thread -> service.archiveThread(path, thread) },
+    onArchiveThreads = { targets -> service.archiveThreads(targets) },
     canArchiveThread = { thread -> service.canArchiveThread(thread) },
     treeUiState = uiStateService,
     lastUsedProvider = lastUsedProvider,
@@ -115,6 +116,9 @@ internal fun agentSessionsToolWindowContent(
   onOpenSubAgent: (String, AgentSessionThread, AgentSubAgent) -> Unit = { _, _, _ -> },
   onCreateSession: (String, AgentSessionProvider, AgentSessionLaunchMode) -> Unit = { _, _, _ -> },
   onArchiveThread: (String, AgentSessionThread) -> Unit = { _, _ -> },
+  onArchiveThreads: (List<ArchiveThreadTarget>) -> Unit = { targets ->
+    targets.forEach { target -> onArchiveThread(target.path, target.thread) }
+  },
   canArchiveThread: (AgentSessionThread) -> Boolean = { false },
   treeUiState: SessionsTreeUiState? = null,
   lastUsedProvider: AgentSessionProvider? = null,
@@ -154,6 +158,7 @@ internal fun agentSessionsToolWindowContent(
         onOpenSubAgent = onOpenSubAgent,
         onCreateSession = onCreateSession,
         onArchiveThread = onArchiveThread,
+        onArchiveThreads = onArchiveThreads,
         canArchiveThread = canArchiveThread,
         treeUiState = effectiveTreeUiState,
         lastUsedProvider = lastUsedProvider,

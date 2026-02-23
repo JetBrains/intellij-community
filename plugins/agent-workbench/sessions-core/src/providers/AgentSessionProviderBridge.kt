@@ -21,6 +21,9 @@ interface AgentSessionProviderBridge {
   val supportsArchiveThread: Boolean
     get() = false
 
+  val supportsUnarchiveThread: Boolean
+    get() = false
+
   fun isCliAvailable(): Boolean
 
   fun buildResumeCommand(sessionId: String): List<String>
@@ -32,6 +35,8 @@ interface AgentSessionProviderBridge {
   suspend fun createNewSession(path: String, mode: AgentSessionLaunchMode): AgentSessionLaunchSpec
 
   suspend fun archiveThread(path: String, threadId: String): Boolean = false
+
+  suspend fun unarchiveThread(path: String, threadId: String): Boolean = false
 
   fun isCliMissingError(throwable: Throwable): Boolean = false
 }

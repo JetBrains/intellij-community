@@ -304,6 +304,13 @@ internal class AgentSessionsLoadingCoordinator(
     }
   }
 
+  fun unsuppressArchivedThread(path: String, provider: AgentSessionProvider, threadId: String) {
+    val normalizedPath = normalizeAgentWorkbenchPath(path)
+    synchronized(archiveSuppressionsLock) {
+      archiveSuppressions.remove(ArchiveSuppression(path = normalizedPath, provider = provider, threadId = threadId))
+    }
+  }
+
   fun loadProjectThreadsOnDemand(path: String) {
     serviceScope.launch(Dispatchers.IO) {
       val normalized = normalizeAgentWorkbenchPath(path)

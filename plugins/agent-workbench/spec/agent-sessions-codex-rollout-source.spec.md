@@ -15,19 +15,19 @@ targets:
 # Codex Sessions Rollout Source
 
 Status: Draft
-Date: 2026-02-22
+Date: 2026-02-23
 
 ## Summary
-Define Codex thread-list behavior where discovery defaults to rollout files under `~/.codex/sessions`, while write/archive operations continue to use app-server RPC. This spec owns rollout parsing, watcher semantics, backend selection, and Codex activity derivation.
+Define Codex thread-list behavior where discovery defaults to rollout files under `~/.codex/sessions`, while write/archive/unarchive operations continue to use app-server RPC. This spec owns rollout parsing, watcher semantics, backend selection, and Codex activity derivation.
 
 ## Goals
 - Keep Codex thread indicators aligned with rollout activity data.
 - Keep app-server implementation available as explicit compatibility backend.
-- Support archive operations for rollout-discovered threads through shared app-server write path.
+- Support archive and archive-undo unarchive operations for rollout-discovered threads through shared app-server write path.
 - Keep backend policy independent from new-thread UI contracts.
 
 ## Non-goals
-- Archived-thread browsing or unarchive UX.
+- Archived-thread browsing and standalone unarchive entry points outside archive-undo flow.
 - Claude backend behavior.
 - Polling-based refresh loops.
 
@@ -96,7 +96,7 @@ Define Codex thread-list behavior where discovery defaults to rollout files unde
   - ready: `#3FE47E`.
   [@test] ../codex/sessions/testSrc/CodexRolloutSessionBackendTest.kt
 
-- Codex provider bridge must advertise archive capability and route archive calls through shared app-server service.
+- Codex provider bridge must advertise archive capability and route archive/unarchive calls through shared app-server service when unarchive is supported.
   [@test] ../codex/sessions/testSrc/CodexAgentSessionProviderBridgeTest.kt
   [@test] ../sessions/testSrc/CodexAppServerClientTest.kt
 
@@ -115,12 +115,13 @@ Define Codex thread-list behavior where discovery defaults to rollout files unde
 ## User Experience
 - Codex activity indicators should reflect recent rollout activity consistently.
 - Archive action remains available for Codex threads discovered from rollout source.
+- Archive undo should be available when Codex unarchive is supported by the active provider bridge.
 
 ## Data & Backend
 - `updatedAt` derives from latest event timestamp with file mtime fallback.
 - `response_item` contributes to activity timing but not title source extraction.
 - Branch value comes from rollout session metadata when present; no branch fallback store is used.
-- Listing stays rollout-backed by default; write operations (`thread/start`, `thread/archive`, persistence calls) remain app-server RPC.
+- Listing stays rollout-backed by default; write operations (`thread/start`, `thread/archive`, `thread/unarchive`, persistence calls) remain app-server RPC.
 
 ## Error Handling
 - Invalid override values must not disable Codex listing; fallback to rollout must apply.

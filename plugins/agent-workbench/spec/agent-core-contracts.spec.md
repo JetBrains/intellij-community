@@ -22,7 +22,7 @@ targets:
 # Agent Workbench Core Contracts
 
 Status: Draft
-Date: 2026-02-22
+Date: 2026-02-23
 
 ## Summary
 Define the single source of truth for cross-feature behavior that must stay consistent across Agent Threads, Agent Chat editor tabs, dedicated-frame routing, and provider-specific session actions.
@@ -76,6 +76,10 @@ Define the single source of truth for cross-feature behavior that must stay cons
 - `Archive Thread` visibility/enablement must be gated by provider archive capability consistently for both tree-row and editor-tab entry points.
   [@test] ../sessions/testSrc/AgentSessionsEditorTabActionsTest.kt
   [@test] ../sessions/testSrc/AgentSessionsServiceArchiveIntegrationTest.kt
+
+- Provider bridge unarchive capability is optional; unsupported providers must keep archive flow functional and must not block supported-provider unarchive restores.
+  [@test] ../sessions/testSrc/AgentSessionsServiceArchiveIntegrationTest.kt
+  [@test] ../codex/sessions/testSrc/CodexAgentSessionProviderBridgeTest.kt
 
 - `Select in Agent Threads` must call `ensureThreadVisible(path, provider, threadId)` before activating the Agent Threads tool window.
   [@test] ../sessions/testSrc/AgentSessionsEditorTabActionsTest.kt

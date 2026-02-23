@@ -10,7 +10,7 @@ targets:
 # Agent Threads Testing
 
 Status: Draft
-Date: 2026-02-22
+Date: 2026-02-23
 
 ## Summary
 Define required coverage ownership for Agent Workbench specs. This file does not redefine runtime behavior; it maps each contract area to mandatory test suites.
@@ -29,12 +29,16 @@ Define required coverage ownership for Agent Workbench specs. This file does not
 - Core contract coverage must include:
   - identity and command mapping,
   - shared editor-tab popup actions,
-  - archive gate behavior,
+  - archive gate behavior (including optional unarchive capability contract),
   - visibility primitive persistence.
   [@test] ../sessions/testSrc/AgentSessionCliTest.kt
   [@test] ../sessions/testSrc/AgentSessionsEditorTabActionsTest.kt
   [@test] ../sessions/testSrc/AgentSessionsServiceArchiveIntegrationTest.kt
+  [@test] ../codex/sessions/testSrc/CodexAgentSessionProviderBridgeTest.kt
   [@test] ../sessions/testSrc/AgentSessionsServiceOnDemandIntegrationTest.kt
+
+- Archive service coverage must include single-thread archive, multi-target archive with partial provider support, and unarchive restore behavior for supported providers.
+  [@test] ../sessions/testSrc/AgentSessionsServiceArchiveIntegrationTest.kt
 
 - Sessions aggregation/service coverage must include ordering, partial warning, blocking error, unknown counts, refresh bootstrap, on-demand dedup, and refresh concurrency.
   [@test] ../sessions/testSrc/AgentSessionLoadAggregationTest.kt
@@ -76,7 +80,7 @@ Define required coverage ownership for Agent Workbench specs. This file does not
 - Real-backend contract assertions must be invariant-based (ordering and archived consistency) and must not depend on user-specific thread IDs.
   [@test] ../sessions/testSrc/CodexAppServerClientTest.kt
 
-- Mock-backend contract assertions must additionally validate deterministic fixture IDs, archive mutation behavior, and idle-timeout lazy restart.
+- Mock-backend contract assertions must additionally validate deterministic fixture IDs, archive/unarchive mutation behavior, and idle-timeout lazy restart.
   [@test] ../sessions/testSrc/CodexAppServerClientTest.kt
 
 ## Requirement Ownership Matrix
@@ -93,7 +97,7 @@ Define required coverage ownership for Agent Workbench specs. This file does not
 ## Contract Suite
 - `CodexAppServerClientTest` is parameterized for mock backend and optional real `codex app-server` backend.
 - Both modes must assert invariant behavior: descending `updatedAt` ordering and archive flag consistency.
-- Mock mode additionally asserts deterministic IDs, archive mutation, and idle-timeout restart semantics.
+- Mock mode additionally asserts deterministic IDs, archive/unarchive mutation, and idle-timeout restart semantics.
 
 ## Integration Gating
 - Real backend runs only when `codex` CLI is resolvable.

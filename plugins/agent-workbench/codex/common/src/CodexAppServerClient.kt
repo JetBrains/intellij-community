@@ -146,6 +146,17 @@ class CodexAppServerClient(
     )
   }
 
+  suspend fun unarchiveThread(threadId: String) {
+    requestUnit(
+      method = "thread/unarchive",
+      paramsWriter = { generator ->
+        generator.writeStartObject()
+        generator.writeStringField("threadId", threadId)
+        generator.writeEndObject()
+      },
+    )
+  }
+
   /**
    * Sends a minimal [turn/start] for the given thread to force persistence so
    * that `codex resume <id>` can discover it.

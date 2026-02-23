@@ -31,6 +31,7 @@ import androidx.compose.ui.graphics.takeOrElse
 import androidx.compose.ui.text.TextLayoutResult
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
+import com.intellij.agent.workbench.common.normalizeAgentWorkbenchPath
 import org.jetbrains.jewel.foundation.ExperimentalJewelApi
 import org.jetbrains.jewel.foundation.lazy.SelectableLazyItemScope
 import org.jetbrains.jewel.foundation.lazy.tree.Tree
@@ -51,7 +52,8 @@ internal fun SelectableLazyItemScope.sessionTreeNodeContent(
   onOpenProject: (String) -> Unit,
   onRefresh: () -> Unit,
   onCreateSession: (String, AgentSessionProvider, AgentSessionLaunchMode) -> Unit = { _, _, _ -> },
-  onArchiveThread: (String, AgentSessionThread) -> Unit = { _, _ -> },
+  onArchiveThreads: (List<ArchiveThreadTarget>) -> Unit = {},
+  selectedArchiveTargets: List<ArchiveThreadTarget> = emptyList(),
   canArchiveThread: (AgentSessionThread) -> Boolean = { false },
   lastUsedProvider: AgentSessionProvider? = null,
   nowProvider: () -> Long,
@@ -70,11 +72,13 @@ internal fun SelectableLazyItemScope.sessionTreeNodeContent(
         else -> node.project.path
       }
       threadNodeRow(
+        path = path,
         thread = node.thread,
         nowProvider = nowProvider,
         parentWorktreeBranch = node.parentWorktreeBranch,
-        canArchiveThread = canArchiveThread(node.thread),
-        onArchiveThread = { onArchiveThread(path, node.thread) },
+        selectedArchiveTargets = selectedArchiveTargets,
+        canArchiveThread = canArchiveThread,
+        onArchiveThreads = onArchiveThreads,
       )
     }
     is SessionTreeNode.SubAgent -> subAgentNodeRow(
@@ -227,11 +231,13 @@ private fun SelectableLazyItemScope.projectNodeRow(
 @OptIn(ExperimentalJewelApi::class, ExperimentalFoundationApi::class)
 @Composable
 private fun SelectableLazyItemScope.threadNodeRow(
+  path: String,
   thread: AgentSessionThread,
   nowProvider: () -> Long,
   parentWorktreeBranch: String? = null,
-  canArchiveThread: Boolean = false,
-  onArchiveThread: (() -> Unit)? = null,
+  selectedArchiveTargets: List<ArchiveThreadTarget> = emptyList(),
+  canArchiveThread: (AgentSessionThread) -> Boolean = { false },
+  onArchiveThreads: ((List<ArchiveThreadTarget>) -> Unit)? = null,
 ) {
   val timestamp = thread.updatedAt.takeIf { it > 0 }
   val timeLabel = timestamp?.let { formatRelativeTimeShort(it, nowProvider()) }
@@ -246,7 +252,19 @@ private fun SelectableLazyItemScope.threadNodeRow(
     .copy(alpha = 0.55f)
   val providerLabel = providerLabel(thread.provider)
   val indicatorColor = if (branchMismatch) JewelTheme.globalColors.text.warning else threadIndicatorColor(thread)
-  val archiveLabel = AgentSessionsBundle.message("toolwindow.action.archive")
+  val normalizedPath = normalizeAgentWorkbenchPath(path)
+  val currentArchiveTarget = ArchiveThreadTarget(path = normalizedPath, thread = thread)
+  val useSelectedTargets = selectedArchiveTargets.size > 1 && selectedArchiveTargets.any { target ->
+    target.path == normalizedPath && target.thread.provider == thread.provider && target.thread.id == thread.id
+  }
+  val effectiveArchiveTargets = if (useSelectedTargets) selectedArchiveTargets else listOf(currentArchiveTarget)
+  val canArchiveAction = effectiveArchiveTargets.any { target -> canArchiveThread(target.thread) }
+  val archiveLabel = if (effectiveArchiveTargets.size > 1) {
+    AgentSessionsBundle.message("toolwindow.action.archive.selected.count", effectiveArchiveTargets.size)
+  }
+  else {
+    AgentSessionsBundle.message("toolwindow.action.archive")
+  }
   val threadTitle = thread.title
   var titleLayoutResult by remember { mutableStateOf<TextLayoutResult?>(null) }
   val isTitleOverflowed = titleLayoutResult?.hasVisualOverflow == true
@@ -304,13 +322,13 @@ private fun SelectableLazyItemScope.threadNodeRow(
       }
     }
 
-    if (canArchiveThread && onArchiveThread != null) {
+    if (canArchiveAction && onArchiveThreads != null) {
       ContextMenuArea(
         items = {
           listOf(
             ContextMenuItemOption(
               label = archiveLabel,
-              action = onArchiveThread,
+              action = { onArchiveThreads(effectiveArchiveTargets) },
             ),
           )
         },
