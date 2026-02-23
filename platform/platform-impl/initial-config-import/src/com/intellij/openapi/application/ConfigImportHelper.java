@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.application;
 
 import com.intellij.configurationStore.StoreUtilKt;
@@ -36,6 +36,7 @@ import com.intellij.openapi.application.migrations.CwmMigration261;
 import com.intellij.openapi.application.migrations.Localization242;
 import com.intellij.openapi.application.migrations.NotebooksMigration242;
 import com.intellij.openapi.application.migrations.SpaceMigration252;
+import com.intellij.openapi.application.migrations.VcsPluginsMigration261;
 import com.intellij.openapi.components.StoragePathMacros;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.PluginId;
@@ -1123,6 +1124,7 @@ public final class ConfigImportHelper {
     new NotebooksMigration242().migratePlugins(options);
     new SpaceMigration252().migratePlugins(options);
     new BigDataToolsMigration253().migratePlugins(options);
+    new VcsPluginsMigration261().migratePlugins(options);
     new CwmMigration261().migratePlugins(options);
   }
 
