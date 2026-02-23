@@ -1,6 +1,5 @@
 package com.intellij.selucene.backend.providers.files
 
-import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.application.readAction
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
@@ -41,15 +40,12 @@ import org.apache.lucene.search.Query
 import java.io.IOException
 import java.nio.file.Files
 import java.nio.file.Paths
-import kotlin.io.path.div
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.seconds
 
 @Service(Service.Level.PROJECT)
 internal class FileIndex(val project: Project, val coroutineScope: CoroutineScope) {
-  private val luceneIndex = LuceneIndex(project, coroutineScope, let {
-    PathManager.getSystemDir() / "luceneIndex" / SeLuceneProviderIdUtils.LUCENE_FILES
-  })
+  private val luceneIndex = LuceneIndex(project, coroutineScope, SeLuceneProviderIdUtils.LUCENE_FILES)
   private val scheduledIndexingOps = Channel<LuceneFileIndexOperation>(capacity = Channel.UNLIMITED)
 
   init {
@@ -153,10 +149,10 @@ internal class FileIndex(val project: Project, val coroutineScope: CoroutineScop
   // TODO figure out why old files no longer show up. They ARE returned from this search function after all.
   //   SeLuceneFilesProvider performs refiltering: val virtualFile = VirtualFileManager.getInstance().findFileByNioPath(Path.of((it.path))) ?: return@collect
   // TODO Store virtual file ID in the index to allow efficient retrieval later.
-  fun search(params: SeParams) = {
-    val query = buildQuery(params);
+  fun search(params: SeParams): Flow<LuceneFileSearchResult> {
+    val query = buildQuery(params)
     LOG.debug { "Search for ${params.inputQuery} with ${params.filter} was translated into Lucene Query: $query" }
-    luceneIndex.search(query).map { (scoreDoc, doc) ->
+    return luceneIndex.search(query).map { (scoreDoc, doc) ->
       LOG.debug { "Search \"${params.inputQuery}\" returned $doc with score ${scoreDoc.score}" }
       val name = doc.get(FILE_NAME)
       val path = doc.get(FILE_ABSOLUTE_PATH)

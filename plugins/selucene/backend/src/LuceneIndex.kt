@@ -1,6 +1,7 @@
 package com.intellij.selucene.backend
 
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.project.getProjectDataPath
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.ensureActive
@@ -20,10 +21,14 @@ import org.apache.lucene.search.SearcherManager
 import org.apache.lucene.search.TopDocs
 import org.apache.lucene.store.FSDirectory
 import java.nio.file.Path
+import kotlin.io.path.div
 
 
-class LuceneIndex(val project: Project, val coroutineScope: CoroutineScope, indexPath: Path) {
-  private val directory = FSDirectory.open(indexPath);
+class LuceneIndex(val project: Project, val coroutineScope: CoroutineScope, indexName: String) {
+  private val indexPath: Path = let {
+    project.getProjectDataPath("luceneIndex") / indexName
+  }
+  private val directory = FSDirectory.open(indexPath)
   private var writer: IndexWriter = createWriter()
 
   //TODO use a separate background thread, that periodically calls ReferenceManager.maybeRefresh()
