@@ -51,33 +51,30 @@ internal class FileIndex(val project: Project, val coroutineScope: CoroutineScop
   private val scheduledIndexingOps = Channel<LuceneFileIndexOperation>(capacity = Channel.UNLIMITED)
 
   init {
-    DumbService.getInstance(project).runWhenSmart {
-      coroutineScope.launch {
-        // Wait until config is loaded and we can expect `ProjectFileIndex.getInstance()` to return the files to index.
-        //Observation.awaitConfiguration(project)
+    coroutineScope.launch {
+      // Wait until config is loaded and we can expect `ProjectFileIndex.getInstance()` to return the files to index.
+      //Observation.awaitConfiguration(project)
 
+      LOG.debug { "File Index in ${project.name} project stated processing changes..." }
 
-        LOG.debug { "File Index in ${project.name} project stated processing changes..." }
+      scheduledIndexingOps.consumeAsFlow().debounceBatch(1.seconds).collect { ops ->
+        if (ops.size == 1) {
+          processFileIndexOp(ops.first())
+          return@collect
+        }
 
-        scheduledIndexingOps.consumeAsFlow().debounceBatch(1.seconds).collect { ops ->
-          if (ops.size == 1) {
-            processFileIndexOp(ops.first())
-            return@collect
-          }
+        if (ops.any { it is LuceneFileIndexOperation.IndexAll }) {
+          // If ANY one of the ops is a reindexing request, we can also drop all other updates, as the updated state will be picked up by the reindexing anyways.
+          processFileIndexOp(LuceneFileIndexOperation.IndexAll)
+        }
+        else {
+          // Since all others are ReindexFiles, we can merge them to reduce the number of times indexing runs:
+          val merged_files = ops.asSequence()
+            .filterIsInstance<LuceneFileIndexOperation.ReindexFiles>()
+            .flatMap { it.addedFiles }
+            .toList()
 
-          if (ops.any { it is LuceneFileIndexOperation.IndexAll }) {
-            // If ANY one of the ops is a reindexing request, we can also drop all other updates, as the updated state will be picked up by the reindexing anyways.
-            processFileIndexOp(LuceneFileIndexOperation.IndexAll)
-          }
-          else {
-            // Since all others are ReindexFiles, we can merge them to reduce the number of times indexing runs:
-            val merged_files = ops.asSequence()
-              .filterIsInstance<LuceneFileIndexOperation.ReindexFiles>()
-              .flatMap { it.addedFiles }
-              .toList()
-
-            processFileIndexOp(LuceneFileIndexOperation.ReindexFiles(merged_files))
-          }
+          processFileIndexOp(LuceneFileIndexOperation.ReindexFiles(merged_files))
         }
       }
     }
