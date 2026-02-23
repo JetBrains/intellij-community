@@ -2,14 +2,13 @@
 
 package org.jetbrains.kotlin.idea.compilerPlugin.kotlinxSerialization.maven
 
-import com.intellij.openapi.project.Project
 import org.jetbrains.idea.maven.project.MavenProject
 import org.jetbrains.kotlin.idea.base.plugin.artifacts.KotlinArtifacts
 import org.jetbrains.kotlin.idea.compilerPlugin.CompilerPluginSetup
 import org.jetbrains.kotlin.idea.maven.compilerPlugin.AbstractMavenImportHandler
 import java.nio.file.Path
 
-class KotlinSerializationMavenImportHandler(project: Project) : AbstractMavenImportHandler(project) {
+class KotlinSerializationMavenImportHandler : AbstractMavenImportHandler() {
     override val compilerPluginId: String = "org.jetbrains.kotlinx.serialization"
     override val pluginName: String = "serialization"
     override val mavenPluginArtifactName: String = "kotlin-maven-serialization"

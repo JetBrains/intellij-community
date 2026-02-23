@@ -2,7 +2,6 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.kotlin.idea.compilerPlugin.lombok.maven
 
-import com.intellij.openapi.project.Project
 import org.jetbrains.idea.maven.project.MavenProject
 import org.jetbrains.kotlin.idea.base.plugin.artifacts.KotlinArtifacts
 import org.jetbrains.kotlin.idea.compilerPlugin.CompilerPluginSetup.PluginOption
@@ -12,7 +11,7 @@ import org.jetbrains.kotlin.lombok.LombokPluginNames.PLUGIN_ID
 import java.io.File
 import java.nio.file.Path
 
-class LombokMavenProjectImportHandler(project: Project) : AbstractMavenImportHandler(project) {
+class LombokMavenProjectImportHandler : AbstractMavenImportHandler() {
     override val compilerPluginId: String = PLUGIN_ID
     override val pluginName: String = MAVEN_SUBPLUGIN_NAME
     override val mavenPluginArtifactName: String = "kotlin-maven-lombok"

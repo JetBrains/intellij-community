@@ -2,12 +2,10 @@
 
 package org.jetbrains.kotlin.idea.maven.compilerPlugin
 
-import com.intellij.openapi.project.Project
 import org.jdom.Element
 import org.jdom.Text
 import org.jetbrains.idea.maven.project.MavenProject
 import org.jetbrains.kotlin.config.IKotlinFacetSettings
-import org.jetbrains.kotlin.idea.compiler.configuration.KotlinPluginLayoutService
 import org.jetbrains.kotlin.idea.compilerPlugin.CompilerPluginSetup
 import org.jetbrains.kotlin.idea.compilerPlugin.CompilerPluginSetup.PluginOption
 import org.jetbrains.kotlin.idea.compilerPlugin.modifyCompilerArgumentsForPluginWithFacetSettings
@@ -15,7 +13,7 @@ import org.jetbrains.kotlin.idea.maven.MavenProjectImportHandler
 import java.nio.file.Path
 import org.jetbrains.kotlin.idea.maven.findKotlinPlugin
 
-abstract class AbstractMavenImportHandler(protected val project: Project) : MavenProjectImportHandler {
+abstract class AbstractMavenImportHandler : MavenProjectImportHandler {
     abstract val compilerPluginId: String
     abstract val pluginName: String
     abstract val mavenPluginArtifactName: String
@@ -51,9 +49,8 @@ abstract class AbstractMavenImportHandler(protected val project: Project) : Mave
             ?.mapTo(mutableListOf()) { (it as Text).text }
             ?: mutableListOf<String>()
 
-        val layoutService = KotlinPluginLayoutService.getInstance(project)
         // We can't use the plugin from Gradle as it may have the incompatible version
-        val classpath = listOf(layoutService.resolveRelativeToRemoteKotlinc(pluginJarFileFromIdea))
+        val classpath = listOf(pluginJarFileFromIdea)
 
         val options = getOptions(mavenProject, enabledCompilerPlugins, compilerPluginOptions) ?: return null
         return CompilerPluginSetup(options, classpath)

@@ -5,7 +5,6 @@
 
 package org.jetbrains.kotlin.idea.compilerPlugin.assignment.maven
 
-import com.intellij.openapi.project.Project
 import org.jetbrains.idea.maven.project.MavenProject
 import org.jetbrains.kotlin.assignment.plugin.AssignmentPluginNames.ANNOTATION_OPTION_NAME
 import org.jetbrains.kotlin.assignment.plugin.AssignmentPluginNames.PLUGIN_ID
@@ -14,7 +13,7 @@ import org.jetbrains.kotlin.idea.compilerPlugin.CompilerPluginSetup.PluginOption
 import org.jetbrains.kotlin.idea.maven.compilerPlugin.AbstractMavenImportHandler
 import java.nio.file.Path
 
-class AssignmentMavenProjectImportHandler(project: Project) : AbstractMavenImportHandler(project) {
+class AssignmentMavenProjectImportHandler : AbstractMavenImportHandler() {
     private companion object {
         const val ANNOTATION_PARAMETER_PREFIX = "assignment:$ANNOTATION_OPTION_NAME="
     }

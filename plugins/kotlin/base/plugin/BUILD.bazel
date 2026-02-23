@@ -50,7 +50,6 @@ jvm_library(
     "//platform/util",
     "//platform/lang-core",
     "//platform/platform-impl/update-checker",
-    "//platform/eel-provider",
   ],
   runtime_deps = ["//platform/util/trove"]
 )
@@ -103,7 +102,6 @@ jvm_library(
     "//platform/lang-core",
     "//plugins/kotlin/util/project-model-updater",
     "//platform/platform-impl/update-checker",
-    "//platform/eel-provider",
   ]
 )
 ### auto-generated section `build intellij.kotlin.base.plugin` end

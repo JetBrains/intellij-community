@@ -14,7 +14,7 @@ import org.jetbrains.kotlin.idea.maven.compilerPlugin.AbstractMavenImportHandler
 import java.nio.file.Path
 import org.jetbrains.kotlin.idea.maven.getKotlinPlugin
 
-class AllOpenMavenProjectImportHandler(project: Project) : AbstractMavenImportHandler(project) {
+class AllOpenMavenProjectImportHandler : AbstractMavenImportHandler() {
     override val compilerPluginId: String = PLUGIN_ID
     override val pluginName: String = "allopen"
     override val mavenPluginArtifactName: String = "kotlin-maven-allopen"
