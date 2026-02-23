@@ -16,6 +16,7 @@ import com.intellij.openapi.externalSystem.service.project.manage.ExternalSystem
 import com.intellij.openapi.externalSystem.service.project.settings.BeforeRunTaskImporter
 import com.intellij.openapi.externalSystem.service.project.settings.ConfigurationHandler
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil
+import com.intellij.openapi.progress.runBlockingCancellable
 import com.intellij.openapi.project.Project
 import com.intellij.project.stateStore
 import com.intellij.util.ObjectUtils.consumeIfCast
@@ -143,7 +144,10 @@ class IDEAProjectFilesPostProcessor: ConfigurationHandler {
       return
     }
 
-    activator.addTask(taskActivationEntry)
+   activator.addTask(taskActivationEntry)
+    runBlockingCancellable {
+      project.stateStore.save(forceSavingAllSettings = true)
+    }
     val f = File(projectData.linkedExternalProjectPath).toPath()
     val extProjectDir = if (f.isDirectory()) {
       f
