@@ -884,40 +884,42 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
     Map<SearchRequestCollector, Processor<? super PsiReference>> collectors = new HashMap<>();
     collectors.put(collector, processor);
 
-    ProgressIndicator progress = getOrCreateIndicator();
-    if (appendCollectorsFromQueryRequests(progress, collectors) == QueryRequestsRunResult.STOPPED) {
-      return false;
-    }
-    do {
-      Map<TextIndexQuery, Collection<RequestWithProcessor>> globals = new HashMap<>();
-      List<Computable<Boolean>> customs = new ArrayList<>();
-      Set<RequestWithProcessor> locals = new LinkedHashSet<>();
-      Map<RequestWithProcessor, Processor<? super CandidateFileInfo>> localProcessors = new HashMap<>();
-      distributePrimitives(collectors, locals, globals, customs, localProcessors);
-      if (!processGlobalRequestsOptimized(globals, progress, localProcessors)) {
+    return ConcurrencyUtils.runWithIndicatorOrContextCancellation((__) -> {
+      ProgressIndicator progress = getOrCreateIndicator();
+      if (appendCollectorsFromQueryRequests(progress, collectors) == QueryRequestsRunResult.STOPPED) {
         return false;
       }
-      for (RequestWithProcessor local : locals) {
-        progress.checkCanceled();
-        if (!processSingleRequest(local.request, local.refProcessor)) {
+      do {
+        Map<TextIndexQuery, Collection<RequestWithProcessor>> globals = new HashMap<>();
+        List<Computable<Boolean>> customs = new ArrayList<>();
+        Set<RequestWithProcessor> locals = new LinkedHashSet<>();
+        Map<RequestWithProcessor, Processor<? super CandidateFileInfo>> localProcessors = new HashMap<>();
+        distributePrimitives(collectors, locals, globals, customs, localProcessors);
+        if (!processGlobalRequestsOptimized(globals, progress, localProcessors)) {
           return false;
         }
-      }
-      for (Computable<Boolean> custom : customs) {
-        progress.checkCanceled();
-        if (!custom.compute()) {
+        for (RequestWithProcessor local : locals) {
+          progress.checkCanceled();
+          if (!processSingleRequest(local.request, local.refProcessor)) {
+            return false;
+          }
+        }
+        for (Computable<Boolean> custom : customs) {
+          progress.checkCanceled();
+          if (!custom.compute()) {
+            return false;
+          }
+        }
+        QueryRequestsRunResult result = appendCollectorsFromQueryRequests(progress, collectors);
+        if (result == QueryRequestsRunResult.STOPPED) {
           return false;
         }
+        else if (result == QueryRequestsRunResult.UNCHANGED) {
+          return true;
+        }
       }
-      QueryRequestsRunResult result = appendCollectorsFromQueryRequests(progress, collectors);
-      if (result == QueryRequestsRunResult.STOPPED) {
-        return false;
-      }
-      else if (result == QueryRequestsRunResult.UNCHANGED) {
-        return true;
-      }
-    }
-    while (true);
+      while (true);
+    });
   }
 
   private static @NotNull ProgressIndicator getOrCreateIndicator() {
