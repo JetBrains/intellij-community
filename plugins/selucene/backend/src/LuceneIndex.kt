@@ -35,6 +35,7 @@ class LuceneIndex(val project: Project, val coroutineScope: CoroutineScope, inde
   //TODO use a separate background thread, that periodically calls ReferenceManager.maybeRefresh()
   private var searcherManager: SearcherManager = SearcherManager(writer, SearcherFactory())
 
+  //TODO implement some recovery logic when index creation fails.
   private fun createWriter(): IndexWriter {
     val analyzer = StandardAnalyzer()
     val config = IndexWriterConfig(analyzer)
