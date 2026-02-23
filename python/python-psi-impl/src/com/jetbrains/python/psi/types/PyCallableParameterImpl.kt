@@ -128,7 +128,7 @@ class PyCallableParameterImpl @JvmOverloads internal constructor(
       if (parameterType is PyCollectionType) {
         parameterType.elementTypes.getOrNull(1)
       }
-      else if (parameterType is PyUnpackedKeywordContainerType) {
+      else if (parameterType is PyUnpackedTypedDictType) {
         parameterType.wrapperType
       }
       else {

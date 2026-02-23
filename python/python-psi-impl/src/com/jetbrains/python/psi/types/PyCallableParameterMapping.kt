@@ -307,7 +307,7 @@ object PyCallableParameterMapping {
     context: TypeEvalContext,
   ): Boolean {
     val expectedHasUnpackedTD = expectedCallableParameters.lastOrNull()
-      ?.takeIf { it.isKeywordContainer && it.getType(context) is PyUnpackedKeywordContainerType } != null
+      ?.takeIf { it.isKeywordContainer && it.getType(context) is PyUnpackedTypedDictType } != null
     val actualHasKeywordContainer = actualCallableParameters.lastOrNull()
       ?.takeIf { it.isKeywordContainer } != null
 

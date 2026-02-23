@@ -31,7 +31,7 @@ import com.jetbrains.python.psi.types.PyCallableParameter;
 import com.jetbrains.python.psi.types.PyCallableParameterImpl;
 import com.jetbrains.python.psi.types.PyCallableType;
 import com.jetbrains.python.psi.types.PyType;
-import com.jetbrains.python.psi.types.PyUnpackedKeywordContainerType;
+import com.jetbrains.python.psi.types.PyUnpackedTypedDictType;
 import com.jetbrains.python.psi.types.TypeEvalContext;
 import org.jetbrains.annotations.ApiStatus;
 import one.util.streamex.StreamEx;
@@ -259,8 +259,8 @@ public final class ParamHelper {
       .flatMap(param -> {
         if (param.isKeywordContainer()) {
           PyType paramType = param.getType(context);
-          if (paramType instanceof PyUnpackedKeywordContainerType unpackedKeywordContainerType) {
-            return StreamEx.of(unpackedKeywordContainerType.getUnpackedParameters());
+          if (paramType instanceof PyUnpackedTypedDictType unpackedTypedDictType) {
+            return StreamEx.of(unpackedTypedDictType.getUnpackedParameters());
           }
         }
         return StreamEx.of(param);

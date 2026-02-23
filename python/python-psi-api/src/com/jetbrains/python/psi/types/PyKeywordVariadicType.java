@@ -19,7 +19,7 @@ import org.jetbrains.annotations.ApiStatus;
  * }</pre>
  *
  * @see PyVariadicType
- * @see PyUnpackedKeywordContainerType
+ * @see PyUnpackedTypedDictType
  */
 @ApiStatus.Experimental
 public non-sealed interface PyKeywordVariadicType extends PyVariadicType {

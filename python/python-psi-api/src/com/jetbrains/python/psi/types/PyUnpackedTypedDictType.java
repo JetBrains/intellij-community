@@ -28,7 +28,7 @@ import java.util.List;
  * (e.g., the TypedDict) from which they are derived.
  */
 @ApiStatus.Experimental
-public interface PyUnpackedKeywordContainerType extends PyKeywordVariadicType {
+public interface PyUnpackedTypedDictType extends PyKeywordVariadicType {
 
   @NotNull List<PyCallableParameter> getUnpackedParameters();
 

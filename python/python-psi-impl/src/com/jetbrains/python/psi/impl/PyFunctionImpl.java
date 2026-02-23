@@ -89,6 +89,7 @@ import com.jetbrains.python.psi.types.PyTypeChecker;
 import com.jetbrains.python.psi.types.PyTypeInferenceCspFactory;
 import com.jetbrains.python.psi.types.PyTypedDictType;
 import com.jetbrains.python.psi.types.PyUnionType;
+import com.jetbrains.python.psi.types.PyUnpackedTypedDictTypeImpl;
 import com.jetbrains.python.psi.types.TypeEvalContext;
 import com.jetbrains.python.sdk.legacy.PythonSdkUtil;
 import org.jetbrains.annotations.NotNull;
@@ -498,7 +499,7 @@ public class PyFunctionImpl extends PyBaseElementImpl<PyFunctionStub> implements
       if (parameter instanceof PyNamedParameter namedParameter &&
           namedParameter.isKeywordContainer() &&
           context.getType(namedParameter) instanceof PyTypedDictType typedDictType) {
-        PyUnpackedKeywordContainerType keywordContainerType = new PyUnpackedKeywordContainerType(typedDictType);
+        PyUnpackedTypedDictTypeImpl keywordContainerType = new PyUnpackedTypedDictTypeImpl(typedDictType);
         parameters.add(PyCallableParameterImpl.keywordNonPsi(parameter.getName(), keywordContainerType));
       }
       else {
