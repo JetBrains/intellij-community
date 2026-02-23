@@ -13,6 +13,7 @@
     <orderEntry type="module" module-name="intellij.agent.workbench.chat" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.agent.workbench.claude.common" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.agent.workbench.codex.common" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.agent.workbench.sessions.core" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.agent.workbench.sessions" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.agent.workbench.codex.sessions" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.agent.workbench.claude.sessions" scope="RUNTIME" />

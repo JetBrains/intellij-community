@@ -28,7 +28,7 @@ private data class AgentSessionProviderBridgeSnapshot(
   }
 }
 
-internal interface AgentSessionProviderRegistry {
+interface AgentSessionProviderRegistry {
   fun find(provider: AgentSessionProvider): AgentSessionProviderBridge?
 
   fun allBridges(): List<AgentSessionProviderBridge>
@@ -87,7 +87,7 @@ private fun snapshotOrEmpty(): AgentSessionProviderBridgeSnapshot {
   }
 }
 
-internal class InMemoryAgentSessionProviderRegistry(
+class InMemoryAgentSessionProviderRegistry(
   bridges: Iterable<AgentSessionProviderBridge>,
 ) : AgentSessionProviderRegistry {
   private val snapshot = buildAgentSessionProviderBridgeSnapshot(bridges)
@@ -105,7 +105,7 @@ internal class InMemoryAgentSessionProviderRegistry(
   }
 }
 
-internal object AgentSessionProviderBridges {
+object AgentSessionProviderBridges {
   private val epRegistry: AgentSessionProviderRegistry = EpBackedAgentSessionProviderRegistry()
   private val testOverrideLock = Any()
 
@@ -128,7 +128,7 @@ internal object AgentSessionProviderBridges {
     return activeRegistry().allBridges()
   }
 
-  internal fun <T> withRegistryForTest(registry: AgentSessionProviderRegistry, action: () -> T): T {
+  fun <T> withRegistryForTest(registry: AgentSessionProviderRegistry, action: () -> T): T {
     return synchronized(testOverrideLock) {
       val previous = testRegistryOverride
       testRegistryOverride = registry

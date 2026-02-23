@@ -25,7 +25,7 @@ jvm_library(
     "//plugins/agent-workbench/codex/common",
     "//plugins/agent-workbench/common",
     "//plugins/agent-workbench/json",
-    "//plugins/agent-workbench/sessions",
+    "//plugins/agent-workbench/sessions-core:agent-workbench-sessions-core",
     "//libraries/jackson/jackson",
   ]
 )
@@ -56,8 +56,8 @@ jvm_library(
     "//plugins/agent-workbench/common:common_test_lib",
     "//plugins/agent-workbench/json",
     "//plugins/agent-workbench/json:json_test_lib",
-    "//plugins/agent-workbench/sessions",
-    "//plugins/agent-workbench/sessions:sessions_test_lib",
+    "//plugins/agent-workbench/sessions-core:agent-workbench-sessions-core",
+    "//plugins/agent-workbench/sessions-core:agent-workbench-sessions-core_test_lib",
     "//libraries/jackson/jackson",
     "//libraries/jackson/jackson:jackson_test_lib",
     "//libraries/junit5",

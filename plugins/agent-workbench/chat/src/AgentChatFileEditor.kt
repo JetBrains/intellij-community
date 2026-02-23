@@ -3,6 +3,9 @@ package com.intellij.agent.workbench.chat
 
 // @spec community/plugins/agent-workbench/spec/agent-chat-editor.spec.md
 
+import com.intellij.openapi.actionSystem.ActionGroup
+import com.intellij.openapi.actionSystem.ActionManager
+import com.intellij.openapi.actionSystem.DefaultActionGroup
 import com.intellij.openapi.fileEditor.FileEditor
 import com.intellij.openapi.fileEditor.FileEditorState
 import com.intellij.openapi.project.Project
@@ -15,11 +18,17 @@ import java.beans.PropertyChangeListener
 import javax.swing.JComponent
 import javax.swing.JPanel
 
+private const val NEW_THREAD_FROM_EDITOR_TAB_ACTION_ID = "AgentWorkbenchChat.NewThreadFromEditorTab"
+
 internal class AgentChatFileEditor(
   private val project: Project,
   private val file: AgentChatVirtualFile,
 ) : UserDataHolderBase(), FileEditor {
   private val component = JPanel(BorderLayout())
+  private val editorTabActions: ActionGroup? by lazy {
+    val action = ActionManager.getInstance().getAction(NEW_THREAD_FROM_EDITOR_TAB_ACTION_ID) ?: return@lazy null
+    action as? ActionGroup ?: DefaultActionGroup(action)
+  }
   private var tab: TerminalToolWindowTab? = null
   private var initializationStarted: Boolean = false
   private var disposed: Boolean = false
@@ -32,6 +41,8 @@ internal class AgentChatFileEditor(
   }
 
   override fun getName(): String = file.threadTitle
+
+  override fun getTabActions(): ActionGroup? = editorTabActions
 
   override fun setState(state: FileEditorState) = Unit
 

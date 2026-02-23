@@ -2,7 +2,7 @@
   <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
   <dependencies>
     <module name="intellij.agent.workbench.claude.common"/>
-    <module name="intellij.agent.workbench.sessions"/>
+    <module name="intellij.agent.workbench.sessions.core"/>
   </dependencies>
   <!-- endregion -->
 

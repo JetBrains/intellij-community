@@ -5,16 +5,10 @@
     <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
     <module name="intellij.agent.workbench.common"/>
     <module name="intellij.agent.workbench.chat"/>
+    <module name="intellij.agent.workbench.sessions.core"/>
     <module name="intellij.platform.compose"/>
     <!-- endregion -->
   </dependencies>
-
-  <extensionPoints>
-    <extensionPoint
-      qualifiedName="com.intellij.agent.workbench.sessionProviderBridge"
-      interface="com.intellij.agent.workbench.sessions.providers.AgentSessionProviderBridge"
-      dynamic="true"/>
-  </extensionPoints>
 
   <extensions defaultExtensionNs="com.intellij">
     <toolWindow
@@ -33,6 +27,9 @@
     <statusBarWidgetFactory
       id="claude.quota"
       implementation="com.intellij.agent.workbench.sessions.claude.ClaudeQuotaStatusBarWidgetFactory"/>
+    <applicationService
+      serviceInterface="com.intellij.agent.workbench.sessions.AgentThreadQuickStartService"
+      serviceImplementation="com.intellij.agent.workbench.sessions.AgentThreadQuickStartServiceImpl"/>
   </extensions>
 
   <actions resource-bundle="messages.AgentSessionsBundle">

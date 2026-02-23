@@ -28,6 +28,9 @@
 - name: lib/modules/intellij.agent.workbench.json.jar
   contentModules:
   - name: intellij.agent.workbench.json
+- name: lib/modules/intellij.agent.workbench.sessions.core.jar
+  contentModules:
+  - name: intellij.agent.workbench.sessions.core
 - name: lib/modules/intellij.agent.workbench.sessions.jar
   contentModules:
   - name: intellij.agent.workbench.sessions

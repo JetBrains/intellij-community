@@ -1,0 +1,14 @@
+<idea-plugin>
+  <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
+  <dependencies>
+    <module name="intellij.agent.workbench.common"/>
+  </dependencies>
+  <!-- endregion -->
+
+  <extensionPoints>
+    <extensionPoint
+      qualifiedName="com.intellij.agent.workbench.sessionProviderBridge"
+      interface="com.intellij.agent.workbench.sessions.providers.AgentSessionProviderBridge"
+      dynamic="true"/>
+  </extensionPoints>
+</idea-plugin>

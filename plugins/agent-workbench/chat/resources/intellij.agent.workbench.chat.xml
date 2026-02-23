@@ -2,6 +2,7 @@
   <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
   <dependencies>
     <module name="intellij.agent.workbench.common"/>
+    <module name="intellij.agent.workbench.sessions.core"/>
     <module name="intellij.terminal.frontend"/>
   </dependencies>
   <!-- endregion -->
@@ -15,4 +16,11 @@
     <fileEditorProvider id="agent.workbench-chat-editor" implementation="com.intellij.agent.workbench.chat.AgentChatFileEditorProvider"/>
     <editorTabTitleProvider implementation="com.intellij.agent.workbench.chat.AgentChatEditorTabTitleProvider"/>
   </extensions>
+
+  <actions resource-bundle="messages.AgentChatBundle">
+    <action
+      id="AgentWorkbenchChat.NewThreadFromEditorTab"
+      class="com.intellij.agent.workbench.chat.AgentChatNewThreadFromEditorTabAction"
+      icon="AllIcons.General.Add"/>
+  </actions>
 </idea-plugin>
