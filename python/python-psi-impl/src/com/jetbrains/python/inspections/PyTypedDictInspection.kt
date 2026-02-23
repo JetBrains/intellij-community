@@ -361,10 +361,11 @@ class PyTypedDictInspection : PyInspection() {
 
       if (kwContainerType is PyTypedDictType) {
         val fieldNames = kwContainerType.fields.keys
+        val typedDictName = kwContainerType.name
         parameters
           .mapNotNull { it.asNamed }
           .filter { !it.isPositionalOnly && it.name in fieldNames }
-          .forEach { registerProblem(it, PyPsiBundle.message("INSP.typeddict.parameter.overlaps.with.typed.dict", it.name)) }
+          .forEach { registerProblem(it, PyPsiBundle.message("INSP.typeddict.parameter.overlaps.with.typed.dict", it.name, typedDictName)) }
       }
     }
 

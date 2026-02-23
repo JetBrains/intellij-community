@@ -1269,7 +1269,7 @@ public class PyTypedDictInspectionTest extends PyInspectionTestCase {
         v2: NotRequired[str]
         v3: Required[str]
     
-    def foo1(<warning descr="Parameter 'v1' overlaps with TypedDict">v1: int</warning>, <warning descr="Parameter 'v2' overlaps with TypedDict">v2: str</warning>, **kwargs: Unpack[TD1]) -> None:
+    def foo1(<warning descr="Named parameter 'v1' conflicts with a field of the TypedDict 'TD1'">v1: int</warning>, <warning descr="Named parameter 'v2' conflicts with a field of the TypedDict 'TD1'">v2: str</warning>, **kwargs: Unpack[TD1]) -> None:
         ...
     def foo1(v1: int, v2: str, /, **kwargs: Unpack[TD1]) -> None: # pos-only OK
         ...
