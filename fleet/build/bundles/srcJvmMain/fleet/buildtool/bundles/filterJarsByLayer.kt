@@ -19,8 +19,7 @@ import kotlin.io.path.name
 import kotlin.io.path.readBytes
 
 @OptIn(ExperimentalPathApi::class)
-fun filterJarsByLayer(
-  runtimeClasspathByLayer: Map<LayerSelector, Set<Path>>,
+internal fun Map<LayerSelector, Set<Path>>.filterJarsByLayer(
   alreadyIncludedJarsByLayer: Map<LayerSelector, Set<Path>>,
   outputDirectory: Path,
   logger: Logger,
@@ -28,7 +27,7 @@ fun filterJarsByLayer(
   outputDirectory.deleteRecursively()
   outputDirectory.createDirectories()
 
-  val moduleJarsByLayer = runtimeClasspathByLayer.mapNotNull { (layerSelector, jarsCollection) ->
+  val moduleJarsByLayer = this.mapNotNull { (layerSelector, jarsCollection) ->
     val jars = jarsCollection.unwrapJarFiles()
     require(jars.all { it.extension == "jar" }) {
       "must have only jar files in runtime classpath for layer '${layerSelector.selector}', but got: ${jars}"

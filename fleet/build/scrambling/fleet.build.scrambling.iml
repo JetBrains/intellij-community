@@ -12,12 +12,6 @@
             <stringArg name="apiVersion" arg="2.3" />
             <stringArg name="languageVersion" arg="2.3" />
           </stringArguments>
-          <arrayArguments>
-            <arrayArg name="pluginClasspaths">
-              <args>$KOTLIN_BUNDLED$/lib/kotlinx-serialization-compiler-plugin.jar</args>
-            </arrayArg>
-            <arrayArg name="pluginOptions" />
-          </arrayArguments>
         </compilerArguments>
       </configuration>
     </facet>
@@ -31,15 +25,7 @@
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="library" name="kotlin-stdlib" level="project" />
-    <orderEntry type="module" module-name="fleet.build.codecache" />
-    <orderEntry type="module" module-name="fleet.build.scrambling" />
-    <orderEntry type="module" module-name="fleet.build.sign" />
-    <orderEntry type="module" module-name="fleet.codecache" />
-    <orderEntry type="module" module-name="fleet.build.fs" />
-    <orderEntry type="module" module-name="fleet.bundles" />
     <orderEntry type="library" name="kotlinx-coroutines-core" level="project" />
     <orderEntry type="library" name="slf4j-api" level="project" />
-    <orderEntry type="library" name="kotlinx-serialization-core" level="project" />
-    <orderEntry type="library" name="kotlinx-serialization-json" level="project" />
   </component>
 </module>

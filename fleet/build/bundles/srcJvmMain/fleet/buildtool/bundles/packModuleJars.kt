@@ -3,38 +3,82 @@ package fleet.buildtool.bundles
 import fleet.buildtool.codecache.ModulePacker
 import fleet.buildtool.codecache.ModuleToPack
 import fleet.buildtool.codecache.NativeLibraryExtractor
-import fleet.buildtool.codecache.PackedJar
-import fleet.buildtool.codecache.kotlinStdlibJarNamePattern
 import fleet.buildtool.codecache.shadowing.ShadowedJarSpec
+import fleet.buildtool.scrambling.JarScrambler
 import fleet.bundles.LayerSelector
 import org.slf4j.Logger
 import java.nio.file.Path
+import kotlin.collections.toList
+import kotlin.io.path.createDirectories
+import kotlin.io.path.listDirectoryEntries
+import kotlin.plus
 
-fun packModuleJars(
-  moduleJarsByLayer: Map<LayerSelector, Collection<Path>>,
+
+internal suspend fun Map<LayerSelector, Collection<Path>>.packModuleJars(
+  shouldPackModuleJars: Boolean,
+  fullClassPath: Map<LayerSelector, Collection<Path>>,
   outputDirectory: Path,
   logger: Logger,
   pluginId: String,
+  scrambler: JarScrambler,
 ): Map<LayerSelector, Collection<Path>> {
 
-  val packer = ModulePacker(
-    directory = outputDirectory,
-    nativeLibraryExtractor = NativeLibraryExtractor.Noop, // TODO: Native ModulesExtractor
-    version = null,
-    logger = logger,
-    shadowedJarSpecs = listOf(licenseClientShadowedJarSpec),
-  )
+  return when {
+    !shouldPackModuleJars -> this // Do nothing, return the current map
+    else -> {
+      val packer = ModulePacker(
+        directory = outputDirectory,
+        nativeLibraryExtractor = NativeLibraryExtractor.Noop,
+        version = null,
+        logger = logger,
+        shadowedJarSpecs = listOf(licenseClientShadowedJarSpec),
+      )
 
-  return moduleJarsByLayer.mapValues { (layerSelector, jars) ->
-    val packedModule = packer.packModule(
-      object : ModuleToPack {
-        override val name: String = "$pluginId.${layerSelector.selector}"
-        override val filesToPack: List<Path> = jars.toList()
-      })
-    packedModule.jarFiles.map { it.path }
+      this.mapValues { (layerSelector, jars) ->
+        packModuleLayer(layerSelector, jars, packer, fullClassPath, outputDirectory, logger, pluginId, scrambler)
+      }
+    }
   }
 }
 
+private suspend fun packModuleLayer(
+  layerSelector: LayerSelector,
+  jars: Collection<Path>,
+  packer: ModulePacker,
+  fullClassPath: Map<LayerSelector, Collection<Path>>,
+  outputDirectory: Path,
+  logger: Logger,
+  pluginId: String,
+  scrambler: JarScrambler,
+): Collection<Path> {
+  val packedModule = packer.packModule(
+    object : ModuleToPack {
+      override val name: String = "$pluginId.${layerSelector.selector}"
+      override val filesToPack: List<Path> = jars.toList()
+    })
+  val (toScramble, nonScrambledJars) = packedModule.jarFiles.partition { it.needsScrambling }
+
+
+  val scrambledJars = when {
+    toScramble.isNotEmpty() -> {
+      val scrambledJarsOutputDirectory = outputDirectory.resolve("scrambled")
+      scrambledJarsOutputDirectory.createDirectories()
+      val fullClassPathForLayer = fullClassPath[layerSelector]?.toList() ?: emptyList()
+      logger.warn("Scrambling jars for layer '${layerSelector.selector}': ${fullClassPathForLayer.joinToString("\n")}")
+      scrambler.scramble(
+        classpath = fullClassPathForLayer,
+        jarsToScramble = toScramble.map { it.path },
+        outputDirectory = scrambledJarsOutputDirectory,
+        logger = logger,
+        passthroughJars = emptyList(),
+      )
+      scrambledJarsOutputDirectory.listDirectoryEntries()
+    }
+    else -> listOf()
+  }
+
+  return nonScrambledJars.map { it.path } + scrambledJars
+}
 
 private val licenseClientShadowedJarSpec = ShadowedJarSpec(
   allowedConsumerModule = "SHIP.common",

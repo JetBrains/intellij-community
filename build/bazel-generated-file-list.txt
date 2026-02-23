@@ -226,6 +226,7 @@ fleet/build/http
 fleet/build/license
 fleet/build/platform
 fleet/build/s3
+fleet/build/scrambling
 fleet/build/sign
 fleet/bundles
 fleet/codecache

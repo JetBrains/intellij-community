@@ -1,0 +1,45 @@
+### auto-generated section `build fleet.build.scrambling` start
+load("//build:compiler-options.bzl", "create_kotlinc_options")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
+
+create_kotlinc_options(
+  name = "custom_scrambling",
+  opt_in = [
+    "kotlinx.coroutines.ExperimentalCoroutinesApi",
+    "kotlin.ExperimentalStdlibApi",
+  ],
+  x_consistent_data_class_copy_visibility = True,
+  x_context_parameters = True,
+  x_jvm_default = "all-compatibility",
+  x_lambdas = "class"
+)
+
+resourcegroup(
+  name = "scrambling_resources",
+  srcs = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_library(
+  name = "scrambling",
+  module_name = "fleet.build.scrambling",
+  visibility = ["//visibility:public"],
+  srcs = glob(["srcJvmMain/**/*.kt", "srcJvmMain/**/*.java", "srcJvmMain/**/*.form"], allow_empty = True, exclude = ["**/module-info.java"]),
+  resources = [":scrambling_resources"],
+  kotlinc_opts = ":custom_scrambling",
+  deps = [
+    "@lib//:kotlin-stdlib",
+    "@lib//:kotlinx-coroutines-core",
+    "@lib//:slf4j-api",
+  ]
+)
+
+jvm_library(
+  name = "scrambling_test_lib",
+  module_name = "fleet.build.scrambling",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True, exclude = ["**/module-info.java"]),
+  kotlinc_opts = ":custom_scrambling",
+  runtime_deps = [":scrambling"]
+)
+### auto-generated section `build fleet.build.scrambling` end

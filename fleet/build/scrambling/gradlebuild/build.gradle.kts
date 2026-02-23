@@ -10,7 +10,6 @@ plugins {
   alias(libs.plugins.dokka)
   // GRADLE_PLUGINS__MARKER_START
   id("fleet-module")
-  alias(jps.plugins.kotlin.serialization)
   // GRADLE_PLUGINS__MARKER_END
 }
 
@@ -56,18 +55,6 @@ kotlin {
       isTransitive = false
       exclude(group = "org.slf4j", module = "slf4j-jdk14")
     }
-    implementation(jps.org.jetbrains.kotlinx.kotlinx.serialization.core.jvm1739247612.get().let { "${it.group}:kotlinx-serialization-core:${it.version}" }) {
-      isTransitive = false
-    }
-    implementation(jps.org.jetbrains.kotlinx.kotlinx.serialization.json.jvm231489733.get().let { "${it.group}:kotlinx-serialization-json:${it.version}" }) {
-      isTransitive = false
-    }
-    implementation(project(":fleet.build.codecache"))
-    implementation(project(":fleet.build.scrambling"))
-    implementation(project(":fleet.build.sign"))
-    implementation(project(":fleet.codecache"))
-    implementation(project(":fleet.build.fs"))
-    implementation(project(":fleet.bundles"))
   }
   // KOTLIN__MARKER_END
 }

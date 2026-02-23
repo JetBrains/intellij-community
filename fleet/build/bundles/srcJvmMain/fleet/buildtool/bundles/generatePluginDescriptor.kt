@@ -5,6 +5,7 @@ import fleet.buildtool.codecache.findModuleDescriptor
 import fleet.buildtool.fs.zip
 import fleet.buildtool.sign.FleetSigner
 import fleet.buildtool.sign.jetSignJsonContentType
+import fleet.buildtool.scrambling.JarScrambler
 import fleet.bundles.Coordinates
 import fleet.bundles.CoordinatesPlatform
 import fleet.bundles.KnownCoordinatesMeta
@@ -23,8 +24,6 @@ import fleet.bundles.eliminateIntersections
 import fleet.bundles.encodeToSignableString
 import fleet.codecache.CodeCacheHasher
 import fleet.codecache.resourceUrl
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.runBlocking
 import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.builtins.ListSerializer
 import kotlinx.serialization.json.Json
@@ -54,7 +53,7 @@ internal const val defaultIconMarketplaceFilepath = "pluginIcon.svg"
 internal const val darkIconMarketplaceFilepath = "pluginIcon_dark.svg"
 
 @OptIn(ExperimentalPathApi::class, ExperimentalSerializationApi::class)
-fun generatePluginDescriptor(
+suspend fun generatePluginDescriptor(
   pluginId: String,
   pluginVersion: String,
   shipVersion: PluginVersion,
@@ -73,8 +72,11 @@ fun generatePluginDescriptor(
   alreadyIncludedJarsByLayer: Map<LayerSelector, Set<Path>>,
   resources: List<FleetResource>,
 
+  shouldPackModuleJars: Boolean,
+
   logger: Logger,
   signer: FleetSigner,
+  scrambler: JarScrambler,
 
   pluginPartsFileOutput: Path,
   pluginDescriptorFileOutput: Path,
@@ -94,28 +96,31 @@ fun generatePluginDescriptor(
 
   val temporaryDir = createTempDirectory("resolvedConfigurationCache")
 
-  val dependencies = runBlocking(Dispatchers.IO) {
-    logger.info("[fleet-dependencies] Resolving Marketplace and project plugins dependencies for requirements map...")
-    val dependencies = resolvePluginsDependencies(
-      // we cannot use the resolved configuration built by [GenerateResolvedPluginsConfigurationTask] as it includes that plugin itself, it has a different purpose all together, see [GenerateResolvedPluginsConfigurationTask]'s description
-      cacheDirectory = temporaryDir,
-      projectPluginDescriptors = projectPluginsPluginDescriptors,
-      projectPluginResolvedPluginConfigurations = projectPluginResolvedPluginConfigurations,
-      shipVersion = shipVersion,
-      logger = logger,
-    )
-    dependencies.bundlesToLoad.associate { descriptor ->
-      descriptor.name to CompatibleWith(descriptor.version)
-    }.filter { (name, _) -> name.name != "SHIP" }
-  }
+  logger.info("[fleet-dependencies] Resolving Marketplace and project plugins dependencies for requirements map...")
+  val resolvedDependencies = resolvePluginsDependencies(
+    // we cannot use the resolved configuration built by [GenerateResolvedPluginsConfigurationTask] as it includes that plugin itself, it has a different purpose all together, see [GenerateResolvedPluginsConfigurationTask]'s description
+    cacheDirectory = temporaryDir,
+    projectPluginDescriptors = projectPluginsPluginDescriptors,
+    projectPluginResolvedPluginConfigurations = projectPluginResolvedPluginConfigurations,
+    shipVersion = shipVersion,
+    logger = logger,
+  )
+  val dependencies = resolvedDependencies.bundlesToLoad.associate { descriptor ->
+    descriptor.name to CompatibleWith(descriptor.version)
+  }.filter { (name, _) -> name.name != "SHIP" }
 
   val pluginName = PluginName(pluginId)
   val pluginVersion = PluginVersion.fromString(pluginVersion)
 
+  val outputModuleJarsByLayer =
+    runtimeClasspathByLayer
+      .filterJarsByLayer(alreadyIncludedJarsByLayer, temporaryDir.resolve("filteredJars"), logger)
+      .packModuleJars(shouldPackModuleJars, runtimeClasspathByLayer, temporaryDir.resolve("packedJars"), logger, pluginId, scrambler)
 
-  val filteredDir = pluginDescriptorFileOutput.parent.resolve("filteredJarsDir")
-  val filteredModuleJarsByLayer = filterJarsByLayer(runtimeClasspathByLayer, alreadyIncludedJarsByLayer, filteredDir, logger)
-  val outputModuleJarsByLayer = packModuleJars(filteredModuleJarsByLayer, jarsUsedInDescriptor, logger, pluginId)
+  outputModuleJarsByLayer.flatMap { (_, paths) -> paths }
+    .forEach {
+      it.copyTo(jarsUsedInDescriptor.resolve(it.name), overwrite = true)
+    }
 
   val documentationZipsDirectory = temporaryDir.resolve("documentationZips").also {
     // recreating directories so that build will be reproducible
