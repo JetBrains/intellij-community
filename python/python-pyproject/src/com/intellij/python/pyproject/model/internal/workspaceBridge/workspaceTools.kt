@@ -7,6 +7,7 @@ import com.intellij.openapi.util.NlsSafe
 import com.intellij.platform.backend.workspace.workspaceModel
 import com.intellij.platform.workspace.jps.JpsImportedEntitySource
 import com.intellij.platform.workspace.jps.entities.ContentRootEntity
+import com.intellij.platform.workspace.jps.entities.ContentRootEntityBuilder
 import com.intellij.platform.workspace.jps.entities.DependencyScope
 import com.intellij.platform.workspace.jps.entities.ExternalSystemModuleOptionsEntity
 import com.intellij.platform.workspace.jps.entities.FacetEntityBuilder
@@ -69,8 +70,25 @@ internal suspend fun rebuildProjectModel(project: Project, files: FSWalkInfoWith
       renameSameModule(syncStorage, projectStorage)
       relocateFacetAndSdk(syncStorage, projectStorage)
       projectStorage.replaceBySource({ it.isPythonEntity }, syncStorage)
+
+      // For some reason, WSM duplicates sources instead of merging them, so we remove duplicates
+      for (moduleEntity in projectStorage.entities(ModuleEntity::class.java).filter { it.entitySource.isPythonEntity }) {
+        for (contentRoot in moduleEntity.contentRoots) {
+          if (contentRoot.sourceRoots.size > 1) {
+            projectStorage.modifyContentRootEntity(contentRoot) {
+              removeSrcDuplicates()
+            }
+          }
+        }
+      }
+
     }
   }
+}
+
+private fun ContentRootEntityBuilder.removeSrcDuplicates() {
+  val newSourceRoots = sourceRoots.distinctBy { it.url }
+  sourceRoots = newSourceRoots
 }
 
 private fun renameSameModule(syncStorage: EntityStorage, projectStorage: MutableEntityStorage) {
