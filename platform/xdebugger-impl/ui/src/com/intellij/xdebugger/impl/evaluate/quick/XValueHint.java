@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.xdebugger.impl.evaluate.quick;
 
 import com.intellij.codeInsight.hint.HintUtil;
@@ -251,6 +251,7 @@ public class XValueHint extends AbstractValueHint {
         private XFullValueEvaluator myFullValueEvaluator;
         private boolean myShown = false;
         private SimpleColoredComponent mySimpleColoredComponent;
+        private @Nullable HintPresentation myHintPresentation;
 
         @Override
         public void applyPresentation(@Nullable Icon icon,
@@ -264,16 +265,24 @@ public class XValueHint extends AbstractValueHint {
           SimpleColoredText text = new SimpleColoredText();
           XValueNodeImpl.buildText(valuePresenter, text, false);
 
+          HintPresentation presentation = new HintPresentation(icon, text, hasChildren, valuePresenter, myFullValueEvaluator);
+          myHintPresentation = presentation;
+
           if (!hasChildren) {
-            showTooltipPopup(createHintComponent(icon, text, valuePresenter, myFullValueEvaluator));
+            // show simple popup if there are no children
+            mySimpleColoredComponent = null;
+            showTooltipPopup(createHintComponent(presentation.icon(), presentation.text(),
+                                                 presentation.valuePresentation(), presentation.evaluator()));
           }
           else if (getType() == ValueHintType.MOUSE_CLICK_HINT) {
+            // show full evaluation popup if the hint is explicitly requested
             if (!myShown) {
-              Runnable showPopupRunnable = getShowPopupRunnable(result, myFullValueEvaluator);
+              Runnable showPopupRunnable = getShowPopupRunnable(result, presentation.evaluator());
               showPopupRunnable.run();
             }
           }
           else {
+            // show simple popup, which can be expanded to the full one
             if (getType() == ValueHintType.MOUSE_OVER_HINT) {
               if (myFromKeyboard) {
                 text.insert(0, "(" + KeymapUtil.getFirstKeyboardShortcutText("ShowErrorDescription") + ") ",
@@ -289,25 +298,16 @@ public class XValueHint extends AbstractValueHint {
             }
 
             // On presentation change we update our shown popup and resize if needed
-            if (mySimpleColoredComponent != null) {
-              if (mySimpleColoredComponent instanceof SimpleColoredComponentWithProgress) {
-                ((SimpleColoredComponentWithProgress)mySimpleColoredComponent).stopLoading();
-              }
-              Icon previousIcon = mySimpleColoredComponent.getIcon();
-              var previousPreferredWidth = mySimpleColoredComponent.getPreferredSize().width;
-
-              mySimpleColoredComponent.clear();
-              fillSimpleColoredComponent(mySimpleColoredComponent, previousIcon, text, myFullValueEvaluator);
-
-              var delta = mySimpleColoredComponent.getPreferredSize().width - previousPreferredWidth;
-              if (delta < 0) return;
-
-              resizePopup(delta, 0);
+            if (updateShownExpandableHint(presentation)) {
               return;
             }
 
-            mySimpleColoredComponent = createExpandableHintComponent(icon, text, getShowPopupRunnable(result, myFullValueEvaluator), myFullValueEvaluator, valuePresenter);
+            mySimpleColoredComponent = createExpandableHintComponent(presentation.icon(), presentation.text(),
+                                                                     getShowPopupRunnable(result, presentation.evaluator()),
+                                                                     presentation.evaluator(), presentation.valuePresentation());
             if (mySimpleColoredComponent instanceof SimpleColoredComponentWithProgress) {
+              // TODO: it seems like that we are skipping "Collecting data..." this way, assuming that it will be the first presentation
+              //   But this is not a correct way, UI should send "Collecting data..." presentation instead of the backend
               ((SimpleColoredComponentWithProgress)mySimpleColoredComponent).startLoading();
             }
             showTooltipPopup(mySimpleColoredComponent);
@@ -318,11 +318,55 @@ public class XValueHint extends AbstractValueHint {
         @Override
         public void setFullValueEvaluator(@NotNull XFullValueEvaluator fullValueEvaluator) {
           myFullValueEvaluator = fullValueEvaluator;
+          if (!myShown || isHintHidden()) {
+            return;
+          }
+          if (myHintPresentation == null) {
+            return;
+          }
+
+          HintPresentation presentation = new HintPresentation(
+            myHintPresentation.icon(), myHintPresentation.text(), myHintPresentation.hasChildren(),
+            myHintPresentation.valuePresentation(), fullValueEvaluator
+          );
+          myHintPresentation = presentation;
+
+          if (!presentation.hasChildren()) {
+            showTooltipPopup(createHintComponent(presentation.icon(), presentation.text(),
+                                                 presentation.valuePresentation(), presentation.evaluator()));
+            return;
+          }
+
+          updateShownExpandableHint(presentation);
         }
 
         @Override
         public boolean isObsolete() {
           return isHintHidden();
+        }
+
+        /**
+         * Updates the currently displayed hint with new content based on the provided {@link presentation}.
+         * If the hint component's preferred size changes as a result of the update, the popup is resized accordingly.
+         */
+        private boolean updateShownExpandableHint(@NotNull HintPresentation presentation) {
+          if (mySimpleColoredComponent == null) {
+            return false;
+          }
+          if (mySimpleColoredComponent instanceof SimpleColoredComponentWithProgress) {
+            ((SimpleColoredComponentWithProgress)mySimpleColoredComponent).stopLoading();
+          }
+          Icon previousIcon = mySimpleColoredComponent.getIcon();
+          var previousPreferredWidth = mySimpleColoredComponent.getPreferredSize().width;
+
+          mySimpleColoredComponent.clear();
+          fillSimpleColoredComponent(mySimpleColoredComponent, previousIcon, presentation.text(), presentation.evaluator());
+
+          var delta = mySimpleColoredComponent.getPreferredSize().width - previousPreferredWidth;
+          if (delta > 0) {
+            resizePopup(delta, 0);
+          }
+          return true;
         }
       }, XValuePlace.TOOLTIP);
     }
@@ -349,5 +393,12 @@ public class XValueHint extends AbstractValueHint {
       });
       LOG.debug("Cannot evaluate '" + myExpression + "':" + errorMessage);
     }
+  }
+
+  private record HintPresentation(@Nullable Icon icon,
+                                  @NotNull SimpleColoredText text,
+                                  boolean hasChildren,
+                                  @NotNull XValuePresentation valuePresentation,
+                                  @Nullable XFullValueEvaluator evaluator) {
   }
 }
