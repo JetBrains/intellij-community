@@ -231,7 +231,8 @@ internal class DevkitHotReloadCommandLinePatcher : RunConfigurationExtension() {
     if (configuration !is JavaRunConfigurationBase) return
 
     if (params.mainClass != "org.jetbrains.intellij.build.devServer.DevMainKt"
-        && params.mainClass != "com.intellij.idea.Main") {
+        && params.mainClass != "com.intellij.idea.Main"
+        && params.mainClass != "com.android.tools.idea.Main") {
       // only IDE build configurations supported here so far
       return
     }
