@@ -1,5 +1,6 @@
 package com.intellij.searchEverywhereLucene.backend.providers.files
 
+import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.readAction
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
@@ -51,6 +52,9 @@ internal class FileIndex(val project: Project, val coroutineScope: CoroutineScop
   private val scheduledIndexingOps = Channel<LuceneFileIndexOperation>(capacity = Channel.UNLIMITED)
 
   init {
+    Disposer.register(SearchEverywhereLucenePluginDisposable.getInstance(project),this)
+    Disposer.register(this, luceneIndex)
+
     coroutineScope.launch {
       // Wait until config is loaded and we can expect `ProjectFileIndex.getInstance()` to return the files to index.
       //Observation.awaitConfiguration(project)
@@ -171,6 +175,9 @@ internal class FileIndex(val project: Project, val coroutineScope: CoroutineScop
       LuceneFileSearchResult(name, path, scoreDoc.score)
     }
   }
+
+  override fun dispose() {}
+
 
   companion object {
     fun getInstance(project: Project): FileIndex = project.service()
