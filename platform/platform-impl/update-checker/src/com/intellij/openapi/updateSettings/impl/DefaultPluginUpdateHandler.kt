@@ -12,7 +12,7 @@ import javax.swing.JComponent
 
 @OptIn(IntellijInternalApi::class)
 @ApiStatus.Internal
-object DefaultPluginUpdateHandler : PluginUpdateHandler {
+class DefaultPluginUpdateHandler : PluginUpdateHandler {
   private val downloaders = ConcurrentHashMap<String, PluginDownloaders>()
 
   override suspend fun loadAndStorePluginUpdates(

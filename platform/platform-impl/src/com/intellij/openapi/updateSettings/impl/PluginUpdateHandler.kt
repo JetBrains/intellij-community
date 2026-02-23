@@ -3,9 +3,7 @@ package com.intellij.openapi.updateSettings.impl
 
 import com.intellij.ide.plugins.api.PluginDto
 import com.intellij.ide.plugins.newui.PluginUiModel
-import com.intellij.openapi.components.serviceOrNull
 import com.intellij.openapi.progress.ProgressIndicator
-import com.intellij.openapi.util.registry.Registry
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.Transient
 import org.jetbrains.annotations.ApiStatus
@@ -23,12 +21,7 @@ interface PluginUpdateHandler {
   suspend fun ignorePluginUpdates(sessionId: String)
 
   companion object {
-    fun getInstance(): PluginUpdateHandler {
-      if (Registry.`is`("reworked.plugin.updater", false)) {
-        return serviceOrNull<PluginUpdateHandler>() ?: DefaultPluginUpdateHandler
-      }
-      return DefaultPluginUpdateHandler
-    }
+    fun getInstance(): PluginUpdateHandler = PluginUpdateHandlerProvider.getInstance().getPluginUpdateHandler()
   }
 }
 
