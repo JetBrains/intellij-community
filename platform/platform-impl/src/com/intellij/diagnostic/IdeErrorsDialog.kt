@@ -468,17 +468,17 @@ open class IdeErrorsDialog @ApiStatus.Internal @JvmOverloads constructor(
       myPrivacyNotice.panel.isVisible = false
     }
     val pluginId = cluster.pluginId
-    val plugin = cluster.plugin
+    val pluginInfo = cluster.pluginInfo
     val info = StringBuilder()
 
     if (t is RemoteSerializedThrowable && t.headerPrefix != null) {
       info.append("[${t.headerPrefix}] ")
     }
 
-    if (pluginId != null && !t.isSpecialBackendException()) {
-      val name = if (plugin != null) plugin.name else pluginId.toString()
-      if (plugin != null && (!plugin.isBundled || plugin.allowBundledUpdate())) {
-        info.append(DiagnosticBundle.message("error.list.message.blame.plugin.version", name, plugin.version))
+    if (pluginId != null) {
+      val name = if (pluginInfo != null) pluginInfo.name else pluginId.toString()
+      if (pluginInfo != null && (!pluginInfo.isBundled || pluginInfo.allowsBundledUpdate)) {
+        info.append(DiagnosticBundle.message("error.list.message.blame.plugin.version", name, pluginInfo.version))
       }
       else {
         info.append(DiagnosticBundle.message("error.list.message.blame.plugin", name))
@@ -537,12 +537,12 @@ open class IdeErrorsDialog @ApiStatus.Internal @JvmOverloads constructor(
     val date = DateFormatUtil.formatPrettyDateTime(cluster.messages[count - 1].date)
     myDetailsLabel.text = DiagnosticBundle.message("error.list.message.info", date, count)
     val submitter = cluster.submitter
-    if (submitter == null && plugin != null && !PluginManagerCore.isDevelopedByJetBrains(plugin)) {
+    if (submitter == null && pluginInfo != null && !PluginManagerCore.isDevelopedByJetBrains(pluginInfo.pluginId, pluginInfo.vendor, pluginInfo.organization)) {
       myForeignPluginWarningLabel.isVisible = true
-      val vendor = plugin.vendor
+      val vendor = pluginInfo.vendor
       val vendorUrl =
-        plugin.vendorUrl?.trim()?.let { URLUtil.addSchemaIfMissing(it) }?.takeIf(::isValidUrl)
-        ?: plugin.vendorEmail?.trim()?.let { "mailto:" + it.removePrefix("mailto:") }?.takeIf(::isValidUrl)
+        pluginInfo.vendorUrl?.trim()?.let { URLUtil.addSchemaIfMissing(it) }?.takeIf(::isValidUrl)
+        ?: pluginInfo.vendorEmail?.trim()?.let { "mailto:" + it.removePrefix("mailto:") }?.takeIf(::isValidUrl)
       myForeignPluginWarningLabel.text = when {
         !vendor.isNullOrEmpty() && vendorUrl != null -> DiagnosticBundle.message("error.dialog.foreign.plugin.warning", vendor, vendorUrl)
         vendorUrl != null -> DiagnosticBundle.message("error.dialog.foreign.plugin.warning.unnamed", vendorUrl)
@@ -613,7 +613,7 @@ open class IdeErrorsDialog @ApiStatus.Internal @JvmOverloads constructor(
       return false
     }
 
-    val events = arrayOf(IdeaLoggingEvent(pair.first, pair.second, message.includedAttachments, cluster.plugin, message))
+    val events = arrayOf(IdeaLoggingEvent(pair.first, pair.second, message.includedAttachments, cluster.pluginInfo, message))
     var parentComponent: Container = rootPane
     if (dialogClosed) {
       val frame = ComponentUtil.getParentOfType(IdeFrame::class.java, parentComponent)
@@ -630,7 +630,7 @@ open class IdeErrorsDialog @ApiStatus.Internal @JvmOverloads constructor(
   }
 
   private fun disablePlugin() {
-    selectedCluster()?.plugin?.let { plugin ->
+    selectedCluster()?.pluginInfo?.let { plugin ->
       DisablePluginsDialog.confirmDisablePlugins(myProject, listOf(plugin))
     }
   }
@@ -962,11 +962,6 @@ open class IdeErrorsDialog @ApiStatus.Internal @JvmOverloads constructor(
     this is RemoteSerializedThrowable && classFqn == T::class.qualifiedName
 
   private inline fun <reified T : Throwable> Throwable.isInstance() = this is T || isBackendInstance<T>()
-
-  // Since we do not handle Freezes/Abstract Methods/JBR Crashes gracefully for now. TODO: IJPL-182368
-  private fun Throwable.isSpecialBackendException() =
-    this is RemoteSerializedThrowable &&
-    (isInstance<AbstractMethodError>() || isInstance<Freeze>() || isInstance<JBRCrash>() || isInstance<KotlinCompilerCrash>())
 
   // This is a very hacky method, since no actual cast is done for `RemoteSerializedThrowable``
   private val Throwable.kotlinVersionOrEmpty: String

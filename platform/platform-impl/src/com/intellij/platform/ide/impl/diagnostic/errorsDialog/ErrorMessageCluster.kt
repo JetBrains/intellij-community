@@ -2,23 +2,23 @@
 package com.intellij.platform.ide.impl.diagnostic.errorsDialog
 
 import com.intellij.diagnostic.AbstractMessage
-import com.intellij.diagnostic.DefaultIdeaErrorLogger
 import com.intellij.diagnostic.MessagePool
 import com.intellij.diagnostic.RecoveredThrowable
-import com.intellij.ide.plugins.IdeaPluginDescriptor
-import com.intellij.ide.plugins.PluginManagerCore
-import com.intellij.ide.plugins.PluginUtil
 import com.intellij.openapi.diagnostic.ErrorReportSubmitter
+import com.intellij.openapi.diagnostic.ProblematicPluginInfo
 import com.intellij.openapi.extensions.PluginId
 
 /**
  * Describes a group of errors with the same stracktrace in [com.intellij.diagnostic.IdeErrorsDialog].
  */
-internal class ErrorMessageCluster(val messages: List<AbstractMessage>) {
+internal class ErrorMessageCluster(
+  val messages: List<AbstractMessage>,
+  val pluginId: PluginId?,
+  val pluginInfo: ProblematicPluginInfo?,
+  val submitter: ErrorReportSubmitter?
+) {
   val first = messages.first()
-  val pluginId: PluginId? = PluginUtil.getInstance().findPluginId(first.throwable)
-  val plugin: IdeaPluginDescriptor? = PluginManagerCore.getPlugin(pluginId)
-  val submitter: ErrorReportSubmitter? = DefaultIdeaErrorLogger.findSubmitter(first.throwable, plugin)
+
   @Volatile
   var detailsText: String? = detailsText()
 
