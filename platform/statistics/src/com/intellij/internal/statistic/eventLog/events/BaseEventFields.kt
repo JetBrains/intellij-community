@@ -54,11 +54,28 @@ abstract class StringEventField(override val name: String) : PrimitiveEventField
 
   data class ValidatedByAllowedValues(@NonNls @EventFieldName override val name: String,
                                       val allowedValues: List<String>,
+                                      @NonNls override val description: String? = null) : StringEventField(name) {
+    constructor(name: String, allowedValues: List<String>) : this(name, allowedValues, null)
+
+    override val validationRule: List<String>
+      get() = listOf("{enum:${allowedValues.joinToString("|")}}")
+  }
+
+  /**
+   * String event field validated against a predefined list of allowed values,
+   * with optional support for required and default value validation rules.
+   *
+   * @param name name of the field
+   * @param allowedValues list of allowed values for the field
+   * @param description optional description of the field
+   * @param required whether the field is required
+   * @param defaultValue optional default value applied when the field is missing or invalid
+   */
+  data class ValidatedByAllowedValuesExtended(@NonNls @EventFieldName override val name: String,
+                                      val allowedValues: List<String>,
                                       @NonNls override val description: String? = null,
                                       override val required: Boolean? = null,
                                       override val defaultValue: String? = null) : StringEventField(name) {
-    constructor(name: String, allowedValues: List<String>) : this(name, allowedValues, null)
-
     override val validationRule: List<String>
       get() = buildList {
         add("{enum:${allowedValues.joinToString("|")}}")
