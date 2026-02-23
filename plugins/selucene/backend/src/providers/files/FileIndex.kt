@@ -6,10 +6,10 @@ import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.ProjectFileIndex
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.platform.backend.observation.Observation
 import com.intellij.platform.searchEverywhere.SeParams
 import com.intellij.selucene.backend.LuceneIndex
 import com.intellij.selucene.common.SeLuceneProviderIdUtils
@@ -49,9 +49,12 @@ internal class FileIndex(val project: Project, val coroutineScope: CoroutineScop
   private val scheduledIndexingOps = Channel<LuceneFileIndexOperation>(capacity = Channel.UNLIMITED)
 
   init {
-    coroutineScope.launch {
-      // Wait until config is loaded and we can expect `ProjectFileIndex.getInstance()` to return the files to index.
-      Observation.awaitConfiguration(project)
+    DumbService.getInstance(project).runWhenSmart {
+      coroutineScope.launch {
+        // Wait until config is loaded and we can expect `ProjectFileIndex.getInstance()` to return the files to index.
+        //Observation.awaitConfiguration(project)
+
+        LOG.debug { "File Index in ${project.name} project stated processing changes..." }
 
         scheduledIndexingOps.consumeAsFlow().debounceBatch(1.seconds).collect { ops ->
           if (ops.size == 1) {
