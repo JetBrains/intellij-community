@@ -9,9 +9,11 @@ import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.ProjectFileIndex
+import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.platform.searchEverywhere.SeParams
 import com.intellij.searchEverywhereLucene.backend.LuceneIndex
+import com.intellij.searchEverywhereLucene.backend.SearchEverywhereLucenePluginDisposable
 import com.intellij.searchEverywhereLucene.common.SearchEverywhereLuceneProviderIdUtils
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -44,7 +46,7 @@ import kotlin.time.Duration
 import kotlin.time.Duration.Companion.seconds
 
 @Service(Service.Level.PROJECT)
-internal class FileIndex(val project: Project, val coroutineScope: CoroutineScope) {
+internal class FileIndex(val project: Project, val coroutineScope: CoroutineScope) : Disposable {
   private val luceneIndex = LuceneIndex(project, coroutineScope, SearchEverywhereLuceneProviderIdUtils.LUCENE_FILES)
   private val scheduledIndexingOps = Channel<LuceneFileIndexOperation>(capacity = Channel.UNLIMITED)
 
@@ -53,6 +55,7 @@ internal class FileIndex(val project: Project, val coroutineScope: CoroutineScop
       coroutineScope.launch {
         // Wait until config is loaded and we can expect `ProjectFileIndex.getInstance()` to return the files to index.
         //Observation.awaitConfiguration(project)
+
 
         LOG.debug { "File Index in ${project.name} project stated processing changes..." }
 

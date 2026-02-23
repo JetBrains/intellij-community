@@ -1,5 +1,6 @@
 package com.intellij.searchEverywhereLucene.backend
 
+import com.intellij.openapi.Disposable
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.getProjectDataPath
 import kotlinx.coroutines.CoroutineScope
@@ -20,11 +21,12 @@ import org.apache.lucene.search.SearcherFactory
 import org.apache.lucene.search.SearcherManager
 import org.apache.lucene.search.TopDocs
 import org.apache.lucene.store.FSDirectory
+import java.io.IOException
 import java.nio.file.Path
 import kotlin.io.path.div
 
 
-class LuceneIndex(val project: Project, val coroutineScope: CoroutineScope, indexName: String) {
+class LuceneIndex(val project: Project, val coroutineScope: CoroutineScope, indexName: String) : Disposable {
 
   private val indexPath: Path = let {
     project.getProjectDataPath("luceneIndex") / indexName
@@ -36,9 +38,15 @@ class LuceneIndex(val project: Project, val coroutineScope: CoroutineScope, inde
   private var searcherManager: SearcherManager = SearcherManager(writer, SearcherFactory())
 
   //TODO implement some recovery logic when index creation fails.
+  // This can happen when the project is reopened.
+  //TODO implement operating in a read-only mode, that just hopes the other process will maintain the index properly. (Or even better, indicate some fallback flag so the fallback logic is used.)
+  // Then it regularly checks if the index is still locked and once the lock can be aquired, we take ownership of the index and reindex everything once.
   private fun createWriter(): IndexWriter {
     val analyzer = StandardAnalyzer()
     val config = IndexWriterConfig(analyzer)
+    // When closing the writer, the IDE shuts down. Since we reindex on startup anyways, we do not need to persist any pending changes.
+    config.setCommitOnClose(false)
+
     return IndexWriter(directory, config)
   }
 
@@ -120,6 +128,18 @@ class LuceneIndex(val project: Project, val coroutineScope: CoroutineScope, inde
         searcherManager.release(searcher)
       }
     }.buffer(0, onBufferOverflow = BufferOverflow.SUSPEND)
+  }
+
+  override fun dispose() {
+    try {
+      searcherManager.close()
+    }catch (_: IOException) {}
+    try {
+      writer.close()
+    }catch (_: IOException) {}
+    try {
+      directory.close()
+    }catch (_: IOException) {}
   }
 
   companion object {
