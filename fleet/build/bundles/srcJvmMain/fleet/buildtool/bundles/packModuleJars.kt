@@ -2,8 +2,9 @@ package fleet.buildtool.bundles
 
 import fleet.buildtool.codecache.ModulePacker
 import fleet.buildtool.codecache.ModuleToPack
-import fleet.buildtool.codecache.NativeLibraryExtractor
-import fleet.buildtool.codecache.shadowing.ShadowedJarSpec
+import fleet.buildtool.codecache.specs.NativeLibraryExtractor
+import fleet.buildtool.codecache.specs.ScrambledJarSpec
+import fleet.buildtool.codecache.specs.ShadowedJarSpec
 import fleet.buildtool.scrambling.JarScrambler
 import fleet.bundles.LayerSelector
 import org.slf4j.Logger
@@ -11,8 +12,6 @@ import java.nio.file.Path
 import kotlin.collections.toList
 import kotlin.io.path.createDirectories
 import kotlin.io.path.listDirectoryEntries
-import kotlin.plus
-
 
 suspend fun Map<LayerSelector, Collection<Path>>.packModuleJars(
   shouldPackModuleJars: Boolean,
@@ -32,6 +31,7 @@ suspend fun Map<LayerSelector, Collection<Path>>.packModuleJars(
         version = null,
         logger = logger,
         shadowedJarSpecs = listOf(licenseClientShadowedJarSpec),
+        scrambledJarSpecs = listOf(fleetCommonScrambleJarSpec),
       )
 
       this.mapValues { (layerSelector, jars) ->
@@ -78,10 +78,12 @@ suspend fun packModule(
   return nonScrambledJars.map { it.path } + scrambledJars
 }
 
+private val fleetCommonScrambleJarSpec = ScrambledJarSpec(
+  jarToScramblePattern = Regex("fleet\\.common.*\\.jar"),
+)
 private val licenseClientShadowedJarSpec = ShadowedJarSpec(
   allowedConsumerModule = "SHIP.common",
-  consumerJarPattern = Regex("fleet\\.common.*\\.jar"), // fleet.common-$version.jar in Gradle
-  shadowedJarPattern = Regex("ls\\.client\\.api\\.jar"), // ls-client-api.jar in Gradle
+  consumerJarPattern = fleetCommonScrambleJarSpec.jarToScramblePattern,
+  shadowedJarPattern = Regex("ls\\.client\\.api\\.jar"),
   jpmsModuleName = "ls.client.api",
-  needsScrambling = true,
 )

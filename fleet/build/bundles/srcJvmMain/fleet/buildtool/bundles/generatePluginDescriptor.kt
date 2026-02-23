@@ -115,7 +115,14 @@ suspend fun generatePluginDescriptor(
   val outputModuleJarsByLayer =
     runtimeClasspathByLayer
       .filterJarsByLayer(alreadyIncludedJarsByLayer, temporaryDir.resolve("filteredJars"), logger)
-      .packModuleJars(shouldPackModuleJars, runtimeClasspathByLayer, temporaryDir.resolve("packedJars"), logger, pluginId, scrambler)
+      .packModuleJars(
+        shouldPackModuleJars = shouldPackModuleJars,
+        fullClassPath = runtimeClasspathByLayer,
+        outputDirectory = temporaryDir.resolve("packedJars"),
+        logger = logger,
+        pluginId = pluginId,
+        scrambler = scrambler,
+      )
 
   outputModuleJarsByLayer.flatMap { (_, paths) -> paths }
     .forEach {

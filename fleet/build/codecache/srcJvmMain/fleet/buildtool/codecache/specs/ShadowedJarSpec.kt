@@ -1,4 +1,4 @@
-package fleet.buildtool.codecache.shadowing
+package fleet.buildtool.codecache.specs
 
 import fleet.buildtool.codecache.ModuleToPack
 import fleet.buildtool.codecache.singleOrNullOrThrow
@@ -8,7 +8,6 @@ import kotlin.io.path.name
 data class ShadowedJarResolution(
   val shadowedJar: Path,
   val consumerJar: Path,
-  val needsScrambling: Boolean,
 )
 
 class ShadowedJarSpec(
@@ -16,7 +15,6 @@ class ShadowedJarSpec(
   val consumerJarPattern: Regex,
   val shadowedJarPattern: Regex,
   val jpmsModuleName: String,
-  val needsScrambling: Boolean,
 ) {
 
   fun resolve(module: ModuleToPack): ShadowedJarResolution? {
@@ -31,7 +29,6 @@ class ShadowedJarSpec(
     return ShadowedJarResolution(
       shadowedJar = shadowedJar,
       consumerJar = consumerJar,
-      needsScrambling = needsScrambling,
     )
   }
 }

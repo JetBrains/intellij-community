@@ -1,7 +1,10 @@
 package fleet.buildtool.codecache
 
 import com.intellij.util.lang.ImmutableZipFile
-import fleet.buildtool.codecache.shadowing.ShadowedJarSpec
+import fleet.buildtool.codecache.specs.NativeLibrariesExtractorSpec
+import fleet.buildtool.codecache.specs.NativeLibraryExtractor
+import fleet.buildtool.codecache.specs.ScrambledJarSpec
+import fleet.buildtool.codecache.specs.ShadowedJarSpec
 import fleet.buildtool.fs.extractZip
 import fleet.buildtool.platform.Arch
 import fleet.buildtool.platform.Platform
@@ -30,11 +33,9 @@ import kotlin.io.path.deleteIfExists
 import kotlin.io.path.deleteRecursively
 import kotlin.io.path.extension
 import kotlin.io.path.isDirectory
-import kotlin.io.path.listDirectoryEntries
 import kotlin.io.path.moveTo
 import kotlin.io.path.name
 
-private val jnaJarNamePattern = Regex("jna-\\d.*\\.jar")
 val kotlinStdlibJarNamePattern = Regex("kotlin-stdlib-\\d.*\\.jar")
 
 private typealias Jar = Path
@@ -58,24 +59,13 @@ interface ModuleToPack {
   val filesToPack: List<Path>
 }
 
-sealed class NativeLibraryExtractor {
-  /**
-   * Jars would be left untouched.
-   */
-  object Noop : NativeLibraryExtractor()
-
-  /**
-   * Native libraries inside jars will be extracted to [directory]
-   */
-  data class ExtractTo(val directory: Path) : NativeLibraryExtractor()
-}
-
 class ModulePacker(
   private val directory: Path,
   private val nativeLibraryExtractor: NativeLibraryExtractor,
   private val version: String?,
   private val logger: Logger,
   private val shadowedJarSpecs: List<ShadowedJarSpec>,
+  private val scrambledJarSpecs: List<ScrambledJarSpec> = emptyList(),
 ) {
   private val cache = ConcurrentHashMap<Path, CacheEntry>()
 
@@ -92,11 +82,13 @@ class ModulePacker(
     val shadowing = resolvedShadowedJars.singleOrNull()
     val toPack = module.filesToPack.filter { it != shadowing?.shadowedJar } // never pack the shadowed jar
     val jars = runBlocking(Dispatchers.IO) {
-      toPack.mapConcurrent { path ->
-        when (path == shadowing?.consumerJar) {
-          true -> pack(path, needsScrambling = shadowing.needsScrambling, shadowed = shadowing.shadowedJar)
-          false -> pack(path, needsScrambling = false, shadowed = null)
+      toPack.mapConcurrent { jar ->
+        val shadowed = when (jar == shadowing?.consumerJar) {
+          true -> shadowing.shadowedJar
+          false -> null
         }
+        val needsScrambling = scrambledJarSpecs.any { it.needsScrambling(jar) }
+        pack(jar, needsScrambling, shadowed)
       }
     }
     return PackedModule(
@@ -125,6 +117,7 @@ class ModulePacker(
         null -> {
           directory.createDirectories()
           logger.debug("'{}' (needsScrambling={}, shadowing={}) not found in cache, packing it...", file, needsScrambling, shadowed)
+          val nativeLibrariesExtractorSpec = (nativeLibraryExtractor as? NativeLibraryExtractor.ExtractTo)?.specificationFor(fileToPack.name)
           val jar = when {
             Files.isDirectory(fileToPack) -> packToImmutableJar(
               path = fileToPack,
@@ -137,22 +130,14 @@ class ModulePacker(
               logger = logger,
             )
 
-            nativeLibraryExtractor is NativeLibraryExtractor.ExtractTo && jnaJarNamePattern.matches(fileToPack.name) -> repackToImmutableJarExtractingNativeFiles(
+            nativeLibrariesExtractorSpec != null -> repackToImmutableJarExtractingNativeFiles(
               fileToPack,
               needsScrambling,
               shadowed,
               targetDirectory = directory,
               nativeLibrariesTargetDirectory = nativeLibraryExtractor.directory,
               logger = logger,
-            )
-
-            nativeLibraryExtractor is NativeLibraryExtractor.ExtractTo && fileToPack.name.contains("kotlin-desktop-toolkit") -> repackToImmutableJarExtractingNativeFiles2(
-              fileToPack,
-              needsScrambling,
-              shadowed,
-              targetDirectory = directory,
-              nativeLibrariesTargetDirectory = nativeLibraryExtractor.directory,
-              logger = logger,
+              extractionSpec = nativeLibrariesExtractorSpec,
             )
 
             fileToPack.name.endsWith(".jar") -> packToImmutableJar(
@@ -212,7 +197,6 @@ fun packToImmutableJar(path: Path, needsScrambling: Boolean, shadowed: Path?, ta
   )
 }
 
-// TODO: make it more generic, not only for JNA
 @OptIn(ExperimentalPathApi::class)
 private fun repackToImmutableJarExtractingNativeFiles(
   jar: Path,
@@ -221,53 +205,15 @@ private fun repackToImmutableJarExtractingNativeFiles(
   targetDirectory: Path,
   nativeLibrariesTargetDirectory: Path,
   logger: Logger,
+  extractionSpec: NativeLibrariesExtractorSpec,
 ): PackedJar {
   require(shadowed == null) { "shadowing not supported" }
   val tmp = Files.createTempDirectory("repacking").resolve(jar.name)
   extractZip(archive = jar, destination = tmp, stripTopLevelFolder = false, cleanDestination = false, temporaryDir = tmp, logger = logger)
-  val nativeFiles = tmp.resolve("com/sun/jna").listDirectoryEntries()
-    .filter { it.isDirectory() }
-    .mapNotNull { it.listDirectoryEntries().singleOrNull() }
-    .filter { lib -> lib.extension in setOf("jnilib", "dylib", "so", "tbd", "dll", "a") }
+  val nativeFiles = extractionSpec.nativeLibrariesSelector(tmp)
+    .filter { lib -> lib.extension in extractionSpec.allowedExtensions }
     .mapNotNull { lib ->
-      val libraryPlatform = detectNativeLibraryPlatform(lib.parent.name)
-      if (libraryPlatform != null) {
-        val target = nativeLibrariesTargetDirectory.resolve(libraryPlatform.toS3DistributionSlug()).createDirectories()
-        val targetFile = lib.moveTo(target.resolve(lib.name), overwrite = true)
-        libraryPlatform to targetFile
-      }
-      else {
-        lib.deleteExisting()
-        null
-      }
-    }.groupBy({ (platform, _) -> platform }, { (_, file) -> file })
-  val jar = packDirectoriesToImmutableJar(targetDirectory.resolve(jar.name), listOf(tmp))
-  tmp.deleteRecursively()
-  return PackedJar(
-    path = jar,
-    needsScrambling = needsScrambling,
-    nativeFilesByPlatform = nativeFiles,
-  )
-}
-
-// TODO: delete once `repackToImmutableJarExtractingNativeFiles` is generic
-@OptIn(ExperimentalPathApi::class)
-private fun repackToImmutableJarExtractingNativeFiles2(
-  jar: Path,
-  needsScrambling: Boolean,
-  shadowed: Path?,
-  targetDirectory: Path,
-  nativeLibrariesTargetDirectory: Path,
-  logger: Logger,
-): PackedJar {
-  require(shadowed == null) { "shadowing not supported" }
-  val tmp = Files.createTempDirectory("repacking").resolve(jar.name)
-  extractZip(archive = jar, destination = tmp, cleanDestination = false, stripTopLevelFolder = false, temporaryDir = tmp, logger = logger)
-  val nativeFiles = tmp.listDirectoryEntries()
-    .filter { lib -> lib.extension in setOf("dylib", "so", "dll") }
-    .mapNotNull { lib ->
-      val libName = lib.name
-      val libraryPlatform = detectNativeLibraryPlatformBasedOnItsName(libName)
+      val libraryPlatform = extractionSpec.platformDetector(lib)
       if (libraryPlatform != null) {
         val target = nativeLibrariesTargetDirectory.resolve(libraryPlatform.toS3DistributionSlug()).createDirectories()
         val targetFile = lib.moveTo(target.resolve(lib.name), overwrite = true)
@@ -353,7 +299,7 @@ internal fun <T> Iterable<T>.singleOrNullOrThrow(p: (T) -> Boolean = { true }): 
   return single
 }
 
-private fun detectNativeLibraryPlatform(path: String): Platform? {
+fun detectNativeLibraryPlatform(path: String): Platform? {
   return when {
     path.contains("x86-64") -> Arch.X64
     path.contains("aarch64") -> Arch.AARCH64
@@ -371,7 +317,7 @@ private fun detectNativeLibraryPlatform(path: String): Platform? {
 /**
  * Skiko and KotlinDesktopToolkit follow this pattern
  */
-private fun detectNativeLibraryPlatformBasedOnItsName(libName: String): Platform? {
+fun detectNativeLibraryPlatformBasedOnItsName(libName: String): Platform? {
   return when {
     libName.contains("x64") -> Arch.X64
     libName.contains("arm64") -> Arch.AARCH64

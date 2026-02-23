@@ -30,6 +30,7 @@ jvm_library(
   deps = [
     "@lib//:kotlin-stdlib",
     "//fleet/build/codecache",
+    "//fleet/build/platform",
     "//fleet/build/scrambling",
     "//fleet/build/sign",
     "//fleet/codecache",
@@ -51,6 +52,7 @@ jvm_library(
   runtime_deps = [
     ":bundles",
     "//fleet/build/codecache:codecache_test_lib",
+    "//fleet/build/platform:platform_test_lib",
     "//fleet/build/scrambling:scrambling_test_lib",
     "//fleet/build/sign:sign_test_lib",
     "//fleet/codecache:codecache_test_lib",
