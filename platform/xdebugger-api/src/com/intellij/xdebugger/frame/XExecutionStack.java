@@ -66,7 +66,7 @@ public abstract class XExecutionStack {
   @ApiStatus.Internal
   public final void setIcon(Icon icon) { myIconFlow.setValue(icon); }
 
-  @ApiStatus.Experimental
+  @ApiStatus.Internal
   public Flow<@Nullable Icon> getIconFlow() { return myIconFlow; }
 
   /**
