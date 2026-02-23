@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:OptIn(IntellijInternalApi::class)
 
 package com.intellij.util.indexing.contentQueue
@@ -46,6 +46,11 @@ import com.intellij.util.indexing.events.FileIndexingRequest
 import com.intellij.workspaceModel.core.fileIndex.WorkspaceFileIndex
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.Channel
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.ensureActive
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
+import kotlinx.coroutines.yield
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.TestOnly
 import java.io.FileNotFoundException
@@ -304,11 +309,11 @@ class IndexUpdateRunner(
         val workspaceFileIndex = WorkspaceFileIndex.getInstance(project)
         val excluded = readActionUndispatched {
           val isIndexable = workspaceFileIndex.isIndexable(file)
-          val belongsToContentNonIndexable = workspaceFileIndex.findFileSet(file, true, false, includeContentNonIndexableSets = true, false, false, false) != null
+          val belongsToNonIndexable = workspaceFileIndex.findFileSet(file, true, false, includeContentNonIndexableSets = true, false, false, false) != null
           // We don't want to just exclude all !isIndexable,
           // because they may be contributed by an indexing contributor while WorkspaceFileIndex is not aware about it.
           // We only want to exclude the files that are explicitly registered as non indexable.
-          ProjectRootManager.getInstance(project).fileIndex.isExcluded(file) || (!isIndexable && belongsToContentNonIndexable)
+          ProjectRootManager.getInstance(project).fileIndex.isExcluded(file) || (!isIndexable && belongsToNonIndexable)
         }
         if (excluded) {
           val counter = badFileCounter.incrementAndGet()
@@ -514,7 +519,7 @@ class IndexUpdateRunner(
 
     fun getPresentableLocationBeingIndexed(project: Project, file: VirtualFile): @NlsSafe String {
       var actualFile = file
-      if (actualFile.fileSystem is ArchiveFileSystem) {
+      if (actualFile.isValid && actualFile.fileSystem is ArchiveFileSystem) {
         actualFile = VfsUtil.getLocalFile(actualFile)
       }
       var path = getProjectRelativeOrAbsolutePath(project, actualFile)
@@ -581,7 +586,9 @@ private class UsedMemorySoftLimiter(private val softLimitOfTotalBytesUsed: Long)
     while (true) { //CAS-loop
       val _totalBytesUsed = totalBytesUsed.get()
       if (_totalBytesUsed > softLimitOfTotalBytesUsed) {
-        yield()
+        //Without this delay most of cpu time is spent inside coroutine scheduler since it is spinning non-stop
+        //This bug is reproducible with big Jupyter files 100mb or more, we need a time to parse it and other coroutines wait the parse finish
+        delay(10)
         continue
       }
 

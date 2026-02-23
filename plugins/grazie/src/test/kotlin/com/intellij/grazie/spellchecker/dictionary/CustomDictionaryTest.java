@@ -48,7 +48,7 @@ public class CustomDictionaryTest extends SpellcheckerInspectionTestCase {
 
     List<String> testDictionaries = new ArrayList<>();
     VfsUtilCore.processFilesRecursively(dictDir, file -> {
-      if (isDic(file.getName())) {
+      if (isDic(file.getName()) && !isTestTxtFile(file)) {
         testDictionaries.add(PathUtil.toSystemDependentName(file.getPath()));
       }
       return true;
@@ -83,6 +83,10 @@ public class CustomDictionaryTest extends SpellcheckerInspectionTestCase {
     return Paths.get(getSpellcheckerTestDataPath(), "inspection", "dictionary").toString();
   }
 
+  private static boolean isTestTxtFile(VirtualFile file) {
+    return file.getName().equals("test.after.txt") || file.getName().equals("test.before.txt");
+  }
+
   private VirtualFile getTestDictionaryFile() {
     return dictDir.findChild(TEST_DIC);
   }
@@ -96,11 +100,11 @@ public class CustomDictionaryTest extends SpellcheckerInspectionTestCase {
   }
 
   private void doBeforeCheck() {
-    doTest(Paths.get(getTestName(true), "test.before.php").toString());
+    doTest(Paths.get(getTestName(true), "test.before.txt").toString());
   }
 
   private void doAfterCheck() {
-    doTest(Paths.get(getTestName(true), "test.after.php").toString());
+    doTest(Paths.get(getTestName(true), "test.after.txt").toString());
   }
 
   private void doDictTest() throws IOException {

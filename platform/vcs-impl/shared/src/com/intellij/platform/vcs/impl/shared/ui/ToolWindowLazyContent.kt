@@ -1,6 +1,8 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.vcs.impl.shared.ui
 
+import com.intellij.codeWithMe.ClientId
+import com.intellij.codeWithMe.ClientId.Companion.withExplicitClientId
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.Key
@@ -33,8 +35,10 @@ object ToolWindowLazyContent {
   fun initLazyContent(content: Content) {
     val provider = content.getUserData(CONTENT_SUPPLIER) ?: return
     content.putUserData(CONTENT_SUPPLIER, null)
-    provider.invoke(content)
-    IJSwingUtilities.updateComponentTreeUI(content.component)
+    withExplicitClientId(ClientId.localId) {
+      provider.invoke(content)
+      IJSwingUtilities.updateComponentTreeUI(content.component)
+    }
   }
 
   private class ContentInitializer(private val toolWindow: ToolWindow): ContentManagerListener, ToolWindowManagerListener {

@@ -16,11 +16,13 @@ import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.onFirstVisible
+import androidx.compose.ui.awt.SwingPanel
 import androidx.compose.ui.unit.dp
 import com.intellij.ide.BrowserUtil
 import com.intellij.openapi.project.Project
 import com.intellij.ui.JBColor
 import com.intellij.util.ui.JBUI
+import javax.swing.JButton
 import org.jetbrains.jewel.bridge.toComposeColor
 import org.jetbrains.jewel.foundation.LocalComponent
 import org.jetbrains.jewel.foundation.actionSystem.provideData
@@ -177,6 +179,32 @@ private fun RowScope.ColumnOne() {
 
     var sliderValue by remember { mutableFloatStateOf(.15f) }
     Slider(sliderValue, { sliderValue = it }, steps = 5)
+
+    var swingButtonClicks by remember { mutableIntStateOf(0) }
+    var swingButtonFocused by remember { mutableStateOf(false) }
+    Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+      Text("Swing interop:")
+      SwingPanel(
+        factory = {
+          JButton("Click me (Swing)").apply {
+            addActionListener {
+              swingButtonClicks++
+              requestFocusInWindow()
+            }
+            addFocusListener(object : java.awt.event.FocusListener {
+              override fun focusGained(e: java.awt.event.FocusEvent?) {
+                swingButtonFocused = true
+              }
+              override fun focusLost(e: java.awt.event.FocusEvent?) {
+                swingButtonFocused = false
+              }
+            })
+          }
+        },
+        modifier = Modifier.height(32.dp)
+      )
+      Text("Clicks: $swingButtonClicks, Focused: $swingButtonFocused")
+    }
 
     var bannerStyle by remember { mutableIntStateOf(0) }
     var clickLabel by remember { mutableStateOf("") }

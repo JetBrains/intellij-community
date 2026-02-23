@@ -27,6 +27,12 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.graphics.isSpecified
+import androidx.compose.ui.input.key.Key
+import androidx.compose.ui.input.key.KeyEventType
+import androidx.compose.ui.input.key.key
+import androidx.compose.ui.input.key.onPreviewKeyEvent
+import androidx.compose.ui.input.key.type
+import androidx.compose.ui.input.key.utf16CodePoint
 import androidx.compose.ui.text.TextLayoutResult
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.input.TextFieldValue
@@ -45,6 +51,8 @@ import org.jetbrains.jewel.ui.Outline
 import org.jetbrains.jewel.ui.component.styling.InputFieldStyle
 import org.jetbrains.jewel.ui.focusOutline
 import org.jetbrains.jewel.ui.outline
+import org.jetbrains.jewel.ui.platform.LocalPlatformCursorController
+import org.jetbrains.jewel.ui.platform.PlatformCursorController
 
 @Composable
 internal fun InputField(
@@ -120,6 +128,7 @@ internal fun InputField(
         modifier =
             modifier
                 .hoverable(hoverInteractionSource)
+                .thenIf(enabled && !readOnly) { hideCursor() }
                 .then(backgroundModifier)
                 .thenIf(!undecorated && hasNoOutline) {
                     focusOutline(state = inputFieldState, outlineShape = shape, alignment = Stroke.Alignment.Center)
@@ -216,6 +225,7 @@ internal fun InputField(
         modifier =
             modifier
                 .hoverable(hoverInteractionSource)
+                .thenIf(enabled && !readOnly) { hideCursor() }
                 .then(backgroundModifier)
                 .thenIf(!undecorated && hasNoOutline) {
                     focusOutline(state = inputFieldState, outlineShape = shape, alignment = Stroke.Alignment.Center)
@@ -237,6 +247,16 @@ internal fun InputField(
         decorationBox =
             @Composable { innerTextField: @Composable () -> Unit -> decorationBox(innerTextField, inputFieldState) },
     )
+}
+
+@Composable
+private fun Modifier.hideCursor(
+    cursorController: PlatformCursorController = LocalPlatformCursorController.current
+): Modifier = onPreviewKeyEvent { event ->
+    if (event.type == KeyEventType.KeyDown && event.key != Key.Escape && event.utf16CodePoint != 0) {
+        cursorController.hideCursor()
+    }
+    false // returning false so the text field can handle the key event properly
 }
 
 @Immutable

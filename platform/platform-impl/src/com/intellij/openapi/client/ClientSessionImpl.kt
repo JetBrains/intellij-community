@@ -15,6 +15,7 @@ import com.intellij.openapi.components.impl.stores.IComponentStore
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.extensions.impl.ExtensionPointDeferredListenersNotification
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.project.impl.ProjectImpl
@@ -84,12 +85,6 @@ abstract class ClientSessionImpl(
     assert(containerState.compareAndSet(ContainerState.PRE_INIT, ContainerState.COMPONENT_CREATED))
   }
 
-  final override suspend fun preloadService(service: ServiceDescriptor, serviceInterface: String) {
-    return withContext(clientId.asContextElement()) {
-      super.preloadService(service, serviceInterface)
-    }
-  }
-
   final override fun isServiceSuitable(descriptor: ServiceDescriptor): Boolean {
     return descriptor.client?.let { type.matches(it) } ?: false
   }
@@ -100,7 +95,7 @@ abstract class ClientSessionImpl(
   final override fun registerComponents(
     modules: List<IdeaPluginDescriptorImpl>,
     app: Application?,
-    listenerCallbacks: MutableList<in Runnable>?
+    listenerCallbacks: MutableList<ExtensionPointDeferredListenersNotification>?
   ) {
     for (rootModule in modules) {
       registerServices(getContainerDescriptor(rootModule).services, rootModule)

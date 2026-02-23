@@ -54,8 +54,7 @@ if (Properties.useClasspathFile && intelliJRtPath != null) {
 GradleLifecycleUtil.afterProject(gradle) { Project project ->
   def projectPath = GradleProjectUtil.getProjectIdentityPath(project)
   if (projectPath == Properties.gradlePath && JavaPluginUtil.isJavaPluginApplied(project)) {
-    def overwrite = project.tasks.findByName(Properties.runAppTaskName) != null
-    project.tasks.create(name: Properties.runAppTaskName, overwrite: overwrite, type: JavaExec) {
+    project.tasks.create(name: Properties.runAppTaskName, type: JavaExec) { task ->
       if (javaExePath) executable = javaExePath
 
       classpath = project.sourceSets[Properties.sourceSetName].runtimeClasspath
@@ -66,8 +65,17 @@ GradleLifecycleUtil.afterProject(gradle) { Project project ->
         mainClass = Properties.mainClassToRun
         if (Properties.javaModuleName != null) {
           mainModule = Properties.javaModuleName
-          jvmArgs '--module-path', classpath.asPath,
+          jvmArgumentProviders.add(
+            new CommandLineArgumentProvider() {
+              @Override
+              Iterable<String> asArguments() {
+                return [
+                  '--module-path', task.classpath.asPath,
                   '--patch-module', Properties.javaModuleName + '=' + project.sourceSets[Properties.sourceSetName].output.resourcesDir
+                ]
+              }
+            }
+          )
         }
       }
       PARAMS

@@ -49,7 +49,7 @@ import org.jetbrains.annotations.NotNull
 import java.awt.KeyboardFocusManager
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.ConcurrentLinkedDeque
-import java.util.function.Predicate
+import java.util.function.BiPredicate
 import javax.swing.Icon
 
 @ApiStatus.Internal
@@ -276,7 +276,7 @@ class RunContentManagerImpl(private val project: Project) : RunContentManager {
 
     val contentManager = getContentManagerForRunner(executor, descriptor)
     val toolWindowId = getToolWindowIdForRunner(executor, descriptor)
-    val oldDescriptor = chooseReuseContentForDescriptor(contentManager, descriptor, executionId, descriptor.displayName, getReuseCondition(toolWindowId))
+    val oldDescriptor = chooseReuseContentForDescriptor(contentManager, descriptor, null, executionId, descriptor.displayName, getReuseCondition(toolWindowId))
     val content: Content?
     if (oldDescriptor == null) {
       content = createNewContent(descriptor, executor)
@@ -441,7 +441,7 @@ class RunContentManagerImpl(private val project: Project) : RunContentManager {
     }
 
     val toolWindowId = getContentDescriptorToolWindowId(executionEnvironment)
-    val reuseCondition: Predicate<Content>?
+    val reuseCondition: BiPredicate<in Content, RunConfiguration?>?
     val contentManager: ContentManager
     if (toolWindowId == null) {
       contentManager = getContentManagerForRunner(executionEnvironment.executor, null)
@@ -451,12 +451,13 @@ class RunContentManagerImpl(private val project: Project) : RunContentManager {
       contentManager = getOrCreateContentManagerForToolWindow(toolWindowId, executionEnvironment.executor)
       reuseCondition = getReuseCondition(toolWindowId)
     }
-    return chooseReuseContentForDescriptor(contentManager, null, executionEnvironment.executionId, executionEnvironment.toString(), reuseCondition)
+    return chooseReuseContentForDescriptor(contentManager, null, executionEnvironment.runnerAndConfigurationSettings?.configuration,
+                                           executionEnvironment.executionId, executionEnvironment.toString(), reuseCondition)
   }
 
-  private fun getReuseCondition(toolWindowId: String): Predicate<Content>? {
+  private fun getReuseCondition(toolWindowId: String): BiPredicate<in Content, RunConfiguration?>? {
     val runDashboardManager = RunDashboardUiManager.getInstance(project)
-    return if (runDashboardManager.toolWindowId == toolWindowId) runDashboardManager.reuseCondition else null
+    return if (runDashboardManager.toolWindowId == toolWindowId) runDashboardManager.getReuseCondition() else null
   }
 
   override fun findContentDescriptor(requestor: Executor, handler: ProcessHandler): RunContentDescriptor? {
@@ -677,9 +678,10 @@ class RunContentManagerImpl(private val project: Project) : RunContentManager {
 
 private fun chooseReuseContentForDescriptor(contentManager: ContentManager,
                                             descriptor: RunContentDescriptor?,
+                                            runConfiguration: RunConfiguration?,
                                             executionId: Long,
                                             preferredName: String?,
-                                            reuseCondition: Predicate<in Content>?): RunContentDescriptor? {
+                                            reuseCondition: BiPredicate<in Content, RunConfiguration?>?): RunContentDescriptor? {
   var content: Content? = null
   if (descriptor != null) {
     //Stage one: some specific descriptors (like AnalyzeStacktrace) cannot be reused at all
@@ -698,7 +700,7 @@ private fun chooseReuseContentForDescriptor(contentManager: ContentManager,
 
   // stage three: choose the content with name we prefer
   if (content == null) {
-    content = getContentFromManager(contentManager, preferredName, executionId, reuseCondition)
+    content = getContentFromManager(contentManager, preferredName, executionId, runConfiguration, reuseCondition)
   }
   if (content == null || !RunContentManagerImpl.isTerminated(content) || content.executionId == executionId && executionId != 0L) {
     return null
@@ -717,7 +719,8 @@ private fun chooseReuseContentForDescriptor(contentManager: ContentManager,
 private fun getContentFromManager(contentManager: ContentManager,
                                   preferredName: String?,
                                   executionId: Long,
-                                  reuseCondition: Predicate<in Content>?): Content? {
+                                  runConfiguration: RunConfiguration?,
+                                  reuseCondition: BiPredicate<in Content, RunConfiguration?>?): Content? {
   val contents = contentManager.contentsRecursively.toMutableList()
   val first = contentManager.selectedContent
   if (first != null && contents.remove(first)) {
@@ -735,7 +738,7 @@ private fun getContentFromManager(contentManager: ContentManager,
 
   // return first "good" content
   return contents.firstOrNull {
-    canReuseContent(it, executionId) && (reuseCondition == null || reuseCondition.test(it))
+    canReuseContent(it, executionId) && (reuseCondition == null || reuseCondition.test(it, runConfiguration))
   }
 }
 

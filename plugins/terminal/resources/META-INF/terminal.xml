@@ -119,6 +119,8 @@
     <applicationService serviceInterface="com.intellij.terminal.search.JediTermSearchComponentProvider"
                         serviceImplementation="org.jetbrains.plugins.terminal.search.JediTermSearchComponentProviderImpl"/>
     <advancedSetting id="new.terminal.output.capacity.kb" default="1024" groupKey="group.advanced.settings.terminal"/>
+    <advancedSetting id="terminal.shift.enter.sends.esc.cr" default="true"
+                     bundle="messages.TerminalBundle" groupKey="group.advanced.settings.terminal"/>
 
     <postStartupActivity implementation="org.jetbrains.plugins.terminal.block.GenOneTerminalOptionHidingActivity"/>
     

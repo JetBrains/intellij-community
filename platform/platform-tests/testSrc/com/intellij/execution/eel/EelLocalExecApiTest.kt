@@ -13,6 +13,7 @@ import com.intellij.openapi.util.SystemInfoRt
 import com.intellij.platform.eel.*
 import com.intellij.platform.eel.EelExecApi.Pty
 import com.intellij.platform.eel.impl.local.getShellFromPasswdRecords
+import com.intellij.platform.eel.provider.LocalEelDescriptor
 import com.intellij.platform.eel.provider.localEel
 import com.intellij.platform.eel.provider.utils.sendWholeText
 import com.intellij.platform.tests.eelHelpers.EelHelper
@@ -179,8 +180,10 @@ class EelLocalExecApiTest {
           PTY_SIZE_FROM_START, PTY_RESIZE_LATER -> {
             Assertions.assertNotNull(ttyState.size)
             Assertions.assertEquals(Size(PTY_COLS, PTY_ROWS), ttyState.size, "size must be set for tty")
-            val expectedTerm = System.getenv("TERM") ?: "xterm"
-            Assertions.assertEquals(expectedTerm, ttyState.termName, "Wrong term type")
+            if (LocalEelDescriptor.osFamily.isPosix) {
+              val expectedTerm = System.getenv("TERM") ?: "xterm"
+              Assertions.assertEquals(expectedTerm, ttyState.termName, "Wrong term type")
+            }
           }
           NO_PTY -> {
             Assertions.assertNull(ttyState.size, "size must not be set if no tty")

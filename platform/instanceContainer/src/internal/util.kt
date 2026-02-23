@@ -4,6 +4,7 @@ package com.intellij.platform.instanceContainer.internal
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.platform.instanceContainer.InstanceNotRegisteredException
 import kotlinx.coroutines.CoroutineScope
+import kotlin.coroutines.CoroutineContext
 
 internal val LOG: Logger = Logger.getInstance("#com.intellij.platform.instanceContainer")
 
@@ -38,7 +39,7 @@ fun InstanceContainerInternal.initializedInstances(): Sequence<Any> {
   }
 }
 
-internal fun prepareHolders(parentScope: CoroutineScope, actions: Map<String, RegistrationAction>): PreparedHolders {
+internal fun prepareHolders(parentScope: CoroutineScope, additionalContext: CoroutineContext, actions: Map<String, RegistrationAction>): PreparedHolders {
   val holders = LinkedHashMap<String, InstanceHolder>(actions.size)
   val keysToAdd = HashSet<String>()
   val keysToRemove = HashSet<String>()
@@ -46,10 +47,10 @@ internal fun prepareHolders(parentScope: CoroutineScope, actions: Map<String, Re
     when (action) {
       is RegistrationAction.Register -> {
         keysToAdd.add(keyClassName)
-        holders[keyClassName] = StaticInstanceHolder(parentScope, action.initializer)
+        holders[keyClassName] = StaticInstanceHolder(parentScope, additionalContext, action.initializer)
       }
       is RegistrationAction.Override -> {
-        holders[keyClassName] = StaticInstanceHolder(parentScope, action.initializer)
+        holders[keyClassName] = StaticInstanceHolder(parentScope, additionalContext, action.initializer)
       }
       RegistrationAction.Remove -> {
         keysToRemove.add(keyClassName)

@@ -148,7 +148,7 @@ public final class AcceptedLanguageLevelsSettings implements PersistentStateComp
     //allow custom features to appear in EAP
     if (ApplicationManager.getApplication().isEAP()) return true;
     // language levels up to HIGHEST are officially supported
-    return JavaRelease.getHighest().compareTo(languageLevel) >= 0 || getSettings().acceptedNames.contains(languageLevel.name());
+    return JavaRelease.getHighest().compareTo(languageLevel.getNonPreviewLevel()) >= 0 || getSettings().acceptedNames.contains(languageLevel.name());
   }
 
   private static void acceptAndRestore(Project project, Collection<? extends Module> modules, LanguageLevel languageLevel) {

@@ -6,6 +6,8 @@ f:org.jetbrains.jewel.foundation.JewelFlags
 f:org.jetbrains.jewel.foundation.LocalComponentKt
 - *sf:getLocalComponent():androidx.compose.runtime.ProvidableCompositionLocal
 *:org.jetbrains.jewel.foundation.code.highlighting.CodeHighlighter
+- a:highlight(java.lang.String,java.lang.String):kotlinx.coroutines.flow.Flow
+- bs:highlight$default(org.jetbrains.jewel.foundation.code.highlighting.CodeHighlighter,java.lang.String,java.lang.String,I,java.lang.Object):kotlinx.coroutines.flow.Flow
 - a:highlight-zTGadEY(java.lang.String,java.lang.String):kotlinx.coroutines.flow.Flow
 f:org.jetbrains.jewel.foundation.code.highlighting.CodeHighlighterKt
 - *sf:getLocalCodeHighlighter():androidx.compose.runtime.ProvidableCompositionLocal
@@ -13,4 +15,5 @@ f:org.jetbrains.jewel.foundation.code.highlighting.CodeHighlighterKt
 - org.jetbrains.jewel.foundation.code.highlighting.CodeHighlighter
 - sf:$stable:I
 - sf:INSTANCE:org.jetbrains.jewel.foundation.code.highlighting.NoOpCodeHighlighter
+- highlight(java.lang.String,java.lang.String):kotlinx.coroutines.flow.Flow
 - highlight-zTGadEY(java.lang.String,java.lang.String):kotlinx.coroutines.flow.Flow

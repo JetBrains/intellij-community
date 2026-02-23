@@ -243,4 +243,7 @@ public class DataFlowInspection21Test extends DataFlowInspectionTestCase {
     doTest();
   }
 
+  public void testOptionalInference() {
+    doTestWith((dfi, cvi) -> dfi.SUGGEST_NULLABLE_ANNOTATIONS = false);
+  }
 }

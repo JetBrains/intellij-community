@@ -224,7 +224,10 @@ enum class JavaFeature {
     override val standardLevel: LanguageLevel = LanguageLevel.JDK_25
   },
 
-  //JEP 507
+  /**
+   * JEP 507
+   * @see PATTERNS_WITH_TIGHTENED_DOMINANCE
+   */
   PRIMITIVE_TYPES_IN_PATTERNS(LanguageLevel.JDK_23_PREVIEW, "feature.primitive.types.in.patterns"),
 
   /**
@@ -286,6 +289,20 @@ enum class JavaFeature {
    * @see JAVA_LANG_IO
    */
   JAVA_LANG_IO(LanguageLevel.JDK_25, "feature.java.lang.io"),
+
+  /**
+   * JEP 502,
+   * JEP 526
+   * @see STABLE_VALUES
+   */
+  LAZY_CONSTANTS(LanguageLevel.JDK_26_PREVIEW, "feature.lazy.constants"),
+
+  /**
+   * JEP 530
+   * @see PRIMITIVE_TYPES_IN_PATTERNS
+   */
+  PATTERNS_WITH_TIGHTENED_DOMINANCE(LanguageLevel.JDK_26_PREVIEW, "feature.patterns.with.tightened.dominance"),
+
 
   VALHALLA_VALUE_CLASSES(LanguageLevel.JDK_X, "feature.valhalla.value.classes"),
   ;
@@ -380,6 +397,7 @@ enum class JavaFeature {
         "FOREIGN" -> FOREIGN_FUNCTIONS
         "VIRTUAL_THREADS" -> VIRTUAL_THREADS
         "MODULE_IMPORTS" -> MODULE_IMPORT_DECLARATIONS
+        "LAZY_CONSTANTS" -> LAZY_CONSTANTS
         else -> null
       }
     }

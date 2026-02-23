@@ -8,6 +8,7 @@ import kotlinx.coroutines.runBlocking
 import org.junit.Test
 
 class MavenDependencyModificatorTest : MavenTestCase() {
+  override fun runInDispatchThread() = false
 
   @Test
   fun testShouldReturnDependencyDirectlyDeclared() = runBlocking {

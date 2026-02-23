@@ -9,6 +9,7 @@ import org.jetbrains.kotlin.config.SettingConstants
 import org.jetbrains.kotlin.idea.compiler.configuration.KotlinArtifactsDownloader
 import org.jetbrains.kotlin.idea.compiler.configuration.KotlinJpsPluginSettings
 import org.jetbrains.kotlin.idea.compiler.configuration.KotlinPluginLayout
+import org.jetbrains.kotlin.idea.compiler.configuration.versionWithFallback
 import org.jetbrains.kotlin.idea.jps.KOTLIN_BUNDLED
 import java.io.IOException
 import java.nio.file.Path
@@ -38,7 +39,7 @@ private class KotlinBundledPathMacroContributor : ProjectWidePathMacroContributo
         val path = if (cached.second >= lastModified) {
             cached.first
         } else {
-            val newPath = KotlinJpsPluginSettings.readFromKotlincXmlOrIpr(iprOrKotlincXml)?.version
+            val newPath = KotlinJpsPluginSettings.readFromKotlincXmlOrIpr(iprOrKotlincXml)?.versionWithFallback
                 ?.let { KotlinArtifactsDownloader.getUnpackedKotlinDistPath(it).canonicalPath }
                 ?: KotlinPluginLayout.kotlinc.canonicalPath
             val newPair = Pair(newPath, lastModified)

@@ -26,7 +26,33 @@ public interface CodeHighlighter {
      *
      * @see [NoOpCodeHighlighter]
      */
+    @Deprecated(
+        message =
+            "This method is not scalable as it relies on a pre-resolved MimeType object. " +
+                "This prevents automatic support for languages not explicitly defined in the MimeType system" +
+                "(e.g., from TextMate bundles). Use the overload that accepts the raw " +
+                "`language` string instead.",
+        replaceWith = ReplaceWith("highlight(code, language)"),
+    )
     public fun highlight(code: String, mimeType: MimeType?): Flow<AnnotatedString>
+
+    /**
+     * Highlights the given `code` string based on the provided `language`.
+     *
+     * This function uses available syntax definitions to apply styling to the code. The highlighting is dynamic,
+     * meaning it can update automatically if the environment's styling, such as the active color scheme, changes. For
+     * static highlighting, simply use the first value emitted from the returned flow.
+     *
+     * If the `language` is blank, or doesn't match any known language, the function will return the original code as a
+     * plain, un-styled `AnnotatedString`.
+     *
+     * @param code The source code to highlight.
+     * @param language A string that identifies the programming language, typically a file extension or the language
+     *   name (e.g., "kt", "py", "js", "ruby").
+     * @return A [Flow] that emits an `AnnotatedString` with syntax highlighting applied. The flow will emit new values
+     *   in response to theme or color scheme changes.
+     */
+    public fun highlight(code: String, language: String = ""): Flow<AnnotatedString>
 }
 
 @ExperimentalJewelApi

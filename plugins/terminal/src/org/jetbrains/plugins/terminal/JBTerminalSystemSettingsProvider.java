@@ -104,6 +104,11 @@ public final class JBTerminalSystemSettingsProvider extends JBTerminalSystemSett
   }
 
   @Override
+  public boolean shiftEnterSendsEscCR() {
+    return AdvancedSettings.getBoolean("terminal.shift.enter.sends.esc.cr");
+  }
+
+  @Override
   public @NotNull TerminalTypeAheadSettings getTypeAheadSettings() {
     return new TerminalTypeAheadSettings(
       AdvancedSettings.getBoolean("terminal.type.ahead"),

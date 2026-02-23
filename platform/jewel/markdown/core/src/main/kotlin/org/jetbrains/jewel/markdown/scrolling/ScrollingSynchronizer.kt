@@ -387,7 +387,7 @@ public abstract class ScrollingSynchronizer {
                 //
                 // Some of the lines might be empty, and thus there are no spans for them.
                 // However, every empty line follows the 1:1 mapping rule,
-                // which means all of the lines in the range [first line + 1; last line - 1]
+                // which means all the lines in the range [first line + 1; last line - 1]
                 // have their counterparts in the preview, regardless of the content.
 
                 val openingLine = sourceLines.first()

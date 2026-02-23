@@ -52,6 +52,7 @@ import java.util.*;
 import static com.intellij.execution.RunContentDescriptorIdImplKt.RUN_CONTENT_DESCRIPTOR_ID;
 import static com.intellij.execution.dashboard.RunDashboardServiceIdKt.SELECTED_DASHBOARD_SERVICE_ID;
 import static com.intellij.ide.ui.icons.IconIdKt.icon;
+import static com.intellij.openapi.actionSystem.PlatformDataKeys.TREE_EXPANDER_HIDE_ACTIONS_IF_NO_EXPANDER;
 import static com.intellij.platform.execution.dashboard.RunDashboardServiceViewContributorHelper.*;
 import static com.intellij.platform.execution.serviceView.ServiceViewImplementationChooserKt.shouldEnableServicesViewInCurrentEnvironment;
 
@@ -60,7 +61,7 @@ public final class RunDashboardServiceViewContributor
              RunDashboardGroupNode {
 
   private static final DataProvider TREE_EXPANDER_HIDE_PROVIDER =
-    id -> PlatformDataKeys.TREE_EXPANDER_HIDE_ACTIONS_IF_NO_EXPANDER.is(id) ? true : null;
+    id -> TREE_EXPANDER_HIDE_ACTIONS_IF_NO_EXPANDER.is(id) ? true : null;
 
   @Override
   public @NotNull ServiceViewDescriptor getViewDescriptor(@NotNull Project project) {
@@ -257,23 +258,6 @@ public final class RunDashboardServiceViewContributor
     }
 
     @Override
-    public DataProvider getDataProvider() {
-      Content content = myNode.getContent();
-      if (content == null) return TREE_EXPANDER_HIDE_PROVIDER;
-
-      // Try to get data provider from content's component itself.
-      // No need to search for data providers in content's component swing hierarchy,
-      // because it is inside service view component for which data is provided.
-      DataProvider componentProvider = DataManagerImpl.getDataProviderEx(content.getComponent());
-      return id -> {
-        Object data = TREE_EXPANDER_HIDE_PROVIDER.getData(id);
-        if (data != null) return data;
-
-        return componentProvider == null ? null : componentProvider.getData(id);
-      };
-    }
-
-    @Override
     public void onNodeSelected(List<Object> selectedServices) {
       if (selectedServices.size() != 1) return;
 
@@ -400,10 +384,27 @@ public final class RunDashboardServiceViewContributor
       sink.set(CommonDataKeys.PROJECT,  myNode.getProject());
       sink.set(SELECTED_DASHBOARD_SERVICE_ID, myNode.getValue().getRunDashboardServiceDto().getUuid());
       sink.set(RUN_CONTENT_DESCRIPTOR_ID, myNode.getValue().getRunDashboardServiceDto().getContentId());
+      sink.set(TREE_EXPANDER_HIDE_ACTIONS_IF_NO_EXPANDER, true);
+
+      Content content = myNode.getContent();
+      if (content == null) {
+        return;
+      }
+      var component = content.getComponent();
+      if (component instanceof UiDataProvider provider) {
+        provider.uiDataSnapshot(sink);
+      }
+      else {
+        var provider = DataManagerImpl.getDataProviderEx(content.getComponent());
+        if (provider == null) {
+          return;
+        }
+        sink.uiDataSnapshot(provider);
+      }
     }
   }
 
-  private static class RunDashboardGroupViewDescriptor implements ServiceViewDescriptor, WeighedItem {
+  private static class RunDashboardGroupViewDescriptor implements ServiceViewDescriptor, WeighedItem, UiDataProvider {
     protected final RunDashboardGroup myGroup;
     protected final GroupingNode myNode;
     private final PresentationData myPresentationData;
@@ -488,8 +489,8 @@ public final class RunDashboardServiceViewContributor
     }
 
     @Override
-    public @Nullable DataProvider getDataProvider() {
-      return TREE_EXPANDER_HIDE_PROVIDER;
+    public void uiDataSnapshot(DataSink sink) {
+      sink.set(TREE_EXPANDER_HIDE_ACTIONS_IF_NO_EXPANDER, true);
     }
   }
 
@@ -544,20 +545,15 @@ public final class RunDashboardServiceViewContributor
     }
 
     @Override
-    public @Nullable DataProvider getDataProvider() {
-      return dataId -> {
-        if (PlatformDataKeys.TREE_EXPANDER.is(dataId)) {
-          RunDashboardTypePanel typeContent =
-            RunDashboardUiManagerImpl.getInstance(myNode.getProject()).getTypeContent();
-          return typeContent.getTreeExpander();
-        }
-        return TREE_EXPANDER_HIDE_PROVIDER.getData(dataId);
-      };
+    public void uiDataSnapshot(DataSink sink) {
+      sink.set(PlatformDataKeys.TREE_EXPANDER,
+               RunDashboardUiManagerImpl.getInstance(myNode.getProject()).getTypeContent().getTreeExpander());
+      sink.set(TREE_EXPANDER_HIDE_ACTIONS_IF_NO_EXPANDER, true);
     }
   }
 
   private static final class RunDashboardContributorViewDescriptor extends SimpleServiceViewDescriptor
-    implements ServiceViewToolWindowDescriptor {
+    implements ServiceViewToolWindowDescriptor, UiDataProvider {
     private final Project myProject;
 
     RunDashboardContributorViewDescriptor(@NotNull Project project) {
@@ -576,10 +572,9 @@ public final class RunDashboardServiceViewContributor
     }
 
     @Override
-    public DataProvider getDataProvider() {
-      return id -> PlatformDataKeys.DELETE_ELEMENT_PROVIDER.is(id)
-                   ? new RunDashboardServiceViewDeleteProvider()
-                   : TREE_EXPANDER_HIDE_PROVIDER.getData(id);
+    public void uiDataSnapshot(@NotNull DataSink sink) {
+      sink.set(PlatformDataKeys.DELETE_ELEMENT_PROVIDER, new RunDashboardServiceViewDeleteProvider());
+      sink.set(TREE_EXPANDER_HIDE_ACTIONS_IF_NO_EXPANDER, true);
     }
 
     @Override

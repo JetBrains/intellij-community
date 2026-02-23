@@ -238,7 +238,7 @@ object CommunityRepositoryModules {
 
       // jSerialComm native library
       spec.withGeneratedResources { targetDir, context ->
-        val uri = URI.create("https://packages.jetbrains.team/files/p/ij/intellij-build-dependencies/jSerialComm/25666bc98300c6fd674d3a03afd700714c6fe571/jSerialComm.zip")
+        val uri = URI.create("https://packages.jetbrains.team/files/p/ij/intellij-build-dependencies/jSerialComm/9a7813435b79aa2e23c7f2a78f1b66b48c0504c4/jSerialComm.zip")
         val downloaded = BuildDependenciesDownloader.downloadFileToCacheLocation(context.paths.communityHomeDirRoot, uri)
         BuildDependenciesDownloader.extractFile(downloaded, targetDir.resolve("bin"), context.paths.communityHomeDirRoot)
       }

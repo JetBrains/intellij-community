@@ -11,6 +11,7 @@ import kotlinx.coroutines.CoroutineName
 import kotlinx.coroutines.CoroutineScope
 import java.lang.invoke.MethodHandles
 import java.lang.invoke.VarHandle
+import kotlin.coroutines.CoroutineContext
 
 class InstanceContainerImpl(
   private val scopeHolder: ScopeHolder,
@@ -102,8 +103,9 @@ class InstanceContainerImpl(
       }
       val dynamicInstanceInitializer = dynamicInstanceSupport.dynamicInstanceInitializer(instanceClass = keyClass) ?: return null
       val parentScope = scopeHolder.intersectScope(dynamicInstanceInitializer.registrationScope)
+      val additionalContext = scopeHolder.additionalContext
       val initializer = dynamicInstanceInitializer.initializer
-      holder = DynamicInstanceHolder(parentScope, initializer)
+      holder = DynamicInstanceHolder(scope = parentScope, additionalContext = additionalContext, initializer)
       state.replaceByClass(keyClass, holder)
     }
     // the following can only execute in case `holder` was initialized and committed into `state`
@@ -135,7 +137,8 @@ class InstanceContainerImpl(
     }
     LOG.trace { "$debugString : registration" }
     val parentScope = scopeHolder.intersectScope(registrationScope)
-    return register(parentScope = parentScope, actions).also {
+    val additionalContext = scopeHolder.additionalContext
+    return register(parentScope = parentScope, additionalContext = additionalContext, actions).also {
       LOG.trace { "$debugString : registration completed" }
     }
   }
@@ -161,8 +164,8 @@ class InstanceContainerImpl(
     }
   }
 
-  private fun register(parentScope: CoroutineScope, actions: Map<String, RegistrationAction>): UnregisterHandle {
-    val preparedHolders = prepareHolders(parentScope, actions)
+  private fun register(parentScope: CoroutineScope, additionalContext: CoroutineContext, actions: Map<String, RegistrationAction>): UnregisterHandle {
+    val preparedHolders = prepareHolders(parentScope, additionalContext, actions)
     val (holders, _, keysToRemove) = preparedHolders
     lateinit var handle: UnregisterHandle
     updateState { state ->

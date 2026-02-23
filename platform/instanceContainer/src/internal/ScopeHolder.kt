@@ -14,7 +14,7 @@ import kotlin.coroutines.CoroutineContext
 
 class ScopeHolder(
   parentScope: CoroutineScope,
-  additionalContext: CoroutineContext,
+  val additionalContext: CoroutineContext,
   private val containerName: String,
 ) {
 

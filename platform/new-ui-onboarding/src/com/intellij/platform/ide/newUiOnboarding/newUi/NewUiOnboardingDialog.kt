@@ -1,14 +1,11 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.ide.newUiOnboarding.newUi
 
-import com.intellij.ide.plugins.PluginManagerConfigurable
 import com.intellij.ide.ui.laf.darcula.ui.DarculaButtonUI
-import com.intellij.openapi.application.ApplicationNamesInfo
-import com.intellij.openapi.options.ShowSettingsUtil
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.DialogWrapper
-import com.intellij.openapi.util.IconLoader
 import com.intellij.platform.ide.newUiOnboarding.NewUiOnboardingBundle
+import com.intellij.platform.ide.newUiOnboarding.NewUiOnboardingUtil
 import com.intellij.ui.ClientProperty
 import com.intellij.ui.JBColor
 import com.intellij.ui.PopupBorder
@@ -25,7 +22,6 @@ import java.awt.Font
 import javax.swing.JComponent
 import javax.swing.JRootPane
 import javax.swing.border.Border
-import javax.swing.event.HyperlinkEvent
 
 
 internal class NewUiOnboardingDialog(private val project: Project)
@@ -43,7 +39,7 @@ internal class NewUiOnboardingDialog(private val project: Project)
 
   override fun createCenterPanel(): JComponent {
     val contentGaps = UnscaledGaps(28, 32, 22, 32)
-    val popupImage = IconLoader.getIcon(POPUP_IMAGE_PATH, NewUiOnboardingDialog::class.java.classLoader)
+    val popupImage = NewUiOnboardingUtil.getImage(NewUiOnboardingUtil.MEET_ISLANDS_TOUR_COVER_IMAGE_PATH)
     val panel = panel {
       row {
         icon(popupImage)
@@ -61,13 +57,8 @@ internal class NewUiOnboardingDialog(private val project: Project)
           val maxWidth = popupImage.iconWidth - JBUI.scale(contentGaps.width)
           val charWidth = window.getFontMetrics(JBFont.label()).charWidth('0')
           val maxLineLength = maxWidth / charWidth
-          text(NewUiOnboardingBundle.message("newUiOnboarding.dialog.text", ApplicationNamesInfo.getInstance().fullProductName), maxLineLength) { event ->
-            if (event.eventType == HyperlinkEvent.EventType.ACTIVATED) {
-              ShowSettingsUtil.getInstance().showSettingsDialog(project, PluginManagerConfigurable::class.java) { c ->
-                c.openMarketplaceTab("Classic UI")
-              }
-            }
-          }.customize(UnscaledGaps(top = 8))
+          text(NewUiOnboardingBundle.message("newUiOnboarding.dialog.text"), maxLineLength)
+            .customize(UnscaledGaps(top = 8))
         }
         row {
           button(NewUiOnboardingBundle.message("start.tour")) { close(0) }
@@ -93,8 +84,4 @@ internal class NewUiOnboardingDialog(private val project: Project)
   }
 
   override fun createContentPaneBorder(): Border? = null
-
-  companion object {
-    private const val POPUP_IMAGE_PATH: String = "newUiOnboarding/newUIOnboardingPopup.png"
-  }
 }

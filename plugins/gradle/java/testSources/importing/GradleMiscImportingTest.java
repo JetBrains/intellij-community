@@ -130,7 +130,6 @@ public class GradleMiscImportingTest extends GradleJavaImportingTestCase {
   public void testPreviewLanguageLevel() throws Exception {
     LanguageLevel highest = JavaRelease.getHighest();
     LanguageLevel highestPreview = highest.getPreviewLevel();
-
     importProject(
       "apply plugin: 'java'\n" +
       "java.sourceCompatibility = " + highest.feature() + "\n" +

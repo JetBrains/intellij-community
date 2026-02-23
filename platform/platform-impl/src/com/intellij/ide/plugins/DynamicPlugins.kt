@@ -50,6 +50,7 @@ import com.intellij.openapi.extensions.ExtensionDescriptor
 import com.intellij.openapi.extensions.ExtensionPointDescriptor
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.extensions.PluginId
+import com.intellij.openapi.extensions.impl.ExtensionPointDeferredListenersNotification
 import com.intellij.openapi.extensions.impl.ExtensionsAreaImpl
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.keymap.impl.BundledKeymapBean
@@ -1056,7 +1057,7 @@ object DynamicPlugins {
     app.messageBus.syncPublisher(DynamicPluginListener.TOPIC).beforePluginLoaded(pluginDescriptor)
     app.runWriteAction {
       try {
-        val listenerCallbacks = mutableListOf<Runnable>()
+        val listenerCallbacks = mutableListOf<ExtensionPointDeferredListenersNotification>()
 
         // 4. load into service container
         loadModules(modules = pluginWithContentModules, app = app, listenerCallbacks = listenerCallbacks)
@@ -1079,7 +1080,15 @@ object DynamicPlugins {
 
         PluginManagerCore.setPluginSet(pluginSet)
 
-        listenerCallbacks.forEach(Runnable::run)
+        if (System.getProperty("revert.IJPL233642", "false") != "true") {
+          listenerCallbacks.sortBy {
+            // put all registryKey EP listeners before anything else FIXME IJPL-233642
+            if (it.ep.name == "com.intellij.registryKey") -1 else 0
+          }
+        }
+        listenerCallbacks.forEach {
+          it.notify.run()
+        }
 
         DynamicPluginsUsagesCollector.logDescriptorLoad(pluginDescriptor)
         PluginManagerCore.clearLoadingErrorsFor(pluginDescriptor.pluginId)
@@ -1264,7 +1273,11 @@ private fun optionalDependenciesOnPlugin(
     .toSet()
 }
 
-private fun loadModules(modules: List<IdeaPluginDescriptorImpl>, app: ApplicationImpl, listenerCallbacks: MutableList<in Runnable>) {
+private fun loadModules(
+  modules: List<IdeaPluginDescriptorImpl>,
+  app: ApplicationImpl,
+  listenerCallbacks: MutableList<ExtensionPointDeferredListenersNotification>,
+) {
   app.registerComponents(modules = modules, app = app, listenerCallbacks = listenerCallbacks)
   for (openProject in getOpenedProjects()) {
     openProject.getComponentManagerImpl().registerComponents(modules = modules, app = app, listenerCallbacks = listenerCallbacks)

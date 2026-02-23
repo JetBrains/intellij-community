@@ -83,6 +83,7 @@ public final class PlatformHttpClient {
         if (certificateManager != null) {
           builder = builder.sslContext(certificateManager.getSslContext());
         }
+        builder = builder.authenticator(JdkProxyProvider.getInstance().getAuthenticator());
       }
     }
     return builder;

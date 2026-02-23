@@ -28,6 +28,7 @@ import com.intellij.openapi.diagnostic.ControlFlowException
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.diagnostic.trace
 import com.intellij.openapi.extensions.*
+import com.intellij.openapi.extensions.impl.ExtensionPointDeferredListenersNotification
 import com.intellij.openapi.extensions.impl.ExtensionPointImpl
 import com.intellij.openapi.extensions.impl.ExtensionsAreaImpl
 import com.intellij.openapi.extensions.impl.createExtensionPoints
@@ -316,7 +317,7 @@ abstract class ComponentManagerImpl(
   open fun registerComponents(
     modules: List<IdeaPluginDescriptorImpl>,
     app: Application?,
-    listenerCallbacks: MutableList<in Runnable>? = null
+    listenerCallbacks: MutableList<ExtensionPointDeferredListenersNotification>? = null,
   ) {
     val activityNamePrefix = activityNamePrefix()
 
@@ -366,7 +367,7 @@ abstract class ComponentManagerImpl(
 
     for (rootModule in modules) {
       executeRegisterTask(rootModule) { module ->
-        module.registerExtensions(nameToPoint = extensionPoints, listenerCallbacks = listenerCallbacks)
+        extensionArea.registerExtensions(module.extensions, module, listenerCallbacks)
       }
     }
 
@@ -1105,7 +1106,7 @@ abstract class ComponentManagerImpl(
   ) {
   }
 
-  protected open suspend fun preloadService(service: ServiceDescriptor, serviceInterface: String) {
+  protected suspend fun preloadService(service: ServiceDescriptor, serviceInterface: String) {
     serviceContainer.getInstanceHolder(keyClassName = serviceInterface)
       ?.takeIf(InstanceHolder::isStatic)
       ?.getInstanceInCallerContext(keyClass = null)

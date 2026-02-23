@@ -23,7 +23,7 @@ public class CodeHighlighterFactory(private val project: Project, private val co
             )
     }
 
-    public fun createHighlighter(): CodeHighlighter = LexerBasedCodeHighlighter(project, reHighlightingRequests)
+    public fun createHighlighter(): CodeHighlighter = IntelliJCodeHighlighter(project, reHighlightingRequests)
 
     public companion object {
         public fun getInstance(project: Project): CodeHighlighterFactory = project.service()

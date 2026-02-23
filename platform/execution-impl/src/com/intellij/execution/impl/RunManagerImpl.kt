@@ -12,6 +12,7 @@ import com.intellij.execution.runToolbar.RunToolbarSlotManager
 import com.intellij.execution.runners.ExecutionEnvironment
 import com.intellij.execution.runners.ExecutionUtil
 import com.intellij.execution.runners.ProgramRunner
+import com.intellij.ide.ActivityTracker
 import com.intellij.ide.plugins.DynamicPluginListener
 import com.intellij.ide.plugins.IdeaPluginDescriptor
 import com.intellij.ide.util.PropertiesComponent
@@ -618,6 +619,7 @@ open class RunManagerImpl @NonInjectable constructor(val project: Project, priva
       }
 
       eventPublisher.runConfigurationSelected(value)
+      ActivityTracker.getInstance().inc()
     }
 
   internal fun isFileContainsRunConfiguration(file: VirtualFile): Boolean {

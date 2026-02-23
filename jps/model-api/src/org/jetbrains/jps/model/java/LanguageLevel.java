@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jps.model.java;
 
 import com.intellij.util.lang.JavaVersion;
@@ -31,11 +31,12 @@ public enum LanguageLevel {
   JDK_23(23), JDK_23_PREVIEW(23),
   JDK_24(24), JDK_24_PREVIEW(24),
   JDK_25(25), JDK_25_PREVIEW(25),
-  JDK_X(26),
+  JDK_26(26), JDK_26_PREVIEW(26),
+  JDK_X(27),
   
   ;
 
-  public static final LanguageLevel HIGHEST = JDK_25;
+  public static final LanguageLevel HIGHEST = JDK_26;
 
   private final JavaVersion myVersion;
 
@@ -55,6 +56,6 @@ public enum LanguageLevel {
   }
 
   public boolean isPreview() {
-    return name().endsWith("_PREVIEW") || name().endsWith("_X");
+    return name().endsWith("_PREVIEW") || this == JDK_X;
   }
 }

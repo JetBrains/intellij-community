@@ -22,6 +22,7 @@ import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.impl.ActionToolbarImpl;
 import com.intellij.openapi.actionSystem.impl.MoreActionGroup;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.NlsContexts;
@@ -64,6 +65,7 @@ public final class RunContentBuilder extends RunTab {
   @ApiStatus.Experimental
   public static final String RUN_TOOL_WINDOW_TOP_TOOLBAR_MORE_GROUP = "RunTab.TopToolbar.More";
 
+  private static final Logger LOG = Logger.getInstance(RunContentBuilder.class);
   private static final String RUN_TOOL_WINDOW_ID = "Run";
 
   private static final String JAVA_RUNNER = "JavaRunner";
@@ -485,6 +487,10 @@ public final class RunContentBuilder extends RunTab {
                                                DefaultActionGroup actionGroup,
                                                @Nullable DefaultActionGroup moreGroup) {
     for (AnAction action : ContainerUtil.reverse(actions)) {
+      if (action == null) {
+        LOG.error("Null action in toolbar " + actions);
+        continue;
+      }
       if (moreGroup != null && action.getTemplatePresentation().getClientProperty(PREFERRED_PLACE) == PreferredPlace.MORE_GROUP) {
         addAvoidingDuplicates(moreGroup, new AnAction[]{action}, Constraints.LAST, AnAction.EMPTY_ARRAY);
       }

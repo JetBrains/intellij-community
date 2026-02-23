@@ -388,6 +388,8 @@ public final class ConsentOptions implements ModificationTracker {
   private @Nullable Consent getDefaultConsent(String consentId) {
     var defaultConsents = loadDefaultConsents();
     var consentMap = defaultConsents.get(consentId);
+    if (consentMap == null) return null;
+
     var defaultConsent = consentMap.get(getDefaultLocale());
     if (defaultConsent == null) return null;
     var localizedConsent = consentMap.get(getCurrentLocale());

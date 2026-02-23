@@ -34,6 +34,43 @@ import org.jetbrains.jewel.foundation.code.MimeType.Known.VERSION_CATALOG
 import org.jetbrains.jewel.foundation.code.MimeType.Known.XML
 import org.jetbrains.jewel.foundation.code.MimeType.Known.YAML
 
+private val ALREADY_NORMALIZED_BUILTIN_TYPES =
+    setOf(
+        AGSL,
+        AIDL,
+        C,
+        CPP,
+        DART,
+        DIFF,
+        GO,
+        GRADLE,
+        GRADLE_KTS,
+        GROOVY,
+        JAVA,
+        JAVASCRIPT,
+        JSON,
+        KOTLIN,
+        MANIFEST,
+        PATCH,
+        PROGUARD,
+        PROPERTIES,
+        PROTO,
+        PYTHON,
+        REGEX,
+        RESOURCE,
+        RUST,
+        SHELL,
+        SQL,
+        SVG,
+        TEXT,
+        TOML,
+        TYPESCRIPT,
+        UNKNOWN,
+        VERSION_CATALOG,
+        XML,
+        YAML,
+    )
+
 /**
  * Represents the language and dialect of a source snippet, as an RFC 2046 mime type.
  *
@@ -53,10 +90,24 @@ import org.jetbrains.jewel.foundation.code.MimeType.Known.YAML
  * language id's. Instead, these are looked up via `when`-tables. When adding a new language, update all lookup methods:
  * * [displayName]
  */
+@Deprecated(
+    message =
+        "The MimeType class is deprecated in favor of using the code block info strings (e.g., \"kt\", \"python\"). " +
+            "This class creates an unnecessary layer of abstraction and requires manual maintenance " +
+            "to support new languages. Use the new `highlight(code, language)` function " +
+            "to handle language resolution automatically."
+)
 @JvmInline
 public value class MimeType(private val mimeType: String) {
+    @Deprecated(
+        message =
+            "The MimeType class is deprecated in favor of using the code block info strings (e.g., \"kt\", " +
+                "\"python\"). This class creates an unnecessary layer of abstraction and requires manual maintenance " +
+                "to support new languages. Use the new `highlight(code, language)` function " +
+                "to handle language resolution automatically."
+    )
     public fun displayName(): String =
-        when (normalizeString()) {
+        when (getBaseMimeType()) {
             KOTLIN.mimeType -> if (isGradle()) "Gradle DSL" else "Kotlin"
             JAVA.mimeType -> "Java"
             XML.mimeType -> {
@@ -96,127 +147,55 @@ public value class MimeType(private val mimeType: String) {
             else -> mimeType
         }
 
-    private fun normalizeString(): String {
-        when (this) {
-            // Built-ins are already normalized, don't do string and sorting work
-            AGSL,
-            AIDL,
-            C,
-            CPP,
-            DART,
-            DIFF,
-            GO,
-            GRADLE,
-            GRADLE_KTS,
-            GROOVY,
-            JAVA,
-            JAVASCRIPT,
-            JSON,
-            KOTLIN,
-            MANIFEST,
-            PATCH,
-            PROGUARD,
-            PROPERTIES,
-            PROTO,
-            PYTHON,
-            REGEX,
-            RESOURCE,
-            RUST,
-            SHELL,
-            SQL,
-            SVG,
-            TEXT,
-            TOML,
-            TYPESCRIPT,
-            UNKNOWN,
-            VERSION_CATALOG,
-            XML,
-            YAML -> return this.mimeType
-        }
+    private fun getBaseMimeType(): String {
+        val baseMimeType = base().toString()
+        // Built-ins are already normalized, don't do string and sorting work
+        if (this in ALREADY_NORMALIZED_BUILTIN_TYPES) return baseMimeType
 
-        val baseEnd = mimeType.indexOf(';')
-        val normalizedBase =
-            when (val base = if (baseEnd == -1) mimeType else mimeType.substring(0, baseEnd)) {
-                "text/x-java-source",
-                "application/x-java",
-                "text/x-java" -> JAVA.mimeType
+        return when (baseMimeType) {
+            "text/x-java-source",
+            "application/x-java",
+            "text/x-java" -> JAVA.mimeType
 
-                "application/kotlin-source",
-                "text/x-kotlin",
-                "text/x-kotlin-source" -> KOTLIN.mimeType
+            "application/kotlin-source",
+            "text/x-kotlin",
+            "text/x-kotlin-source" -> KOTLIN.mimeType
 
-                "application/xml" -> XML.mimeType
-                "application/json",
-                "application/vnd.api+json",
-                "application/hal+json",
-                "application/ld+json" -> JSON.mimeType
+            "application/xml" -> XML.mimeType
+            "application/json",
+            "application/vnd.api+json",
+            "application/hal+json",
+            "application/ld+json" -> JSON.mimeType
 
-                "image/svg+xml" -> XML.mimeType
-                "text/x-python",
-                "application/x-python-script" -> PYTHON.mimeType
+            "image/svg+xml" -> XML.mimeType
+            "text/x-python",
+            "application/x-python-script" -> PYTHON.mimeType
 
-                "text/dart",
-                "text/x-dart",
-                "application/dart",
-                "application/x-dart" -> DART.mimeType
+            "text/dart",
+            "text/x-dart",
+            "application/dart",
+            "application/x-dart" -> DART.mimeType
 
-                "application/javascript",
-                "application/x-javascript",
-                "text/ecmascript",
-                "application/ecmascript",
-                "application/x-ecmascript" -> JAVASCRIPT.mimeType
+            "application/javascript",
+            "application/x-javascript",
+            "text/ecmascript",
+            "application/ecmascript",
+            "application/x-ecmascript" -> JAVASCRIPT.mimeType
 
-                "application/typescript" + "application/x-typescript" -> TYPESCRIPT.mimeType
-                "text/x-rust",
-                "application/x-rust" -> RUST.mimeType
+            "application/typescript",
+            "application/x-typescript" -> TYPESCRIPT.mimeType
+            "text/x-rust",
+            "application/x-rust" -> RUST.mimeType
 
-                "text/x-sksl" -> AGSL.mimeType
-                "application/yaml",
-                "text/x-yaml",
-                "application/x-yaml" -> YAML.mimeType
-                "application/x-patch" -> PATCH.mimeType
+            "text/x-sksl" -> AGSL.mimeType
+            "application/yaml",
+            "text/x-yaml",
+            "application/x-yaml" -> YAML.mimeType
+            "application/x-patch" -> PATCH.mimeType
 
-                else -> base
-            }
-
-        if (baseEnd == -1) {
-            return normalizedBase
-        }
-
-        val attributes =
-            mimeType
-                .split(';')
-                .asSequence()
-                .drop(1)
-                .sorted()
-                .mapNotNull {
-                    val index = it.indexOf('=')
-                    if (index != -1) {
-                        it.substring(0, index).trim() to it.substring(index + 1).trim()
-                    } else {
-                        null
-                    }
-                }
-                .filter { isRelevantAttribute(it.first) }
-                .map { "${it.first}=${it.second}" }
-                .joinToString("; ")
-
-        return if (attributes.isNotBlank()) {
-            "$normalizedBase; $attributes"
-        } else {
-            normalizedBase
+            else -> baseMimeType
         }
     }
-
-    /** Returns whether the given attribute should be included in a normalized string */
-    private fun isRelevantAttribute(attribute: String): Boolean =
-        when (attribute) {
-            ATTR_ROLE,
-            ATTR_ROOT_TAG,
-            ATTR_FOLDER_TYPE -> true
-
-            else -> false
-        }
 
     /**
      * Returns just the language portion of the mime type.
@@ -224,11 +203,16 @@ public value class MimeType(private val mimeType: String) {
      * For example, for `text/kotlin; role=gradle` this will return `text/kotlin`. For `text/plain; charset=us-ascii`
      * this returns `text/plain`
      */
+    @Deprecated(
+        message =
+            "The MimeType class is deprecated in favor of using the code block info strings (e.g., \"kt\", " +
+                "\"python\"). This class creates an unnecessary layer of abstraction and requires manual maintenance " +
+                "to support new languages. Use the new `highlight(code, language)` function " +
+                "to handle language resolution automatically."
+    )
     public fun base(): MimeType = MimeType(mimeType.substringBefore(';').trim())
 
     internal fun getRole(): String? = getAttribute(ATTR_ROLE)
-
-    private fun getFolderType(): String? = getAttribute(ATTR_FOLDER_TYPE)
 
     private fun getAttribute(name: String): String? {
         val marker = "$name="
@@ -263,6 +247,13 @@ public value class MimeType(private val mimeType: String) {
         const val VALUE_MANIFEST = "manifest"
     }
 
+    @Deprecated(
+        message =
+            "The MimeType class is deprecated in favor of using the code block info strings (e.g., \"kt\", " +
+                "\"python\"). This class creates an unnecessary layer of abstraction and requires manual maintenance " +
+                "to support new languages. Use the new `highlight(code, language)` function " +
+                "to handle language resolution automatically."
+    )
     public object Known {
         // Well known mime types for major languages.
 
@@ -271,12 +262,33 @@ public value class MimeType(private val mimeType: String) {
          * check if a mime type represents Kotlin code such that it also picks up `build.gradle.kts` files (which carry
          * extra attributes in the mime type; see [GRADLE_KTS].)
          */
+        @Deprecated(
+            message =
+                "The MimeType class is deprecated in favor of using the code block info strings (e.g., \"kt\", " +
+                    "\"python\"). This class creates an unnecessary layer of abstraction and requires manual " +
+                    "maintenance to support new languages. Use the new `highlight(code, language)` function " +
+                    "to handle language resolution automatically."
+        )
         public val KOTLIN: MimeType = MimeType("text/kotlin")
 
         /** Well known name for Java source snippets. */
+        @Deprecated(
+            message =
+                "The MimeType class is deprecated in favor of using the code block info strings (e.g., \"kt\", " +
+                    "\"python\"). This class creates an unnecessary layer of abstraction and requires manual " +
+                    "maintenance to support new languages. Use the new `highlight(code, language)` function " +
+                    "to handle language resolution automatically."
+        )
         public val JAVA: MimeType = MimeType("text/java")
 
         /** Well known mime type for text files. */
+        @Deprecated(
+            message =
+                "The MimeType class is deprecated in favor of using the code block info strings (e.g., \"kt\", " +
+                    "\"python\"). This class creates an unnecessary layer of abstraction and requires manual " +
+                    "maintenance to support new languages. Use the new `highlight(code, language)` function " +
+                    "to handle language resolution automatically."
+        )
         public val TEXT: MimeType = MimeType("text/plain")
 
         /**
@@ -287,6 +299,13 @@ public value class MimeType(private val mimeType: String) {
          * Note that [MimeType] is generally nullable in places where it's optional instead of being set to this value,
          * but this mime type is there for places where we need a specific value to point to.
          */
+        @Deprecated(
+            message =
+                "The MimeType class is deprecated in favor of using the code block info strings (e.g., \"kt\", " +
+                    "\"python\"). This class creates an unnecessary layer of abstraction and requires manual " +
+                    "maintenance to support new languages. Use the new `highlight(code, language)` function " +
+                    "to handle language resolution automatically."
+        )
         public val UNKNOWN: MimeType = MimeType("text/unknown")
 
         /**
@@ -294,39 +313,276 @@ public value class MimeType(private val mimeType: String) {
          * if a mime type represents any XML such that it also picks up manifest files, resource files etc., which all
          * carry extra attributes in the mime type; see for example [MANIFEST] and [RESOURCE].
          */
+        @Deprecated(
+            message =
+                "The MimeType class is deprecated in favor of using the code block info strings (e.g., \"kt\", " +
+                    "\"python\"). This class creates an unnecessary layer of abstraction and requires manual " +
+                    "maintenance to support new languages. Use the new `highlight(code, language)` function " +
+                    "to handle language resolution automatically."
+        )
         public val XML: MimeType = MimeType("text/xml")
+
+        @Deprecated(
+            message =
+                "The MimeType class is deprecated in favor of using the code block info strings (e.g., \"kt\", " +
+                    "\"python\"). This class creates an unnecessary layer of abstraction and requires manual " +
+                    "maintenance to support new languages. Use the new `highlight(code, language)` function " +
+                    "to handle language resolution automatically."
+        )
         public val PROPERTIES: MimeType = MimeType("text/properties")
+
+        @Deprecated(
+            message =
+                "The MimeType class is deprecated in favor of using the code block info strings (e.g., \"kt\", " +
+                    "\"python\"). This class creates an unnecessary layer of abstraction and requires manual " +
+                    "maintenance to support new languages. Use the new `highlight(code, language)` function " +
+                    "to handle language resolution automatically."
+        )
         public val TOML: MimeType = MimeType("text/toml")
+
+        @Deprecated(
+            message =
+                "The MimeType class is deprecated in favor of using the code block info strings (e.g., \"kt\", " +
+                    "\"python\"). This class creates an unnecessary layer of abstraction and requires manual " +
+                    "maintenance to support new languages. Use the new `highlight(code, language)` function " +
+                    "to handle language resolution automatically."
+        )
         public val JSON: MimeType = MimeType("text/json")
+
+        @Deprecated(
+            message =
+                "The MimeType class is deprecated in favor of using the code block info strings (e.g., \"kt\", " +
+                    "\"python\"). This class creates an unnecessary layer of abstraction and requires manual " +
+                    "maintenance to support new languages. Use the new `highlight(code, language)` function " +
+                    "to handle language resolution automatically."
+        )
         public val REGEX: MimeType = MimeType("text/x-regex-source")
+
+        @Deprecated(
+            message =
+                "The MimeType class is deprecated in favor of using the code block info strings (e.g., \"kt\", " +
+                    "\"python\"). This class creates an unnecessary layer of abstraction and requires manual " +
+                    "maintenance to support new languages. Use the new `highlight(code, language)` function " +
+                    "to handle language resolution automatically."
+        )
         public val GROOVY: MimeType = MimeType("text/groovy")
+
+        @Deprecated(
+            message =
+                "The MimeType class is deprecated in favor of using the code block info strings (e.g., \"kt\", " +
+                    "\"python\"). This class creates an unnecessary layer of abstraction and requires manual " +
+                    "maintenance to support new languages. Use the new `highlight(code, language)` function " +
+                    "to handle language resolution automatically."
+        )
         public val C: MimeType = MimeType("text/c")
+
+        @Deprecated(
+            message =
+                "The MimeType class is deprecated in favor of using the code block info strings (e.g., \"kt\", " +
+                    "\"python\"). This class creates an unnecessary layer of abstraction and requires manual " +
+                    "maintenance to support new languages. Use the new `highlight(code, language)` function " +
+                    "to handle language resolution automatically."
+        )
         public val CPP: MimeType = MimeType("text/c++")
+
+        @Deprecated(
+            message =
+                "The MimeType class is deprecated in favor of using the code block info strings (e.g., \"kt\", " +
+                    "\"python\"). This class creates an unnecessary layer of abstraction and requires manual " +
+                    "maintenance to support new languages. Use the new `highlight(code, language)` function " +
+                    "to handle language resolution automatically."
+        )
         public val SVG: MimeType = MimeType("image/svg+xml")
+
+        @Deprecated(
+            message =
+                "The MimeType class is deprecated in favor of using the code block info strings (e.g., \"kt\", " +
+                    "\"python\"). This class creates an unnecessary layer of abstraction and requires manual " +
+                    "maintenance to support new languages. Use the new `highlight(code, language)` function " +
+                    "to handle language resolution automatically."
+        )
         public val AIDL: MimeType = MimeType("text/x-aidl-source")
+
+        @Deprecated(
+            message =
+                "The MimeType class is deprecated in favor of using the code block info strings (e.g., \"kt\", " +
+                    "\"python\"). This class creates an unnecessary layer of abstraction and requires manual " +
+                    "maintenance to support new languages. Use the new `highlight(code, language)` function " +
+                    "to handle language resolution automatically."
+        )
         public val PROTO: MimeType = MimeType("text/x-protobuf")
+
+        @Deprecated(
+            message =
+                "The MimeType class is deprecated in favor of using the code block info strings (e.g., \"kt\", " +
+                    "\"python\"). This class creates an unnecessary layer of abstraction and requires manual " +
+                    "maintenance to support new languages. Use the new `highlight(code, language)` function " +
+                    "to handle language resolution automatically."
+        )
         public val SQL: MimeType = MimeType("text/x-sql")
+
+        @Deprecated(
+            message =
+                "The MimeType class is deprecated in favor of using the code block info strings (e.g., \"kt\", " +
+                    "\"python\"). This class creates an unnecessary layer of abstraction and requires manual " +
+                    "maintenance to support new languages. Use the new `highlight(code, language)` function " +
+                    "to handle language resolution automatically."
+        )
         public val PROGUARD: MimeType = MimeType("text/x-proguard")
+
+        @Deprecated(
+            message =
+                "The MimeType class is deprecated in favor of using the code block info strings (e.g., \"kt\", " +
+                    "\"python\"). This class creates an unnecessary layer of abstraction and requires manual " +
+                    "maintenance to support new languages. Use the new `highlight(code, language)` function " +
+                    "to handle language resolution automatically."
+        )
         public val PYTHON: MimeType = MimeType("text/python")
+
+        @Deprecated(
+            message =
+                "The MimeType class is deprecated in favor of using the code block info strings (e.g., \"kt\", " +
+                    "\"python\"). This class creates an unnecessary layer of abstraction and requires manual " +
+                    "maintenance to support new languages. Use the new `highlight(code, language)` function " +
+                    "to handle language resolution automatically."
+        )
         public val JAVASCRIPT: MimeType = MimeType("text/javascript")
+
+        @Deprecated(
+            message =
+                "The MimeType class is deprecated in favor of using the code block info strings (e.g., \"kt\", " +
+                    "\"python\"). This class creates an unnecessary layer of abstraction and requires manual " +
+                    "maintenance to support new languages. Use the new `highlight(code, language)` function " +
+                    "to handle language resolution automatically."
+        )
         public val TYPESCRIPT: MimeType = MimeType("text/typescript")
+
+        @Deprecated(
+            message =
+                "The MimeType class is deprecated in favor of using the code block info strings (e.g., \"kt\", " +
+                    "\"python\"). This class creates an unnecessary layer of abstraction and requires manual " +
+                    "maintenance to support new languages. Use the new `highlight(code, language)` function " +
+                    "to handle language resolution automatically."
+        )
         public val DART: MimeType = MimeType("application/dart")
+
+        @Deprecated(
+            message =
+                "The MimeType class is deprecated in favor of using the code block info strings (e.g., \"kt\", " +
+                    "\"python\"). This class creates an unnecessary layer of abstraction and requires manual " +
+                    "maintenance to support new languages. Use the new `highlight(code, language)` function " +
+                    "to handle language resolution automatically."
+        )
         public val RUST: MimeType = MimeType("text/rust")
+
+        @Deprecated(
+            message =
+                "The MimeType class is deprecated in favor of using the code block info strings (e.g., \"kt\", " +
+                    "\"python\"). This class creates an unnecessary layer of abstraction and requires manual " +
+                    "maintenance to support new languages. Use the new `highlight(code, language)` function " +
+                    "to handle language resolution automatically."
+        )
         public val AGSL: MimeType = MimeType("text/x-agsl")
+
+        @Deprecated(
+            message =
+                "The MimeType class is deprecated in favor of using the code block info strings (e.g., \"kt\", " +
+                    "\"python\"). This class creates an unnecessary layer of abstraction and requires manual " +
+                    "maintenance to support new languages. Use the new `highlight(code, language)` function " +
+                    "to handle language resolution automatically."
+        )
         public val SHELL: MimeType = MimeType("application/x-sh")
+
+        @Deprecated(
+            message =
+                "The MimeType class is deprecated in favor of using the code block info strings (e.g., \"kt\", " +
+                    "\"python\"). This class creates an unnecessary layer of abstraction and requires manual " +
+                    "maintenance to support new languages. Use the new `highlight(code, language)` function " +
+                    "to handle language resolution automatically."
+        )
         public val YAML: MimeType = MimeType("text/yaml")
+
+        @Deprecated(
+            message =
+                "The MimeType class is deprecated in favor of using the code block info strings (e.g., \"kt\", " +
+                    "\"python\"). This class creates an unnecessary layer of abstraction and requires manual " +
+                    "maintenance to support new languages. Use the new `highlight(code, language)` function " +
+                    "to handle language resolution automatically."
+        )
         public val GO: MimeType = MimeType("text/go")
 
         /** Note that most resource files will also have a folder type, so don't use equality on this mime type */
+        @Deprecated(
+            message =
+                "The MimeType class is deprecated in favor of using the code block info strings (e.g., \"kt\", " +
+                    "\"python\"). This class creates an unnecessary layer of abstraction and requires manual " +
+                    "maintenance to support new languages. Use the new `highlight(code, language)` function " +
+                    "to handle language resolution automatically."
+        )
         public val RESOURCE: MimeType = MimeType("$XML; $ATTR_ROLE=resource")
+
+        @Deprecated(
+            message =
+                "The MimeType class is deprecated in favor of using the code block info strings (e.g., \"kt\", " +
+                    "\"python\"). This class creates an unnecessary layer of abstraction and requires manual " +
+                    "maintenance to support new languages. Use the new `highlight(code, language)` function " +
+                    "to handle language resolution automatically."
+        )
         public val MANIFEST: MimeType = MimeType("$XML;$ATTR_ROLE=manifest $ATTR_ROOT_TAG=manifest")
+
+        @Deprecated(
+            message =
+                "The MimeType class is deprecated in favor of using the code block info strings (e.g., \"kt\", " +
+                    "\"python\"). This class creates an unnecessary layer of abstraction and requires manual " +
+                    "maintenance to support new languages. Use the new `highlight(code, language)` function " +
+                    "to handle language resolution automatically."
+        )
         public val GRADLE: MimeType = MimeType("$GROOVY; $ATTR_ROLE=gradle")
+
+        @Deprecated(
+            message =
+                "The MimeType class is deprecated in favor of using the code block info strings (e.g., \"kt\", " +
+                    "\"python\"). This class creates an unnecessary layer of abstraction and requires manual " +
+                    "maintenance to support new languages. Use the new `highlight(code, language)` function " +
+                    "to handle language resolution automatically."
+        )
         public val GRADLE_KTS: MimeType = MimeType("$KOTLIN; $ATTR_ROLE=gradle")
+
+        @Deprecated(
+            message =
+                "The MimeType class is deprecated in favor of using the code block info strings (e.g., \"kt\", " +
+                    "\"python\"). This class creates an unnecessary layer of abstraction and requires manual " +
+                    "maintenance to support new languages. Use the new `highlight(code, language)` function " +
+                    "to handle language resolution automatically."
+        )
         public val VERSION_CATALOG: MimeType = MimeType("$TOML; $ATTR_ROLE=version-catalog")
+
+        @Deprecated(
+            message =
+                "The MimeType class is deprecated in favor of using the code block info strings (e.g., \"kt\", " +
+                    "\"python\"). This class creates an unnecessary layer of abstraction and requires manual " +
+                    "maintenance to support new languages. Use the new `highlight(code, language)` function " +
+                    "to handle language resolution automatically."
+        )
         public val DIFF: MimeType = MimeType("text/x-diff")
+
+        @Deprecated(
+            message =
+                "The MimeType class is deprecated in favor of using the code block info strings (e.g., \"kt\", " +
+                    "\"python\"). This class creates an unnecessary layer of abstraction and requires manual " +
+                    "maintenance to support new languages. Use the new `highlight(code, language)` function " +
+                    "to handle language resolution automatically."
+        )
         public val PATCH: MimeType = MimeType("text/x-patch")
 
-        /** Maps from a markdown language [name] back to a mime type. */
+        /** Maps from a Markdown language [name] back to a mime type. */
+        @Deprecated(
+            message =
+                "The MimeType class is deprecated in favor of using the code block info strings (e.g., \"kt\", " +
+                    "\"python\"). This class creates an unnecessary layer of abstraction and requires manual " +
+                    "maintenance to support new languages. Use the new `highlight(code, language)` function " +
+                    "to handle language resolution automatically."
+        )
         public fun fromMarkdownLanguageName(name: String): MimeType? =
             when (name) {
                 "kotlin",
@@ -371,7 +627,7 @@ public value class MimeType(private val mimeType: String) {
                 "yml" -> YAML
 
                 "go",
-                "golang" -> YAML
+                "golang" -> GO
 
                 "diff" -> DIFF
                 "patch" -> PATCH
@@ -382,30 +638,93 @@ public value class MimeType(private val mimeType: String) {
 }
 
 /** Is the base language for this mime type Kotlin? */
+@Deprecated(
+    message =
+        "The MimeType class is deprecated in favor of using the code block info strings (e.g., \"kt\", \"python\"). " +
+            "This class creates an unnecessary layer of abstraction and requires manual maintenance " +
+            "to support new languages. Use the new `highlight(code, language)` function " +
+            "to handle language resolution automatically."
+)
 public fun MimeType?.isKotlin(): Boolean = this?.base() == KOTLIN
 
 /** Is the base language for this mime type Java? */
+@Deprecated(
+    message =
+        "The MimeType class is deprecated in favor of using the code block info strings (e.g., \"kt\", \"python\"). " +
+            "This class creates an unnecessary layer of abstraction and requires manual maintenance " +
+            "to support new languages. Use the new `highlight(code, language)` function " +
+            "to handle language resolution automatically."
+)
 public fun MimeType?.isJava(): Boolean = this?.base() == JAVA
 
 /** Is the base language for this mime type XML? */
+@Deprecated(
+    message =
+        "The MimeType class is deprecated in favor of using the code block info strings (e.g., \"kt\", \"python\"). " +
+            "This class creates an unnecessary layer of abstraction and requires manual maintenance " +
+            "to support new languages. Use the new `highlight(code, language)` function " +
+            "to handle language resolution automatically."
+)
 public fun MimeType?.isXml(): Boolean = this?.base() == XML
 
 /** Is this a Gradle file (which could be in Groovy, *or*, Kotlin) */
+@Deprecated(
+    message =
+        "The MimeType class is deprecated in favor of using the code block info strings (e.g., \"kt\", \"python\"). " +
+            "This class creates an unnecessary layer of abstraction and requires manual maintenance " +
+            "to support new languages. Use the new `highlight(code, language)` function " +
+            "to handle language resolution automatically."
+)
 public fun MimeType?.isGradle(): Boolean = this?.getRole() == "gradle"
 
 /** Is this a version catalog file (which could be in TOML, or in Groovy) */
+@Deprecated(
+    message =
+        "The MimeType class is deprecated in favor of using the code block info strings (e.g., \"kt\", \"python\"). " +
+            "This class creates an unnecessary layer of abstraction and requires manual maintenance " +
+            "to support new languages. Use the new `highlight(code, language)` function " +
+            "to handle language resolution automatically."
+)
 public fun MimeType?.isVersionCatalog(): Boolean = this?.getRole() == "version-catalog"
 
 /** Is this an Android manifest file? */
+@Deprecated(
+    message =
+        "The MimeType class is deprecated in favor of using the code block info strings (e.g., \"kt\", \"python\"). " +
+            "This class creates an unnecessary layer of abstraction and requires manual maintenance " +
+            "to support new languages. Use the new `highlight(code, language)` function " +
+            "to handle language resolution automatically."
+)
 public fun MimeType?.isManifest(): Boolean = this?.getRole() == "manifest"
 
 /** Is the base language for this mime type SQL? */
+@Deprecated(
+    message =
+        "The MimeType class is deprecated in favor of using the code block info strings (e.g., \"kt\", \"python\"). " +
+            "This class creates an unnecessary layer of abstraction and requires manual maintenance " +
+            "to support new languages. Use the new `highlight(code, language)` function " +
+            "to handle language resolution automatically."
+)
 public fun MimeType?.isSql(): Boolean = this?.base() == SQL
 
 /** Is the base language for this mime type a regular expression? */
+@Deprecated(
+    message =
+        "The MimeType class is deprecated in favor of using the code block info strings (e.g., \"kt\", \"python\"). " +
+            "This class creates an unnecessary layer of abstraction and requires manual maintenance " +
+            "to support new languages. Use the new `highlight(code, language)` function " +
+            "to handle language resolution automatically."
+)
 public fun MimeType?.isRegex(): Boolean = this?.base() == REGEX
 
 /** Is the base language for this mime type a protobuf? */
+@Deprecated(
+    message =
+        "The MimeType class is deprecated in favor of using the code block info strings (e.g., \"kt\", \"python\"). " +
+            "This class creates an unnecessary layer of abstraction and requires manual maintenance " +
+            "to support new languages. Use the new `highlight(code, language)` function " +
+            "to handle language resolution automatically."
+)
 public fun MimeType?.isProto(): Boolean = this?.base() == PROTO
 
 private fun String.capitalizeAsciiOnly(): String {

@@ -168,7 +168,8 @@ private class TerminalOutputBuilder(
     if (!previousLineWrapped) {
       addCurrentLine()
     }
-    line.forEachEntry { entry ->
+    val entries = line.entries.dropLastWhile { it.isNul }
+    for (entry in entries) {
       val text = entry.text.clearDWC()
       if (text.isNotEmpty() && (!entry.isNul || entry.style != TextStyle.EMPTY)) {
         val resultText = if (entry.isNul) " ".repeat(text.length) else text

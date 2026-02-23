@@ -24,7 +24,7 @@ private val actionInfo = listOf("rule.settings:canceled",
                                 "rule.settings:changes:domains",
                                 "rule.settings:changes:unclassified")
 
-private val GROUP = EventLogGroup("grazie.count", 11)
+private val GROUP = EventLogGroup("grazie.count", 12)
 
 private val LANGUAGE_FIELD = EventFields.Enum<Language>("language") { it.iso.name.lowercase() }
 private val RULE_FIELD = EventFields.StringValidatedByDictionary("id", "grazie_rule_long_ids.ndjson")
@@ -69,20 +69,6 @@ private val suggestionShownEvent = GROUP.registerVarargEvent("suggestion.shown",
                                                              EventFields.Language,
                                                              TEXT_LANGUAGE_FIELD,
                                                              EventFields.PluginInfo)
-
-//Ex. JB AIA Grazie Pro events
-private val definitionRequested = GROUP.registerEvent(
-  "definition.requested",
-  LANGUAGE_FIELD,
-  EventFields.Int("word_count")
-)
-
-private val definitionShown = GROUP.registerEvent(
-  "definition.shown",
-  LANGUAGE_FIELD,
-  EventFields.Count,
-  EventFields.DurationMs
-)
 
 private object RephraseEventFields {
   val sentenceLength = EventFields.Int("sentence_length")
@@ -225,14 +211,6 @@ object GrazieFUSCounter : CounterUsagesCollector() {
       TEXT_LANGUAGE_FIELD.with(tracker.textLanguage),
       EventFields.PluginInfo.with(getPluginInfo(tracker.rule.javaClass)),
     ))
-  }
-
-  fun reportDefinitionRequested(language: Language, wordCount: Int) {
-    definitionRequested.log(language, wordCount)
-  }
-
-  fun reportDefinitionShown(language: Language, definitionCount: Int, displayTime: Duration) {
-    definitionShown.log(language, definitionCount, displayTime.toMillis())
   }
 
   fun reportRephraseRequested(language: Language, sentenceLength: Int, rangeLength: Int, rangeWordCount: Int) {

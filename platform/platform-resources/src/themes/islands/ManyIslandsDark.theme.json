@@ -67,7 +67,9 @@
     "Island": {
       "arc": 20,
       "arc.compact": 16,
-      "borderWidth": 5,
+      "borderArcLength": 14,
+      "borderArcLength.compact": 10,
+      "borderWidth": 6,
       "borderWidth.compact": 4,
       "borderColor": "ToolWindowBackground",
       "inactiveAlpha": 0.44,

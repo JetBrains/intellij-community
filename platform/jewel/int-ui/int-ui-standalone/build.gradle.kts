@@ -14,6 +14,7 @@ plugins {
 dependencies {
     api(projects.ui)
     implementation(libs.jbr.api)
+    implementation(libs.jna.core)
 }
 
 intelliJThemeGenerator {

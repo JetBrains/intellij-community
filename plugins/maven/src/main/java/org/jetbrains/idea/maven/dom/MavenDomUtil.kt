@@ -24,6 +24,8 @@ import com.intellij.psi.xml.XmlFile
 import com.intellij.psi.xml.XmlTag
 import com.intellij.testFramework.LightVirtualFile
 import com.intellij.util.ObjectUtils
+import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
+import com.intellij.util.concurrency.annotations.RequiresReadLock
 import com.intellij.util.containers.ContainerUtil
 import com.intellij.util.xml.*
 import org.jetbrains.idea.maven.dom.model.*
@@ -259,6 +261,8 @@ object MavenDomUtil {
     return manager.findContainingProject(file)
   }
 
+  @RequiresReadLock
+  @RequiresBackgroundThread(generateAssertion = false)
   @JvmStatic
   fun getMavenDomProjectModel(project: Project, file: VirtualFile): MavenDomProjectModel? {
     return getMavenDomModel(project, file, MavenDomProjectModel::class.java)
@@ -276,6 +280,8 @@ object MavenDomUtil {
     return getMavenDomModel<MavenDomProfiles>(project, file, MavenDomProfiles::class.java) // try an old-style model
   }
 
+  @RequiresReadLock
+  @RequiresBackgroundThread(generateAssertion = false)
   @JvmStatic
   fun <T : MavenDomElement?> getMavenDomModel(
     project: Project,

@@ -311,13 +311,12 @@ sealed interface FileSystem<P : PathHolder> {
     }
 
     override suspend fun resolvePythonBinary(pythonHome: PathHolder.Target): PathHolder.Target {
-      val pythonHomeString = pythonHome.pathString
-      val pythonBinaryPath = when {
-        pythonHomeString.contains("\\") -> "${pythonHomeString.removeSuffix("\\")}\\Scripts\\python.exe"
-        else -> "${pythonHomeString.removeSuffix("/")}/bin/python"
-      }.let { PathHolder.Target(it) }
+      val pythonHomeString = pythonHome.pathString.takeIf { !it.contains("/bin/python") }
+                             ?: return pythonHome
 
-      return pythonBinaryPath
+      val pythonBinaryString = pythonHomeString.let { "${it.removeSuffix("/")}/bin/python" }
+
+      return PathHolder.Target(pythonBinaryString)
     }
 
     override suspend fun which(cmd: String): PathHolder.Target? {

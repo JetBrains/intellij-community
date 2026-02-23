@@ -7,7 +7,6 @@ import com.intellij.codeInsight.lookup.LookupElement
 import com.intellij.codeInsight.lookup.LookupEx
 import com.intellij.openapi.client.ClientProjectSession
 import com.intellij.openapi.client.currentSession
-import com.intellij.openapi.components.service
 import com.intellij.openapi.components.serviceOrNull
 import com.intellij.openapi.diagnostic.fileLogger
 import com.intellij.openapi.editor.Editor
@@ -27,7 +26,7 @@ interface ClientLookupManager {
   companion object {
     fun getInstance(session: ClientProjectSession): ClientLookupManager? = session.serviceOrNull()
 
-    fun getCurrentInstance(project: Project): ClientLookupManager = project.currentSession.service()
+    fun getCurrentInstance(project: Project): ClientLookupManager? = project.currentSession.serviceOrNull()
   }
 
   fun getActiveLookup(): LookupEx?

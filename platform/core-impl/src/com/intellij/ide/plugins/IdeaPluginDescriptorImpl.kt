@@ -104,13 +104,6 @@ sealed class IdeaPluginDescriptorImpl(
   )
 
   @ApiStatus.Internal
-  fun registerExtensions(nameToPoint: Map<String, ExtensionPointImpl<*>>, listenerCallbacks: MutableList<in Runnable>?) {
-    for ((descriptors, point) in intersectMaps(extensions, nameToPoint)) {
-      point.registerExtensions(descriptors, pluginDescriptor = this, listenerCallbacks)
-    }
-  }
-
-  @ApiStatus.Internal
   companion object {
     private fun convertDepends(depends: List<DependsElement>): MutableList<PluginDependencyImpl> =
       depends.mapTo(ArrayList(depends.size)) {
@@ -201,20 +194,6 @@ sealed class IdeaPluginDescriptorImpl(
         pluginDeps.add(ULTIMATE_PLUGIN_ID)
       }
       return ModuleDependencies(moduleDeps, pluginDeps)
-    }
-
-    private fun <K, V1, V2> intersectMaps(first: Map<K, V1>, second: Map<K, V2>): Sequence<Pair<V1, V2>> {
-      // Make sure we iterate the smaller map
-      return if (first.size < second.size) {
-        first.asSequence().mapNotNull { (key, firstValue) ->
-          second[key]?.let { secondValue -> firstValue to secondValue }
-        }
-      }
-      else {
-        second.asSequence().mapNotNull { (key, secondValue) ->
-          first[key]?.let { firstValue -> firstValue to secondValue }
-        }
-      }
     }
 
     internal fun IdeaPluginDescriptor.logUnexpectedElement(elementName: String) {

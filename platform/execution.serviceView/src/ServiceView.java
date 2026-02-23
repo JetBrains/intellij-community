@@ -120,14 +120,14 @@ abstract class ServiceView extends JPanel implements UiDataProvider, Disposable 
              onlyItem != null ? onlyItem.getValue() : null);
     sink.set(ServiceViewActionProvider.SERVICES_SELECTED_ITEMS, selection);
 
-    ServiceViewContributor<?> contributor = ServiceViewDragHelper.getTheOnlyRootContributor(selection);
-    ServiceViewDescriptor contributorDescriptor = contributor != null ? contributor.getViewDescriptor(myProject) : null;
-    if (contributorDescriptor instanceof UiDataProvider uiDataProvider) {
-      sink.uiDataSnapshot(uiDataProvider);
-    }
-    else {
-      DataSink.uiDataSnapshot(sink, contributorDescriptor != null ? contributorDescriptor.getDataProvider() : null);
-    }
+    //ServiceViewContributor<?> contributor = ServiceViewDragHelper.getTheOnlyRootContributor(selection);
+    //ServiceViewDescriptor contributorDescriptor = contributor != null ? contributor.getViewDescriptor(myProject) : null;
+    //if (contributorDescriptor instanceof UiDataProvider uiDataProvider) {
+    //  sink.uiDataSnapshot(uiDataProvider);
+    //}
+    //else {
+    //  DataSink.uiDataSnapshot(sink, contributorDescriptor != null ? contributorDescriptor.getDataProvider() : null);
+    //}
     sink.set(ServiceViewActionUtils.CONTRIBUTORS_KEY,
              getModel().getRoots().stream().map(item -> item.getRootContributor()).collect(Collectors.toSet()));
     sink.set(ServiceViewActionUtils.OPTIONS_KEY, myViewOptions);
@@ -136,13 +136,13 @@ abstract class ServiceView extends JPanel implements UiDataProvider, Disposable 
                                                                             item -> ServiceViewDescriptorIdKt.toId(item, myProject));
     sink.set(ServiceViewActionProvider.SERVICES_SELECTED_DESCRIPTOR_IDS, selectedDescriptorIds);
 
-    ServiceViewDescriptor descriptor = onlyItem == null || onlyItem.isRemoved() ? null : onlyItem.getViewDescriptor();
-    if (descriptor instanceof UiDataProvider uiDataProvider) {
-      sink.uiDataSnapshot(uiDataProvider);
-    }
-    else {
-      DataSink.uiDataSnapshot(sink, descriptor != null ? descriptor.getDataProvider() : null);
-    }
+    //ServiceViewDescriptor descriptor = onlyItem == null || onlyItem.isRemoved() ? null : onlyItem.getViewDescriptor();
+    //if (descriptor instanceof UiDataProvider uiDataProvider) {
+    //  sink.uiDataSnapshot(uiDataProvider);
+    //}
+    //else {
+    //  DataSink.uiDataSnapshot(sink, descriptor != null ? descriptor.getDataProvider() : null);
+    //}
   }
 
   private static void setViewModelState(@NotNull ServiceViewModel viewModel, @NotNull ServiceViewState viewState) {

@@ -458,59 +458,89 @@ public final class InspectionResultsView extends JPanel implements Disposable, U
     final int problemCount = myTree.getSelectedProblemCount();
     JComponent previewPanel = null;
     final InspectionToolWrapper<?,?> tool = myTree.getSelectedToolWrapper(true);
+
+    final InspectionToolPresentation presentation = tool != null ? myGlobalInspectionContext.getPresentation(tool) : null;
+
     boolean isCustomActionPanelAlignedToLeft = false;
-    if (tool != null) {
-      final InspectionToolPresentation presentation = myGlobalInspectionContext.getPresentation(tool);
+    if (presentation != null) {
       isCustomActionPanelAlignedToLeft = presentation.shouldAlignCustomActionPanelToLeft();
       final TreePath path = myTree.getSelectionPath();
       if (path != null) {
         Object last = path.getLastPathComponent();
-        if (last instanceof ProblemDescriptionNode problemDescriptionNode) {
-          CommonProblemDescriptor descriptor = problemDescriptionNode.getDescriptor();
-          if (descriptor != null) {
-            previewPanel = presentation.getCustomPreviewPanel(descriptor, this);
-            JComponent customActions = presentation.getCustomActionsPanel(descriptor, this);
-            if (customActions != null) {
-              String borderLayout = isCustomActionPanelAlignedToLeft ? BorderLayout.WEST : BorderLayout.EAST;
-              actionsPanel.add(customActions, borderLayout);
+        switch (last) {
+          case ProblemDescriptionNode problemDescriptionNode -> {
+            CommonProblemDescriptor descriptor = problemDescriptionNode.getDescriptor();
+            if (descriptor != null) {
+              previewPanel = presentation.getCustomPreviewPanel(descriptor, this);
+              addCustomActionsToPanel(presentation.getCustomActionsPanel(descriptor, this), actionsPanel, isCustomActionPanelAlignedToLeft);
             }
           }
-        }
-        else {
-          if (refEntity != null && refEntity.isValid()) {
-            previewPanel = presentation.getCustomPreviewPanel(refEntity);
+          case InspectionNode inspectionNode -> {
+            previewPanel = presentation.getCustomPreviewPanel(inspectionNode);
+            addCustomActionsToPanel(presentation.getCustomActionsPanel(inspectionNode), actionsPanel, isCustomActionPanelAlignedToLeft);
+          }
+          case InspectionModuleNode moduleNode -> {
+            previewPanel = presentation.getCustomPreviewPanel(moduleNode);
+            addCustomActionsToPanel(presentation.getCustomActionsPanel(moduleNode), actionsPanel, isCustomActionPanelAlignedToLeft);
+          }
+          case InspectionPackageNode packageNode -> {
+            previewPanel = presentation.getCustomPreviewPanel(packageNode);
+            addCustomActionsToPanel(presentation.getCustomActionsPanel(packageNode), actionsPanel, isCustomActionPanelAlignedToLeft);
+          }
+          case null, default -> {
+            if (refEntity != null && refEntity.isValid()) {
+              previewPanel = presentation.getCustomPreviewPanel(refEntity);
+              addCustomActionsToPanel(presentation.getCustomActionsPanel(refEntity), actionsPanel, isCustomActionPanelAlignedToLeft);
+            }
           }
         }
       }
     }
     EditorEx previewEditor = null;
     if (previewPanel == null) {
-      final Pair<JComponent, EditorEx> panelAndEditor = createBaseRightComponentFor(problemCount, refEntity);
+      final Pair<JComponent, EditorEx> panelAndEditor = ReadAction.compute(() -> createBaseRightComponentFor(problemCount, refEntity));
       previewPanel = panelAndEditor.getFirst();
       previewEditor = panelAndEditor.getSecond();
     }
     editorPanel.add(previewPanel, BorderLayout.CENTER);
-    if (problemCount > 0) {
+
+    // Custom toolbar is called ALWAYS (exclusion-resistant), not just when problemCount > 0
+    var customToolbar = presentation != null ? presentation.getCustomToolbar(this) : null;
+    if (customToolbar != null) {
+      myFixToolbar = customToolbar;
+    }
+    else if (problemCount > 0) {
       var paths = myTree.getSelectionPaths();
       if (paths != null) {
         InspectionResultsViewUtil.INSTANCE.updateAvailableSuppressActions(getProject(), paths, this);
       }
       myFixToolbar = QuickFixPreviewPanelFactory.create(this);
-      if (myFixToolbar != null) {
-        if (myFixToolbar instanceof InspectionTreeLoadingProgressAware progressPreview) {
-          myLoadingProgressPreview = progressPreview;
-        }
-        if (previewEditor != null) {
-          previewPanel.setBorder(IdeBorderFactory.createBorder(SideBorder.TOP));
-        }
-        String borderLayout = isCustomActionPanelAlignedToLeft ? BorderLayout.EAST : BorderLayout.WEST;
-        actionsPanel.add(myFixToolbar, borderLayout);
+    }
+
+    if (myFixToolbar != null) {
+      if (myFixToolbar instanceof InspectionTreeLoadingProgressAware progressPreview) {
+        myLoadingProgressPreview = progressPreview;
       }
+      if (previewEditor != null) {
+        previewPanel.setBorder(IdeBorderFactory.createBorder(SideBorder.TOP));
+      }
+      String borderLayout = isCustomActionPanelAlignedToLeft ? BorderLayout.EAST : BorderLayout.WEST;
+      actionsPanel.add(myFixToolbar, borderLayout);
     }
     if (previewEditor != null) {
-      ProblemPreviewEditorPresentation.setupFoldingsAndHighlightProblems(previewEditor, this);
+      EditorEx editor = previewEditor;
+      ReadAction.run(() -> ProblemPreviewEditorPresentation.setupFoldingsAndHighlightProblems(editor, this));
     }
     mySplitter.setSecondComponent(editorPanel);
+  }
+
+  private static void addCustomActionsToPanel(@Nullable JComponent customActions,
+                                              @NotNull JPanel actionsPanel,
+                                              boolean alignToLeft) {
+    if (customActions != null) {
+      String borderLayout = alignToLeft ? BorderLayout.WEST : BorderLayout.EAST;
+      actionsPanel.add(customActions, borderLayout);
+    }
   }
 
   private Pair<JComponent, EditorEx> createBaseRightComponentFor(int problemCount, RefEntity selectedEntity) {
@@ -755,7 +785,7 @@ public final class InspectionResultsView extends JPanel implements Disposable, U
                : navigatable;
       });
       sink.lazy(CommonDataKeys.PSI_ELEMENT, () -> {
-        RefEntity item = ((ProblemDescriptionNode)selectedNode).getElement();
+        RefEntity item = problemNode.getElement();
         return item instanceof RefElement r ? r.getPsiElement() : null;
       });
 

@@ -26,6 +26,8 @@ class ClientEditorManager {
   companion object {
     fun getCurrentInstance(): ClientEditorManager = ApplicationManager.getApplication().getService(ClientEditorManager::class.java)
 
+    fun getCurrentInstanceIfCreated(): ClientEditorManager? = ApplicationManager.getApplication().getServiceIfCreated(ClientEditorManager::class.java)
+
     fun getAllInstances(): List<ClientEditorManager> = ApplicationManager.getApplication().getServices(ClientEditorManager::class.java, ClientKind.ALL)
 
     /**

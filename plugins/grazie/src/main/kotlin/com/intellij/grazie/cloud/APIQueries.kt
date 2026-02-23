@@ -1,6 +1,5 @@
 package com.intellij.grazie.cloud
 
-import ai.grazie.def.WordDefinition
 import ai.grazie.gec.model.CorrectionServiceType
 import ai.grazie.gec.model.problem.SentenceWithProblems
 import ai.grazie.gen.tasks.text.rewrite.full.RewriteFullTaskDescriptor
@@ -17,7 +16,6 @@ import ai.grazie.ner.model.SentenceWithNERAnnotations
 import ai.grazie.nlp.langs.Language
 import ai.grazie.nlp.langs.utils.englishName
 import ai.grazie.rules.tree.TreeSupport
-import ai.grazie.text.TextRange
 import ai.grazie.text.exclusions.SentenceWithExclusions
 import ai.grazie.tree.model.SentenceWithTreeDependencies
 import ai.grazie.utils.text
@@ -38,9 +36,6 @@ import java.io.IOException
 import com.intellij.openapi.util.TextRange as IJTextRange
 
 object APIQueries {
-  @JvmField
-  val defLanguages = setOf(Language.ENGLISH, Language.GERMAN)
-
   @Volatile
   @JvmStatic
   var translator: Translator = object : Translator {
@@ -88,15 +83,6 @@ object APIQueries {
         .map { it.trim() }
         .distinct()
         .filter { it != text }
-    }
-  }
-
-  @JvmStatic
-  fun definitions(
-    text: String, range: IJTextRange, lang: Language, project: Project
-  ): WordDefinition? {
-    return request(project, null) {
-      GrazieCloudConnector.api()?.meta()?.def()?.define(text, TextRange(range.startOffset, range.endOffset), lang)
     }
   }
 

@@ -44,6 +44,24 @@ public interface InspectionToolPresentation extends InspectionToolResultExporter
   @NotNull
   GlobalInspectionContextImpl getContext();
 
+  /** Override the preview panel for the inspection node. */
+  @ApiStatus.Internal
+  default @Nullable JComponent getCustomPreviewPanel(@NotNull InspectionNode inspectionNode) {
+    return null;
+  }
+
+  /** Override the preview panel for the module node. */
+  @ApiStatus.Internal
+  default @Nullable JComponent getCustomPreviewPanel(@NotNull InspectionModuleNode moduleNode) {
+    return null;
+  }
+
+  /** Override the preview panel for the package node. */
+  @ApiStatus.Internal
+  default @Nullable JComponent getCustomPreviewPanel(@NotNull InspectionPackageNode packageNode) {
+    return null;
+  }
+
   /** Override the preview panel for the entity. */
   default @Nullable JComponent getCustomPreviewPanel(@NotNull RefEntity entity) {
     return null;
@@ -54,8 +72,42 @@ public interface InspectionToolPresentation extends InspectionToolResultExporter
     return null;
   }
 
+  /** Additional actions applicable to the inspection node. May be (but not necessarily) related to the custom preview panel. */
+  @ApiStatus.Internal
+  default @Nullable JComponent getCustomActionsPanel(@NotNull InspectionNode inspectionNode) {
+    return null;
+  }
+
+  /** Additional actions applicable to the module node. May be (but not necessarily) related to the custom preview panel. */
+  @ApiStatus.Internal
+  default @Nullable JComponent getCustomActionsPanel(@NotNull InspectionModuleNode moduleNode) {
+    return null;
+  }
+
+  /** Additional actions applicable to the package node. May be (but not necessarily) related to the custom preview panel. */
+  @ApiStatus.Internal
+  default @Nullable JComponent getCustomActionsPanel(@NotNull InspectionPackageNode packageNode) {
+    return null;
+  }
+
+  /** Additional actions applicable to the entity. May be (but not necessarily) related to the custom preview panel. */
+  @ApiStatus.Internal
+  default @Nullable JComponent getCustomActionsPanel(@NotNull RefEntity entity) {
+    return null;
+  }
+
   /** Additional actions applicable to the problem descriptor. May be (but not necessarily) related to the custom preview panel. */
   default @Nullable JComponent getCustomActionsPanel(@NotNull CommonProblemDescriptor descriptor, @NotNull Disposable parent) {
+    return null;
+  }
+
+  /**
+   * Provides a custom toolbar for the fix/action buttons area.
+   * Called regardless of whether there are problems selected (exclusion-resistant).
+   * Results view fallbacks to the default behavior if null is returned.
+   */
+  @ApiStatus.Internal
+  default @Nullable JComponent getCustomToolbar(@NotNull InspectionResultsView view) {
     return null;
   }
 

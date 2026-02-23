@@ -64,7 +64,6 @@ internal class WslTargetIntrospectionStep(model: WslTargetWizardModel) : WslTarg
     setSpinningVisible(true)
     model.resetLanguageConfigForIntrospection()
     console.clear()
-    val modalityState = ModalityState.stateForComponent(console.component)
     introspectionFinished = false
     ApplicationManager.getApplication().executeOnPooledThread {
       val introspectable = WslTargetIntrospectable(distribution, console)
@@ -73,20 +72,19 @@ internal class WslTargetIntrospectionStep(model: WslTargetWizardModel) : WslTarg
           model.subject.projectRootOnTarget = "${it}/${model.project.name}"
         }
       }
-      introspect(model.languageConfigForIntrospection, introspectable, modalityState)
+      introspect(model.languageConfigForIntrospection, introspectable)
     }
   }
 
   private fun introspect(languageRuntimeConfiguration: LanguageRuntimeConfiguration?,
-                         introspectable: WslTargetIntrospectable,
-                         modalityState: @NotNull ModalityState) {
+                         introspectable: WslTargetIntrospectable) {
     if (languageRuntimeConfiguration == null) {
-      finalizeIntrospection(modalityState)
+      finalizeIntrospection()
       return
     }
     val introspector = languageRuntimeConfiguration.getRuntimeType().createIntrospector(languageRuntimeConfiguration)
     if (introspector == null) {
-      finalizeIntrospection(modalityState)
+      finalizeIntrospection()
       return
     }
 
@@ -102,16 +100,16 @@ internal class WslTargetIntrospectionStep(model: WslTargetWizardModel) : WslTarg
                         ConsoleViewContentType.ERROR_OUTPUT)
         }
         introspectable.shutdown()
-        finalizeIntrospection(modalityState)
+        finalizeIntrospection()
       }
   }
 
-  private fun finalizeIntrospection(modalityState: @NotNull ModalityState) {
+  private fun finalizeIntrospection() {
     ApplicationManager.getApplication().invokeLater({
                                                       introspectionFinished = true
                                                       setSpinningVisible(false)
                                                       fireStateChanged()
-                                                    }, modalityState)
+                                                    }, ModalityState.any())
   }
 
   override fun createMainPanel(): JComponent {
