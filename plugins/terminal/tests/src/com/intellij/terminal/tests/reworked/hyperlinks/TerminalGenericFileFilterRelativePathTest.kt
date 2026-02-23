@@ -288,4 +288,34 @@ internal class TerminalGenericFileFilterRelativePathTest {
     val result = applyFilter("AssertionError at test/Test.kt:25")
     assertSingleLink(result, testKt, 18, 33, 25)
   }
+
+  @Test
+  fun `backticks around relative paths`() {
+    val result = applyFilter("See `src\\Main.kt`, `test\\Test.kt:10`  and `.\\lib\\Util.kt:24:10`")
+    assertLinks(result, ExpectedLink(mainKt, 5, 16), ExpectedLink(testKt, 20, 35, 10), ExpectedLink(utilKt, 43, 62, 24, 10))
+  }
+
+  @Test
+  fun `parenthesis around relative paths`() {
+    val result = applyFilter("● Update(src\\Main.kt)")
+    assertLinks(result, ExpectedLink(mainKt, 9, 20))
+  }
+
+  @Test
+  fun `parenthesis around several relative paths`() {
+    val result = applyFilter("Update(src\\Main.kt, test\\Test.kt:10:2), delete(lib\\Util.kt)")
+    assertLinks(result, ExpectedLink(mainKt, 7, 18), ExpectedLink(testKt, 20, 37, 10, 2), ExpectedLink(utilKt, 47, 58))
+  }
+
+  @Test
+  fun `file paths in --option=path`() {
+    val result = applyFilter("tar --create --file=./lib/Util.kt --directory=src  src/Main.kt")
+    assertLinks(result, ExpectedLink(utilKt, 20, 33), ExpectedLink(srcDir, 46, 49), ExpectedLink(mainKt, 51, 62))
+  }
+
+  @Test
+  fun `directory path with trailing slash`() {
+    val result = applyFilter("cp -r ./lib/ src/")
+    assertLinks(result, ExpectedLink(libDir, 6, 12), ExpectedLink(srcDir, 13, 17))
+  }
 }

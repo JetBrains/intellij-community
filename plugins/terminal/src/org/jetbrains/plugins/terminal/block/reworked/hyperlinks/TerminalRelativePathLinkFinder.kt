@@ -28,12 +28,7 @@ internal class TerminalRelativePathLinkFinder(
   private var lastPathSegmentStart: Int = -1
 
   private fun isLinkSeparatedFromFollowingText(linkEndExclusiveIndex: Int): Boolean {
-    if (linkEndExclusiveIndex == line.length) return true
-    val nextChar = line[linkEndExclusiveIndex]
-    if (nextChar.isWhitespace()) {
-      return true
-    }
-    return AFTER_LINK_CHARS.contains(nextChar) && line.getOrElse(linkEndExclusiveIndex + 1, ' ').isWhitespace()
+    return linkEndExclusiveIndex == line.length || isNonPathChar(line[linkEndExclusiveIndex])
   }
 
   private fun addLink(pathEndExclusiveIndex: Int, position: Position?, checkLinkSeparatedFromFollowingText: Boolean): Boolean {
@@ -45,12 +40,15 @@ internal class TerminalRelativePathLinkFinder(
       return false
     }
     val name = line.substring(lastPathSegmentStart, pathEndExclusiveIndex)
-    if (name == "..") {
+    if (pathStartIndex == lastPathSegmentStart && (name == ".." || name == ".")) {
+      // avoid noisy links for ".." or "."
       return false
     }
-    val child = if (name.isNotEmpty()) findValidChild(dir, name) else null
-    if (child == null) {
-      return false
+    val child = if (name.isNotEmpty()) {
+      findValidChild(dir, name) ?: return false
+    }
+    else {
+      dir // directory path with a trailing slash
     }
     val oneBasedLine = position?.oneBasedLine ?: 1
     val oneBasedColumn = position?.oneBasedColumn ?: 1
@@ -65,8 +63,8 @@ internal class TerminalRelativePathLinkFinder(
     return true
   }
 
-  private fun addLinkSeparatedFromFollowingText(endInd: Int) {
-    val pathEndExclusiveIndex = if (endInd > 0 && AFTER_LINK_CHARS.contains(line[endInd - 1])) endInd - 1 else endInd
+  private fun addLinkWithoutTrailingDot(endInd: Int) {
+    val pathEndExclusiveIndex = if (endInd > 0 && line[endInd - 1] == '.') endInd - 1 else endInd
     addLink(pathEndExclusiveIndex, null, false)
   }
 
@@ -76,7 +74,7 @@ internal class TerminalRelativePathLinkFinder(
     while (ind < line.length) {
       when (state) {
         ParsingState.NORMAL -> {
-          if (canStartRelativePath(ind) && BEFORE_LINK_CHARS.contains(line.getOrElse(ind - 1, ' '))) {
+          if (canStartRelativePath(ind)) {
             dir = initialWorkingDirectory
             state = ParsingState.PATH
             pathStartIndex = ind
@@ -106,15 +104,15 @@ internal class TerminalRelativePathLinkFinder(
                 addLink(ind, position, true)
                 state = ParsingState.CANCELED_PATH
               }
-              char.isWhitespace() -> {
-                addLinkSeparatedFromFollowingText(ind)
+              isNonPathChar(char) -> {
+                addLinkWithoutTrailingDot(ind)
                 state = ParsingState.NORMAL
               }
             }
           }
         }
         ParsingState.CANCELED_PATH -> {
-          if (line[ind].isWhitespace()) {
+          if (isNonPathChar(line[ind])) {
             state = ParsingState.NORMAL
           }
         }
@@ -122,7 +120,7 @@ internal class TerminalRelativePathLinkFinder(
       ind++
     }
     if (state == ParsingState.PATH) {
-      addLinkSeparatedFromFollowingText(ind)
+      addLinkWithoutTrailingDot(ind)
     }
   }
 
@@ -166,16 +164,13 @@ internal class TerminalRelativePathLinkFinder(
 
   private fun canStartRelativePath(ind: Int): Boolean {
     val char = line[ind]
-    if (isSeparator(char)) {
+    if (char.isWhitespace() || NON_PATH_START_CHARS.contains(char)) {
       return false
     }
     if (isWindows && OSAgnosticPathUtil.isDriveLetter(char) && line.getOrElse(ind + 1, ' ') == ':') {
       return false
     }
-    if (char == '~' && !isSeparator(line.getOrElse(ind + 1, '/'))) {
-      return false
-    }
-    return !char.isWhitespace() && !ILLEGAL_PATH_START_CHARS.contains(char)
+    return ind == 0 || isNonPathChar(line[ind - 1])
   }
 
   private fun findValidChild(parentDirectory: VirtualFile, name: String) : VirtualFile? {
@@ -192,7 +187,7 @@ internal class TerminalRelativePathLinkFinder(
   }
 }
 
-internal class Position(val oneBasedLine: Int, val oneBasedColumn: Int, val linkEndExclusiveIndex: Int)
+private data class Position(val oneBasedLine: Int, val oneBasedColumn: Int, val linkEndExclusiveIndex: Int)
 
 private fun isSeparator(char: Char) = char == '/' || char == '\\'
 
@@ -212,6 +207,11 @@ private fun String.takeNumberFromIndex(startIndex: Int): String? {
   return null
 }
 
-private val ILLEGAL_PATH_START_CHARS: CharSet = CharOpenHashSet("\u0000/\\<>:;\"|?* \t'[](){}".toCharArray())
-private val BEFORE_LINK_CHARS: CharSet = CharOpenHashSet("([<{\"' \t".toCharArray())
-private val AFTER_LINK_CHARS: CharSet = CharOpenHashSet(")]>}\"':;,.".toCharArray())
+private fun isNonPathChar(char: Char): Boolean {
+  return char.isWhitespace() || NON_PATH_CHARS.contains(char)
+}
+
+private val NON_PATH_CHARS: CharSet = CharOpenHashSet("()[]<>{}\"'`:;,=|^!?*".toCharArray())
+private val NON_PATH_START_CHARS: CharSet = CharOpenHashSet(NON_PATH_CHARS).also {
+  it.addAll("/\\~#$%&+".toCharArray().toTypedArray())
+}
