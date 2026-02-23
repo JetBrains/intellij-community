@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.framework.detection.impl
 
 import com.intellij.framework.detection.DetectedFrameworkDescription
@@ -7,10 +7,13 @@ import com.intellij.framework.detection.impl.exclude.DetectionExcludesConfigurat
 import com.intellij.ide.lightEdit.LightEdit
 import com.intellij.openapi.application.readAction
 import com.intellij.openapi.application.smartReadAction
+import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.progress.runBlockingMaybeCancellable
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.openapi.wm.ex.ProjectFrameCapabilitiesService
+import com.intellij.openapi.wm.ex.ProjectFrameCapability
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.util.concurrency.annotations.RequiresReadLock
 import com.intellij.util.indexing.FileBasedIndex
@@ -114,7 +117,7 @@ internal class FrameworkDetectorQueue(
   }
 
   private suspend fun doRunDetection(detectors: Collection<String>) {
-    if (LightEdit.owns(project)) {
+    if (isBackgroundActivitiesSuppressed(project)) {
       return
     }
 
@@ -152,4 +155,9 @@ internal class FrameworkDetectorQueue(
       notificationListener?.accept(newNamesToNotify)
     }
   }
+}
+
+private suspend fun isBackgroundActivitiesSuppressed(project: Project): Boolean {
+  return LightEdit.owns(project) ||
+         serviceAsync<ProjectFrameCapabilitiesService>().has(project, ProjectFrameCapability.SUPPRESS_BACKGROUND_ACTIVITIES)
 }

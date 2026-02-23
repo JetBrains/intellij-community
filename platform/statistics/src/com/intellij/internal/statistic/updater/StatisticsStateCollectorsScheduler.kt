@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.internal.statistic.updater
 
 import com.intellij.ide.ApplicationActivity
@@ -14,6 +14,8 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.project.waitForSmartMode
 import com.intellij.openapi.startup.ProjectActivity
+import com.intellij.openapi.wm.ex.ProjectFrameCapabilitiesService
+import com.intellij.openapi.wm.ex.ProjectFrameCapability
 import kotlinx.coroutines.delay
 import java.util.concurrent.atomic.AtomicBoolean
 import kotlin.time.Duration.Companion.minutes
@@ -38,7 +40,7 @@ internal class StatisticsStateCollectorsScheduler : ApplicationActivity {
 
     override suspend fun execute(project: Project) {
       // smart mode is not available when LightEdit is active
-      if (LightEdit.owns(project)) {
+      if (isBackgroundActivitiesSuppressed(project)) {
         return
       }
 
@@ -65,4 +67,9 @@ internal class StatisticsStateCollectorsScheduler : ApplicationActivity {
       }
     }
   }
+}
+
+private suspend fun isBackgroundActivitiesSuppressed(project: Project): Boolean {
+  return LightEdit.owns(project) ||
+         serviceAsync<ProjectFrameCapabilitiesService>().has(project, ProjectFrameCapability.SUPPRESS_BACKGROUND_ACTIVITIES)
 }

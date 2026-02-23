@@ -14,6 +14,8 @@ import com.intellij.openapi.project.RootsChangeRescanningInfo
 import com.intellij.openapi.projectRoots.SdkType
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.util.text.StringUtil
+import com.intellij.openapi.wm.ex.ProjectFrameCapabilitiesService
+import com.intellij.openapi.wm.ex.ProjectFrameCapability
 import com.intellij.platform.backend.workspace.WorkspaceModel
 import com.intellij.platform.workspace.jps.entities.LibraryEntity
 import com.intellij.platform.workspace.jps.entities.SdkEntity
@@ -67,7 +69,7 @@ class ProjectEntityIndexingService(
 
   fun indexChanges(changes: List<RootsChangeRescanningInfo>) {
     if (FileBasedIndex.getInstance() !is FileBasedIndexImpl) return
-    if (LightEdit.owns(project)) return
+    if (isBackgroundActivitiesSuppressed(project)) return
     if (invalidateProjectFilterIfFirstScanningNotRequested(project)) return
 
     if (ModalityState.defaultModalityState() === ModalityState.any()) {
@@ -86,7 +88,7 @@ class ProjectEntityIndexingService(
 
   override fun workspaceFileIndexChanged(event: WorkspaceFileIndexChangedEvent) {
     if (FileBasedIndex.getInstance() !is FileBasedIndexImpl) return
-    if (LightEdit.owns(project)) return
+    if (isBackgroundActivitiesSuppressed(project)) return
 
     if (ModalityState.defaultModalityState() === ModalityState.any()) {
       LOG.error("Unexpected modality: should not be ANY. Replace with NON_MODAL (130820241337)")
@@ -511,4 +513,9 @@ class ProjectEntityIndexingService(
       return builders
     }
   }
+}
+
+private fun isBackgroundActivitiesSuppressed(project: Project): Boolean {
+  return LightEdit.owns(project) ||
+         service<ProjectFrameCapabilitiesService>().has(project, ProjectFrameCapability.SUPPRESS_BACKGROUND_ACTIVITIES)
 }

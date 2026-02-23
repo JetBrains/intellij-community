@@ -25,6 +25,8 @@ import com.intellij.openapi.vfs.CompactVirtualFileSet;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.openapi.vfs.VirtualFileWithId;
+import com.intellij.openapi.wm.ex.ProjectFrameCapabilitiesService;
+import com.intellij.openapi.wm.ex.ProjectFrameCapability;
 import com.intellij.psi.SingleRootFileViewProvider;
 import com.intellij.psi.search.EverythingGlobalScope;
 import com.intellij.psi.search.GlobalSearchScope;
@@ -294,7 +296,7 @@ public abstract class FileBasedIndexEx extends FileBasedIndex {
       trace.keysWithAND(1)
         .withProject(project);
 
-      if (project instanceof LightEditCompatible) return Collections.emptyIterator();
+      if (isBackgroundActivitiesSuppressed(project)) return Collections.emptyIterator();
       @Nullable Iterator<VirtualFile> restrictToFileIt = extractSingleFileOrEmpty(scope);
       if (restrictToFileIt != null) {
         VirtualFile restrictToFile = restrictToFileIt.hasNext() ? restrictToFileIt.next() : null;
@@ -588,10 +590,21 @@ public abstract class FileBasedIndexEx extends FileBasedIndex {
    * Consider iterating without a read action if you don't require a consistent snapshot.
    */
   public @NotNull List<IndexableFilesIterator> getIndexableFilesProviders(@NotNull Project project) {
-    if (project instanceof LightEditCompatible) {
+    if (isBackgroundActivitiesSuppressed(project)) {
       return Collections.emptyList();
     }
     return IndexingIteratorsProvider.getInstance(project).getIndexingIterators();
+  }
+
+  private static boolean isBackgroundActivitiesSuppressed(@Nullable Project project) {
+    if (project == null) {
+      return false;
+    }
+    if (project instanceof LightEditCompatible) {
+      return true;
+    }
+    ProjectFrameCapabilitiesService service = ApplicationManager.getApplication().getService(ProjectFrameCapabilitiesService.class);
+    return service != null && service.has(project, ProjectFrameCapability.SUPPRESS_BACKGROUND_ACTIVITIES);
   }
 
   private @Nullable <K, V> IntSet collectFileIdsContainingAllKeys(@NotNull ID<K, V> indexId,

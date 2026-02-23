@@ -76,6 +76,8 @@ import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
+import com.intellij.openapi.wm.ex.ProjectFrameCapabilitiesService;
+import com.intellij.openapi.wm.ex.ProjectFrameCapability;
 import com.intellij.packageDependencies.DependencyValidationManager;
 import com.intellij.psi.PsiCompiledElement;
 import com.intellij.psi.PsiDocumentManager;
@@ -1113,7 +1115,7 @@ public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx
       // take a number of queued requests to update and pretend we execute them all (they are all the same, so one is enough)
       long requestDelta = analyzer.getDelta();
       try {
-        if (!project.isDefault() && project.isInitialized() && !LightEdit.owns(project)) {
+        if (!project.isDefault() && project.isInitialized() && !isBackgroundActivitiesSuppressed(project)) {
           String result = analyzer.runUpdate();
           if (LOG.isDebugEnabled()) {
             LOG.debug("runUpdate result: " + result+"; requestDelta:"+requestDelta);
@@ -1130,6 +1132,12 @@ public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx
         }
       }
     }
+  }
+
+  private static boolean isBackgroundActivitiesSuppressed(@NotNull Project project) {
+    ProjectFrameCapabilitiesService capabilitiesService = ApplicationManager.getApplication().getService(ProjectFrameCapabilitiesService.class);
+    return LightEdit.owns(project) ||
+           capabilitiesService != null && capabilitiesService.has(project, ProjectFrameCapability.SUPPRESS_BACKGROUND_ACTIVITIES);
   }
 
   // return update outcome for debug

@@ -100,4 +100,27 @@ class ProjectFrameCapabilitiesServiceTest {
     assertThat(service.has(project, ProjectFrameCapability.SUPPRESS_PROJECT_VIEW)).isTrue()
     assertThat(service.getAll(project)).isEqualTo(setOf(ProjectFrameCapability.SUPPRESS_PROJECT_VIEW))
   }
+
+  @Test
+  fun supportsSuppressBackgroundActivitiesCapability() {
+    ExtensionTestUtil.maskExtensions(
+      ProjectFrameCapabilitiesService.EP_NAME,
+      listOf(
+        object : ProjectFrameCapabilitiesProvider {
+          override fun getCapabilities(project: Project): Set<ProjectFrameCapability> {
+            return setOf(ProjectFrameCapability.SUPPRESS_BACKGROUND_ACTIVITIES)
+          }
+
+          override fun getUiPolicy(project: Project, capabilities: Set<ProjectFrameCapability>): ProjectFrameUiPolicy? {
+            return null
+          }
+        },
+      ),
+      disposable,
+    )
+
+    val service = ProjectFrameCapabilitiesService()
+    assertThat(service.has(project, ProjectFrameCapability.SUPPRESS_BACKGROUND_ACTIVITIES)).isTrue()
+    assertThat(service.getAll(project)).isEqualTo(setOf(ProjectFrameCapability.SUPPRESS_BACKGROUND_ACTIVITIES))
+  }
 }

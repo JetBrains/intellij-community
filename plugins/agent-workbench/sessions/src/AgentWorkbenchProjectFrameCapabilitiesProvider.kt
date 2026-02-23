@@ -36,6 +36,7 @@ internal class AgentWorkbenchProjectFrameCapabilitiesProvider : ProjectFrameCapa
 private val AGENT_WORKBENCH_FRAME_CAPABILITIES = EnumSet.of(
   ProjectFrameCapability.SUPPRESS_VCS_UI,
   ProjectFrameCapability.SUPPRESS_PROJECT_VIEW,
+  ProjectFrameCapability.SUPPRESS_BACKGROUND_ACTIVITIES,
 )
 
 private val AGENT_WORKBENCH_FRAME_UI_POLICY = ProjectFrameUiPolicy(

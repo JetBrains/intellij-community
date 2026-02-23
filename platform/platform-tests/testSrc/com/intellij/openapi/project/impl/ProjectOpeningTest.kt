@@ -1,15 +1,23 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.project.impl
 
 import com.intellij.ide.impl.OpenProjectTask
 import com.intellij.ide.impl.ProjectUtil
 import com.intellij.ide.impl.ProjectUtilCore
 import com.intellij.openapi.extensions.ExtensionPointName
+import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.project.ProjectManagerListener
 import com.intellij.openapi.project.ex.ProjectManagerEx
 import com.intellij.openapi.startup.InitProjectActivity
+import com.intellij.openapi.util.Ref
+import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.openapi.wm.ex.ProjectFrameCapabilitiesProvider
+import com.intellij.openapi.wm.ex.ProjectFrameCapabilitiesService
+import com.intellij.openapi.wm.ex.ProjectFrameCapability
+import com.intellij.openapi.wm.ex.ProjectFrameUiPolicy
+import com.intellij.platform.DirectoryProjectConfigurator
 import com.intellij.testFramework.ExtensionTestUtil
 import com.intellij.testFramework.PlatformTestUtil
 import com.intellij.testFramework.assertions.Assertions.assertThat
@@ -71,6 +79,66 @@ class ProjectOpeningTest : BareTestFixtureTestCase() {
         assertProjectOpenIsCancelled(createTestOpenProjectOptions(beforeOpen = { job!!.cancel("test") }))
       }
     }
+  }
+
+  @Test
+  fun suppressBackgroundActivitiesSkipsDirectoryProjectConfigurators() {
+    val configuratorInvoked = AtomicBoolean(false)
+    val configurator = object : DirectoryProjectConfigurator {
+      override fun configureProject(project: Project, baseDir: VirtualFile, moduleRef: Ref<Module>, isProjectCreatedWithWizard: Boolean) {
+        configuratorInvoked.set(true)
+      }
+    }
+    ExtensionTestUtil.maskExtensions(
+      ExtensionPointName.create<DirectoryProjectConfigurator>("com.intellij.directoryProjectConfigurator"),
+      listOf(configurator),
+      testRootDisposable,
+      fireEvents = false,
+    )
+
+    val baselineProjectDir = tempDir.root.toPath().resolve("baseline-configurators").createDirectories()
+    val baselineProject = runBlocking {
+      ProjectManagerEx.getInstanceEx().openProjectAsync(
+        baselineProjectDir,
+        OpenProjectTask {
+          isNewProject = true
+          runConfigurators = true
+        }
+      )
+    }
+    assertThat(baselineProject).isNotNull()
+    baselineProject!!.useProject { }
+    assertThat(configuratorInvoked.get()).isTrue()
+
+    configuratorInvoked.set(false)
+    ExtensionTestUtil.maskExtensions(
+      ProjectFrameCapabilitiesService.EP_NAME,
+      listOf(object : ProjectFrameCapabilitiesProvider {
+        override fun getCapabilities(project: Project): Set<ProjectFrameCapability> {
+          return setOf(ProjectFrameCapability.SUPPRESS_BACKGROUND_ACTIVITIES)
+        }
+
+        override fun getUiPolicy(project: Project, capabilities: Set<ProjectFrameCapability>): ProjectFrameUiPolicy? {
+          return null
+        }
+      }),
+      testRootDisposable,
+      fireEvents = false,
+    )
+
+    val suppressedProjectDir = tempDir.root.toPath().resolve("suppressed-configurators").createDirectories()
+    val suppressedProject = runBlocking {
+      ProjectManagerEx.getInstanceEx().openProjectAsync(
+        suppressedProjectDir,
+        OpenProjectTask {
+          isNewProject = true
+          runConfigurators = true
+        }
+      )
+    }
+    assertThat(suppressedProject).isNotNull()
+    suppressedProject!!.useProject { }
+    assertThat(configuratorInvoked.get()).isFalse()
   }
 
   private suspend fun assertProjectOpenIsCancelled(options: OpenProjectTask) {

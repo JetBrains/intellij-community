@@ -706,6 +706,10 @@ private suspend fun openDedicatedFrameProject(dedicatedProjectDir: Path): Projec
     options = OpenProjectTask {
       forceOpenInNewFrame = true
       runConfigurators = false
+      runConversionBeforeOpen = false
+      preloadServices = false
+      preventIprLookup = true
+      showWelcomeScreen = false
       createModule = false
     },
   )

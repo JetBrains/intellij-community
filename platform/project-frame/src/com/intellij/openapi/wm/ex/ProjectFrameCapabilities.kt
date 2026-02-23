@@ -36,6 +36,11 @@ enum class ProjectFrameCapability {
    * Disables file colors for the frame.
    */
   FORCE_DISABLE_FILE_COLORS,
+
+  /**
+   * Suppresses non-essential background activities for the frame.
+   */
+  SUPPRESS_BACKGROUND_ACTIVITIES,
 }
 
 /**
