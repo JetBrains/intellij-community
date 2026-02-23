@@ -26,7 +26,7 @@ class ShadowedJarSpec(
     }
     val consumerJar = module.filesToPack.singleOrNull { it.name.matches(consumerJarPattern) }
     require(consumerJar != null) {
-      "module '${module.name} shadows '$shadowedJar' so it must want to pack a jar '$consumerJarPattern'"
+      "module '${module.name} shadows '$shadowedJar' so it must want to pack a jar '$consumerJarPattern'. Jars: ${module.filesToPack.joinToString { it.name }}"
     }
     return ShadowedJarResolution(
       shadowedJar = shadowedJar,

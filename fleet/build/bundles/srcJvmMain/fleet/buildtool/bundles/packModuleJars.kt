@@ -14,7 +14,7 @@ import kotlin.io.path.listDirectoryEntries
 import kotlin.plus
 
 
-internal suspend fun Map<LayerSelector, Collection<Path>>.packModuleJars(
+suspend fun Map<LayerSelector, Collection<Path>>.packModuleJars(
   shouldPackModuleJars: Boolean,
   fullClassPath: Map<LayerSelector, Collection<Path>>,
   outputDirectory: Path,
@@ -35,38 +35,36 @@ internal suspend fun Map<LayerSelector, Collection<Path>>.packModuleJars(
       )
 
       this.mapValues { (layerSelector, jars) ->
-        packModuleLayer(layerSelector, jars, packer, fullClassPath, outputDirectory, logger, pluginId, scrambler)
+        val moduleName = "$pluginId.${layerSelector.selector}"
+        val fullClassPathForLayer = fullClassPath[layerSelector] ?: emptyList()
+        packModule(moduleName, jars, packer, fullClassPathForLayer, outputDirectory, logger, scrambler)
       }
     }
   }
 }
 
-private suspend fun packModuleLayer(
-  layerSelector: LayerSelector,
+suspend fun packModule(
+  moduleName: String,
   jars: Collection<Path>,
   packer: ModulePacker,
-  fullClassPath: Map<LayerSelector, Collection<Path>>,
+  fullClassPath: Collection<Path>,
   outputDirectory: Path,
   logger: Logger,
-  pluginId: String,
   scrambler: JarScrambler,
 ): Collection<Path> {
   val packedModule = packer.packModule(
     object : ModuleToPack {
-      override val name: String = "$pluginId.${layerSelector.selector}"
+      override val name: String = moduleName
       override val filesToPack: List<Path> = jars.toList()
     })
+
   val (toScramble, nonScrambledJars) = packedModule.jarFiles.partition { it.needsScrambling }
-
-
   val scrambledJars = when {
     toScramble.isNotEmpty() -> {
       val scrambledJarsOutputDirectory = outputDirectory.resolve("scrambled")
       scrambledJarsOutputDirectory.createDirectories()
-      val fullClassPathForLayer = fullClassPath[layerSelector]?.toList() ?: emptyList()
-      logger.warn("Scrambling jars for layer '${layerSelector.selector}': ${fullClassPathForLayer.joinToString("\n")}")
       scrambler.scramble(
-        classpath = fullClassPathForLayer,
+        classpath = fullClassPath.toList(),
         jarsToScramble = toScramble.map { it.path },
         outputDirectory = scrambledJarsOutputDirectory,
         logger = logger,
