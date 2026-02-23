@@ -2,7 +2,6 @@
 
 package org.jetbrains.kotlin.idea.compilerPlugin.allopen.maven
 
-import com.intellij.openapi.project.Project
 import com.intellij.util.text.VersionComparatorUtil
 import org.jetbrains.idea.maven.project.MavenProject
 import org.jetbrains.kotlin.allopen.AllOpenPluginNames.ANNOTATION_OPTION_NAME
@@ -12,12 +11,13 @@ import org.jetbrains.kotlin.idea.base.plugin.artifacts.KotlinArtifacts
 import org.jetbrains.kotlin.idea.compilerPlugin.CompilerPluginSetup.PluginOption
 import org.jetbrains.kotlin.idea.jps.toJpsVersionAgnosticKotlinBundledPath
 import org.jetbrains.kotlin.idea.maven.compilerPlugin.AbstractMavenImportHandler
+import org.jetbrains.kotlin.idea.maven.getKotlinPlugin
 
 class AllOpenMavenProjectImportHandler : AbstractMavenImportHandler() {
-    override val compilerPluginId = PLUGIN_ID
-    override val pluginName = "allopen"
-    override val mavenPluginArtifactName = "kotlin-maven-allopen"
-    override val pluginJarFileFromIdea = KotlinArtifacts.allopenCompilerPlugin.toJpsVersionAgnosticKotlinBundledPath()
+    override val compilerPluginId: String = PLUGIN_ID
+    override val pluginName: String = "allopen"
+    override val mavenPluginArtifactName: String = "kotlin-maven-allopen"
+    override val pluginJarFileFromIdea: String = KotlinArtifacts.allopenCompilerPlugin.toJpsVersionAgnosticKotlinBundledPath()
 
     override fun getOptions(
         mavenProject: MavenProject,

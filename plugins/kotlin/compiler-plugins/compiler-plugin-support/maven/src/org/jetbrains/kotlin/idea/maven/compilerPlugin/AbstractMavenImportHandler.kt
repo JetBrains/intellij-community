@@ -10,6 +10,7 @@ import org.jetbrains.kotlin.idea.compilerPlugin.CompilerPluginSetup
 import org.jetbrains.kotlin.idea.compilerPlugin.CompilerPluginSetup.PluginOption
 import org.jetbrains.kotlin.idea.compilerPlugin.modifyCompilerArgumentsForPluginWithFacetSettings
 import org.jetbrains.kotlin.idea.maven.MavenProjectImportHandler
+import org.jetbrains.kotlin.idea.maven.findKotlinPlugin
 
 abstract class AbstractMavenImportHandler : MavenProjectImportHandler {
     abstract val compilerPluginId: String
