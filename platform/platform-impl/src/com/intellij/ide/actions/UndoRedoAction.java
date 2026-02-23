@@ -102,9 +102,9 @@ public abstract class UndoRedoAction extends DumbAwareAction implements LightEdi
     boolean isActionInProgress,
     boolean isActionPerformed
   ) {
-    for (UndoManagerProvider provider : UndoManagerProvider.EP_NAME.getExtensionList()) {
-      UndoManager providedManager = provider.getUndoManager(dataContext);
-      if (providedManager != null) return providedManager;
+    UndoManager providedManager = getProvidedUndoManager(dataContext);
+    if (providedManager != null) {
+      return providedManager;
     }
     Component component = PlatformCoreDataKeys.CONTEXT_COMPONENT.getData(dataContext);
     if (component instanceof JTextComponent && !ClientProperty.isTrue(component, IGNORE_SWING_UNDO_MANAGER)) {
@@ -130,6 +130,20 @@ public abstract class UndoRedoAction extends DumbAwareAction implements LightEdi
     }
     Project project = getProject(editor, dataContext);
     return project != null && !project.isDefault() ? UndoManager.getInstance(project) : UndoManager.getGlobalInstance();
+  }
+
+  private static @Nullable UndoManager getProvidedUndoManager(DataContext dataContext) {
+    try {
+      for (UndoManagerProvider provider : UndoManagerProvider.EP_NAME.getExtensionList()) {
+        UndoManager providedManager = provider.getUndoManager(dataContext);
+        if (providedManager != null) {
+          return providedManager;
+        }
+      }
+    } catch (Throwable e) {
+      LOG.error(e);
+    }
+    return null;
   }
 
   private static @Nullable Project getProject(FileEditor editor, DataContext dataContext) {
