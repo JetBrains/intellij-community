@@ -485,7 +485,7 @@ fun getInnerVirtualEnvRoot(sdk: Sdk): VirtualFile? {
 }
 
 internal suspend fun suggestAssociatedSdkName(sdkHome: String, associatedPath: String?): String? = withContext(Dispatchers.IO) {
-  // please don't forget to update com.jetbrains.python.inspections.interpreter.PyInterpreterInspection#getSuitableSdkFix
+  // please don't forget to update com.jetbrains.python.inspections.interpreter.PyInterpreterNotificationProvider (createCacheLoader)
   // after changing this method
 
   val baseSdkName = PythonSdkType.suggestBaseSdkName(sdkHome) ?: return@withContext null

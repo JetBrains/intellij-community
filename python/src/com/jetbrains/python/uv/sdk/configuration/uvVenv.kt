@@ -31,11 +31,10 @@ import java.nio.file.Path
 private val logger = fileLogger()
 
 internal suspend fun checkManageableUvEnvBase(
-  module: Module,
   venvsInModule: List<PythonBinary>,
 ): EnvCheckerResult {
   getUvExecutableLocal() ?: return EnvCheckerResult.CannotConfigure
-  val intentionName = PyBundle.message("sdk.set.up.uv.environment", module.name)
+  val intentionName = PyBundle.message("sdk.set.up.uv.environment")
   val envFound = getUvEnv(venvsInModule)?.findEnvOrNull(intentionName)
   return envFound ?: EnvCheckerResult.EnvNotFound(intentionName)
 }

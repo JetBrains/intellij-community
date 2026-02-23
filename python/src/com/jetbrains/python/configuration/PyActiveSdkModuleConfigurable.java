@@ -16,6 +16,8 @@ import org.jetbrains.annotations.NotNull;
 // Inherit in the module you are going to use it
 @ApiStatus.Internal
 public abstract class PyActiveSdkModuleConfigurable extends ModuleAwareProjectConfigurable<UnnamedConfigurable> {
+  public static final String CONFIGURABLE_ID = "com.jetbrains.python.configuration.PyActiveSdkModuleConfigurable";
+
   private final Project myProject;
 
   protected PyActiveSdkModuleConfigurable(Project project) {

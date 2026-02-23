@@ -32,7 +32,7 @@ internal class PyUvSdkConfiguration : PyProjectTomlConfigurationExtension {
     venvsInModule: List<PythonBinary>,
     tomlCheckedByWorkspaceTools: Boolean
   ): EnvCheckerResult {
-    val baseCheckResult = checkManageableUvEnvBase(module, venvsInModule)
+    val baseCheckResult = checkManageableUvEnvBase(venvsInModule)
     return when (baseCheckResult) {
       is EnvCheckerResult.EnvFound, is EnvCheckerResult.SuggestToolInstallation -> baseCheckResult
       is EnvCheckerResult.EnvNotFound -> if (tomlCheckedByWorkspaceTools || findUvLock(module) != null) baseCheckResult else EnvCheckerResult.CannotConfigure

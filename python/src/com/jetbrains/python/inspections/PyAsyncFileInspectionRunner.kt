@@ -1,128 +1,117 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.inspections
 
+import com.github.benmanes.caffeine.cache.CacheLoader
 import com.github.benmanes.caffeine.cache.Caffeine
 import com.github.benmanes.caffeine.cache.LoadingCache
-import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer
-import com.intellij.codeInsight.intention.CustomizableIntentionAction
-import com.intellij.codeInsight.intention.FileModifier
-import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo
-import com.intellij.codeInspection.LocalQuickFix
-import com.intellij.codeInspection.ProblemDescriptor
-import com.intellij.codeInspection.util.IntentionName
-import com.intellij.openapi.application.edtWriteAction
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.components.serviceIfCreated
-import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.platform.ide.progress.withBackgroundProgress
-import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
-import com.jetbrains.python.psi.PyFile
+import com.intellij.ui.EditorNotifications
+import com.jetbrains.python.inspections.interpreter.InterpreterFix
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.async
 import kotlinx.coroutines.launch
 import org.jetbrains.annotations.ApiStatus
-import org.jetbrains.annotations.VisibleForTesting
+import kotlinx.coroutines.future.asCompletableFuture
+import java.util.concurrent.CompletableFuture
+import java.util.concurrent.Executor
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.seconds
 import kotlin.time.toJavaDuration
 
 /**
- * This class is intended for async file inspections. It should have the same lifecycle as the inspection, the best
- * way is to create the instance of this runner as a property of the inspection itself.
+ * This class is intended for async computation of interpreter fixes.
+ * It should have the same lifecycle as the notification provider.
  */
 @ApiStatus.Internal
-@VisibleForTesting
 class PyAsyncFileInspectionRunner(
   @NlsContexts.ProgressTitle private val progressTitle: String,
   cacheTtl: Duration = 20.seconds,
-  cacheLoader: suspend (Module) -> InspectionRunnerResult,
+  private val cacheLoader: suspend (Module) -> InspectionRunnerResult,
 ) {
   private val cache: LoadingCache<Module, Deferred<InspectionRunnerResult>> = Caffeine.newBuilder()
-    .expireAfterWrite(cacheTtl.toJavaDuration())
+    .refreshAfterWrite(cacheTtl.toJavaDuration())
     .weakKeys()
-    .build { module ->
-      val project = module.project
-      project.service<InspectionRunnerService>().scope.async {
-        withBackgroundProgress(module.project, progressTitle) {
-          cacheLoader(module)
-        }
+    .build(object : CacheLoader<Module, Deferred<InspectionRunnerResult>> {
+      override fun load(key: Module): Deferred<InspectionRunnerResult> = startComputation(key)
+
+      /**
+       * On refresh, the old (completed) [Deferred] is served to callers while the new one is loading.
+       * The cache entry is replaced only when the new [Deferred] completes.
+       * This prevents the notification from flickering (disappearing and reappearing on cache refresh).
+       */
+      override fun asyncReload(
+        key: Module,
+        oldValue: Deferred<InspectionRunnerResult>,
+        executor: Executor,
+      ): CompletableFuture<out Deferred<InspectionRunnerResult>> {
+        val deferred = startComputation(key)
+        return deferred.asCompletableFuture().thenApply { deferred }
+      }
+    })
+
+  private fun startComputation(module: Module): Deferred<InspectionRunnerResult> {
+    val project = module.project
+    val deferred = project.service<InspectionRunnerService>().scope.async {
+      withBackgroundProgress(project, progressTitle) {
+        cacheLoader(module)
       }
     }
-
-  @OptIn(ExperimentalCoroutinesApi::class)
-  fun runInspection(node: PyFile, module: Module): List<LocalQuickFix>? {
-    val cached = cache.getIfPresent(module) != null
-    val inspectionResult = cache.get(module)
-    if (inspectionResult.isCompleted) {
-      if (inspectionResult.isCancelled) {
-        cache.invalidate(module)
-        return null
-      }
-
-      val (fixes, shouldCache) = inspectionResult.getCompleted()
-      if (!shouldCache) {
-        cache.invalidate(module)
-      }
-      return fixes.map { InspectionRunnerLocalQuickFix(it) { cache.invalidate(module) } }
-    }
-
-    if (!cached) {
-      inspectionResult.invokeOnCompletion {
-        inspectionFinished(node, module)
-      }
-    }
-
-    return null
+    deferred.invokeOnCompletion { updateNotifications(module) }
+    return deferred
   }
 
-  private fun inspectionFinished(node: PyFile, module: Module) {
+  @OptIn(ExperimentalCoroutinesApi::class)
+  fun runInspection(module: Module): List<InterpreterFix>? {
+    val inspectionResult = cache.get(module).takeIf { it.isCompleted } ?: return null
+
+    if (inspectionResult.isCancelled) {
+      cache.invalidate(module)
+      return null
+    }
+
+    val (fixes, shouldCache) = inspectionResult.getCompleted()
+    if (!shouldCache) {
+      cache.invalidate(module)
+    }
+    return fixes.map { CacheEvictingFix(it) { cache.invalidate(module) } }
+  }
+
+  private fun updateNotifications(module: Module) {
     val project = module.project
+    // Must use a separate coroutine scope: invokeOnCompletion runs inline in the completing
+    // coroutine's context, and EditorNotifications.getInstance() may need runBlocking for
+    // service initialization, which fails inside an already-completed coroutine scope.
     project.serviceIfCreated<InspectionRunnerService>()?.scope?.launch {
-      edtWriteAction {
-        DaemonCodeAnalyzer.getInstance(project).restart(node, "$progressTitle finished")
-      }
-    } ?: thisLogger().warn("No service was found, this is most likely due to project being disposed")
+      EditorNotifications.getInstance(project).updateAllNotifications()
+    }
   }
 }
 
 @ApiStatus.Internal
-@VisibleForTesting
 data class InspectionRunnerResult(
-  val fixes: List<LocalQuickFix>,
+  val fixes: List<InterpreterFix>,
   val shouldCache: Boolean,
 )
 
-private class InspectionRunnerLocalQuickFix(
-  private val fix: LocalQuickFix,
-  private val cacheEvictor: () -> Unit
-) : LocalQuickFix by fix {
+private class CacheEvictingFix(
+  private val fix: InterpreterFix,
+  private val cacheEvictor: () -> Unit,
+) : InterpreterFix {
+  override val name: String get() = fix.name
 
-  override fun applyFix(project: Project, descriptor: ProblemDescriptor) {
-    fix.applyFix(project, descriptor)
+  override fun apply(module: Module, project: Project, psiFile: PsiFile) {
+    fix.apply(module, project, psiFile)
     cacheEvictor()
   }
-
-  /**
-   * We have to override the following methods manually as the delegate does not override default methods in Java interfaces
-   */
-  override fun generatePreview(project: Project, previewDescriptor: ProblemDescriptor): IntentionPreviewInfo =
-    fix.generatePreview(project, previewDescriptor)
-
-  override fun getRangesToHighlight(project: Project?, descriptor: ProblemDescriptor?): List<CustomizableIntentionAction.RangeToHighlight> =
-    fix.getRangesToHighlight(project, descriptor)
-
-  override fun getName(): @IntentionName String = fix.name
-  override fun startInWriteAction(): Boolean = fix.startInWriteAction()
-  override fun getElementToMakeWritable(currentFile: PsiFile): PsiElement? = fix.getElementToMakeWritable(currentFile)
-  override fun getFileModifierForPreview(target: PsiFile): FileModifier? = fix.getFileModifierForPreview(target)
-  override fun availableInBatchMode(): Boolean = fix.availableInBatchMode()
 }
 
 @Service(Service.Level.PROJECT)

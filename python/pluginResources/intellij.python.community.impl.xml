@@ -119,6 +119,8 @@
               topic="com.jetbrains.python.packaging.common.PythonPackageManagementListener"/>
     <listener class="com.jetbrains.python.statistics.PyPackageDaemonListener"
               topic="com.intellij.codeInsight.daemon.DaemonCodeAnalyzer$DaemonListener"/>
+    <listener class="com.jetbrains.python.inspections.interpreter.PyInterpreterNotificationFileOpenedListener"
+              topic="com.intellij.openapi.fileEditor.FileEditorManagerListener"/>
   </projectListeners>
 
   <extensions defaultExtensionNs="com.intellij">
@@ -273,9 +275,7 @@
     <localInspection language="Python" shortName="PyPep8Inspection" suppressId="PyPep8" bundle="messages.PyPsiBundle"
                      key="INSP.pep8.coding.style.violation" groupKey="INSP.GROUP.python" enabledByDefault="true" level="INFORMATION"
                      implementationClass="com.jetbrains.python.inspections.PyPep8Inspection" unfair="true"/>
-    <localInspection language="Python" shortName="PyInterpreterInspection" suppressId="PyInterpreter" bundle="messages.PyPsiBundle"
-                     key="INSP.NAME.invalid.interpreter" groupKey="INSP.GROUP.python" enabledByDefault="true" level="WARNING"
-                     implementationClass="com.jetbrains.python.inspections.interpreter.PyInterpreterInspection"/>
+    <editorNotificationProvider implementation="com.jetbrains.python.inspections.interpreter.PyInterpreterNotificationProvider"/>
     <localInspection language="Python" shortName="PyStubPackagesCompatibilityInspection" suppressId="PyStubPackagesCompatibility"
                      bundle="messages.PyPsiBundle" key="INSP.stub.packages.compatibility" groupKey="INSP.GROUP.python"
                      enabledByDefault="true" level="WARNING"
@@ -961,7 +961,6 @@
 
     <systemPythonProvider implementation="com.jetbrains.python.sdk.uv.UvSystemPythonProvider"/>
 
-    <inspectionExtension implementation="com.jetbrains.python.sdk.configuration.suppressors.PyInterpreterInspectionSuppressor"/>
     <inspectionExtension implementation="com.jetbrains.python.inspections.PyUnresolvedReferenceDefaultInspectionExtension" order="last"/>
 
     <runConfigurationEditorExtension implementation="com.jetbrains.python.run.PyRunConfigurationTargetOptions"/>
