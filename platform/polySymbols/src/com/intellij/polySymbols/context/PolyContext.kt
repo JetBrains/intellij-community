@@ -11,6 +11,7 @@ import com.intellij.polySymbols.context.impl.PolyContextImpl
 import com.intellij.polySymbols.context.impl.PolyContextProviderExtensionCollector
 import com.intellij.polySymbols.context.impl.findPolyContext
 import com.intellij.psi.PsiElement
+import com.intellij.util.concurrency.annotations.RequiresReadLock
 import org.jetbrains.annotations.TestOnly
 
 interface PolyContext {
@@ -41,10 +42,12 @@ interface PolyContext {
     val PKG_MANAGER_SYMFONY_BUNDLES: String = "symfony-bundles"
 
     @JvmStatic
+    @RequiresReadLock
     fun get(kind: PolyContextKind, location: VirtualFile, project: Project): PolyContextName? =
       findPolyContext(kind, location, project)
 
     @JvmStatic
+    @RequiresReadLock
     fun get(kind: PolyContextKind, location: PsiElement): PolyContextName? =
       findPolyContext(kind, location)
 
