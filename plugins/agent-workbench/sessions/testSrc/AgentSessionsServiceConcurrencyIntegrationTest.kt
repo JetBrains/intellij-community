@@ -12,7 +12,7 @@ import java.util.concurrent.atomic.AtomicInteger
 @TestApplication
 class AgentSessionsServiceConcurrencyIntegrationTest {
   @Test
-  fun refreshIgnoresConcurrentRequestWhileRefreshInProgress() = runBlocking {
+  fun refreshCoalescesConcurrentRequestsAndRunsFollowUpRefresh() = runBlocking {
     val openInvocationCount = AtomicInteger(0)
     val started = CompletableDeferred<Unit>()
     val release = CompletableDeferred<Unit>()
@@ -49,7 +49,7 @@ class AgentSessionsServiceConcurrencyIntegrationTest {
         service.state.value.projects.firstOrNull { it.path == PROJECT_PATH }?.hasLoaded == true
       }
 
-      assertThat(openInvocationCount.get()).isEqualTo(1)
+      assertThat(openInvocationCount.get()).isEqualTo(2)
     }
   }
 }

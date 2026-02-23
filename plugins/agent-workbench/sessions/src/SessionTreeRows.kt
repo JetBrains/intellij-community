@@ -126,6 +126,7 @@ private fun rememberTreeRowChrome(
   isSelected: Boolean,
   isActive: Boolean,
   baseTint: Color = Color.Unspecified,
+  baseTintAlpha: Float = 0.06f,
 ): TreeRowChrome {
   val interactionSource = remember { MutableInteractionSource() }
   val isHovered by interactionSource.collectIsHoveredAsState()
@@ -134,6 +135,7 @@ private fun rememberTreeRowChrome(
     isSelected = isSelected,
     isActive = isActive,
     baseTint = baseTint,
+    baseTintAlpha = baseTintAlpha,
   )
   val shape = treeRowShape()
   val spacing = treeRowSpacing()
@@ -156,15 +158,21 @@ private fun SelectableLazyItemScope.projectNodeRow(
   onCreateSession: (String, AgentSessionProvider, AgentSessionLaunchMode) -> Unit,
   lastUsedProvider: AgentSessionProvider?,
 ) {
-  val chrome = rememberTreeRowChrome(
-    isSelected = isSelected,
-    isActive = isActive,
-    baseTint = projectRowTint(),
-  )
+  val isProjectOpen = project.isOpen || project.worktrees.any { worktree -> worktree.isOpen }
+  val chrome = rememberTreeRowChrome(isSelected = isSelected, isActive = isActive)
   val openLabel = AgentSessionsBundle.message("toolwindow.action.open")
+  val titleColor = if (isSelected || isActive) {
+    Color.Unspecified
+  }
+  else if (isProjectOpen) {
+    JewelTheme.globalColors.text.normal
+  }
+  else {
+    JewelTheme.globalColors.text.normal.copy(alpha = 0.72f)
+  }
   val branchColor = LocalContentColor.current
     .takeOrElse { JewelTheme.globalColors.text.disabled }
-    .copy(alpha = 0.55f)
+    .copy(alpha = if (isProjectOpen) 0.55f else 0.42f)
   ContextMenuArea(
     items = {
       if (!project.isOpen) {
@@ -198,7 +206,8 @@ private fun SelectableLazyItemScope.projectNodeRow(
         ) {
           Text(
             text = projectTitle.highlightTextSearch(),
-            style = AgentSessionsTextStyles.projectTitle(),
+            style = AgentSessionsTextStyles.projectTitle(isOpen = isProjectOpen),
+            color = titleColor,
             maxLines = 1,
             overflow = TextOverflow.MiddleEllipsis,
             onTextLayout = { titleLayoutResult = it },

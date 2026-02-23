@@ -51,6 +51,9 @@ internal class AgentSessionsLoadingCoordinator(
   ) -> Int = ::rebindOpenAgentChatPendingTabs,
 ) {
   private val refreshMutex = Mutex()
+  private val refreshQueueLock = Any()
+  private var pendingRefreshRequest: RefreshRequestType? = null
+  private var refreshProcessorRunning = false
   private val onDemandMutex = Mutex()
   private val onDemandLoading = LinkedHashSet<String>()
   private val onDemandWorktreeLoading = LinkedHashSet<String>()
@@ -69,188 +72,321 @@ internal class AgentSessionsLoadingCoordinator(
   }
 
   fun refresh() {
-    serviceScope.launch(Dispatchers.IO) {
-      if (!refreshMutex.tryLock()) {
-        return@launch
+    enqueueRefresh(RefreshRequestType.FULL_REFRESH)
+  }
+
+  fun refreshCatalogAndLoadNewlyOpened() {
+    enqueueRefresh(RefreshRequestType.CATALOG_SYNC)
+  }
+
+  private fun enqueueRefresh(requestType: RefreshRequestType) {
+    var shouldStartProcessor = false
+    synchronized(refreshQueueLock) {
+      pendingRefreshRequest = mergeRefreshRequestTypes(pendingRefreshRequest, requestType)
+      if (!refreshProcessorRunning) {
+        refreshProcessorRunning = true
+        shouldStartProcessor = true
       }
+    }
+    if (!shouldStartProcessor) {
+      return
+    }
+    serviceScope.launch(Dispatchers.IO) {
+      processQueuedRefreshRequests()
+    }
+  }
+
+  private suspend fun processQueuedRefreshRequests() {
+    while (true) {
+      val requestType = synchronized(refreshQueueLock) {
+        val next = pendingRefreshRequest
+        if (next == null) {
+          refreshProcessorRunning = false
+          null
+        }
+        else {
+          pendingRefreshRequest = null
+          next
+        }
+      } ?: return
+
       try {
-        ensureSourceUpdateObservers()
-        val entries = projectEntriesProvider()
-        val currentState = stateStore.snapshot()
-        val currentProjectsByPath = currentState.projects.associateBy { normalizeAgentWorkbenchPath(it.path) }
-        val openPaths = entries.flatMap { entry ->
-          buildList {
-            if (entry.project != null) add(normalizeAgentWorkbenchPath(entry.path))
-            entry.worktreeEntries.filter { it.project != null }.forEach { add(normalizeAgentWorkbenchPath(it.path)) }
-          }
-        }
-        treeUiState.retainOpenProjectThreadPreviews(openPaths.toSet())
-        val knownPaths = entries.flatMap { entry ->
-          buildList {
-            add(normalizeAgentWorkbenchPath(entry.path))
-            entry.worktreeEntries.forEach { add(normalizeAgentWorkbenchPath(it.path)) }
-          }
-        }
-        val initialVisibleThreadCounts = stateStore.buildInitialVisibleThreadCounts(knownPaths)
-        val initialProjects = entries.map { entry ->
-          val normalizedEntryPath = normalizeAgentWorkbenchPath(entry.path)
-          val existing = currentProjectsByPath[normalizedEntryPath]
-          val cachedPreviews = if (entry.project != null) {
-            treeUiState.getOpenProjectThreadPreviews(normalizedEntryPath)
-          }
-          else {
-            null
-          }
-          val cachedThreads = cachedPreviews.orEmpty().toCachedSessionThreads()
-          AgentProjectSessions(
-            path = normalizedEntryPath,
-            name = entry.name,
-            branch = entry.branch ?: existing?.branch,
-            isOpen = entry.project != null,
-            isLoading = entry.project != null,
-            hasLoaded = existing?.hasLoaded ?: (cachedPreviews != null),
-            hasUnknownThreadCount = existing?.hasUnknownThreadCount ?: false,
-            threads = existing?.threads ?: cachedThreads,
-            errorMessage = existing?.errorMessage,
-            providerWarnings = existing?.providerWarnings ?: emptyList(),
-            worktrees = entry.worktreeEntries.map { wt ->
-              val normalizedWorktreePath = normalizeAgentWorkbenchPath(wt.path)
-              val existingWt = existing?.worktrees?.firstOrNull { normalizeAgentWorkbenchPath(it.path) == normalizedWorktreePath }
-              val cachedWorktreePreviews = if (wt.project != null) {
-                treeUiState.getOpenProjectThreadPreviews(normalizedWorktreePath)
-              }
-              else {
-                null
-              }
-              val cachedWorktreeThreads = cachedWorktreePreviews.orEmpty().toCachedSessionThreads()
-              val hasExistingData = existingWt != null && existingWt.threads.isNotEmpty()
-              AgentWorktree(
-                path = normalizedWorktreePath,
-                name = wt.name,
-                branch = wt.branch,
-                isOpen = wt.project != null,
-                isLoading = wt.project != null && (hasExistingData || cachedWorktreePreviews != null),
-                hasLoaded = existingWt?.hasLoaded ?: (cachedWorktreePreviews != null),
-                hasUnknownThreadCount = existingWt?.hasUnknownThreadCount ?: false,
-                threads = existingWt?.threads ?: cachedWorktreeThreads,
-                errorMessage = existingWt?.errorMessage,
-                providerWarnings = existingWt?.providerWarnings ?: emptyList(),
-              )
-            },
-          )
-        }
-        stateStore.replaceProjects(
-          projects = initialProjects,
-          visibleThreadCounts = initialVisibleThreadCounts,
-        )
-
-        val sessionSources = sessionSourcesProvider()
-
-        // Prefetch from all sources in parallel
-        val prefetchedByProvider = coroutineScope {
-          sessionSources.map { source ->
-            async {
-              source.provider to try {
-                source.prefetchThreads(openPaths)
-              }
-              catch (_: Throwable) {
-                emptyMap()
-              }
-            }
-          }.awaitAll().toMap()
-        }
-
-        // Load each (project × source) independently so fast sources (Claude)
-        // update the UI immediately without waiting for slow sources (Codex).
-        coroutineScope {
-          for (entry in entries) {
-            launch {
-              val normalizedEntryPath = normalizeAgentWorkbenchPath(entry.path)
-              if (entry.project == null) {
-                stateStore.updateProject(normalizedEntryPath) { it.copy(isLoading = false) }
-                return@launch
-              }
-              val finalResult = loadSourcesIncrementally(
-                sessionSources = sessionSources,
-                normalizedPath = normalizedEntryPath,
-                project = entry.project,
-                prefetchedByProvider = prefetchedByProvider,
-                originalPath = entry.path,
-              ) { partial, anySuccess ->
-                stateStore.updateProject(normalizedEntryPath) { project ->
-                  project.copy(
-                    threads = partial.threads,
-                    providerWarnings = partial.providerWarnings,
-                    isLoading = if (anySuccess) false else project.isLoading,
-                  )
-                }
-              }
-              stateStore.updateProject(normalizedEntryPath) { project ->
-                project.copy(
-                  isLoading = false,
-                  hasLoaded = true,
-                  hasUnknownThreadCount = finalResult.hasUnknownThreadCount,
-                  threads = finalResult.threads,
-                  errorMessage = finalResult.errorMessage,
-                  providerWarnings = finalResult.providerWarnings,
-                )
-              }
-              if (finalResult.errorMessage == null) {
-                treeUiState.setOpenProjectThreadPreviews(normalizedEntryPath, finalResult.threads.toThreadPreviews())
-              }
-            }
-            for (wt in entry.worktreeEntries) {
-              launch {
-                val normalizedEntryPath = normalizeAgentWorkbenchPath(entry.path)
-                val normalizedWorktreePath = normalizeAgentWorkbenchPath(wt.path)
-                if (wt.project == null) {
-                  stateStore.updateWorktree(normalizedEntryPath, normalizedWorktreePath) { it.copy(isLoading = false) }
-                  return@launch
-                }
-                val finalResult = loadSourcesIncrementally(
-                  sessionSources = sessionSources,
-                  normalizedPath = normalizedWorktreePath,
-                  project = wt.project,
-                  prefetchedByProvider = prefetchedByProvider,
-                  originalPath = wt.path,
-                ) { partial, anySuccess ->
-                  stateStore.updateWorktree(normalizedEntryPath, normalizedWorktreePath) { worktree ->
-                    worktree.copy(
-                      threads = partial.threads,
-                      providerWarnings = partial.providerWarnings,
-                      isLoading = if (anySuccess) false else worktree.isLoading,
-                    )
-                  }
-                }
-                stateStore.updateWorktree(normalizedEntryPath, normalizedWorktreePath) { worktree ->
-                  worktree.copy(
-                    isLoading = false,
-                    hasLoaded = true,
-                    hasUnknownThreadCount = finalResult.hasUnknownThreadCount,
-                    threads = finalResult.threads,
-                    errorMessage = finalResult.errorMessage,
-                    providerWarnings = finalResult.providerWarnings,
-                  )
-                }
-                if (finalResult.errorMessage == null) {
-                  treeUiState.setOpenProjectThreadPreviews(normalizedWorktreePath, finalResult.threads.toThreadPreviews())
-                }
-              }
-            }
-          }
-        }
-        stateStore.update { it.copy(lastUpdatedAt = System.currentTimeMillis()) }
+        executeRefreshRequest(requestType)
       }
       catch (e: Throwable) {
         if (e is CancellationException) throw e
         LOG.error("Failed to load agent sessions", e)
         stateStore.markLoadFailure(AgentSessionsBundle.message("toolwindow.error"))
       }
-      finally {
-        refreshMutex.unlock()
-      }
     }
   }
+
+  private suspend fun executeRefreshRequest(requestType: RefreshRequestType) {
+    refreshMutex.withLock {
+      val loadScope = when (requestType) {
+        RefreshRequestType.FULL_REFRESH -> OpenProjectLoadScope.ALL_OPEN_PROJECTS
+        RefreshRequestType.CATALOG_SYNC -> OpenProjectLoadScope.NEWLY_OPENED_ONLY
+      }
+      refreshNow(loadScope)
+    }
+  }
+
+  private suspend fun refreshNow(loadScope: OpenProjectLoadScope) {
+    ensureSourceUpdateObservers()
+    val currentState = stateStore.snapshot()
+    val bootstrap = buildRefreshBootstrap(currentState = currentState, loadScope = loadScope)
+    treeUiState.retainOpenProjectThreadPreviews(bootstrap.openPaths)
+    stateStore.replaceProjects(
+      projects = bootstrap.initialProjects,
+      visibleThreadCounts = bootstrap.initialVisibleThreadCounts,
+    )
+
+    if (bootstrap.loadPaths.isEmpty()) {
+      stateStore.update { it.copy(lastUpdatedAt = System.currentTimeMillis()) }
+      return
+    }
+
+    val sessionSources = sessionSourcesProvider()
+
+    val prefetchedByProvider = coroutineScope {
+      sessionSources.map { source ->
+        async {
+          source.provider to try {
+            source.prefetchThreads(bootstrap.loadPaths.toList())
+          }
+          catch (_: Throwable) {
+            emptyMap()
+          }
+        }
+      }.awaitAll().toMap()
+    }
+
+    coroutineScope {
+      for (entry in bootstrap.entries) {
+        launch {
+          val normalizedEntryPath = normalizeAgentWorkbenchPath(entry.path)
+          val entryProject = entry.project
+          val shouldLoadProject = entryProject != null && normalizedEntryPath in bootstrap.loadPaths
+          if (!shouldLoadProject) {
+            stateStore.updateProject(normalizedEntryPath) { project ->
+              if (project.isLoading) project.copy(isLoading = false) else project
+            }
+            return@launch
+          }
+          val finalResult = loadSourcesIncrementally(
+            sessionSources = sessionSources,
+            normalizedPath = normalizedEntryPath,
+            project = entryProject,
+            prefetchedByProvider = prefetchedByProvider,
+            originalPath = entry.path,
+          ) { partial, anySuccess ->
+            stateStore.updateProject(normalizedEntryPath) { project ->
+              project.copy(
+                threads = partial.threads,
+                providerWarnings = partial.providerWarnings,
+                isLoading = if (anySuccess) false else project.isLoading,
+              )
+            }
+          }
+          stateStore.updateProject(normalizedEntryPath) { project ->
+            project.copy(
+              isLoading = false,
+              hasLoaded = true,
+              hasUnknownThreadCount = finalResult.hasUnknownThreadCount,
+              threads = finalResult.threads,
+              errorMessage = finalResult.errorMessage,
+              providerWarnings = finalResult.providerWarnings,
+            )
+          }
+          if (finalResult.errorMessage == null) {
+            treeUiState.setOpenProjectThreadPreviews(normalizedEntryPath, finalResult.threads.toThreadPreviews())
+          }
+        }
+        for (wt in entry.worktreeEntries) {
+          launch {
+            val normalizedEntryPath = normalizeAgentWorkbenchPath(entry.path)
+            val normalizedWorktreePath = normalizeAgentWorkbenchPath(wt.path)
+            val worktreeProject = wt.project
+            val shouldLoadWorktree = worktreeProject != null && normalizedWorktreePath in bootstrap.loadPaths
+            if (!shouldLoadWorktree) {
+              stateStore.updateWorktree(normalizedEntryPath, normalizedWorktreePath) { worktree ->
+                if (worktree.isLoading) worktree.copy(isLoading = false) else worktree
+              }
+              return@launch
+            }
+            val finalResult = loadSourcesIncrementally(
+              sessionSources = sessionSources,
+              normalizedPath = normalizedWorktreePath,
+              project = worktreeProject,
+              prefetchedByProvider = prefetchedByProvider,
+              originalPath = wt.path,
+            ) { partial, anySuccess ->
+              stateStore.updateWorktree(normalizedEntryPath, normalizedWorktreePath) { worktree ->
+                worktree.copy(
+                  threads = partial.threads,
+                  providerWarnings = partial.providerWarnings,
+                  isLoading = if (anySuccess) false else worktree.isLoading,
+                )
+              }
+            }
+            stateStore.updateWorktree(normalizedEntryPath, normalizedWorktreePath) { worktree ->
+              worktree.copy(
+                isLoading = false,
+                hasLoaded = true,
+                hasUnknownThreadCount = finalResult.hasUnknownThreadCount,
+                threads = finalResult.threads,
+                errorMessage = finalResult.errorMessage,
+                providerWarnings = finalResult.providerWarnings,
+              )
+            }
+            if (finalResult.errorMessage == null) {
+              treeUiState.setOpenProjectThreadPreviews(normalizedWorktreePath, finalResult.threads.toThreadPreviews())
+            }
+          }
+        }
+      }
+    }
+    stateStore.update { it.copy(lastUpdatedAt = System.currentTimeMillis()) }
+  }
+
+  private suspend fun buildRefreshBootstrap(
+    currentState: AgentSessionsState,
+    loadScope: OpenProjectLoadScope,
+  ): RefreshBootstrap {
+    val entries = projectEntriesProvider()
+    val currentProjectsByPath = currentState.projects.associateBy { normalizeAgentWorkbenchPath(it.path) }
+    val openPaths = LinkedHashSet<String>()
+    val loadPaths = LinkedHashSet<String>()
+    val knownPaths = ArrayList<String>()
+    val initialProjects = entries.map { entry ->
+      val normalizedEntryPath = normalizeAgentWorkbenchPath(entry.path)
+      knownPaths.add(normalizedEntryPath)
+      val existing = currentProjectsByPath[normalizedEntryPath]
+      val entryIsOpen = entry.project != null
+      val shouldLoadProject = shouldLoadOpenPath(
+        isOpen = entryIsOpen,
+        wasOpen = existing?.isOpen == true,
+        normalizedPath = normalizedEntryPath,
+        loadScope = loadScope,
+        openPaths = openPaths,
+        loadPaths = loadPaths,
+      )
+      val cachedPreviews = if (entryIsOpen) {
+        treeUiState.getOpenProjectThreadPreviews(normalizedEntryPath)
+      }
+      else {
+        null
+      }
+      val cachedThreads = cachedPreviews.orEmpty().toCachedSessionThreads()
+      AgentProjectSessions(
+        path = normalizedEntryPath,
+        name = entry.name,
+        branch = entry.branch ?: existing?.branch,
+        isOpen = entryIsOpen,
+        isLoading = shouldLoadProject,
+        hasLoaded = existing?.hasLoaded ?: (cachedPreviews != null),
+        hasUnknownThreadCount = existing?.hasUnknownThreadCount ?: false,
+        threads = existing?.threads ?: cachedThreads,
+        errorMessage = existing?.errorMessage,
+        providerWarnings = existing?.providerWarnings ?: emptyList(),
+        worktrees = entry.worktreeEntries.map { wt ->
+          val normalizedWorktreePath = normalizeAgentWorkbenchPath(wt.path)
+          knownPaths.add(normalizedWorktreePath)
+          val existingWt = existing?.worktrees?.firstOrNull { normalizeAgentWorkbenchPath(it.path) == normalizedWorktreePath }
+          val worktreeIsOpen = wt.project != null
+          val shouldLoadWorktree = shouldLoadOpenPath(
+            isOpen = worktreeIsOpen,
+            wasOpen = existingWt?.isOpen == true,
+            normalizedPath = normalizedWorktreePath,
+            loadScope = loadScope,
+            openPaths = openPaths,
+            loadPaths = loadPaths,
+          )
+          val cachedWorktreePreviews = if (worktreeIsOpen) {
+            treeUiState.getOpenProjectThreadPreviews(normalizedWorktreePath)
+          }
+          else {
+            null
+          }
+          val cachedWorktreeThreads = cachedWorktreePreviews.orEmpty().toCachedSessionThreads()
+          AgentWorktree(
+            path = normalizedWorktreePath,
+            name = wt.name,
+            branch = wt.branch,
+            isOpen = worktreeIsOpen,
+            isLoading = shouldLoadWorktree,
+            hasLoaded = existingWt?.hasLoaded ?: (cachedWorktreePreviews != null),
+            hasUnknownThreadCount = existingWt?.hasUnknownThreadCount ?: false,
+            threads = existingWt?.threads ?: cachedWorktreeThreads,
+            errorMessage = existingWt?.errorMessage,
+            providerWarnings = existingWt?.providerWarnings ?: emptyList(),
+          )
+        },
+      )
+    }
+    return RefreshBootstrap(
+      entries = entries,
+      openPaths = openPaths,
+      loadPaths = loadPaths,
+      initialProjects = initialProjects,
+      initialVisibleThreadCounts = stateStore.buildInitialVisibleThreadCounts(knownPaths),
+    )
+  }
+
+  private fun shouldLoadOpenPath(
+    isOpen: Boolean,
+    wasOpen: Boolean,
+    normalizedPath: String,
+    loadScope: OpenProjectLoadScope,
+    openPaths: MutableSet<String>,
+    loadPaths: MutableSet<String>,
+  ): Boolean {
+    if (!isOpen) {
+      return false
+    }
+    openPaths.add(normalizedPath)
+    val shouldLoad = when (loadScope) {
+      OpenProjectLoadScope.ALL_OPEN_PROJECTS -> true
+      OpenProjectLoadScope.NEWLY_OPENED_ONLY -> !wasOpen
+    }
+    if (shouldLoad) {
+      loadPaths.add(normalizedPath)
+    }
+    return shouldLoad
+  }
+
+  private fun mergeRefreshRequestTypes(
+    current: RefreshRequestType?,
+    incoming: RefreshRequestType,
+  ): RefreshRequestType {
+    if (current == null) {
+      return incoming
+    }
+    return if (current == RefreshRequestType.FULL_REFRESH || incoming == RefreshRequestType.FULL_REFRESH) {
+      RefreshRequestType.FULL_REFRESH
+    }
+    else {
+      RefreshRequestType.CATALOG_SYNC
+    }
+  }
+
+  private enum class RefreshRequestType {
+    CATALOG_SYNC,
+    FULL_REFRESH,
+  }
+
+  private enum class OpenProjectLoadScope {
+    NEWLY_OPENED_ONLY,
+    ALL_OPEN_PROJECTS,
+  }
+
+  private data class RefreshBootstrap(
+    val entries: List<ProjectEntry>,
+    val openPaths: Set<String>,
+    val loadPaths: Set<String>,
+    val initialProjects: List<AgentProjectSessions>,
+    val initialVisibleThreadCounts: Map<String, Int>,
+  )
 
   private fun ensureSourceUpdateObservers() {
     val availableSources = LinkedHashMap<AgentSessionProvider, AgentSessionSource>()

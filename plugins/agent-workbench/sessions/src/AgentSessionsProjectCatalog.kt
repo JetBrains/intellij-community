@@ -2,8 +2,10 @@
 package com.intellij.agent.workbench.sessions
 
 import com.intellij.agent.workbench.common.normalizeAgentWorkbenchPath
+import com.intellij.agent.workbench.common.parseAgentWorkbenchPathOrNull
 import com.intellij.ide.RecentProjectsManager
 import com.intellij.ide.RecentProjectsManagerBase
+import com.intellij.ide.impl.ProjectUtil.isSameProject
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.util.io.FileUtilRt
@@ -128,29 +130,42 @@ private fun collectRawProjectEntries(): List<ProjectEntry> {
                 ?: return emptyList()
   val dedicatedProjectPath = AgentWorkbenchDedicatedFrameProjectManager.dedicatedProjectPath()
   val openProjects = ProjectManager.getInstance().openProjects
-  val openByPath = LinkedHashMap<String, Project>()
-  for (project in openProjects) {
-    val path = manager.getProjectPath(project)?.invariantSeparatorsPathString
-               ?: project.basePath?.let(::normalizeAgentWorkbenchPath)
-               ?: continue
-    if (path == dedicatedProjectPath || AgentWorkbenchDedicatedFrameProjectManager.isDedicatedProjectPath(path)) continue
-    openByPath[path] = project
-  }
+  val openCandidates = openProjects.asSequence()
+    .filterNot { project -> AgentWorkbenchDedicatedFrameProjectManager.isDedicatedProject(project) }
+    .map { project ->
+      OpenProjectCandidate(
+        project = project,
+        normalizedPath = resolveOpenProjectPath(
+          managerProjectPath = manager.getProjectPath(project)?.invariantSeparatorsPathString,
+          projectBasePath = project.basePath,
+        ),
+      )
+    }
+    .toList()
+  val consumedOpenProjects = LinkedHashSet<Project>()
   val seen = LinkedHashSet<String>()
   val entries = mutableListOf<ProjectEntry>()
   for (path in manager.getRecentPaths()) {
     val normalized = normalizeAgentWorkbenchPath(path)
     if (normalized == dedicatedProjectPath || AgentWorkbenchDedicatedFrameProjectManager.isDedicatedProjectPath(normalized)) continue
     if (!seen.add(normalized)) continue
+    val openProject = resolveOpenProjectForRecentPath(normalized, openCandidates, consumedOpenProjects)
+    if (openProject != null) {
+      consumedOpenProjects.add(openProject)
+    }
     entries.add(
       ProjectEntry(
         path = normalized,
-        name = resolveProjectName(manager, normalized, openByPath[normalized]),
-        project = openByPath[normalized],
+        name = resolveProjectName(manager, normalized, openProject),
+        project = openProject,
       ),
     )
   }
-  for ((path, project) in openByPath) {
+  for (candidate in openCandidates) {
+    val project = candidate.project
+    if (project in consumedOpenProjects) continue
+    val path = candidate.normalizedPath ?: continue
+    if (path == dedicatedProjectPath || AgentWorkbenchDedicatedFrameProjectManager.isDedicatedProjectPath(path)) continue
     if (!seen.add(path)) continue
     entries.add(
       ProjectEntry(
@@ -161,6 +176,59 @@ private fun collectRawProjectEntries(): List<ProjectEntry> {
     )
   }
   return entries
+}
+
+private data class OpenProjectCandidate(
+  val project: Project,
+  val normalizedPath: String?,
+)
+
+private fun resolveOpenProjectForRecentPath(
+  normalizedRecentPath: String,
+  openCandidates: List<OpenProjectCandidate>,
+  consumedOpenProjects: Set<Project>,
+): Project? {
+  val recentPath = parseAgentWorkbenchPathOrNull(normalizedRecentPath)
+  return resolveRecentPathCandidate(
+    normalizedRecentPath = normalizedRecentPath,
+    candidates = openCandidates,
+    consumedCandidates = consumedOpenProjects,
+    candidateProject = { it.project },
+    candidatePath = { it.normalizedPath },
+    isPathEquivalent = { candidate ->
+      val path = recentPath ?: return@resolveRecentPathCandidate false
+      runCatching { isSameProject(projectFile = path, project = candidate.project) }.getOrDefault(false)
+    },
+  )?.project
+}
+
+internal fun <T, P> resolveRecentPathCandidate(
+  normalizedRecentPath: String,
+  candidates: List<T>,
+  consumedCandidates: Set<P>,
+  candidateProject: (T) -> P,
+  candidatePath: (T) -> String?,
+  isPathEquivalent: (T) -> Boolean,
+): T? {
+  val directMatch = candidates.firstOrNull { candidate ->
+    candidateProject(candidate) !in consumedCandidates &&
+    candidatePath(candidate) == normalizedRecentPath
+  }
+  if (directMatch != null) {
+    return directMatch
+  }
+
+  return candidates.firstOrNull { candidate ->
+    candidateProject(candidate) !in consumedCandidates && isPathEquivalent(candidate)
+  }
+}
+
+internal fun resolveOpenProjectPath(
+  managerProjectPath: String?,
+  projectBasePath: String?,
+): String? {
+  return managerProjectPath?.let(::normalizeAgentWorkbenchPath)
+         ?: projectBasePath?.let(::normalizeAgentWorkbenchPath)
 }
 
 private fun resolveProjectName(

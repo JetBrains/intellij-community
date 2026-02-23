@@ -31,7 +31,7 @@ internal interface SessionsTreeUiState {
   fun retainOpenProjectThreadPreviews(paths: Set<String>): Boolean
 }
 
-internal const val DEFAULT_VISIBLE_PROJECT_COUNT: Int = 10
+internal const val DEFAULT_VISIBLE_CLOSED_PROJECT_COUNT: Int = 3
 internal const val DEFAULT_VISIBLE_THREAD_COUNT: Int = 3
 internal const val OPEN_PROJECT_THREAD_CACHE_LIMIT: Int = 10
 

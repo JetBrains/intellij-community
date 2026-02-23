@@ -122,11 +122,11 @@ internal class AgentSessionsService private constructor(
           @Deprecated("Deprecated in Java")
           @Suppress("removal")
           override fun projectOpened(project: Project) {
-            refresh()
+            refreshCatalogAndLoadNewlyOpened()
           }
 
           override fun projectClosed(project: Project) {
-            refresh()
+            refreshCatalogAndLoadNewlyOpened()
           }
         })
     }
@@ -182,6 +182,10 @@ internal class AgentSessionsService private constructor(
 
   fun refresh() {
     loadingCoordinator.refresh()
+  }
+
+  internal fun refreshCatalogAndLoadNewlyOpened() {
+    loadingCoordinator.refreshCatalogAndLoadNewlyOpened()
   }
 
   fun openOrFocusProject(path: String) {

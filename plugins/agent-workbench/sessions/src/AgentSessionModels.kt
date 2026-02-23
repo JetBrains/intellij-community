@@ -57,6 +57,6 @@ internal data class AgentProjectSessions(
 internal data class AgentSessionsState(
   @JvmField val projects: List<AgentProjectSessions> = emptyList(),
   @JvmField val lastUpdatedAt: Long? = null,
-  @JvmField val visibleProjectCount: Int = DEFAULT_VISIBLE_PROJECT_COUNT,
+  @JvmField val visibleClosedProjectCount: Int = DEFAULT_VISIBLE_CLOSED_PROJECT_COUNT,
   @JvmField val visibleThreadCounts: Map<String, Int> = emptyMap(),
 )

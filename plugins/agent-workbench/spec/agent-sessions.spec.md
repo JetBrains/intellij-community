@@ -82,8 +82,11 @@ Define Agent Threads as a provider-agnostic, project-scoped thread browser. This
 - On-demand loading must deduplicate concurrent requests for the same normalized path.
   [@test] ../sessions/testSrc/AgentSessionsServiceOnDemandIntegrationTest.kt
 
-- Refresh requests must be deduplicated while a refresh is already running.
+- Refresh requests must be coalesced while processing is in progress; catalog-sync requests must not be dropped, and any queued full refresh must take precedence.
   [@test] ../sessions/testSrc/AgentSessionsServiceConcurrencyIntegrationTest.kt
+
+- Project open/close lifecycle updates must run catalog sync and load threads only for newly opened paths; already open paths must not be reloaded by lifecycle updates.
+  [@test] ../sessions/testSrc/AgentSessionsServiceRefreshIntegrationTest.kt
 
 - Session-source update observation and refresh scheduling must be event-driven; periodic polling loops are not allowed.
   [@test] ../sessions/testSrc/AgentSessionsLoadingCoordinatorTest.kt
@@ -123,6 +126,9 @@ Define Agent Threads as a provider-agnostic, project-scoped thread browser. This
 
 ## User Experience
 - Project rows are always expandable and may show worktree children.
+- Open project rows must be visually emphasized via stronger title weight.
+- Closed project rows must remain readable but visually de-emphasized relative to open rows.
+- Default project visibility must include all open projects and up to 3 closed recent projects; additional closed projects appear behind `More`.
 - Thread rows show provider marker and relative activity time.
 - Thread-row archive context menu should apply to current multi-selection when invoked from a selected thread and show `Archive Selected (N)` when `N > 1`.
 - Selection gestures (`Cmd/Ctrl+click`, `Shift+click`) update selection without opening the clicked thread/sub-agent row.

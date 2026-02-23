@@ -48,7 +48,7 @@ internal fun sessionTree(
   treeUiState: SessionsTreeUiState,
   lastUsedProvider: AgentSessionProvider? = null,
   nowProvider: () -> Long,
-  visibleProjectCount: Int = Int.MAX_VALUE,
+  visibleClosedProjectCount: Int = Int.MAX_VALUE,
   onShowMoreProjects: () -> Unit = {},
   visibleThreadCounts: Map<String, Int> = emptyMap(),
   onShowMoreThreads: (String) -> Unit = {},
@@ -67,8 +67,11 @@ internal fun sessionTree(
   val treeState = stateHolder.treeState
   val pointerEventActions = remember(treeState) { SessionTreePointerEventActions(treeState) }
   var selectedArchiveTargets by remember { mutableStateOf<List<ArchiveThreadTarget>>(emptyList()) }
-  val autoOpenNodes = remember(projects, visibleProjectCount, treeUiState) {
-    projects.take(visibleProjectCount)
+  val visibleProjectsResult = remember(projects, visibleClosedProjectCount) {
+    computeVisibleProjects(projects, visibleClosedProjectCount)
+  }
+  val autoOpenNodes = remember(visibleProjectsResult, treeUiState) {
+    visibleProjectsResult.visibleProjects
       .filter {
         it.isOpen ||
         it.errorMessage != null ||
@@ -94,8 +97,8 @@ internal fun sessionTree(
     }
     treeState.selectedKeys = setOf(selectedTreeId)
   }
-  val tree = remember(projects, visibleProjectCount, visibleThreadCounts) {
-    buildSessionTree(projects, visibleProjectCount, visibleThreadCounts)
+  val tree = remember(projects, visibleClosedProjectCount, visibleThreadCounts) {
+    buildSessionTree(projects, visibleClosedProjectCount, visibleThreadCounts)
   }
 
   val treeStyle = run {
@@ -201,13 +204,12 @@ private fun resolveSelectedArchiveThreadTargets(
 
 private fun buildSessionTree(
   projects: List<AgentProjectSessions>,
-  visibleProjectCount: Int,
+  visibleClosedProjectCount: Int,
   visibleThreadCounts: Map<String, Int>,
 ): Tree<SessionTreeNode> =
   buildTree {
-    val visibleProjects = projects.take(visibleProjectCount)
-    val hiddenCount = (projects.size - visibleProjectCount).coerceAtLeast(0)
-    visibleProjects.forEach { project ->
+    val visibleProjectsResult = computeVisibleProjects(projects, visibleClosedProjectCount)
+    visibleProjectsResult.visibleProjects.forEach { project ->
       val projectId = SessionTreeId.Project(project.path)
       addNode(
         data = SessionTreeNode.Project(project),
@@ -290,13 +292,44 @@ private fun buildSessionTree(
         }
       }
     }
-    if (hiddenCount > 0) {
+    if (visibleProjectsResult.hiddenClosedProjectCount > 0) {
       addLeaf(
-        data = SessionTreeNode.MoreProjects(hiddenCount),
+        data = SessionTreeNode.MoreProjects(visibleProjectsResult.hiddenClosedProjectCount),
         id = SessionTreeId.MoreProjects,
       )
     }
   }
+
+private data class VisibleProjectsResult(
+  val visibleProjects: List<AgentProjectSessions>,
+  val hiddenClosedProjectCount: Int,
+)
+
+private fun computeVisibleProjects(
+  projects: List<AgentProjectSessions>,
+  visibleClosedProjectCount: Int,
+): VisibleProjectsResult {
+  var remainingClosedCount = visibleClosedProjectCount.coerceAtLeast(0)
+  var hiddenClosedProjectCount = 0
+  val visibleProjects = ArrayList<AgentProjectSessions>(projects.size)
+  for (project in projects) {
+    if (project.isOpen || project.worktrees.any { worktree -> worktree.isOpen }) {
+      visibleProjects.add(project)
+      continue
+    }
+    if (remainingClosedCount > 0) {
+      visibleProjects.add(project)
+      remainingClosedCount--
+    }
+    else {
+      hiddenClosedProjectCount++
+    }
+  }
+  return VisibleProjectsResult(
+    visibleProjects = visibleProjects,
+    hiddenClosedProjectCount = hiddenClosedProjectCount,
+  )
+}
 
 private fun TreeGeneratorScope<SessionTreeNode>.addThreadNodes(
   project: AgentProjectSessions,

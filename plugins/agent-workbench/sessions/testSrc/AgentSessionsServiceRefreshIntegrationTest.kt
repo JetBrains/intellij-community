@@ -9,6 +9,7 @@ import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.runBlocking
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
+import java.util.concurrent.atomic.AtomicInteger
 
 @TestApplication
 class AgentSessionsServiceRefreshIntegrationTest {
@@ -95,6 +96,91 @@ class AgentSessionsServiceRefreshIntegrationTest {
 
       assertThat(service.state.value.visibleThreadCounts[PROJECT_PATH])
         .isEqualTo(DEFAULT_VISIBLE_THREAD_COUNT + 6)
+    }
+  }
+
+  @Test
+  fun lifecycleCatalogSyncLoadsOnlyNewlyOpenedProjects() = runBlocking {
+    val secondProjectPath = "/work/project-b"
+    var entries = listOf(openProjectEntry(PROJECT_PATH, "Project A"))
+    val openLoadCounts = LinkedHashMap<String, AtomicInteger>()
+
+    withService(
+      sessionSourcesProvider = {
+        listOf(
+          ScriptedSessionSource(
+            provider = AgentSessionProvider.CODEX,
+            listFromOpenProject = { path, _ ->
+              openLoadCounts.getOrPut(path) { AtomicInteger() }.incrementAndGet()
+              listOf(
+                thread(
+                  id = "thread-${path.substringAfterLast('/')}",
+                  updatedAt = 100,
+                  provider = AgentSessionProvider.CODEX,
+                )
+              )
+            },
+          )
+        )
+      },
+      projectEntriesProvider = { entries },
+    ) { service ->
+      service.refresh()
+      waitForCondition {
+        service.state.value.projects.firstOrNull { it.path == PROJECT_PATH }?.hasLoaded == true
+      }
+
+      entries = listOf(
+        openProjectEntry(PROJECT_PATH, "Project A"),
+        openProjectEntry(secondProjectPath, "Project B"),
+      )
+
+      service.refreshCatalogAndLoadNewlyOpened()
+
+      waitForCondition {
+        service.state.value.projects.firstOrNull { it.path == secondProjectPath }?.hasLoaded == true
+      }
+
+      assertThat(openLoadCounts[PROJECT_PATH]?.get()).isEqualTo(1)
+      assertThat(openLoadCounts[secondProjectPath]?.get()).isEqualTo(1)
+    }
+  }
+
+  @Test
+  fun lifecycleCatalogSyncMarksClosedProjectWithoutReloading() = runBlocking {
+    var entries = listOf(openProjectEntry(PROJECT_PATH, "Project A"))
+    val openLoadCount = AtomicInteger(0)
+
+    withService(
+      sessionSourcesProvider = {
+        listOf(
+          ScriptedSessionSource(
+            provider = AgentSessionProvider.CLAUDE,
+            listFromOpenProject = { path, _ ->
+              if (path == PROJECT_PATH) {
+                openLoadCount.incrementAndGet()
+              }
+              listOf(thread(id = "claude-1", updatedAt = 100, provider = AgentSessionProvider.CLAUDE))
+            },
+          )
+        )
+      },
+      projectEntriesProvider = { entries },
+    ) { service ->
+      service.refresh()
+      waitForCondition {
+        service.state.value.projects.firstOrNull { it.path == PROJECT_PATH }?.hasLoaded == true
+      }
+
+      entries = listOf(closedProjectEntry(PROJECT_PATH, "Project A"))
+      service.refreshCatalogAndLoadNewlyOpened()
+
+      waitForCondition {
+        val project = service.state.value.projects.firstOrNull { it.path == PROJECT_PATH } ?: return@waitForCondition false
+        !project.isOpen
+      }
+
+      assertThat(openLoadCount.get()).isEqualTo(1)
     }
   }
 

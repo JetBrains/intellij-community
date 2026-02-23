@@ -51,7 +51,11 @@ internal class AgentSessionsStateStore(
   }
 
   fun showMoreProjects() {
-    mutableState.update { it.copy(visibleProjectCount = it.visibleProjectCount + DEFAULT_VISIBLE_PROJECT_COUNT) }
+    mutableState.update {
+      it.copy(
+        visibleClosedProjectCount = it.visibleClosedProjectCount + DEFAULT_VISIBLE_CLOSED_PROJECT_COUNT,
+      )
+    }
   }
 
   fun showMoreThreads(path: String) {

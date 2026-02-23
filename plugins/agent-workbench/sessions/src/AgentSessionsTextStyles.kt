@@ -2,14 +2,16 @@ package com.intellij.agent.workbench.sessions
 
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.font.FontWeight
 import org.jetbrains.jewel.foundation.theme.JewelTheme
 import org.jetbrains.jewel.ui.typography
 
 internal object AgentSessionsTextStyles {
   // Use theme typography so sizes track IntelliJ Platform defaults.
   @Composable
-  fun projectTitle(): TextStyle {
-    return JewelTheme.typography.h4TextStyle
+  fun projectTitle(isOpen: Boolean = false): TextStyle {
+    val baseStyle = JewelTheme.typography.h4TextStyle
+    return if (isOpen) baseStyle.copy(fontWeight = FontWeight.SemiBold) else baseStyle.copy(fontWeight = FontWeight.Normal)
   }
 
   @Composable
