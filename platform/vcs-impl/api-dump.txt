@@ -3235,7 +3235,6 @@ f:com.intellij.openapi.vcs.merge.MergeUtils
 - sf:putRevisionInfos(com.intellij.diff.requests.DiffRequest,com.intellij.openapi.vcs.merge.MergeData):V
 c:com.intellij.openapi.vcs.merge.MultipleFileMergeDialog
 - com.intellij.openapi.ui.DialogWrapper
-- sf:Companion:com.intellij.openapi.vcs.merge.MultipleFileMergeDialog$Companion
 - <init>(com.intellij.openapi.project.Project,java.util.List,com.intellij.openapi.vcs.merge.MergeProvider,com.intellij.openapi.vcs.merge.MergeDialogCustomizer):V
 - p:beforeResolve(java.util.Collection):Z
 - p:createActions():javax.swing.Action[]
@@ -3246,7 +3245,6 @@ c:com.intellij.openapi.vcs.merge.MultipleFileMergeDialog
 - p:getDimensionServiceKey():java.lang.String
 - getPreferredFocusedComponent():javax.swing.JComponent
 - f:getProcessedFiles():java.util.List
-f:com.intellij.openapi.vcs.merge.MultipleFileMergeDialog$Companion
 a:com.intellij.openapi.vcs.roots.VcsIntegrationEnabler
 - pf:myProject:com.intellij.openapi.project.Project
 - p:<init>(com.intellij.openapi.vcs.AbstractVcs):V

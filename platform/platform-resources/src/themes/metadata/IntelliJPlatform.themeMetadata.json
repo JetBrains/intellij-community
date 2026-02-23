@@ -3602,6 +3602,22 @@
       "key": "RecentProject.ColorN.Avatar.End",
       "description": "Avatar gradient end color of recent project",
       "since": "2025.3"
+    },
+    {
+      "key": "VersionControl.Merge.Badge.infoForeground",
+      "description": "Foreground color for the conflicts badge when there are no conflicts resolved"
+    },
+    {
+      "key": "VersionControl.Merge.Badge.infoBackground",
+      "description": "Background color for the conflicts badge when there are no conflicts resolved"
+    },
+    {
+      "key": "VersionControl.Merge.Badge.modifiedItemForeground",
+      "description": "Foreground color for the conflicts badge when there are some conflicts resolved"
+    },
+    {
+      "key": "VersionControl.Merge.Badge.modifiedItemBackground",
+      "description": "Background color for the conflicts badge when there are some conflicts resolved"
     }
   ]
 }

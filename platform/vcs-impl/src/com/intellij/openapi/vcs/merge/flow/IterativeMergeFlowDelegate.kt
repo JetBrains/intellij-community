@@ -17,6 +17,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.openapi.ui.MessageDialogBuilder
 import com.intellij.openapi.ui.Messages
+import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.vcs.VcsBundle
 import com.intellij.openapi.vcs.changes.ui.ChangesBrowserNode
 import com.intellij.openapi.vcs.changes.ui.ChangesBrowserNodeRenderer
@@ -29,8 +30,9 @@ import com.intellij.openapi.vcs.merge.MergeSession
 import com.intellij.openapi.vcs.merge.MergeUIUtil
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.ui.AnimatedIcon
+import com.intellij.ui.ColorUtil
+import com.intellij.ui.JBColor
 import com.intellij.ui.PopupHandler
-import com.intellij.ui.SimpleColoredComponent
 import com.intellij.ui.SimpleTextAttributes
 import com.intellij.ui.dsl.builder.Align
 import com.intellij.ui.dsl.builder.AlignX
@@ -54,7 +56,9 @@ import org.jetbrains.annotations.Nls
 import java.awt.Color
 import java.awt.Component
 import java.awt.Graphics
+import java.awt.Graphics2D
 import java.awt.Rectangle
+import java.awt.RenderingHints
 import java.awt.event.ActionEvent
 import java.awt.event.ComponentAdapter
 import java.awt.event.ComponentEvent
@@ -69,6 +73,7 @@ import javax.swing.JLayer
 import javax.swing.JPanel
 import javax.swing.JRootPane
 import javax.swing.JTable
+import javax.swing.JTree
 import javax.swing.event.ChangeEvent
 import javax.swing.event.ListSelectionEvent
 import javax.swing.event.TableColumnModelEvent
@@ -77,7 +82,6 @@ import javax.swing.plaf.LayerUI
 import javax.swing.table.TableCellRenderer
 import javax.swing.tree.DefaultMutableTreeNode
 import javax.swing.tree.DefaultTreeModel
-import javax.swing.tree.TreeCellRenderer
 
 internal class IterativeMergeFlowDelegate(
   private val project: Project,
@@ -123,11 +127,16 @@ internal class IterativeMergeFlowDelegate(
       }
     }
     table.installTableContextMenu()
-    table.installNameDecorator {
+    table.createCellRenderer(project, { !getGroupByDirectory() }) {
       iterativeDataHolder.getMergeConflictModel(it)?.let { model ->
-        VcsBundle.message("multiple.file.iterative.merge.files.resolved.changes.count",
-                          model.getResolvedChanges().size,
-                          model.getAllChanges().size)
+        val resolvedChanged = model.getResolvedChanges()
+        val isModified = resolvedChanged.isNotEmpty()
+        val text = VcsBundle.message("multiple.file.iterative.merge.files.resolved.changes.count",
+                                     model.getResolvedChanges().size,
+                                     model.getAllChanges().size)
+        ColoredString(value = text,
+                      background = if (isModified) BADGE_MODIFIED_BACKGROUND else BADGE_BACKGROUND,
+                      foreground = if (isModified) BADGE_MODIFIED_FOREGROUND else BADGE_FOREGROUND)
       }
     }
     return panel {
@@ -427,22 +436,64 @@ private fun TreeTable.changeHeaderColor() {
   }
 }
 
-private fun TreeTable.installNameDecorator(extra: (VirtualFile) -> String?) {
-  val original = tree.cellRenderer
-  tree.cellRenderer = TreeCellRenderer { tree, value, selected, expanded, leaf, row, hasFocus ->
-    val component = original.getTreeCellRendererComponent(tree, value, selected, expanded, leaf, row, hasFocus)
-    if (component is SimpleColoredComponent && value is DefaultMutableTreeNode) {
-      val virtualFile = value.userObject as? VirtualFile
-      val extraText = virtualFile?.let(extra)
-      if (!extraText.isNullOrBlank()) {
-        component.append(" ")
-        component.append(extraText, SimpleTextAttributes.GRAYED_ATTRIBUTES)
+private val BADGE_FOREGROUND = JBColor.namedColor("VersionControl.Merge.Badge.infoForeground", 0x5A5D6B, 0xB4B8BF)
+private val BADGE_BACKGROUND = JBColor.namedColor("VersionControl.Merge.Badge.infoBackground",
+                                                  JBColor(ColorUtil.withAlpha(Color(0x5A5D6B), 0.16),
+                                                          ColorUtil.withAlpha(Color(0xB4B8BF), 0.20)))
+private val BADGE_MODIFIED_FOREGROUND = JBColor.namedColor("VersionControl.Merge.Badge.modifiedItemForeground", 0x2E55A3, 0xD1E0FF)
+private val BADGE_MODIFIED_BACKGROUND = JBColor.namedColor("VersionControl.Merge.Badge.modifiedItemBackground",
+                                                           JBColor(ColorUtil.withAlpha(Color(0x3574F0), 0.16),
+                                                                   ColorUtil.withAlpha(Color(0x35538F), 0.8)))
+
+private fun TreeTable.createCellRenderer(
+  project: Project?,
+  showFlattenGetter: () -> Boolean,
+  nameDecorator: (VirtualFile) -> ColoredString?,
+) {
+  tree.cellRenderer = object : ChangesBrowserNodeRenderer(project, showFlattenGetter, false) {
+
+    override fun appendFileName(vFile: VirtualFile?, fileName: @NlsSafe String, color: Color?) {
+      super.appendFileName(vFile, fileName, null)
+    }
+
+    override fun doPaintFragmentBackground(g: Graphics2D, index: Int, bgColor: Color, x: Int, y: Int, width: Int, height: Int) {
+      val yOffset = JBUI.scale(6)
+      val badgeHeight = height - 2 * yOffset
+      g.color = bgColor
+      g.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON)
+      g.fillRoundRect(x, y + yOffset, width, badgeHeight, badgeHeight, badgeHeight)
+    }
+
+    override fun customizeCellRenderer(
+      tree: JTree,
+      value: Any?,
+      selected: Boolean,
+      expanded: Boolean,
+      leaf: Boolean,
+      row: Int,
+      hasFocus: Boolean,
+    ) {
+      val virtualFile = (value as? DefaultMutableTreeNode)?.userObject as? VirtualFile
+      val extraText = virtualFile?.let(nameDecorator)
+      if (extraText != null) {
+        setFileNameSuffixAppender {
+          val badgeAttrs = SimpleTextAttributes(extraText.background,
+                                                extraText.foreground,
+                                                null,
+                                                SimpleTextAttributes.STYLE_OPAQUE)
+          // Pad to get the capsule look without having to worry about horizontal alignment
+          append("  ${extraText.value}  ", badgeAttrs)
+        }
+      }
+
+      if (value is ChangesBrowserNode<*>) {
+        value.render(tree, this, selected, expanded, hasFocus)
       }
     }
-    component
   }
 }
 
+private data class ColoredString(val value: @Nls String, val background: JBColor, val foreground: JBColor)
 private data class ButtonRectKey(val row: Int, val column: Int)
 
 private const val ROW_HEIGHT = 28

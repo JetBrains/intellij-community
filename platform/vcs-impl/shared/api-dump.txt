@@ -312,6 +312,7 @@ c:com.intellij.openapi.vcs.changes.ui.ChangesBrowserNodeRenderer
 - isShowFlatten():Z
 - isShowingLocalChanges():Z
 - setBackgroundInsets(com.intellij.util.ui.JBInsets):V
+- setFileNameSuffixAppender(java.lang.Runnable):V
 - setIcon(com.intellij.openapi.vcs.FilePath,Z):V
 c:com.intellij.openapi.vcs.changes.ui.ChangesBrowserSpecificFilePathsNode
 - com.intellij.openapi.vcs.changes.ui.ChangesBrowserSpecificNode

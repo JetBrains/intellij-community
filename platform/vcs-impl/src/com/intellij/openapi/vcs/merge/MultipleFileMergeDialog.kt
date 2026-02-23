@@ -33,7 +33,6 @@ import com.intellij.openapi.ui.MessageDialogBuilder
 import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.NlsContexts.ColumnName
-import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.io.FileTooBigException
 import com.intellij.openapi.vcs.VcsBundle
 import com.intellij.openapi.vcs.VcsConfiguration
@@ -74,7 +73,6 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.Nls
 import org.jetbrains.annotations.NonNls
-import java.awt.Color
 import java.awt.event.ComponentAdapter
 import java.awt.event.MouseEvent
 import java.io.IOException
@@ -100,15 +98,7 @@ open class MultipleFileMergeDialog(
 
   private val table = MergeConflictsTreeTable(tableModel).apply {
     val virtualFileRenderer = object : ChangesBrowserNodeRenderer(project, { !groupByDirectory }, false) {
-      override fun calcFocusedState() = UIUtil.isAncestor(this@MultipleFileMergeDialog.peer.window,
-                                                          IdeFocusManager.getInstance(project).focusOwner)
-
-      override fun appendFileName(vFile: VirtualFile?, fileName: @NlsSafe String, color: Color?) {
-        val adjustedColor = if (MergeConflictIterativeResolution.isEnabled()) null else color
-        super.appendFileName(vFile, fileName, adjustedColor)
-      }
-    }.apply {
-      font = UIUtil.getListFont()
+      override fun calcFocusedState() = UIUtil.isAncestor(peer.window, IdeFocusManager.getInstance(project).focusOwner)
     }
 
     setTreeCellRenderer(virtualFileRenderer)

@@ -13,6 +13,7 @@ import com.intellij.ui.ColoredTreeCellRenderer;
 import com.intellij.ui.DirtyUI;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.ui.speedSearch.SpeedSearchUtil;
+import com.intellij.util.FontUtil;
 import com.intellij.util.PlatformIcons;
 import com.intellij.util.ui.JBInsets;
 import org.jetbrains.annotations.Nls;
@@ -31,6 +32,7 @@ public class ChangesBrowserNodeRenderer extends ColoredTreeCellRenderer {
   private final @Nullable IssueLinkRenderer myIssueLinkRenderer;
   private final boolean myHighlightProblems;
   private @Nullable JBInsets myBackgroundInsets;
+  private @Nullable Runnable myFileNameSuffixAppender;
 
   public ChangesBrowserNodeRenderer(@Nullable Project project, @NotNull BooleanGetter showFlattenGetter, boolean highlightProblems) {
     myShowFlatten = showFlattenGetter;
@@ -71,11 +73,17 @@ public class ChangesBrowserNodeRenderer extends ColoredTreeCellRenderer {
     else {
       append(fileName, new SimpleTextAttributes(SimpleTextAttributes.STYLE_PLAIN, color));
     }
+
+    if (myFileNameSuffixAppender != null) {
+      append(FontUtil.spaceAndThinSpace());
+      myFileNameSuffixAppender.run();
+    }
   }
 
   @Override
   public void clear() {
     setBackgroundInsets(null);
+    setFileNameSuffixAppender(null);
     setToolTipText(null);
     super.clear();
   }
@@ -120,6 +128,10 @@ public class ChangesBrowserNodeRenderer extends ColoredTreeCellRenderer {
 
   public void setBackgroundInsets(@Nullable JBInsets backgroundInsets) {
     myBackgroundInsets = backgroundInsets;
+  }
+
+  public void setFileNameSuffixAppender(@Nullable Runnable appender) {
+    myFileNameSuffixAppender = appender;
   }
 
   public boolean isShowingLocalChanges() {
