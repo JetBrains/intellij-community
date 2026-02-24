@@ -16,6 +16,7 @@ import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.python.pyproject.model.internal.PyProjectScopeService
 import com.jetbrains.python.venvReader.VirtualEnvReader.Companion.DEFAULT_VIRTUALENV_DIRNAME
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
@@ -23,7 +24,7 @@ import kotlinx.coroutines.sync.withLock
 /**
  * Excludes [DEFAULT_VIRTUALENV_DIRNAME] from [project] as soon as it appears in index, should only be called once
  */
-internal fun startVenvExclusion(project: Project) {
+internal suspend fun startVenvExclusion(project: Project) {
   VirtualFileManager.getInstance().addAsyncFileListener(project.service<PyProjectScopeService>().scope) { events ->
     if (events.none { it is VFileCreateEvent || it is VFileMoveEvent }) {
       // No need to check anything if no file created
@@ -37,10 +38,10 @@ internal fun startVenvExclusion(project: Project) {
       }
     }
   }
-  excludeEnvs(project)
+  excludeEnvs(project).join()
 }
 
-private fun excludeEnvs(project: Project) {
+private fun excludeEnvs(project: Project): Job =
   project.service<PyProjectScopeService>().scope.launch(Dispatchers.Default) {
     mutex.withLock {
       val dirs = readAction { FilenameIndex.getVirtualFilesByName(DEFAULT_VIRTUALENV_DIRNAME, GlobalSearchScope.allScope(project)) }
@@ -52,14 +53,17 @@ private fun excludeEnvs(project: Project) {
             val model = rootManager.modifiableModel
             val currentRoot = model.contentEntries.firstOrNull { root ->
               root.file?.let { VfsUtilCore.isAncestor(it, venvToExclude, false) } == true
-            } ?: return@writeAction
-            currentRoot.addExcludeFolder(venvToExclude)
-            model.commit()
+            }
+            if (currentRoot != null) {
+              currentRoot.addExcludeFolder(venvToExclude)
+              model.commit()
+            }else {
+              model.dispose()
+            }
           }
         }
       }
     }
   }
-}
 
 private val mutex = Mutex()
