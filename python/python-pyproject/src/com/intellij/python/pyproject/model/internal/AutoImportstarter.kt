@@ -9,16 +9,18 @@ import org.jetbrains.annotations.ApiStatus
 
 
 /**
- * Starts autoimport process if [enabled] or simply "skips" to the next step: [notifyModelRebuilt].
+ * Starts autoimport process if [PyProjectModelSettings.isFeatureEnabled] or simply "skips" to the next step: [notifyModelRebuilt].
  * This method usually called by [com.intellij.python.pyproject.model.internal.platformBridge.PyProjectSyncActivity] except for new projects.
  * In this case, it is postponed till project generation (see usages).
  *
- * This method can only be called once (see [PyProjectAutoImportService.start])
+ * This method can only be called **once** (call [PyProjectAutoImportService.start] to enable/disable import logic)
  */
 @ApiStatus.Internal
 suspend fun startAutoImportIfNeeded(project: Project) {
   startVenvExclusion(project)
-  if (PyProjectModelSettings.isFeatureEnabled) {
+  askUserIfPyProjectMustBeEnabled(project)
+  // Only start autoImport if both: registry and user flags are enabled
+  if (PyProjectModelSettings.isFeatureEnabled && PyProjectModelSettings.getInstance(project).usePyprojectToml) {
     project.service<PyProjectAutoImportService>().start()
   }
   else {

@@ -8,7 +8,6 @@ import com.intellij.notification.impl.NotificationFullContent
 import com.intellij.openapi.application.readAction
 import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.startup.ProjectActivity
 import com.intellij.openapi.util.Disposer
 import com.intellij.psi.search.FilenameIndex
 import com.intellij.psi.search.GlobalSearchScope
@@ -18,50 +17,48 @@ import org.jetbrains.annotations.Nls
 
 private const val NOTIFICATION_GROUP_ID = "PyProject.toml"
 
-internal class PyProjectModelStartupActivity : ProjectActivity {
-  override suspend fun execute(project: Project) {
-    if (!PyProjectModelSettings.isFeatureEnabled) return
+internal suspend fun askUserIfPyProjectMustBeEnabled(project: Project) {
+  if (!PyProjectModelSettings.isFeatureEnabled) return
 
-    val settings = PyProjectModelSettings.getInstance(project)
-    if (!settings.showConfigurationNotification) return
+  val settings = PyProjectModelSettings.getInstance(project)
+  if (!settings.showConfigurationNotification) return
 
-    val hasPyprojectToml = readAction {
-      !project.isDisposed && FilenameIndex.getVirtualFilesByName(PY_PROJECT_TOML, GlobalSearchScope.projectScope(project)).isNotEmpty()
-    }
-
-    if (hasPyprojectToml) {
-      showNotification(project, settings)
-    }
-    else {
-      listenForPyprojectToml(project, settings)
-    }
+  val hasPyprojectToml = readAction {
+    !project.isDisposed && FilenameIndex.getVirtualFilesByName(PY_PROJECT_TOML, GlobalSearchScope.projectScope(project)).isNotEmpty()
   }
 
-  private fun listenForPyprojectToml(project: Project, settings: PyProjectModelSettings) {
-    val disposable = Disposer.newDisposable("PyProjectModelStartupActivity")
-    Disposer.register(settings, disposable)
+  if (hasPyprojectToml) {
+    showNotification(project, settings)
+  }
+  else {
+    listenForPyprojectToml(project, settings)
+  }
+}
 
-    project.messageBus.connect(disposable).subscribe(DumbService.DUMB_MODE, object : DumbService.DumbModeListener {
-      override fun exitDumbMode() {
-        if (!settings.showConfigurationNotification) {
-          Disposer.dispose(disposable)
-          return
-        }
+private fun listenForPyprojectToml(project: Project, settings: PyProjectModelSettings) {
+  val disposable = Disposer.newDisposable("PyProjectModelStartupActivity")
+  Disposer.register(settings, disposable)
 
-        val hasAnyPyprojectToml = FilenameIndex.hasVirtualFileWithName(
-          PY_PROJECT_TOML,
-          true,
-          GlobalSearchScope.projectScope(project),
-          null
-        )
-
-        if (hasAnyPyprojectToml) {
-          Disposer.dispose(disposable)
-          showNotification(project, settings)
-        }
+  project.messageBus.connect(disposable).subscribe(DumbService.DUMB_MODE, object : DumbService.DumbModeListener {
+    override fun exitDumbMode() {
+      if (!settings.showConfigurationNotification) {
+        Disposer.dispose(disposable)
+        return
       }
-    })
-  }
+
+      val hasAnyPyprojectToml = FilenameIndex.hasVirtualFileWithName(
+        PY_PROJECT_TOML,
+        true,
+        GlobalSearchScope.projectScope(project),
+        null
+      )
+
+      if (hasAnyPyprojectToml) {
+        Disposer.dispose(disposable)
+        showNotification(project, settings)
+      }
+    }
+  })
 }
 
 private fun showNotification(project: Project, settings: PyProjectModelSettings) {
@@ -82,5 +79,5 @@ private fun showNotification(project: Project, settings: PyProjectModelSettings)
     .notify(project)
 }
 
-private class FullContentNotification(groupId: String, @Nls title: String, @Nls content: String, type: NotificationType)
-  : Notification(groupId, title, content, type), NotificationFullContent
+private class FullContentNotification(groupId: String, @Nls title: String, @Nls content: String, type: NotificationType) :
+  Notification(groupId, title, content, type), NotificationFullContent
