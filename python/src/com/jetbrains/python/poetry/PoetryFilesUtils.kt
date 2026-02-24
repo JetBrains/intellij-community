@@ -76,13 +76,12 @@ suspend fun poetryFindPythonVersionFromToml(tomlFile: VirtualFile, project: Proj
  * Service class that stores Python versions specified in a pyproject.toml file.
  */
 @Internal
-@Service
+@Service(Service.Level.PROJECT)
 class PoetryPyProjectTomlPythonVersionsService : Disposable {
   private val modulePythonVersions: ConcurrentMap<VirtualFile, PoetryPythonVersion> = ConcurrentHashMap()
 
   companion object {
-    val instance: PoetryPyProjectTomlPythonVersionsService
-      get() = service()
+    fun getInstance(project: Project): PoetryPyProjectTomlPythonVersionsService = project.service()
   }
 
   fun setVersion(moduleFile: VirtualFile, stringVersion: String) {
