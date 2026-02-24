@@ -3,11 +3,11 @@ package com.intellij.agent.workbench.sessions
 
 import com.intellij.agent.workbench.sessions.core.AgentSessionLaunchMode
 import com.intellij.agent.workbench.sessions.core.AgentSessionProvider
-import com.intellij.agent.workbench.sessions.core.AgentSessionProviderIconIds
 import com.intellij.agent.workbench.sessions.core.AgentSessionThread
 import com.intellij.agent.workbench.sessions.core.providers.AgentSessionLaunchSpec
 import com.intellij.agent.workbench.sessions.core.providers.AgentSessionProviderBridge
 import com.intellij.agent.workbench.sessions.core.providers.AgentSessionProviderBridges
+import com.intellij.agent.workbench.sessions.core.providers.AgentSessionProviderIcon
 import com.intellij.agent.workbench.sessions.core.providers.AgentSessionSource
 import com.intellij.agent.workbench.sessions.core.providers.InMemoryAgentSessionProviderRegistry
 import com.intellij.openapi.extensions.ExtensionPointName
@@ -110,6 +110,14 @@ class AgentSessionProviderBridgesTest {
     assertThat(AgentSessionProviderBridges.find(AgentSessionProvider.CLAUDE)).isSameAs(baselineClaude)
   }
 
+  @Test
+  fun allRegisteredBridgesProvideIconDescriptor() {
+    AgentSessionProviderBridges.allBridges().forEach { bridge ->
+      assertThat(bridge.icon.path).isNotBlank()
+      assertThat(bridge.icon.iconClass).isNotNull()
+    }
+  }
+
   private class TestAgentSessionProviderBridge(
     override val provider: AgentSessionProvider,
     sourceId: String,
@@ -122,8 +130,8 @@ class AgentSessionProviderBridgesTest {
     override val newSessionLabelKey: String
       get() = "toolwindow.action.new.session.codex"
 
-    override val iconId: String
-      get() = AgentSessionProviderIconIds.CODEX
+    override val icon: AgentSessionProviderIcon
+      get() = AgentSessionProviderIcon(path = "icons/codex@14x14.svg", iconClass = this::class.java)
 
     override val cliMissingMessageKey: String
       get() = "test.missing.cli"

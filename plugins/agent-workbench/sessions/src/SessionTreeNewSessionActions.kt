@@ -16,11 +16,11 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.InputMode
 import androidx.compose.ui.unit.dp
 import com.intellij.agent.workbench.sessions.core.AgentSessionLaunchMode
 import com.intellij.agent.workbench.sessions.core.AgentSessionProvider
-import com.intellij.agent.workbench.sessions.core.AgentSessionProviderIconIds
 import com.intellij.agent.workbench.sessions.core.providers.AgentSessionProviderBridge
 import com.intellij.agent.workbench.sessions.core.providers.AgentSessionProviderBridges
 import org.jetbrains.jewel.foundation.ExperimentalJewelApi
@@ -32,6 +32,7 @@ import org.jetbrains.jewel.ui.component.PopupMenu
 import org.jetbrains.jewel.ui.component.Text
 import org.jetbrains.jewel.ui.component.Tooltip
 import org.jetbrains.jewel.ui.component.separator
+import org.jetbrains.jewel.ui.icon.PathIconKey
 import org.jetbrains.jewel.ui.icons.AllIconsKeys
 
 @OptIn(ExperimentalJewelApi::class, ExperimentalFoundationApi::class)
@@ -47,8 +48,9 @@ internal fun NewSessionHoverActions(
   val lastUsedBridge = remember(lastUsedProvider) { lastUsedProvider?.let(AgentSessionProviderBridges::find) }
   val canQuickCreateWithLastUsed =
     lastUsedProvider != null &&
-    (lastUsedBridge == null ||
-     (AgentSessionLaunchMode.STANDARD in lastUsedBridge.supportedLaunchModes && lastUsedBridge.isCliAvailable()))
+    lastUsedBridge != null &&
+    AgentSessionLaunchMode.STANDARD in lastUsedBridge.supportedLaunchModes &&
+    lastUsedBridge.isCliAvailable()
   val quickCreateProvider = if (canQuickCreateWithLastUsed) lastUsedProvider else null
 
   Row(
@@ -189,27 +191,27 @@ private fun rememberProviderMenuItems(): List<ProviderMenuItem> {
 }
 
 @Composable
-internal fun ProviderIcon(provider: AgentSessionProvider, modifier: Modifier = Modifier) {
-  val bridge = AgentSessionProviderBridges.find(provider)
-  val iconId = bridge?.iconId ?: defaultIconId(provider)
-  val iconKey = iconId?.let(AgentSessionsIconKeys::byId)
-  if (iconKey == null) {
-    Text("?", modifier = modifier)
-    return
+internal fun ProviderIcon(
+  provider: AgentSessionProvider,
+  modifier: Modifier = Modifier,
+  tint: Color = Color.Unspecified,
+) {
+  val bridge = requireNotNull(AgentSessionProviderBridges.find(provider)) {
+    "No session provider bridge registered for ${provider.value}"
+  }
+  val icon = bridge.icon
+  check(icon.path.isNotBlank()) {
+    "Session provider ${provider.value} returned blank icon path"
+  }
+  val iconKey = remember(icon.path, icon.iconClass) {
+    PathIconKey(icon.path, icon.iconClass)
   }
   Icon(
     key = iconKey,
-    contentDescription = providerDisplayName(provider),
+    contentDescription = AgentSessionsBundle.message(bridge.displayNameKey),
     modifier = modifier,
+    tint = tint,
   )
-}
-
-private fun defaultIconId(provider: AgentSessionProvider): String? {
-  return when (provider) {
-    AgentSessionProvider.CLAUDE -> AgentSessionProviderIconIds.CLAUDE
-    AgentSessionProvider.CODEX -> AgentSessionProviderIconIds.CODEX
-    else -> null
-  }
 }
 
 internal fun providerDisplayName(provider: AgentSessionProvider): String {

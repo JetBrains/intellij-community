@@ -10,7 +10,7 @@ interface AgentSessionProviderBridge {
   val newSessionLabelKey: String
   val yoloSessionLabelKey: String?
     get() = null
-  val iconId: String
+  val icon: AgentSessionProviderIcon
 
   val supportedLaunchModes: Set<AgentSessionLaunchMode>
     get() = setOf(AgentSessionLaunchMode.STANDARD)

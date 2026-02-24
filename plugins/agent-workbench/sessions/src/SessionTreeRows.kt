@@ -15,6 +15,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
@@ -31,6 +32,7 @@ import androidx.compose.ui.graphics.takeOrElse
 import androidx.compose.ui.text.TextLayoutResult
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.unit.dp
 import com.intellij.agent.workbench.common.normalizeAgentWorkbenchPath
 import com.intellij.agent.workbench.sessions.core.AgentSessionLaunchMode
 import com.intellij.agent.workbench.sessions.core.AgentSessionProvider
@@ -263,7 +265,6 @@ private fun SelectableLazyItemScope.threadNodeRow(
   val timeColor = LocalContentColor.current
     .takeOrElse { JewelTheme.globalColors.text.disabled }
     .copy(alpha = 0.55f)
-  val providerLabel = providerLabel(thread.provider)
   val indicatorColor = if (branchMismatch) JewelTheme.globalColors.text.warning else threadIndicatorColor(thread)
   val normalizedPath = normalizeAgentWorkbenchPath(path)
   val currentArchiveTarget = ArchiveThreadTarget(path = normalizedPath, thread = thread)
@@ -320,10 +321,12 @@ private fun SelectableLazyItemScope.threadNodeRow(
             .weight(1f)
             .highlightSpeedSearchMatches(titleLayoutResult),
         )
-        Text(
-          text = providerLabel,
-          color = timeColor,
-          style = AgentSessionsTextStyles.threadTime(),
+        ProviderIcon(
+          provider = thread.provider,
+          modifier = Modifier
+            .size(threadProviderIconSize())
+            .offset(y = (-0.5).dp),
+          tint = timeColor,
         )
         if (timeLabel != null) {
           Text(
@@ -462,10 +465,6 @@ private fun SelectableLazyItemScope.worktreeNodeRow(
       CircularProgressIndicator(Modifier.size(loadingIndicatorSize()))
     }
   }
-}
-
-private fun providerLabel(provider: AgentSessionProvider): String {
-  return providerDisplayName(provider)
 }
 
 @Composable

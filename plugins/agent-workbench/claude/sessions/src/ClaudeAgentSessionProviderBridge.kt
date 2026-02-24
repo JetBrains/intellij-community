@@ -3,9 +3,9 @@ package com.intellij.agent.workbench.claude.sessions
 
 import com.intellij.agent.workbench.sessions.core.AgentSessionLaunchMode
 import com.intellij.agent.workbench.sessions.core.AgentSessionProvider
-import com.intellij.agent.workbench.sessions.core.AgentSessionProviderIconIds
 import com.intellij.agent.workbench.sessions.core.providers.AgentSessionLaunchSpec
 import com.intellij.agent.workbench.sessions.core.providers.AgentSessionProviderBridge
+import com.intellij.agent.workbench.sessions.core.providers.AgentSessionProviderIcon
 import com.intellij.agent.workbench.sessions.core.providers.AgentSessionSource
 
 internal class ClaudeAgentSessionProviderBridge(
@@ -23,8 +23,8 @@ internal class ClaudeAgentSessionProviderBridge(
   override val yoloSessionLabelKey: String
     get() = "toolwindow.action.new.session.claude.yolo"
 
-  override val iconId: String
-    get() = AgentSessionProviderIconIds.CLAUDE
+  override val icon: AgentSessionProviderIcon
+    get() = AgentSessionProviderIcon(path = "icons/claude@14x14.svg", iconClass = this::class.java)
 
   override val supportedLaunchModes: Set<AgentSessionLaunchMode>
     get() = setOf(AgentSessionLaunchMode.STANDARD, AgentSessionLaunchMode.YOLO)

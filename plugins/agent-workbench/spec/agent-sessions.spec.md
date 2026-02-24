@@ -129,7 +129,7 @@ Define Agent Threads as a provider-agnostic, project-scoped thread browser. This
 - Open project rows must be visually emphasized via stronger title weight.
 - Closed project rows must remain readable but visually de-emphasized relative to open rows.
 - Default project visibility must include all open projects and up to 3 closed recent projects; additional closed projects appear behind `More`.
-- Thread rows show provider marker and relative activity time.
+- Thread rows show provider icon marker and relative activity time.
 - Thread-row archive context menu should apply to current multi-selection when invoked from a selected thread and show `Archive Selected (N)` when `N > 1`.
 - Selection gestures (`Cmd/Ctrl+click`, `Shift+click`) update selection without opening the clicked thread/sub-agent row.
 - Context-menu gestures (`secondary click`, macOS `Ctrl+click`) never open rows.

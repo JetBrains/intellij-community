@@ -3,10 +3,10 @@ package com.intellij.agent.workbench.sessions
 
 import com.intellij.agent.workbench.sessions.core.AgentSessionLaunchMode
 import com.intellij.agent.workbench.sessions.core.AgentSessionProvider
-import com.intellij.agent.workbench.sessions.core.AgentSessionProviderIconIds
 import com.intellij.agent.workbench.sessions.core.AgentSessionThread
 import com.intellij.agent.workbench.sessions.core.providers.AgentSessionLaunchSpec
 import com.intellij.agent.workbench.sessions.core.providers.AgentSessionProviderBridge
+import com.intellij.agent.workbench.sessions.core.providers.AgentSessionProviderIcon
 import com.intellij.agent.workbench.sessions.core.providers.AgentSessionSource
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.project.Project
@@ -145,8 +145,8 @@ class AgentSessionCliTest {
     override val newSessionLabelKey: String
       get() = "toolwindow.action.new.session.codex"
 
-    override val iconId: String
-      get() = AgentSessionProviderIconIds.CODEX
+    override val icon: AgentSessionProviderIcon
+      get() = AgentSessionProviderIcon(path = "icons/codex@14x14.svg", iconClass = this::class.java)
 
     override val supportedLaunchModes: Set<AgentSessionLaunchMode>
       get() = setOf(AgentSessionLaunchMode.STANDARD, AgentSessionLaunchMode.YOLO)

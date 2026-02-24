@@ -6,9 +6,9 @@ import com.intellij.agent.workbench.codex.common.CodexCliUtils
 import com.intellij.agent.workbench.codex.sessions.backend.appserver.SharedCodexAppServerService
 import com.intellij.agent.workbench.sessions.core.AgentSessionLaunchMode
 import com.intellij.agent.workbench.sessions.core.AgentSessionProvider
-import com.intellij.agent.workbench.sessions.core.AgentSessionProviderIconIds
 import com.intellij.agent.workbench.sessions.core.providers.AgentSessionLaunchSpec
 import com.intellij.agent.workbench.sessions.core.providers.AgentSessionProviderBridge
+import com.intellij.agent.workbench.sessions.core.providers.AgentSessionProviderIcon
 import com.intellij.agent.workbench.sessions.core.providers.AgentSessionSource
 import com.intellij.openapi.components.serviceAsync
 
@@ -27,8 +27,8 @@ internal class CodexAgentSessionProviderBridge(
   override val yoloSessionLabelKey: String
     get() = "toolwindow.action.new.session.codex.yolo"
 
-  override val iconId: String
-    get() = AgentSessionProviderIconIds.CODEX
+  override val icon: AgentSessionProviderIcon
+    get() = AgentSessionProviderIcon(path = "icons/codex@14x14.svg", iconClass = this::class.java)
 
   override val supportedLaunchModes: Set<AgentSessionLaunchMode>
     get() = setOf(AgentSessionLaunchMode.STANDARD, AgentSessionLaunchMode.YOLO)

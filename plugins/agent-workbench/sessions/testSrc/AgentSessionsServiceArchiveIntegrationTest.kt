@@ -3,10 +3,10 @@ package com.intellij.agent.workbench.sessions
 
 import com.intellij.agent.workbench.sessions.core.AgentSessionLaunchMode
 import com.intellij.agent.workbench.sessions.core.AgentSessionProvider
-import com.intellij.agent.workbench.sessions.core.AgentSessionProviderIconIds
 import com.intellij.agent.workbench.sessions.core.providers.AgentSessionLaunchSpec
 import com.intellij.agent.workbench.sessions.core.providers.AgentSessionProviderBridge
 import com.intellij.agent.workbench.sessions.core.providers.AgentSessionProviderBridges
+import com.intellij.agent.workbench.sessions.core.providers.AgentSessionProviderIcon
 import com.intellij.agent.workbench.sessions.core.providers.AgentSessionSource
 import com.intellij.agent.workbench.sessions.core.providers.InMemoryAgentSessionProviderRegistry
 import com.intellij.testFramework.junit5.TestApplication
@@ -51,8 +51,8 @@ class AgentSessionsServiceArchiveIntegrationTest {
         get() = "toolwindow.provider.claude"
       override val newSessionLabelKey: String
         get() = "toolwindow.action.new.session.claude"
-      override val iconId: String
-        get() = AgentSessionProviderIconIds.CLAUDE
+      override val icon: AgentSessionProviderIcon
+        get() = AgentSessionProviderIcon(path = "icons/claude@14x14.svg", iconClass = this::class.java)
       override val sessionSource: AgentSessionSource = claudeSource
       override val cliMissingMessageKey: String
         get() = "toolwindow.error.claude.cli"
@@ -380,8 +380,8 @@ private fun testCodexBridge(
     override val newSessionLabelKey: String
       get() = "toolwindow.action.new.session.codex"
 
-    override val iconId: String
-      get() = AgentSessionProviderIconIds.CODEX
+    override val icon: AgentSessionProviderIcon
+      get() = AgentSessionProviderIcon(path = "icons/codex@14x14.svg", iconClass = this::class.java)
 
     override val sessionSource: AgentSessionSource = sessionSource
 

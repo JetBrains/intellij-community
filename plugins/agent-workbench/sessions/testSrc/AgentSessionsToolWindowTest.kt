@@ -16,13 +16,34 @@ import com.intellij.agent.workbench.sessions.core.AgentSessionLaunchMode
 import com.intellij.agent.workbench.sessions.core.AgentSessionProvider
 import com.intellij.agent.workbench.sessions.core.AgentSessionThread
 import com.intellij.agent.workbench.sessions.core.AgentSubAgent
+import com.intellij.agent.workbench.sessions.core.providers.AgentSessionLaunchSpec
+import com.intellij.agent.workbench.sessions.core.providers.AgentSessionProviderBridge
+import com.intellij.agent.workbench.sessions.core.providers.AgentSessionProviderBridges
+import com.intellij.agent.workbench.sessions.core.providers.AgentSessionProviderIcon
+import com.intellij.agent.workbench.sessions.core.providers.AgentSessionSource
+import com.intellij.agent.workbench.sessions.core.providers.InMemoryAgentSessionProviderRegistry
+import com.intellij.openapi.project.Project
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.Rule
 import org.junit.Test
+import org.junit.rules.TestRule
+import org.junit.runner.Description
+import org.junit.runners.model.Statement
 
 class AgentSessionsToolWindowTest {
   @get:Rule
   val composeRule: ComposeContentTestRule = createComposeRule()
+
+  @get:Rule
+  val providerBridgeRule: TestRule = TestRule { base, _: Description ->
+    object : Statement() {
+      override fun evaluate() {
+        AgentSessionProviderBridges.withRegistryForTest(defaultProviderBridgeRegistry()) {
+          base.evaluate()
+        }
+      }
+    }
+  }
 
   @Test
   fun emptyStateIsShownWhenNoProjects() {
@@ -395,7 +416,7 @@ class AgentSessionsToolWindowTest {
   }
 
   @Test
-  fun threadRowShowsProviderMarkerForClaude() {
+  fun threadRowShowsProviderIconForClaude() {
     val now = 1_700_000_000_000L
     val thread = AgentSessionThread(
       id = "session-1",
@@ -423,7 +444,9 @@ class AgentSessionsToolWindowTest {
     }
 
     composeRule.onNodeWithText("Session One").assertIsDisplayed()
-    composeRule.onNodeWithText(providerDisplayName(AgentSessionProvider.CLAUDE)).assertIsDisplayed()
+    val providerLabel = providerDisplayName(AgentSessionProvider.CLAUDE)
+    composeRule.onNodeWithContentDescription(providerLabel).assertIsDisplayed()
+    composeRule.onAllNodesWithText(providerLabel).assertCountEquals(0)
   }
 
   @Test
@@ -1031,4 +1054,89 @@ class AgentSessionsToolWindowTest {
 private fun providerUnavailableMessage(provider: AgentSessionProvider): String {
   val providerLabel = providerDisplayName(provider)
   return AgentSessionsBundle.message("toolwindow.warning.provider.unavailable", providerLabel)
+}
+
+private fun defaultProviderBridgeRegistry(): InMemoryAgentSessionProviderRegistry {
+  return InMemoryAgentSessionProviderRegistry(
+    listOf(
+      testProviderBridge(
+        providerId = AgentSessionProvider.CLAUDE,
+        displayNameKeyValue = "toolwindow.provider.claude",
+        newSessionLabelKeyValue = "toolwindow.action.new.session.claude",
+        yoloSessionLabelKeyValue = "toolwindow.action.new.session.claude.yolo",
+        cliMissingMessageKeyValue = "toolwindow.error.claude.cli",
+        iconPathValue = "icons/claude@14x14.svg",
+        buildResumeCommandFn = { sessionId -> listOf("claude", "--resume", sessionId) },
+        buildNewSessionCommandFn = { mode ->
+          if (mode == AgentSessionLaunchMode.YOLO) listOf("claude", "--dangerously-skip-permissions")
+          else listOf("claude")
+        },
+        buildNewEntryCommandValue = listOf("claude"),
+      ),
+      testProviderBridge(
+        providerId = AgentSessionProvider.CODEX,
+        displayNameKeyValue = "toolwindow.provider.codex",
+        newSessionLabelKeyValue = "toolwindow.action.new.session.codex",
+        yoloSessionLabelKeyValue = "toolwindow.action.new.session.codex.yolo",
+        cliMissingMessageKeyValue = "toolwindow.error.cli",
+        iconPathValue = "icons/codex@14x14.svg",
+        buildResumeCommandFn = { sessionId -> listOf("codex", "resume", sessionId) },
+        buildNewSessionCommandFn = { mode ->
+          if (mode == AgentSessionLaunchMode.YOLO) listOf("codex", "--full-auto")
+          else listOf("codex")
+        },
+        buildNewEntryCommandValue = listOf("codex"),
+      ),
+    ),
+  )
+}
+
+private fun testProviderBridge(
+  providerId: AgentSessionProvider,
+  displayNameKeyValue: String,
+  newSessionLabelKeyValue: String,
+  yoloSessionLabelKeyValue: String,
+  cliMissingMessageKeyValue: String,
+  iconPathValue: String,
+  buildResumeCommandFn: (String) -> List<String>,
+  buildNewSessionCommandFn: (AgentSessionLaunchMode) -> List<String>,
+  buildNewEntryCommandValue: List<String>,
+): AgentSessionProviderBridge {
+  return object : AgentSessionProviderBridge {
+    override val provider: AgentSessionProvider = providerId
+
+    override val displayNameKey: String = displayNameKeyValue
+
+    override val newSessionLabelKey: String = newSessionLabelKeyValue
+
+    override val yoloSessionLabelKey: String = yoloSessionLabelKeyValue
+
+    override val icon: AgentSessionProviderIcon
+      get() = AgentSessionProviderIcon(path = iconPathValue, iconClass = this::class.java)
+
+    override val supportedLaunchModes: Set<AgentSessionLaunchMode>
+      get() = setOf(AgentSessionLaunchMode.STANDARD, AgentSessionLaunchMode.YOLO)
+
+    override val sessionSource: AgentSessionSource = object : AgentSessionSource {
+      override val provider: AgentSessionProvider = providerId
+
+      override suspend fun listThreadsFromOpenProject(path: String, project: Project): List<AgentSessionThread> = emptyList()
+
+      override suspend fun listThreadsFromClosedProject(path: String): List<AgentSessionThread> = emptyList()
+    }
+
+    override val cliMissingMessageKey: String = cliMissingMessageKeyValue
+
+    override fun isCliAvailable(): Boolean = true
+
+    override fun buildResumeCommand(sessionId: String): List<String> = buildResumeCommandFn(sessionId)
+
+    override fun buildNewSessionCommand(mode: AgentSessionLaunchMode): List<String> = buildNewSessionCommandFn(mode)
+
+    override fun buildNewEntryCommand(): List<String> = buildNewEntryCommandValue
+
+    override suspend fun createNewSession(path: String, mode: AgentSessionLaunchMode): AgentSessionLaunchSpec {
+      return AgentSessionLaunchSpec(sessionId = null, command = buildNewSessionCommandFn(mode))
+    }
+  }
 }

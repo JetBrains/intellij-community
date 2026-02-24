@@ -59,6 +59,11 @@ internal fun threadIndicatorSize(): Dp {
 }
 
 @Composable
+internal fun threadProviderIconSize(): Dp {
+  return indicatorSize(scale = 0.24f, min = 10.dp, max = 12.dp)
+}
+
+@Composable
 internal fun subAgentIndicatorSize(): Dp {
   return indicatorSize(scale = 0.14f, min = 3.dp, max = 6.dp)
 }
