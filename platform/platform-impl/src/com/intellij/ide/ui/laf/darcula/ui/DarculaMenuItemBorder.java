@@ -6,6 +6,7 @@ import com.intellij.openapi.wm.impl.customFrameDecorations.header.toolbar.ShowMo
 import com.intellij.ui.ExperimentalUI;
 import com.intellij.util.ui.JBInsets;
 import com.intellij.util.ui.JBUI;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.border.Border;
@@ -19,10 +20,12 @@ import java.awt.Insets;
  */
 public class DarculaMenuItemBorder implements Border, UIResource {
 
+  @ApiStatus.Internal
   public static @NotNull JBInsets menuBarItemInnerInsets() {
     return JBUI.insets(2);
   }
 
+  @ApiStatus.Internal
   public static @NotNull JBInsets menuBarItemOuterInsets() {
     return JBUI.emptyInsets();
   }

@@ -456,8 +456,6 @@ c:com.intellij.ide.ui.laf.darcula.ui.DarculaMenuItemBorder
 - <init>():V
 - getBorderInsets(java.awt.Component):java.awt.Insets
 - isBorderOpaque():Z
-- s:menuBarItemInnerInsets():com.intellij.util.ui.JBInsets
-- s:menuBarItemOuterInsets():com.intellij.util.ui.JBInsets
 - paintBorder(java.awt.Component,java.awt.Graphics,I,I,I,I):V
 f:com.intellij.ide.ui.laf.darcula.ui.TextFieldWithPopupHandlerUI$IconHolder
 - f:bounds:java.awt.Rectangle
