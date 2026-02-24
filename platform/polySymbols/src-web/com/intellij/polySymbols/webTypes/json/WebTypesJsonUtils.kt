@@ -36,7 +36,7 @@ import com.intellij.polySymbols.js.JS_PROPERTIES
 import com.intellij.polySymbols.js.JS_SYMBOLS
 import com.intellij.polySymbols.js.JsSymbolSymbolKind
 import com.intellij.polySymbols.js.NAMESPACE_JS
-import com.intellij.polySymbols.js.PROP_JS_SYMBOL_KIND
+import com.intellij.polySymbols.js.JsSymbolKindProperty
 import com.intellij.polySymbols.query.PolySymbolMatch
 import com.intellij.polySymbols.query.PolySymbolNameConversionRules
 import com.intellij.polySymbols.query.PolySymbolNameConverter
@@ -171,7 +171,7 @@ internal val GenericContributionsHost.genericProperties: Map<String, Any>
           is CssPseudoClass -> sequenceOf(Pair(PROP_CSS_ARGUMENTS.name, this.arguments ?: false))
           is CssPseudoElement -> sequenceOf(Pair(PROP_CSS_ARGUMENTS.name, this.arguments ?: false))
           is JsSymbol -> this.kind?.let { kind -> JsSymbolSymbolKind.entries.firstOrNull { it.name.equals(kind.value(), true) } }
-                           ?.let { sequenceOf(Pair(PROP_JS_SYMBOL_KIND.name, it)) }
+                           ?.let { sequenceOf(Pair(JsSymbolKindProperty.name, it)) }
                          ?: emptySequence()
           else -> emptySequence()
         }

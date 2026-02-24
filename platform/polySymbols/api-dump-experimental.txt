@@ -645,6 +645,9 @@
 - s:getEntries():kotlin.enums.EnumEntries
 - s:valueOf(java.lang.String):com.intellij.polySymbols.html.PolySymbolHtmlAttributeValue$Type
 - s:values():com.intellij.polySymbols.html.PolySymbolHtmlAttributeValue$Type[]
+*f:com.intellij.polySymbols.js.JsSymbolKindProperty
+- com.intellij.polySymbols.PolySymbolProperty
+- sf:INSTANCE:com.intellij.polySymbols.js.JsSymbolKindProperty
 *f:com.intellij.polySymbols.js.JsSymbolKinds
 - sf:JS_EVENTS:com.intellij.polySymbols.PolySymbolKind
 - sf:JS_KEYWORDS:com.intellij.polySymbols.PolySymbolKind
@@ -652,7 +655,6 @@
 - sf:JS_STRING_LITERALS:com.intellij.polySymbols.PolySymbolKind
 - sf:JS_SYMBOLS:com.intellij.polySymbols.PolySymbolKind
 - sf:NAMESPACE_JS:java.lang.String
-- sf:PROP_JS_SYMBOL_KIND:com.intellij.polySymbols.PolySymbolProperty
 *e:com.intellij.polySymbols.js.JsSymbolSymbolKind
 - java.lang.Enum
 - sf:Alias:com.intellij.polySymbols.js.JsSymbolSymbolKind
