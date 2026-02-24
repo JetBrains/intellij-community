@@ -112,7 +112,6 @@ internal class FileIndex(val project: Project, val coroutineScope: CoroutineScop
         luceneIndex.processChanges { writer ->
           writer.deleteAll()
           files.forEach { file ->
-            check(Files.exists(Paths.get(file.path))) { "The file at ${file.path} does not exist! We assume fileIndex.iterateContent only returns existing files" }
             check(file.isValid) { "The file at ${file.path} is not Valid! We assume fileIndex.iterateContent only returns valid files" }
             val (_, doc) = getDocument(file)
             writer.addDocument(doc)
