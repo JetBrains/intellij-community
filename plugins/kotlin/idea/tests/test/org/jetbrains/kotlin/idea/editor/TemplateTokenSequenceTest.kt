@@ -15,17 +15,23 @@ class TemplateTokenSequenceTest : TestCase() {
 
     fun `test multiple template tokens`() {
         doTest(
-            "literal \${a.length} literal \${b.length}",
-            "LITERAL_CHUNK(literal )ENTRY_CHUNK(\${a.length})LITERAL_CHUNK( literal )ENTRY_CHUNK(\${b.length})"
+            $$"literal ${a.length} literal ${b.length}",
+            $$"LITERAL_CHUNK(literal )ENTRY_CHUNK(${a.length})LITERAL_CHUNK( literal )ENTRY_CHUNK(${b.length})"
         )
     }
 
     fun `test broken entry`() {
-        doTest("literal \${a.lengt \n literal", "LITERAL_CHUNK(literal )LITERAL_CHUNK(\${a.lengt )NEW_LINE()LITERAL_CHUNK( literal)")
+        doTest(
+            $$"literal ${a.lengt \n literal",
+            $$"LITERAL_CHUNK(literal )LITERAL_CHUNK(${a.lengt )NEW_LINE()LITERAL_CHUNK( literal)"
+        )
     }
 
     fun `test multiple short entries`() {
-        doTest("literal \$a literal \$a", "LITERAL_CHUNK(literal )ENTRY_CHUNK(\$a)LITERAL_CHUNK( literal )ENTRY_CHUNK(\$a)")
+        doTest(
+            $$"literal $a literal $a",
+            $$"LITERAL_CHUNK(literal )ENTRY_CHUNK($a)LITERAL_CHUNK( literal )ENTRY_CHUNK($a)"
+        )
     }
 
     fun `test leading new lines`() {
