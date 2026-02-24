@@ -514,8 +514,6 @@ object PluginManagerCore {
     return null
   }
 
-
-
   @ApiStatus.Internal
   fun initializePlugins(
     descriptorLoadingErrors: List<PluginLoadingError>,
