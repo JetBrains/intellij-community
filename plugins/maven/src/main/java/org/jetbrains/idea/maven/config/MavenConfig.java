@@ -10,6 +10,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Properties;
 
 import static org.jetbrains.idea.maven.config.MavenConfigSettings.CHECKSUM_FAILURE_POLICY;
 import static org.jetbrains.idea.maven.config.MavenConfigSettings.CHECKSUM_WARNING_POLICY;
@@ -21,15 +22,23 @@ import static org.jetbrains.idea.maven.config.MavenConfigSettings.QUIET;
 
 public @Nullable class MavenConfig {
   private final Map<String, Option> optionMap;
+  @NotNull private final Map<String, String> javaProperties;
   private final String baseDir;
 
-  public MavenConfig(@NotNull Map<String, Option> map, @NotNull String dir) {
-    optionMap = Objects.requireNonNull(map);
-    baseDir = Objects.requireNonNull(dir);
+  public MavenConfig(@NotNull Map<String, Option> map,
+                     @NotNull Map<String, String> javaProperties,
+                     @NotNull String dir) {
+    this.optionMap = Objects.requireNonNull(map);
+    this.javaProperties = javaProperties;
+    this.baseDir = Objects.requireNonNull(dir);
   }
 
   public boolean hasOption(@NotNull MavenConfigSettings configSetting) {
     return optionMap.containsKey(configSetting.key);
+  }
+
+  public Map<String, String> getJavaProperties() {
+    return javaProperties;
   }
 
   public String getOptionValue(@NotNull MavenConfigSettings configSetting) {
@@ -65,6 +74,10 @@ public @Nullable class MavenConfig {
     file = Path.of(baseDir, option.getValue());
     if (Files.exists(file)) return file.toAbsolutePath().toString();
     return null;
+  }
+
+  public Properties toProperties() {
+    return new Properties();
   }
 
   public boolean isEmpty() {
