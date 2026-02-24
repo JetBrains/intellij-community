@@ -6,12 +6,14 @@ import com.intellij.python.pyproject.PyProjectToml
 import com.intellij.python.pyproject.model.spi.ProjectDependencies
 import com.intellij.python.pyproject.model.spi.ProjectName
 import com.intellij.python.pyproject.model.spi.PyProjectTomlProject
+import com.intellij.python.pyproject.safeGetArr
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.jetbrains.python.Result
 import com.jetbrains.python.venvReader.Directory
 import com.jetbrains.python.venvReader.VirtualEnvReader
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
+import org.apache.tuweni.toml.TomlTable
 import java.io.IOException
 import java.net.URI
 import java.net.URISyntaxException
@@ -81,23 +83,6 @@ suspend fun walkFileSystemNoTomlContent(
   }
 }
 
-
-suspend fun getPEP621Deps(
-  entries: Map<ProjectName, PyProjectTomlProject>,
-  rootIndex: Map<Directory, ProjectName>,
-): ProjectDependencies = withContext(Dispatchers.Default) {
-  val deps = entries.asSequence().associate { (name, entry) ->
-    val deps = getDependenciesFromToml(entry.pyProjectToml).mapNotNull { dir ->
-      rootIndex[dir] ?: run {
-        logger.warn("Can't find project for dir $dir")
-        null
-      }
-    }.toSet()
-    Pair(name, deps)
-  }
-  ProjectDependencies(deps)  // No workspace info (yet)
-}
-
 private val logger = fileLogger()
 
 private suspend fun readFile(file: Path): PyProjectToml? {
@@ -118,16 +103,93 @@ private suspend fun readFile(file: Path): PyProjectToml? {
   }
 }
 
-@RequiresBackgroundThread
-private fun getDependenciesFromToml(projectToml: PyProjectToml): Set<Directory> {
-  val depsFromFile = projectToml.project?.dependencies?.project ?: emptyList()
-  val moduleDependencies = depsFromFile
-    .mapNotNull { depSpec ->
-      val match = PEP_621_PATH_DEPENDENCY.matchEntire(depSpec) ?: return@mapNotNull null
-      val (_, depUri) = match.destructured
-      return@mapNotNull parseDepUri(depUri)
+suspend fun getDependenciesFromToml(
+  entries: Map<ProjectName, PyProjectTomlProject>,
+  rootIndex: Map<Directory, ProjectName>,
+  tomlDependencySpecifications: List<TomlDependencySpecification>,
+): ProjectDependencies = withContext(Dispatchers.Default) {
+  val deps = entries.asSequence().associate { (name, entry) ->
+    val depsPaths = collectAllDependencies(entry, tomlDependencySpecifications)
+    val deps = processDependenciesWithRootIndex(depsPaths, rootIndex)
+    Pair(name, deps)
+  }
+  ProjectDependencies(deps)
+}
+
+private fun processDependenciesWithRootIndex(dependencies: Sequence<Directory>, rootIndex: Map<Directory, ProjectName>): Set<ProjectName> =
+  dependencies.mapNotNull { dir ->
+    rootIndex[dir] ?: run {
+      logger.warn("Can't find project for dir $dir")
+      null
     }
-  return moduleDependencies.toSet()
+  }.toSet()
+
+@RequiresBackgroundThread
+private fun collectAllDependencies(
+  entry: PyProjectTomlProject, tomlDependencySpecifications: List<TomlDependencySpecification>,
+): Sequence<Directory> = sequence {
+  yieldAll(getDependenciesFromProject(entry.pyProjectToml))
+  yieldAll(getDependenciesFromPep735Groups(entry.pyProjectToml.toml))
+  yieldAll(getToolSpecificDependencies(entry.root, entry.pyProjectToml.toml, tomlDependencySpecifications))
+}
+
+@RequiresBackgroundThread
+private fun getToolSpecificDependencies(
+  root: Path, tomlTable: TomlTable, tomlDependencySpecifications: List<TomlDependencySpecification>,
+): Sequence<Directory> {
+  return tomlDependencySpecifications.asSequence().flatMap { specification ->
+    when (specification) {
+      is TomlDependencySpecification.PathDependency -> tomlTable.getTable(specification.tomlKey)?.let {
+        getToolSpecificDependenciesFromTomlTable(root, it)
+      } ?: emptySet()
+      is TomlDependencySpecification.Pep621Dependency -> {
+        val deps = tomlTable.safeGetArr<String>(specification.tomlKey, unquotedDottedKey = true).successOrNull ?: emptyList()
+        deps.asSequence().mapNotNull(::parsePep621Dependency).toSet()
+      }
+      is TomlDependencySpecification.GroupPathDependency -> {
+        val groups = tomlTable.getTable(specification.tomlKeyToGroup) ?: return@flatMap emptySet()
+        groups.keySet().flatMap { group ->
+          groups.getTable("${group}.${specification.tomlKeyFromGroupToPath}")?.let {
+            getToolSpecificDependenciesFromTomlTable(root, it)
+          } ?: emptySet()
+        }
+      }
+    }
+  }
+}
+
+@RequiresBackgroundThread
+private fun getToolSpecificDependenciesFromTomlTable(root: Path, tomlTable: TomlTable): Set<Directory> {
+  return tomlTable.keySet().asSequence().mapNotNull {
+    tomlTable.getString("${it}.path")?.let { depPathString -> parseDepFromPathString(root, depPathString) }
+  }.toSet()
+}
+
+@RequiresBackgroundThread
+private fun getDependenciesFromPep735Groups(tomlTable: TomlTable): Sequence<Directory> {
+  val groups = tomlTable.getTable("dependency-groups") ?: return emptySequence()
+  return groups.keySet().asSequence().flatMap { group ->
+    val deps = groups.safeGetArr<String>(group).successOrNull ?: emptyList()
+    deps.asSequence().mapNotNull(::parsePep621Dependency)
+  }
+}
+
+@RequiresBackgroundThread
+private fun getDependenciesFromProject(projectToml: PyProjectToml): Sequence<Directory> {
+  val depsFromFile = projectToml.project?.dependencies?.project ?: emptyList()
+  return depsFromFile.asSequence().mapNotNull(::parsePep621Dependency)
+}
+
+private fun parsePep621Dependency(depSpec: String): Path? {
+  val match = PEP_621_PATH_DEPENDENCY.matchEntire(depSpec) ?: return null
+  val (_, depUri) = match.destructured
+  return parseDepUri(depUri)
+}
+
+sealed interface TomlDependencySpecification {
+  data class PathDependency(val tomlKey: String) : TomlDependencySpecification
+  data class Pep621Dependency(val tomlKey: String) : TomlDependencySpecification
+  data class GroupPathDependency(val tomlKeyToGroup: String, val tomlKeyFromGroupToPath: String) : TomlDependencySpecification
 }
 
 
@@ -144,5 +206,14 @@ private fun parseDepUri(depUri: String): Path? =
   }
   catch (e: URISyntaxException) {
     logger.info("Dep $depUri can't be parsed", e)
+    null
+  }
+
+private fun parseDepFromPathString(root: Path, depPathString: String): Path? =
+  try {
+    root.resolve(depPathString).normalize()
+  }
+  catch (e: InvalidPathException) {
+    logger.info("Dep $depPathString points to wrong path", e)
     null
   }

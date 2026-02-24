@@ -36,7 +36,7 @@ import com.intellij.python.pyproject.PyProjectToml
 import com.intellij.python.pyproject.model.internal.PY_PROJECT_SYSTEM_ID
 import com.intellij.python.pyproject.model.internal.PyProjectTomlBundle
 import com.intellij.python.pyproject.model.internal.pyProjectToml.FSWalkInfoWithToml
-import com.intellij.python.pyproject.model.internal.pyProjectToml.getPEP621Deps
+import com.intellij.python.pyproject.model.internal.pyProjectToml.getDependenciesFromToml
 import com.intellij.python.pyproject.model.spi.ProjectName
 import com.intellij.python.pyproject.model.spi.PyProjectTomlProject
 import com.intellij.python.pyproject.model.spi.Tool
@@ -188,8 +188,8 @@ private suspend fun generatePyProjectTomlEntries(
   val entriesByName = entries.associateBy { it.name }
   val namesByDir = entries.associate { Pair(it.root, it.name) }
   val allNames = entriesByName.keys
-  var dependencies = getPEP621Deps(entriesByName, namesByDir)
-  for (tool in Tool.EP.extensionList) {
+  var dependencies = getDependenciesFromToml(entriesByName, namesByDir, tools.flatMap { it.getTomlDependencySpecifications() })
+  for (tool in tools) {
     // Tool provides deps and workspace members
     val toolSpecificInfo = tool.getProjectStructure(entriesByName, namesByDir)
     // Tool-agnostic pep621 deps
