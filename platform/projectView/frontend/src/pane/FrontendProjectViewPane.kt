@@ -3,6 +3,7 @@ package com.intellij.platform.projectView.frontend.pane
 
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.project.Project
+import com.intellij.platform.projectView.pane.ProjectViewPaneDescriptor
 import com.intellij.platform.projectView.pane.ProjectViewPaneId
 import com.intellij.platform.projectView.pane.ProjectViewPaneProviderId
 import com.intellij.platform.projectView.pane.ProjectViewPaneRequest
@@ -20,7 +21,7 @@ internal val FrontendProjectViewPaneProviderEP = ExtensionPointName.create<Front
 @ApiStatus.Internal
 interface FrontendProjectViewPaneProvider {
   val id: ProjectViewPaneProviderId
-  fun createPane(project: Project, id: ProjectViewPaneId): FrontendProjectViewPane
+  fun createPane(project: Project, descriptor: ProjectViewPaneDescriptor): FrontendProjectViewPane
 }
 
 @ApiStatus.Internal
@@ -30,8 +31,10 @@ interface FrontendProjectViewPane {
   val id: ProjectViewPaneId
 
   val displayName: @NonNls String
-  
+
   val component: JComponent
+
+  val order: Int
 
   val requestChannel: ReceiveChannel<ProjectViewPaneRequest>
 

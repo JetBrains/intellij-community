@@ -6,6 +6,7 @@ import com.intellij.platform.projectView.frontend.impl.pane.TreeBasedFrontendPro
 import com.intellij.platform.projectView.frontend.pane.FrontendProjectViewPane
 import com.intellij.platform.projectView.frontend.pane.FrontendProjectViewPaneProvider
 import com.intellij.platform.projectView.impl.legacy.LEGACY_PROVIDER_ID
+import com.intellij.platform.projectView.pane.ProjectViewPaneDescriptor
 import com.intellij.platform.projectView.pane.ProjectViewPaneId
 import com.intellij.platform.projectView.pane.ProjectViewPaneProviderId
 import org.jetbrains.annotations.NonNls
@@ -14,13 +15,19 @@ internal class LegacyFrontendProjectViewPaneProvider : FrontendProjectViewPanePr
   override val id: ProjectViewPaneProviderId
     get() = LEGACY_PROVIDER_ID
 
-  override fun createPane(project: Project, id: ProjectViewPaneId): FrontendProjectViewPane = LegacyFrontendProjectViewPane(project, id)
+  override fun createPane(
+    project: Project,
+    descriptor: ProjectViewPaneDescriptor
+  ): FrontendProjectViewPane = LegacyFrontendProjectViewPane(project, descriptor)
 }
 
-internal class LegacyFrontendProjectViewPane(project: Project, override val id: ProjectViewPaneId) : TreeBasedFrontendProjectViewPane(project) {
+internal class LegacyFrontendProjectViewPane(project: Project, descriptor: ProjectViewPaneDescriptor) : TreeBasedFrontendProjectViewPane(project) {
   override val providerId: ProjectViewPaneProviderId
     get() = LEGACY_PROVIDER_ID
 
-  override val displayName: @NonNls String
-    get() = id.idString
+  override val id: ProjectViewPaneId = descriptor.id
+
+  override val displayName: @NonNls String = descriptor.presentableName
+
+  override val order: Int = descriptor.order
 }

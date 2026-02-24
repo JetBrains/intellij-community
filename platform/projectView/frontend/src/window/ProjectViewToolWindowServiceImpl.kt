@@ -28,6 +28,7 @@ import com.intellij.platform.projectView.pane.projectViewPaneProviderId
 import com.intellij.platform.projectView.rpc.ProjectViewRpc
 import com.intellij.platform.projectView.window.ProjectViewOptionSupport
 import com.intellij.platform.projectView.window.ProjectViewToolWindowService
+import com.intellij.ui.content.Content
 import com.intellij.ui.content.ContentFactory
 import com.intellij.ui.content.ContentManagerEvent
 import com.intellij.ui.content.ContentManagerListener
@@ -40,13 +41,15 @@ import kotlinx.coroutines.CoroutineName
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.awaitCancellation
 import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.supervisorScope
 import kotlinx.coroutines.withContext
 import kotlinx.coroutines.withTimeoutOrNull
 import org.jdom.Element
 import java.util.concurrent.ConcurrentHashMap
-import kotlin.concurrent.atomics.AtomicReference
 import kotlin.concurrent.atomics.ExperimentalAtomicApi
 import kotlin.time.Duration.Companion.seconds
 
@@ -57,17 +60,18 @@ internal class ProjectViewToolWindowServiceImpl(
   private val actionGroup: DefaultActionGroup by lazy { DefaultActionGroup() }
   private val stateInitJob = CompletableDeferred<Unit>()
   private val state = ConcurrentHashMap<ProjectViewPaneProviderId, ConcurrentHashMap<ProjectViewPaneId, Element>>()
-  private val currentPane = AtomicReference<FrontendProjectViewPane?>(null)
+  private val currentPaneFlow = MutableStateFlow<FrontendProjectViewPane?>(null)
   private val currentPaneListener: ContentManagerListener = object : ContentManagerListener {
     override fun selectionChanged(event: ContentManagerEvent) {
       if (event.operation == ContentManagerEvent.ContentOperation.add) {
         val newPane = event.content.getUserData(PANE_KEY)
-        val oldPane = currentPane.exchange(newPane)
+        val oldPane = currentPaneFlow.value
+        currentPaneFlow.value = newPane
         currentPaneChanged(oldPane, newPane)
       }
     }
   }
-  private val optionService = ProjectViewOptionSupportImpl(currentPane)
+  private val optionService = ProjectViewOptionSupportImpl(currentPaneFlow)
 
   override fun getOptionSupport(): ProjectViewOptionSupport = optionService
 
@@ -80,20 +84,28 @@ internal class ProjectViewToolWindowServiceImpl(
 
   override suspend fun manageToolWindow(toolWindow: ToolWindow) {
     supervisorScope {
+      launch(Dispatchers.UI + CoroutineName("Current pane listener")) {
+        toolWindow.contentManager.addContentManagerListener(currentPaneListener)
+        // It's important to use the right scope here, or else the current scope (withContext) would be blocked.
+        awaitCancellationAndInvoke {
+          toolWindow.contentManager.removeContentManagerListener(currentPaneListener)
+        }
+      }
+      val rpc = ProjectViewRpc.getInstance()
       for (provider in FrontendProjectViewPaneProviderEP.extensionList) {
-        for (paneId in listOf(projectViewPaneId("ProjectPane"))) {
-          launch(CoroutineName("Manage PV pane $paneId from the provider ${provider.id}")) {
+        for (descriptor in rpc.getPaneDescriptors(project.projectId(), provider.id)) {
+          launch(CoroutineName("Manage PV pane ${descriptor.id} from the provider ${provider.id}")) {
             try {
-              LOG.debug { "Initializing pane $paneId" }
+              LOG.debug { "Initializing pane ${descriptor.id}" }
               val pane = withContext(Dispatchers.UI) {
-                provider.createPane(project, paneId)
+                provider.createPane(project, descriptor)
               }
-              LOG.debug { "Created pane $paneId" }
+              LOG.debug { "Created pane ${descriptor.id}" }
               managePane(toolWindow, provider.id, pane)
             }
             catch (e: Throwable) {
               rethrowControlFlowException(e)
-              LOG.error("Failed to initialize pane $paneId", e)
+              LOG.error("Failed to initialize pane ${descriptor.id}", e)
             }
           }
         }
@@ -119,59 +131,56 @@ internal class ProjectViewToolWindowServiceImpl(
 
   suspend fun managePane(toolWindow: ToolWindow, providerId: ProjectViewPaneProviderId, pane: FrontendProjectViewPane) {
     coroutineScope {
-      val paneScope = this
       withTimeoutOrNull(15.seconds) { // in case something went wrong with loading the state
         stateInitJob.await()
       }
       LOG.debug { "The saved state has been loaded for ${pane.id}" }
-      try {
-        withContext(Dispatchers.UI) {
-          val content = ContentFactory.getInstance().createContent(
-            /* component = */ pane.component,
-            /* displayName = */ pane.displayName,
-            /* isLockable = */ false
-          )
-          content.putUserData(PANE_KEY, pane)
-          toolWindow.contentManager.addContentManagerListener(currentPaneListener)
-          // It's important to use the right scope here, or else the current scope (withContext) would be blocked.
-          paneScope.awaitCancellationAndInvoke { 
-            toolWindow.contentManager.removeContentManagerListener(currentPaneListener)
+      launch(Dispatchers.UI + CoroutineName("Manage TW content for PV pane ${pane.id}")) {
+        pane.component.launchOnShow("Pane $providerId:${pane.id} service state saving/restoring") {
+          try {
+            val paneState = state[providerId]?.get(pane.id)
+            if (paneState != null) {
+              pane.restoreStateFrom(paneState)
+            }
+            LOG.debug { "Applied the loaded state for ${pane.id}" }
+            awaitCancellation()
           }
-          toolWindow.contentManager.addContent(content)
-          LOG.debug { "The content has been created for ${pane.id}" }
-          pane.component.launchOnShow("Pane $providerId:${pane.id} service state saving/restoring") {
-            try {
-              val paneState = state[providerId]?.get(pane.id)
-              if (paneState != null) {
-                pane.restoreStateFrom(paneState)
-              }
-              LOG.debug { "Applied the loaded state for ${pane.id}" }
-              awaitCancellation()
-            }
-            finally {
-              val paneElement = Element("pane")
-              paneElement.setAttribute("provider", providerId.idString)
-              paneElement.setAttribute("pane", pane.id.idString)
-              pane.saveStateTo(paneElement)
-              state.computeIfAbsent(providerId) { ConcurrentHashMap() }[pane.id] = paneElement
-              LOG.debug { "Saved the last state for ${pane.id}" }
-            }
+          finally {
+            val paneElement = Element("pane")
+            paneElement.setAttribute("provider", providerId.idString)
+            paneElement.setAttribute("pane", pane.id.idString)
+            pane.saveStateTo(paneElement)
+            state.computeIfAbsent(providerId) { ConcurrentHashMap() }[pane.id] = paneElement
+            LOG.debug { "Saved the last state for ${pane.id}" }
           }
         }
-      }
-      catch (e: Throwable) {
-        LOG.debug(e)
-        throw e
+        val content = addContent(toolWindow, pane)
+        LOG.debug { "The content has been created for ${pane.id}" }
+        try {
+          awaitCancellation()
+        }
+        finally {
+          removeContent(toolWindow, content)
+        }
       }
       LOG.debug { "Obtaining the RCP service to manage the pane ${pane.id}" }
       val rpc = ProjectViewRpc.getInstance()
       launch(CoroutineName("Pane $providerId:${pane.id} state updates")) {
-        LOG.debug { "Collecting pane state updates for ${pane.id}" }
-        rpc.getPaneStateFlow(toolWindow.project.projectId(), providerId, pane.id).collect { eventDTO ->
-          withContext(Dispatchers.UI) {
-            val event = eventDTO.toEvent()
-            LOG.trace { "Update pane state for ${pane.id}: $event" }
-            pane.applyStateChange(event)
+        currentPaneFlow.collectLatest { currentPane ->
+          if (currentPane == pane) {
+            LOG.debug { "The pane ${pane.id} is selected, starting to collect its updates"}
+            try {
+              rpc.getPaneStateFlow(toolWindow.project.projectId(), providerId, pane.id).collect { eventDTO ->
+                withContext(Dispatchers.UI) {
+                  val event = eventDTO.toEvent()
+                  LOG.trace { "Update pane state for ${pane.id}: $event" }
+                  pane.applyStateChange(event)
+                }
+              }
+            }
+            finally {
+              LOG.debug { "The pane ${pane.id} has finished collecting its updates"}
+            }
           }
         }
       }
@@ -186,6 +195,46 @@ internal class ProjectViewToolWindowServiceImpl(
       LOG.debug { "Managing pane ${pane.id}" }
       pane.manage()
     }
+  }
+
+  @RequiresEdt
+  private fun addContent(
+    toolWindow: ToolWindow,
+    newPane: FrontendProjectViewPane,
+  ): Content {
+    val newContent = ContentFactory.getInstance().createContent(
+      /* component = */ newPane.component,
+      /* displayName = */ newPane.displayName,
+      /* isLockable = */ false
+    )
+    newContent.putUserData(PANE_KEY, newPane)
+    val contentManager = toolWindow.contentManager
+    val bisectIndex = (0 until contentManager.contentCount).toList().binarySearch { i ->
+      val existingContent = contentManager.getContent(i)
+      val existingPane = existingContent?.getUserData(PANE_KEY) ?: return@binarySearch 1 // non-pane contents last (not really supported)
+      val compareOrder = existingPane.order.compareTo(newPane.order)
+      if (compareOrder == 0) {
+        existingPane.id.compareTo(newPane.id)
+      }
+      else {
+        compareOrder
+      }
+    }
+    val index = if (bisectIndex >= 0) {
+      LOG.warn("We have two panes with the same order and ID, shouldn't be possible: " +
+               "$newPane and ${contentManager.getContent(bisectIndex)?.getUserData(PANE_KEY)}")
+      bisectIndex + 1 // add after the dup pane
+    }
+    else {
+      -bisectIndex - 1
+    }
+    contentManager.addContent(newContent, index)
+    return newContent
+  }
+
+  @RequiresEdt
+  private fun removeContent(toolWindow: ToolWindow, content: Content) {
+    toolWindow.contentManager.removeContent(content, true)
   }
 
   override fun getState(): Element = Element("projectView").also { element ->

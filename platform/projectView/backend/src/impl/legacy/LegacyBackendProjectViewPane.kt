@@ -33,7 +33,7 @@ import com.intellij.platform.projectView.pane.ProjectViewNodeAdded
 import com.intellij.platform.projectView.pane.ProjectViewNodeModel
 import com.intellij.platform.projectView.pane.ProjectViewNodeUpdated
 import com.intellij.platform.projectView.pane.ProjectViewOptionStateEvent
-import com.intellij.platform.projectView.pane.ProjectViewPaneId
+import com.intellij.platform.projectView.pane.ProjectViewPaneDescriptor
 import com.intellij.platform.projectView.pane.ProjectViewPaneLoadChildrenRequest
 import com.intellij.platform.projectView.pane.ProjectViewPaneNavigateRequest
 import com.intellij.platform.projectView.pane.ProjectViewPaneProviderId
@@ -110,14 +110,30 @@ private class LegacyBackendProjectViewPane(
   private val legacyPaneManager: AbstractProjectViewPaneStateManager,
   private val subId: String?,
 ) : BackendProjectViewPane {
-  override val id: ProjectViewPaneId = projectViewPaneId(if (subId == null) legacyPaneManager.id else "${legacyPaneManager.id}:$subId")
+  override val descriptor: ProjectViewPaneDescriptor = ProjectViewPaneDescriptor(
+    id = projectViewPaneId(if (subId == null) legacyPaneManager.id else "${legacyPaneManager.id}:$subId"),
+    presentableName = if (subId == null) legacyPaneManager.legacyPane.title else legacyPaneManager.legacyPane.getPresentableSubIdName(subId),
+    order = legacyPaneManager.legacyPane.weight,
+  )
+
+  private val requestChannel = Channel<ProjectViewPaneRequest>(capacity = Channel.UNLIMITED)
 
   override suspend fun manage() {
-    legacyPaneManager.managePane()
+    coroutineScope {
+      launch(CoroutineName("Manage pane ${descriptor.id}")) {
+        legacyPaneManager.managePane()
+      }
+      launch(CoroutineName("Manage request channel ${descriptor.id}")) {
+        val targetChannel = legacyPaneManager.getRequestChannel()
+        for (request in requestChannel) {
+          targetChannel.send(request)
+        }
+      }
+    }
   }
 
   override fun getRequestChannel(): SendChannel<ProjectViewPaneRequest> {
-    return legacyPaneManager.getRequestChannel()
+    return requestChannel
   }
 
   override suspend fun getPaneStateFlow(): Flow<ProjectViewPaneStateEvent> {
@@ -134,7 +150,7 @@ private class LegacyBackendProjectViewPane(
 private class AbstractProjectViewPaneStateManager(
   private val project: Project,
   coroutineScope: CoroutineScope,
-  private val legacyPane: AbstractProjectViewPane,
+  val legacyPane: AbstractProjectViewPane,
 ) {
   val id: String
     get() = legacyPane.id

@@ -45,8 +45,7 @@ internal class BackendProjectViewPaneService(
       val panes = panesDeferred.await()
       supervisorScope {
         for (pane in panes.values.flatMap { it.values }) {
-          if (pane.id != projectViewPaneId("ProjectPane")) continue
-          launch(CoroutineName("BackendProjectViewPaneService: pane ${pane.id}")) { 
+          launch(CoroutineName("BackendProjectViewPaneService: pane ${pane.id}")) {
             pane.manage()
           }
         }
@@ -58,8 +57,8 @@ internal class BackendProjectViewPaneService(
     return panesDeferred.await()[providerId]?.get(paneId)?.getRequestChannel() ?: Channel<ProjectViewPaneRequest>(capacity = 0).also { it.close() }
   }
 
-  suspend fun getPaneIds(providerId: ProjectViewPaneProviderId): List<ProjectViewPaneId> {
-    return panesDeferred.await()[providerId]?.keys?.toList() ?: emptyList()
+  suspend fun getPaneDescriptors(providerId: ProjectViewPaneProviderId): List<ProjectViewPaneDescriptor> {
+    return panesDeferred.await()[providerId]?.values?.toList()?.map { it.descriptor } ?: emptyList()
   }
 
   suspend fun getPaneStateFlow(providerId: ProjectViewPaneProviderId, paneId: ProjectViewPaneId): Flow<ProjectViewPaneStateEvent> {

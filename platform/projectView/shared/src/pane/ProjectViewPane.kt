@@ -23,13 +23,23 @@ sealed interface ProjectViewPaneProviderId {
 
 @ApiStatus.Internal
 @Serializable
-sealed interface ProjectViewPaneId {
+sealed interface ProjectViewPaneId : Comparable<ProjectViewPaneId> {
   companion object {
     val DATA_KEY: DataKey<ProjectViewPaneId> = DataKey.create("ProjectViewPaneId")
   }
 
   val idString: @NonNls String
+
+  override fun compareTo(other: ProjectViewPaneId): Int = idString.compareTo(other.idString)
 }
+
+@ApiStatus.Internal
+@Serializable
+data class ProjectViewPaneDescriptor(
+  val id: ProjectViewPaneId,
+  val presentableName: @NonNls String,
+  val order: Int,
+)
 
 @ApiStatus.Internal
 val PROJECT_VIEW_SELECTED_NODE_IDS_KEY: DataKey<List<Long>> = DataKey.create("ProjectViewSelectedNodeIds")

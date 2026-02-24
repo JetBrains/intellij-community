@@ -4,6 +4,7 @@ package com.intellij.platform.projectView.backend.rpc
 import com.intellij.platform.project.ProjectId
 import com.intellij.platform.project.findProject
 import com.intellij.platform.projectView.backend.pane.BackendProjectViewPaneService
+import com.intellij.platform.projectView.pane.ProjectViewPaneDescriptor
 import com.intellij.platform.projectView.pane.ProjectViewPaneId
 import com.intellij.platform.projectView.pane.ProjectViewPaneProviderId
 import com.intellij.platform.projectView.pane.ProjectViewPaneRequest
@@ -32,11 +33,11 @@ internal class ProjectViewRpcImpl : ProjectViewRpc {
     return BackendProjectViewPaneService.getInstanceSuspend(projectId.findProject()).getPaneRequestChannel(providerId, paneId)
   }
 
-  override suspend fun getPaneIds(
+  override suspend fun getPaneDescriptors(
     projectId: ProjectId,
     providerId: ProjectViewPaneProviderId,
-  ): List<ProjectViewPaneId> {
-    return BackendProjectViewPaneService.getInstanceSuspend(projectId.findProject()).getPaneIds(providerId)
+  ): List<ProjectViewPaneDescriptor> {
+    return BackendProjectViewPaneService.getInstanceSuspend(projectId.findProject()).getPaneDescriptors(providerId)
   }
 
   override suspend fun getPaneStateFlow(

@@ -7,13 +7,13 @@ import com.intellij.platform.projectView.actions.ProjectViewOption
 import com.intellij.platform.projectView.actions.ProjectViewOptionState
 import com.intellij.platform.projectView.frontend.pane.FrontendProjectViewPane
 import com.intellij.platform.projectView.window.ProjectViewOptionSupport
-import kotlin.concurrent.atomics.AtomicReference
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlin.concurrent.atomics.ExperimentalAtomicApi
 
-internal class ProjectViewOptionSupportImpl(private val currentPane: AtomicReference<FrontendProjectViewPane?>) : ProjectViewOptionSupport {
-  override fun getOptionState(option: ProjectViewOption): ProjectViewOptionState? = currentPane.load()?.getOptionSupport()?.getOptionState(option)
+internal class ProjectViewOptionSupportImpl(private val currentPane: MutableStateFlow<FrontendProjectViewPane?>) : ProjectViewOptionSupport {
+  override fun getOptionState(option: ProjectViewOption): ProjectViewOptionState? = currentPane.value?.getOptionSupport()?.getOptionState(option)
 
   override fun requestOptionValueUpdate(option: ProjectViewOption, newValue: Boolean) {
-    currentPane.load()?.getOptionSupport()?.requestOptionValueUpdate(option, newValue)
+    currentPane.value?.getOptionSupport()?.requestOptionValueUpdate(option, newValue)
   }
 }

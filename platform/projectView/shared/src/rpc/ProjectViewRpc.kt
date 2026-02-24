@@ -2,6 +2,7 @@
 package com.intellij.platform.projectView.rpc
 
 import com.intellij.platform.project.ProjectId
+import com.intellij.platform.projectView.pane.ProjectViewPaneDescriptor
 import com.intellij.platform.projectView.pane.ProjectViewPaneId
 import com.intellij.platform.projectView.pane.ProjectViewPaneProviderId
 import com.intellij.platform.projectView.pane.ProjectViewPaneRequest
@@ -19,7 +20,7 @@ import org.jetbrains.annotations.ApiStatus
 interface ProjectViewRpc : RemoteApi<Unit> {
   suspend fun getPaneRequestChannel(projectId: ProjectId, providerId: ProjectViewPaneProviderId, paneId: ProjectViewPaneId): SendChannel<ProjectViewPaneRequest>
   
-  suspend fun getPaneIds(projectId: ProjectId, providerId: ProjectViewPaneProviderId): List<ProjectViewPaneId>
+  suspend fun getPaneDescriptors(projectId: ProjectId, providerId: ProjectViewPaneProviderId): List<ProjectViewPaneDescriptor>
 
   suspend fun getPaneStateFlow(projectId: ProjectId, providerId: ProjectViewPaneProviderId, paneId: ProjectViewPaneId): Flow<ProjectViewPaneStateEventDTO>
   

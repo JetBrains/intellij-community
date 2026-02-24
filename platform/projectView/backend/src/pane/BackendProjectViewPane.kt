@@ -5,6 +5,7 @@ import com.intellij.openapi.actionSystem.DataSink
 import com.intellij.openapi.actionSystem.DataSnapshot
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.project.Project
+import com.intellij.platform.projectView.pane.ProjectViewPaneDescriptor
 import com.intellij.platform.projectView.pane.ProjectViewPaneId
 import com.intellij.platform.projectView.pane.ProjectViewPaneProviderId
 import com.intellij.platform.projectView.pane.ProjectViewPaneRequest
@@ -23,9 +24,13 @@ interface BackendProjectViewPaneProvider {
 
 @ApiStatus.Internal
 interface BackendProjectViewPane {
-  val id: ProjectViewPaneId
+  val descriptor: ProjectViewPaneDescriptor
   suspend fun manage()
   suspend fun getPaneStateFlow(): Flow<ProjectViewPaneStateEvent>
   fun getRequestChannel(): SendChannel<ProjectViewPaneRequest>
   fun uiDataSnapshot(sink: DataSink, snapshot: DataSnapshot)
 }
+
+@get:ApiStatus.Internal
+val BackendProjectViewPane.id: ProjectViewPaneId
+  get() = descriptor.id
