@@ -14,7 +14,6 @@
     <notificationGroup id="PyProject.toml" displayType="STICKY_BALLOON" isLogByDefault="true"
                        bundle="messages.PyProjectTomlBundle" key="pyproject.notification.title"/>
     <backgroundPostStartupActivity implementation="com.intellij.python.pyproject.model.internal.platformBridge.PyProjectSyncActivity"/>
-    <backgroundPostStartupActivity implementation="com.intellij.python.pyproject.model.internal.PyProjectModelStartupActivity"/>
 
     <statistics.projectUsagesCollector implementation="com.intellij.python.pyproject.statistics.PythonTomlStatsUsagesCollector"/>
   </extensions>

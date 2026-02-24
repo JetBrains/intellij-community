@@ -10,11 +10,13 @@ import com.intellij.openapi.components.Storage
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.registry.Registry
+import com.intellij.python.pyproject.model.internal.autoImportBridge.PyProjectAutoImportService
 
 
 @Service(Service.Level.PROJECT)
 @State(name = "PyProjectModelSettings", storages = [Storage("pyProjectModel.xml")])
-class PyProjectModelSettings : PersistentStateComponent<PyProjectModelSettings.State>, Disposable {
+class PyProjectModelSettings(private val project: Project) :
+  PersistentStateComponent<PyProjectModelSettings.State>, Disposable {
   override fun dispose() {}
   class State : BaseState() {
     var usePyprojectToml: Boolean by property(false)
@@ -23,14 +25,20 @@ class PyProjectModelSettings : PersistentStateComponent<PyProjectModelSettings.S
 
   private var myState = State()
 
-  var onChanged: Runnable? = null // TODO trigger logic here
 
   var usePyprojectToml: Boolean
     get() = isFeatureEnabled && myState.usePyprojectToml
     set(value) {
       if (myState.usePyprojectToml != value) {
         myState.usePyprojectToml = value
-        onChanged?.run()
+        project.service<PyProjectAutoImportService>().apply {
+          if (value) {
+            start()
+          }
+          else {
+            stop()
+          }
+        }
       }
     }
 
@@ -50,6 +58,11 @@ class PyProjectModelSettings : PersistentStateComponent<PyProjectModelSettings.S
     @JvmStatic
     fun getInstance(project: Project): PyProjectModelSettings = project.service()
 
+    /**
+     * Hard setting: if disabled -> feature is disabled on the Registry.
+     * For user-defined setting, check [PyProjectModelSettings.usePyprojectToml].
+     * Be sure to check **both** except for UI for the aforementioned service.
+     */
     val isFeatureEnabled: Boolean get() = Registry.`is`("intellij.python.pyproject.model")
   }
 }

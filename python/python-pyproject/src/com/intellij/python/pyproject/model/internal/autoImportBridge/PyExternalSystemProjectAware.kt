@@ -25,8 +25,6 @@ import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.intellij.util.messages.Topic
 import com.intellij.util.ui.EDT
 import kotlinx.coroutines.CancellationException
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.VisibleForTesting
 import java.nio.file.Path
@@ -113,12 +111,10 @@ class PyExternalSystemProjectAware private constructor(
      */
     @ApiStatus.Internal
     @VisibleForTesting
-    suspend fun create(project: Project): PyExternalSystemProjectAware {
+    fun create(project: Project): PyExternalSystemProjectAware {
       assert(!project.isDefault) { "Default project not supported" }
-      val baseDir = withContext(Dispatchers.IO) {
-        // guessPath doesn't work: it returns first module path
-        project.stateStore.projectBasePath
-      }
+      // guessPath doesn't work: it returns first module path
+      val baseDir = project.stateStore.projectBasePath
       return PyExternalSystemProjectAware(project, baseDir)
     }
   }

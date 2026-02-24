@@ -10,36 +10,17 @@ import com.intellij.openapi.options.SearchableConfigurable
 import com.intellij.openapi.roots.ModifiableRootModel
 import com.intellij.openapi.roots.ModuleRootManager
 import com.intellij.openapi.roots.ui.configuration.DefaultModulesProvider
-import com.intellij.openapi.ui.Splitter
 import com.intellij.python.pyproject.model.PyProjectModelSettings
-import com.intellij.ui.AncestorListenerAdapter
-import com.intellij.ui.roots.IconActionComponent
-import com.intellij.ui.roots.ToolbarPanel
-import com.intellij.util.ui.UIUtil
 import com.jetbrains.python.PyBundle
 import com.jetbrains.python.module.PyContentEntriesEditor
 import org.jetbrains.jps.model.java.JavaSourceRootType
 import java.awt.BorderLayout
-import java.awt.Component
 import javax.swing.JComponent
 import javax.swing.JPanel
-import javax.swing.JPopupMenu
-import javax.swing.JScrollPane
-import javax.swing.JTextField
-import javax.swing.JTree
-import javax.swing.event.AncestorEvent
 
 internal class PyContentEntriesModuleConfigurable(private val module: Module) : SearchableConfigurable.Parent.Abstract() {
 
   private val topPanel = JPanel(BorderLayout())
-    //.apply {
-    //  addAncestorListener(object : AncestorListenerAdapter() {
-    //    override fun ancestorAdded(event: AncestorEvent) {
-    //      updateEnabledState()
-    //    }
-    //  })
-    //}
-
   private var modifiableModel: ModifiableRootModel? = null
   private var editor: PyContentEntriesEditor? = null
   private val isPyProjectTomlManaged: Boolean
@@ -87,7 +68,6 @@ internal class PyContentEntriesModuleConfigurable(private val module: Module) : 
       ApplicationManager.getApplication().runWriteAction { modifiableModel?.commit() }
       resetEditor()
     }
-    //updateEnabledState()
   }
 
   override fun reset() {
@@ -104,38 +84,6 @@ internal class PyContentEntriesModuleConfigurable(private val module: Module) : 
     createEditor()
   }
 
-  private fun updateEnabledState() {
-    val visible = !isPyProjectTomlManaged
-
-    UIUtil.findComponentOfType(topPanel, Splitter::class.java)?.let { splitter ->
-      // Hide the "Mark as" label and action toolbar (siblings of the splitter in contentPanel)
-      splitter.parent?.let { contentPanel ->
-        contentPanel.components.filter { it != splitter }.forEach { it.isVisible = visible }
-      }
-
-      // In the right panel (ToolbarPanel): hide the "Add Content Root" toolbar and remove-root icons
-      val contentRootsPanel = splitter.secondComponent
-      (contentRootsPanel as? ToolbarPanel)?.let {
-        it.getComponent(0).isVisible = visible
-      }
-      UIUtil.findComponentsOfType(contentRootsPanel, IconActionComponent::class.java).forEach {
-        it.isVisible = visible
-      }
-    }
-
-    // Suppress tree context menu without removing PopupHandler listeners
-    UIUtil.findComponentOfType(topPanel, JTree::class.java)?.let { tree ->
-      tree.componentPopupMenu = if (visible) null else EMPTY_POPUP
-    }
-
-    // Hide "Exclude patterns" field, its label, and comment (all are siblings of the tree JScrollPane)
-    UIUtil.findComponentOfType(topPanel, JTextField::class.java)?.let { excludeField ->
-      excludeField.parent?.let { dialogPanel ->
-        dialogPanel.components.filter { it !is JScrollPane }.forEach { it.isVisible = visible }
-      }
-    }
-  }
-
   override fun disposeUIResources() {
     editor?.let {
       it.disposeUIResources()
@@ -149,10 +97,4 @@ internal class PyContentEntriesModuleConfigurable(private val module: Module) : 
   override fun buildConfigurables(): Array<Configurable> = emptyArray()
 
   override fun getId(): String = "python.project.structure"
-
-  companion object {
-    private val EMPTY_POPUP = object : JPopupMenu() {
-      override fun show(invoker: Component?, x: Int, y: Int) {}
-    }
-  }
 }
