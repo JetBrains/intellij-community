@@ -4024,15 +4024,6 @@ f:com.intellij.ide.ui.laf.darcula.ui.DarculaMenuBarBorder
 - getBorderInsets(java.awt.Component):java.awt.Insets
 - isBorderOpaque():Z
 - paintBorder(java.awt.Component,java.awt.Graphics,I,I,I,I):V
-c:com.intellij.ide.ui.laf.darcula.ui.DarculaMenuItemBorder
-- javax.swing.border.Border
-- javax.swing.plaf.UIResource
-- <init>():V
-- getBorderInsets(java.awt.Component):java.awt.Insets
-- isBorderOpaque():Z
-- s:menuBarItemInnerInsets():com.intellij.util.ui.JBInsets
-- s:menuBarItemOuterInsets():com.intellij.util.ui.JBInsets
-- paintBorder(java.awt.Component,java.awt.Graphics,I,I,I,I):V
 c:com.intellij.ide.ui.laf.darcula.ui.DarculaMenuItemUIBase
 - javax.swing.plaf.basic.BasicMenuItemUI
 - <init>():V
