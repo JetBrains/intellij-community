@@ -1,10 +1,10 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.polySymbols.testFramework.query
 
+import com.intellij.polySymbols.PolySymbol
 import com.intellij.polySymbols.PolySymbol.DocHidePatternProperty
 import com.intellij.polySymbols.PolySymbol.HideFromCompletionProperty
 import com.intellij.polySymbols.PolySymbol.InjectLanguageProperty
-import com.intellij.polySymbols.PolySymbol
 import com.intellij.polySymbols.PolySymbolApiStatus
 import com.intellij.polySymbols.PolySymbolNameSegment
 import com.intellij.polySymbols.PolySymbolProperty
@@ -18,7 +18,7 @@ import com.intellij.polySymbols.query.PolySymbolMatch
 import com.intellij.polySymbols.query.PolySymbolWithPattern
 import com.intellij.polySymbols.search.PsiSourcedPolySymbol
 import com.intellij.polySymbols.testFramework.DebugOutputPrinter
-import com.intellij.polySymbols.utils.PolySymbolTypeSupport.Companion.PROP_TYPE_SUPPORT
+import com.intellij.polySymbols.utils.PolySymbolTypeSupport.TypeSupportProperty
 import com.intellij.polySymbols.utils.completeMatch
 import com.intellij.polySymbols.utils.nameSegments
 import com.intellij.polySymbols.utils.qualifiedName
@@ -98,7 +98,7 @@ open class PolySymbolsDebugOutputPrinter : DebugOutputPrinter() {
                     "origin",
                     "${documentation?.library} ($framework)")
       printProperty(level, "source", (source as? PsiSourcedPolySymbol)?.source)
-      printProperty(level, "type", source[PROP_TYPE_SUPPORT]?.typeProperty?.let { source[it] })
+      printProperty(level, "type", source[TypeSupportProperty]?.typeProperty?.let { source[it] })
       printProperty(level, "attrValue", source.htmlAttributeValue)
       printProperty(level, "complete", source.completeMatch)
       if (documentation != null && source !is PolySymbolMatch) {

@@ -4,8 +4,8 @@ package com.intellij.polySymbols.webTypes
 import com.intellij.model.Pointer
 import com.intellij.model.Symbol
 import com.intellij.platform.backend.documentation.DocumentationTarget
-import com.intellij.polySymbols.PolySymbol.DocHideIconProperty
 import com.intellij.polySymbols.PolySymbol
+import com.intellij.polySymbols.PolySymbol.DocHideIconProperty
 import com.intellij.polySymbols.PolySymbolApiStatus
 import com.intellij.polySymbols.PolySymbolKind
 import com.intellij.polySymbols.PolySymbolModifier
@@ -28,7 +28,8 @@ import com.intellij.polySymbols.query.PolySymbolQueryExecutor
 import com.intellij.polySymbols.query.PolySymbolQueryStack
 import com.intellij.polySymbols.query.PolySymbolScope
 import com.intellij.polySymbols.query.PolySymbolWithPattern
-import com.intellij.polySymbols.utils.PolySymbolTypeSupport.Companion.PROP_TYPE_SUPPORT
+import com.intellij.polySymbols.utils.PolySymbolTypeSupport
+import com.intellij.polySymbols.utils.PolySymbolTypeSupport.TypeSupportProperty
 import com.intellij.polySymbols.utils.merge
 import com.intellij.polySymbols.webTypes.WebTypesSymbol.Companion.PROP_NO_DOC
 import com.intellij.polySymbols.webTypes.impl.WebTypesJsonContributionAdapter
@@ -83,10 +84,13 @@ open class WebTypesSymbolBase : WebTypesSymbol {
   val docHideIcon: Boolean
     get() = icon == base.jsonOrigin.defaultIcon
 
+  @PolySymbol.Property(TypeSupportProperty::class)
+  private val typeSupport: PolySymbolTypeSupport?
+    get() = base.jsonOrigin.typeSupport
+
   @Suppress("UNCHECKED_CAST")
   override fun <T : Any> get(property: PolySymbolProperty<T>): T? =
     when (property) {
-      PROP_TYPE_SUPPORT -> property.tryCast(base.jsonOrigin.typeSupport)
       base.jsonOrigin.typeSupport?.typeProperty -> {
         property.tryCast(
           (base.contribution.type)

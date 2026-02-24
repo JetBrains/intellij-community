@@ -480,6 +480,7 @@
 - getDescription():java.lang.String
 - getDocumentationTarget(com.intellij.psi.PsiElement):com.intellij.platform.backend.documentation.DocumentationTarget
 - getModificationCount():J
+- getTypeSupport():com.intellij.polySymbols.utils.PolySymbolTypeSupport
 *f:com.intellij.polySymbols.customElements.CustomElementsSymbol$Companion
 - f:getCEM_DECLARATIONS():com.intellij.polySymbols.PolySymbolKind
 - f:getCEM_MODULES():com.intellij.polySymbols.PolySymbolKind
@@ -1199,18 +1200,18 @@
 - a:addSymbol(com.intellij.polySymbols.PolySymbol):V
 - a:addSymbols(java.util.List):V
 *:com.intellij.polySymbols.utils.PolySymbolTypeSupport
-- *sf:Companion:com.intellij.polySymbols.utils.PolySymbolTypeSupport$Companion
-- sf:PROP_TYPE_SUPPORT:com.intellij.polySymbols.PolySymbolProperty
 - a:getTypeProperty():com.intellij.polySymbols.PolySymbolProperty
 - a:resolve(java.util.List):java.lang.Object
 - a:withEvaluationLocation(com.intellij.psi.PsiElement,kotlin.jvm.functions.Function0):java.lang.Object
-*f:com.intellij.polySymbols.utils.PolySymbolTypeSupport$Companion
 *:com.intellij.polySymbols.utils.PolySymbolTypeSupport$TypeReference
 - *sf:Companion:com.intellij.polySymbols.utils.PolySymbolTypeSupport$TypeReference$Companion
 - a:getModule():java.lang.String
 - a:getName():java.lang.String
 *f:com.intellij.polySymbols.utils.PolySymbolTypeSupport$TypeReference$Companion
 - f:create(java.lang.String,java.lang.String):com.intellij.polySymbols.utils.PolySymbolTypeSupport$TypeReference
+*f:com.intellij.polySymbols.utils.PolySymbolTypeSupport$TypeSupportProperty
+- com.intellij.polySymbols.PolySymbolProperty
+- sf:INSTANCE:com.intellij.polySymbols.utils.PolySymbolTypeSupport$TypeSupportProperty
 *f:com.intellij.polySymbols.utils.PolySymbolUtils
 - sf:applyIfNotNull(java.lang.Object,java.lang.Object,kotlin.jvm.functions.Function2):java.lang.Object
 - sf:asSingleSymbol(java.util.List,Z):com.intellij.polySymbols.PolySymbol

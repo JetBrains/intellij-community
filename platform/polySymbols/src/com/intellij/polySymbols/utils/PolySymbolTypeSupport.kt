@@ -26,8 +26,6 @@ interface PolySymbolTypeSupport {
     }
   }
 
-  companion object {
-    @JvmField
-    val PROP_TYPE_SUPPORT: PolySymbolProperty<PolySymbolTypeSupport> = PolySymbolProperty["type-support"]
-  }
+  object TypeSupportProperty : PolySymbolProperty<PolySymbolTypeSupport>("type-support", PolySymbolTypeSupport::class.java)
+
 }
