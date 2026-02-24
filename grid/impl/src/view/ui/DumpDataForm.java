@@ -538,10 +538,16 @@ public class DumpDataForm {
   public void updatePreview() {
     List<? extends GridRow> rows;
     List<? extends GridColumn> columns;
+    String previewLabelText = DataGridBundle.message("settings.database.DumpDialog.Preview");
     DataGrid grid = mySource instanceof DataGridSource ? ((DataGridSource)mySource).getGrid() : null;
     if (grid != null) {
       GridModel<GridRow, GridColumn> model = grid.getDataModel(DataAccessType.DATABASE_DATA);
-      rows = model.getRows(ModelIndexSet.forRows(grid, IntStream.range(0, Math.min(MAX_ROWS_FOR_PREVIEW, model.getRowCount())).toArray()));
+      int previewRowsCount = model.getRowCount();
+      if (previewRowsCount > MAX_ROWS_FOR_PREVIEW) {
+        previewRowsCount = MAX_ROWS_FOR_PREVIEW;
+        previewLabelText = DataGridBundle.message("settings.database.DumpDialog.Preview.Head", previewRowsCount);
+      }
+      rows = model.getRows(ModelIndexSet.forRows(grid, IntStream.range(0, previewRowsCount).toArray()));
       columns = model.getAllColumnsForExtraction();
     }
     else {
@@ -570,6 +576,7 @@ public class DumpDataForm {
                                    rows,
                                    grid != null ? grid.getVisibleColumns().asArray() : new int[]{});
     emptyTextPanel.setVisible(false);
+    myPreviewLabeledComponent.setText(previewLabelText);
     TextResultView.updateEditorText(myViewer, myProject,
                                     out.getString(),
                                     guessLanguage()
