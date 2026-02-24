@@ -12,6 +12,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.util.xmlb.annotations.XCollection
 import org.jetbrains.plugins.terminal.TerminalTabState
 import org.jetbrains.plugins.terminal.arrangement.TerminalArrangementManager
+import org.jetbrains.plugins.terminal.startup.TerminalProcessType
 
 @Service(Service.Level.PROJECT)
 @State(name = "TerminalTabsStorage", storages = [Storage(StoragePathMacros.PRODUCT_WORKSPACE_FILE)])
@@ -60,6 +61,7 @@ internal class TerminalTabsStorage(private val project: Project) : PersistentSta
         isUserDefinedName = tabToCopy.myIsUserDefinedTabTitle,
         shellCommand = tabToCopy.myShellCommand,
         workingDirectory = tabToCopy.myWorkingDirectory,
+        processType = TerminalProcessType.SHELL,
       )
       newTabs.add(tab)
     }

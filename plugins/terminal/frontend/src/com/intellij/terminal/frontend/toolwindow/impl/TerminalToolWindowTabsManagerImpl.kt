@@ -419,6 +419,7 @@ internal class TerminalToolWindowTabsManagerImpl(
         with(builder) {
           shellCommand(tab.shellCommand)
           workingDirectory(tab.workingDirectory)
+          processType(tab.processType ?: TerminalProcessType.SHELL)
           tabName(tab.name)
           userDefinedName(tab.isUserDefinedName)
           backendTabId(tab.id)
