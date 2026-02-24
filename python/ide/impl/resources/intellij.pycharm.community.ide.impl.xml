@@ -60,7 +60,8 @@
                          bundle="messages.PyBundle"
                          key="configurable.PythonContentEntriesConfigurable.display.name"
                          provider="com.intellij.pycharm.community.ide.impl.configuration.PythonContentEntriesConfigurableProvider"
-                         groupWeight="15"/>
+                         groupWeight="15"
+                         nonDefaultProject="true"/>
 
     <projectConfigurable groupId="project"
                          id="com.intellij.pycharm.community.ide.impl.configuration.PyDependenciesConfigurable"
