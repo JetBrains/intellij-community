@@ -313,8 +313,10 @@ internal class SaveAndSyncHandlerImpl(private val coroutineScope: CoroutineScope
       }
   }
 
+  private val savingDispatcher = Dispatchers.IO.limitedParallelism(1)
+
   private fun saveDocumentsInBackgroundWriteAction() {
-    coroutineScope.launch(CoroutineName("Saving documents on frame deactivation") + NonCancellable) {
+    coroutineScope.launch(CoroutineName("Saving documents on frame deactivation") + savingDispatcher + NonCancellable) {
       (FileDocumentManager.getInstance() as FileDocumentManagerImpl).saveAllDocuments(false)
     }
   }
