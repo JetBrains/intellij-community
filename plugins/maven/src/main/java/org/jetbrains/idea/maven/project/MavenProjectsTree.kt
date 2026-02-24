@@ -104,16 +104,20 @@ class MavenProjectsTree(val project: Project) {
 
   @Throws(IOException::class)
   fun save(file: Path) {
+    val copy = MavenProjectsTree(project)
+
     withReadLock {
-      DataOutputStream(BufferedOutputStream(Files.newOutputStream(NioFiles.createParentDirectories(file)))).use { out ->
-        out.writeUTF(STORAGE_VERSION)
-        writeCollection(out, myManagedFilesPaths)
-        writeCollection(out, myIgnoredFilesPaths)
-        writeCollection(out, myIgnoredFilesPatterns)
-        writeCollection(out, myExplicitProfiles.enabledProfiles)
-        writeCollection(out, myExplicitProfiles.disabledProfiles)
-        writeProjectsRecursively(out, myRootProjects)
-      }
+      copy.updater().copyFrom(this)
+    }
+
+    DataOutputStream(BufferedOutputStream(Files.newOutputStream(NioFiles.createParentDirectories(file)))).use { out ->
+      out.writeUTF(STORAGE_VERSION)
+      writeCollection(out, copy.myManagedFilesPaths)
+      writeCollection(out, copy.myIgnoredFilesPaths)
+      writeCollection(out, copy.myIgnoredFilesPatterns)
+      writeCollection(out, copy.myExplicitProfiles.enabledProfiles)
+      writeCollection(out, copy.myExplicitProfiles.disabledProfiles)
+      copy.writeProjectsRecursively(out, copy.myRootProjects)
     }
   }
 
@@ -1073,7 +1077,10 @@ class MavenProjectsTree(val project: Project) {
     fun copyFrom(projectTree: MavenProjectsTree): Updater {
 
       addFrom(projectTree) { it.myManagedFilesPaths }
-      addFrom(projectTree) { it.myRootProjects }
+      projectTree.myRootProjects.forEach {
+        myRootProjects.addProject(it)
+      }
+
 
       addFromMap(projectTree) { it.myMavenIdToProjectMapping }
       addFromMap(projectTree) { it.myVirtualFileToProjectMapping }
@@ -1272,8 +1279,10 @@ class MavenProjectsTree(val project: Project) {
 }
 
 private fun MutableList<MavenProject>.addProject(project: MavenProject) {
-  this.removeIf { it === project || (
-    it.path == project.path  && it.file.isValid)}
+  this.removeIf {
+    it === project || (
+      it.path == project.path && it.file.isValid)
+  }
   this.add(project)
 }
 
