@@ -1,0 +1,12 @@
+- name: lib/moduleSet-plugin-recentFiles.jar
+  modules:
+  - name: intellij.moduleSet.plugin.recentFiles
+- name: lib/modules/intellij.platform.recentFiles.backend.jar
+  contentModules:
+  - name: intellij.platform.recentFiles.backend
+- name: lib/modules/intellij.platform.recentFiles.frontend.jar
+  contentModules:
+  - name: intellij.platform.recentFiles.frontend
+- name: lib/modules/intellij.platform.recentFiles.jar
+  contentModules:
+  - name: intellij.platform.recentFiles

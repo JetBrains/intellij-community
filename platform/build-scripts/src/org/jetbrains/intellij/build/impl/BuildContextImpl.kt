@@ -90,7 +90,6 @@ suspend fun createBuildContext(
     projectHome = projectHome,
     productProperties = productProperties,
     proprietaryBuildTools = proprietaryBuildTools,
-    scope = scope,
   )
   context.cleanupJarCache()
   return context
@@ -118,7 +117,6 @@ fun createBuildContext(
   projectHome: Path,
   productProperties: ProductProperties,
   proprietaryBuildTools: ProprietaryBuildTools = ProprietaryBuildTools.DUMMY,
-  scope: CoroutineScope? = null,
 ): BuildContextImpl {
   val projectHomeAsString = projectHome.invariantSeparatorsPathString
   val jarCacheManager = compilationContext.options.jarCacheDir?.let {

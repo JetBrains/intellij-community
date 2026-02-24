@@ -123,6 +123,27 @@ fun ideCommon() = moduleSet("ide.common") {
 }
 ```
 
+### `plugin(name)` - Create Pluginized Module Set
+
+```kotlin
+fun plugin(
+  name: String,
+  pluginId: String? = null,
+  outputModule: String? = null,
+  block: ModuleSetBuilder.() -> Unit
+): ModuleSet
+```
+
+Creates a module set and marks it to be materialized as a standalone bundled plugin wrapper.
+
+```kotlin
+fun recentFiles() = plugin("recentFiles") {
+  module("intellij.platform.recentFiles")
+  module("intellij.platform.recentFiles.frontend")
+  module("intellij.platform.recentFiles.backend")
+}
+```
+
 ## Parameters Reference
 
 ### `alias` - Module Alias

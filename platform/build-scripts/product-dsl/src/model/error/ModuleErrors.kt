@@ -35,6 +35,38 @@ data class SelfContainedValidationError(
   }
 }
 
+data class ModuleSetPluginizationError(
+  override val context: String,
+  @JvmField val embeddedModules: Set<ContentModuleName> = emptySet(),
+  @JvmField val nestedPluginizedSets: Set<String> = emptySet(),
+  override val ruleName: String = "ModuleSetPluginizationValidation",
+) : ValidationError {
+  override val category: ErrorCategory get() = ErrorCategory.MODULE_SET_PLUGINIZATION
+
+  override fun format(s: AnsiStyle): String = buildString {
+    appendLine("${s.red}${s.bold}Module set '$context' cannot be materialized as a plugin${s.reset}")
+    if (embeddedModules.isNotEmpty()) {
+      appendLine()
+      appendLine("  ${s.red}*${s.reset} Contains embedded modules in transitive closure:")
+      for (module in embeddedModules.sortedBy { it.value }) {
+        appendLine("    - ${module.value}")
+      }
+    }
+    if (nestedPluginizedSets.isNotEmpty()) {
+      appendLine()
+      appendLine("  ${s.red}*${s.reset} Contains nested pluginized module sets:")
+      for (setName in nestedPluginizedSets.sorted()) {
+        appendLine("    - $setName")
+      }
+    }
+    appendLine()
+    appendLine("${s.yellow}Fix:${s.reset} keep pluginized module sets free of embedded modules and nested pluginized sets")
+    appendLine()
+    appendLine("${s.gray}[Rule: $ruleName]${s.reset}")
+    appendLine()
+  }
+}
+
 data class MissingModuleSetsError(
   override val context: String,
   @JvmField val missingModuleSets: Set<String>,

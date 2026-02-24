@@ -244,12 +244,6 @@
     <module name="intellij.platform.debugger.impl" loading="embedded"/>
     <!-- endregion -->
 
-    <!-- region nested: essential > recentFiles -->
-    <module name="intellij.platform.recentFiles"/>
-    <module name="intellij.platform.recentFiles.frontend"/>
-    <module name="intellij.platform.recentFiles.backend"/>
-    <!-- endregion -->
-
     <!-- region direct modules -->
     <module name="intellij.platform.scopes" loading="embedded"/>
     <module name="intellij.platform.scopes.backend"/>

@@ -1,0 +1,29 @@
+### auto-generated section `build intellij.moduleSet.plugin.main` start
+load("@rules_jvm//:jvm.bzl", "jvm_library")
+
+jvm_library(
+  name = "moduleSet-plugin-main",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  runtime_deps = [
+    "//module-set-plugins/generated/intellij.moduleSet.plugin.recentFiles:moduleSet-plugin-recentFiles",
+    "//platform/recentFiles/shared:recentFiles",
+    "//platform/recentFiles/backend",
+    "//platform/recentFiles/frontend",
+  ]
+)
+
+jvm_library(
+  name = "moduleSet-plugin-main_test_lib",
+  module_name = "intellij.moduleSet.plugin.main",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  runtime_deps = [
+    ":moduleSet-plugin-main",
+    "//module-set-plugins/generated/intellij.moduleSet.plugin.recentFiles:moduleSet-plugin-recentFiles_test_lib",
+    "//platform/recentFiles/shared:recentFiles_test_lib",
+    "//platform/recentFiles/backend:backend_test_lib",
+    "//platform/recentFiles/frontend:frontend_test_lib",
+  ]
+)
+### auto-generated section `build intellij.moduleSet.plugin.main` end

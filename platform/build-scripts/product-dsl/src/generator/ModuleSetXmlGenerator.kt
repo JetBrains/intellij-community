@@ -16,7 +16,7 @@ import java.nio.file.Path
 /**
  * Generator for module set XML files.
  *
- * Creates `intellij.moduleSets.*.xml` files from Kotlin DSL definitions
+ * Creates `intellij.moduleSets.*.xml` files from non-pluginized Kotlin DSL module set definitions
  * (e.g., `CommunityModuleSets.kt`, `UltimateModuleSets.kt`).
  *
  * **Input:** Module set sources from `GenerationModel.discovery.moduleSetSources`

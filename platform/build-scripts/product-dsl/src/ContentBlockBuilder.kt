@@ -58,6 +58,12 @@ internal fun buildContentBlocksAndChainMapping(
   val contentBlockByName = HashMap<String, ContentBlock>()
 
   fun traverse(moduleSet: ModuleSet, chain: List<String>, overrides: Map<ContentModuleName, ModuleLoadingRuleValue>) {
+    // Pluginized module sets are materialized as standalone bundled plugins and should not be inlined
+    // into product content blocks.
+    if (moduleSet.pluginSpec != null) {
+      return
+    }
+
     val setName = "$MODULE_SET_PREFIX${moduleSet.name}"
     
     // Check if already processed

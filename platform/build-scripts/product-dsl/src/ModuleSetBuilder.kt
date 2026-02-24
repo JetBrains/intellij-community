@@ -89,8 +89,9 @@ data class ModuleSet(
   @JvmField val modules: List<ContentModule>,
   @JvmField val nestedSets: List<ModuleSet> = emptyList(),
   val alias: PluginId? = null,
-  @kotlinx.serialization.Transient val outputModule: ContentModuleName? = null,
+  @Transient val outputModule: ContentModuleName? = null,
   @JvmField val selfContained: Boolean = false,
+  @JvmField val pluginSpec: ModuleSetPluginSpec? = null,
 )
 
 /**
@@ -100,6 +101,7 @@ data class ModuleSet(
 class ModuleSetBuilder(private val defaultIncludeDependencies: Boolean = false) {
   private val modules = ArrayList<ContentModule>()
   private val nestedSets = ArrayList<ModuleSet>()
+  private var pluginSpec: ModuleSetPluginSpec? = null
 
   /**
    * Add a single module.
@@ -155,7 +157,23 @@ class ModuleSetBuilder(private val defaultIncludeDependencies: Boolean = false) 
   }
 
   @PublishedApi
-  internal fun build(): Pair<List<ContentModule>, List<ModuleSet>> = Pair(java.util.List.copyOf(modules), java.util.List.copyOf(nestedSets))
+  internal fun configurePluginSpec(pluginId: String? = null) {
+    check(pluginSpec == null) {
+      "module set plugin specification can be configured only once"
+    }
+    pluginSpec = ModuleSetPluginSpec(
+      pluginIdOverride = pluginId?.let(::PluginId),
+    )
+  }
+
+  @PublishedApi
+  internal fun build(): Triple<List<ContentModule>, List<ModuleSet>, ModuleSetPluginSpec?> {
+    return Triple(
+      java.util.List.copyOf(modules),
+      java.util.List.copyOf(nestedSets),
+      pluginSpec,
+    )
+  }
 }
 
 /**
@@ -201,7 +219,7 @@ inline fun moduleSet(
   includeDependencies: Boolean = false,
   block: ModuleSetBuilder.() -> Unit,
 ): ModuleSet {
-  val (modules, nestedSets) = ModuleSetBuilder(defaultIncludeDependencies = includeDependencies).apply(block).build()
+  val (modules, nestedSets, pluginSpec) = ModuleSetBuilder(defaultIncludeDependencies = includeDependencies).apply(block).build()
   return ModuleSet(
     name = name,
     modules = modules,
@@ -209,7 +227,31 @@ inline fun moduleSet(
     alias = alias?.let { PluginId(it) },
     outputModule = outputModule?.let { ContentModuleName(it) },
     selfContained = selfContained,
+    pluginSpec = pluginSpec,
   )
+}
+
+/**
+ * Creates a module set that is materialized as a standalone bundled plugin wrapper.
+ *
+ * This is sugar for `moduleSet(name, ...) { configurePluginSpec(pluginId); ... }`.
+ */
+fun plugin(
+  name: String,
+  pluginId: String? = null,
+  outputModule: String? = null,
+  block: ModuleSetBuilder.() -> Unit,
+): ModuleSet {
+  return moduleSet(
+    name = name,
+    alias = null,
+    outputModule = outputModule,
+    selfContained = false,
+    includeDependencies = false,
+  ) {
+    this.configurePluginSpec(pluginId = pluginId)
+    block()
+  }
 }
 
 /**
@@ -228,12 +270,24 @@ private fun appendModuleXml(sb: StringBuilder, module: ContentModule) {
  * Recursively appends modules from a module set, including nested sets.
  * Handles nested sets at any depth with breadcrumb trail showing full hierarchy.
  */
-private fun appendModuleSetContent(sb: StringBuilder, moduleSet: ModuleSet, indent: String = "    ", breadcrumb: String = "") {
+private fun appendModuleSetContent(
+  sb: StringBuilder,
+  moduleSet: ModuleSet,
+  indent: String = "    ",
+  breadcrumb: String = "",
+  skipPluginizedNestedSets: Boolean = false,
+) {
   // Get direct modules (not from nested sets)
   val directModules = moduleSet.modules
+  val nestedSets = if (skipPluginizedNestedSets) {
+    moduleSet.nestedSets.filter { it.pluginSpec == null }
+  }
+  else {
+    moduleSet.nestedSets
+  }
 
   // Recursively append nested sets first
-  for (nestedSet in moduleSet.nestedSets) {
+  for (nestedSet in nestedSets) {
     // Build breadcrumb path
     val nestedBreadcrumb = if (breadcrumb.isEmpty()) {
       nestedSet.name
@@ -243,14 +297,20 @@ private fun appendModuleSetContent(sb: StringBuilder, moduleSet: ModuleSet, inde
     }
 
     withEditorFold(sb, indent, "nested: $nestedBreadcrumb") {
-      appendModuleSetContent(sb = sb, moduleSet = nestedSet, indent = indent, breadcrumb = nestedBreadcrumb) // RECURSIVE CALL with breadcrumb
+      appendModuleSetContent(
+        sb = sb,
+        moduleSet = nestedSet,
+        indent = indent,
+        breadcrumb = nestedBreadcrumb,
+        skipPluginizedNestedSets = skipPluginizedNestedSets,
+      )
     }
     sb.append("\n")
   }
 
   // Then append direct modules
   if (directModules.isNotEmpty()) {
-    if (moduleSet.nestedSets.isNotEmpty()) {
+    if (nestedSets.isNotEmpty()) {
       withEditorFold(sb, indent, "direct modules") {
         for (module in directModules) {
           appendModuleXml(sb, module)
@@ -293,11 +353,12 @@ internal fun buildModuleSetXml(moduleSet: ModuleSet, label: String): ModuleSetBu
     }
 
     // Generate content blocks with source-file attributes for tracking
-    val hasAnyModules = moduleSet.nestedSets.isNotEmpty() || moduleSet.modules.isNotEmpty()
+    val hasNestedSets = if (moduleSet.pluginSpec == null) moduleSet.nestedSets.any { it.pluginSpec == null } else moduleSet.nestedSets.isNotEmpty()
+    val hasAnyModules = hasNestedSets || moduleSet.modules.isNotEmpty()
     if (hasAnyModules) {
       append("  <content namespace=\"jetbrains\">")
       append("\n")
-      appendModuleSetContent(this, moduleSet)
+      appendModuleSetContent(this, moduleSet, skipPluginizedNestedSets = moduleSet.pluginSpec == null)
       append("  </content>")
       append("\n")
     }
@@ -399,9 +460,10 @@ internal suspend fun doGenerateAllModuleSetsInternal(
     Files.createDirectories(outputDir)
 
     val moduleSets = discoverModuleSets(obj)
+    val moduleSetsToGenerate = moduleSets.filter { it.pluginSpec == null }
 
     // Generate all module set XML files first (in parallel)
-    val fileResults = moduleSets.map { moduleSet ->
+    val fileResults = moduleSetsToGenerate.map { moduleSet ->
       async {
         val targetOutputDir = resolveOutputDir(moduleSet, outputDir, outputProvider)
         generateModuleSetXml(moduleSet = moduleSet, outputDir = targetOutputDir, label = label, strategy = strategy)
@@ -410,7 +472,7 @@ internal suspend fun doGenerateAllModuleSetsInternal(
 
     // Build map of output directory -> generated file names (for cleanup aggregation)
     val outputDirToGeneratedFiles = HashMap<Path, MutableSet<String>>()
-    for ((moduleSet, fileResult) in moduleSets.zip(fileResults)) {
+    for ((moduleSet, fileResult) in moduleSetsToGenerate.zip(fileResults)) {
       val targetOutputDir = resolveOutputDir(moduleSet, outputDir, outputProvider)
       outputDirToGeneratedFiles.computeIfAbsent(targetOutputDir) { HashSet() }.add(fileResult.fileName)
     }

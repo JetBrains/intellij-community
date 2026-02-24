@@ -48,8 +48,8 @@ internal fun appendDefaultProductPluginMetadata(sb: StringBuilder, spec: Product
  * Generates an XML file for a module set.
  * Used to maintain backward compatibility with XML-based module set loading.
  * 
- * Module set XML files ALWAYS contain inlined module definitions - all direct modules
- * and nested module sets are expanded into `<module>` elements. The `inlineModuleSets`
+ * For non-pluginized module sets, XML files contain inlined module definitions - all direct
+ * modules and nested module sets are expanded into `<module>` elements. The `inlineModuleSets`
  * parameter (used in product XML generation) only affects whether PRODUCT XMLs reference
  * these files via xi:include or inline them directly.
  *
@@ -293,7 +293,8 @@ fun buildProductContentXml(
     }
 
     // Generate module sets as xi:includes or inline content blocks
-    if (spec.moduleSets.isNotEmpty()) {
+    val hasRenderableModuleSets = spec.moduleSets.any { it.moduleSet.pluginSpec == null }
+    if (hasRenderableModuleSets) {
       if (inlineModuleSets) {
         // Generate single content block with all module sets inlined
         append("  <content namespace=\"$JETBRAINS_NAMESPACE\">\n")
@@ -315,7 +316,9 @@ fun buildProductContentXml(
       else {
         // Build set of module set names that are referenced at top-level WITH overrides
         // These cannot be brought in via `xi:include` from parent sets (would lose overrides)
-        val overriddenModuleSetNames = spec.moduleSets
+        val moduleSetsForProductContent = spec.moduleSets.filter { it.moduleSet.pluginSpec == null }
+
+        val overriddenModuleSetNames = moduleSetsForProductContent
           .filter { it.hasOverrides }
           .map { ModuleSetName(it.moduleSet.name) }
           .toSet()
@@ -323,7 +326,7 @@ fun buildProductContentXml(
         appendModuleSetsStrategyComment(spec, overriddenModuleSetNames)
 
         // Generate content for each top-level module set
-        for (moduleSetWithOverrides in spec.moduleSets) {
+        for (moduleSetWithOverrides in moduleSetsForProductContent) {
           appendModuleSetXml(
             moduleSetWithOverrides.moduleSet,
             moduleSetWithOverrides.loadingOverrides,

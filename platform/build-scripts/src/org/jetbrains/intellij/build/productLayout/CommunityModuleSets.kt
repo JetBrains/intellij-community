@@ -111,7 +111,7 @@ object CommunityModuleSets {
    * Recent files support (both backend and frontend).
    * Provides recently opened files UI and persistence.
    */
-  fun recentFiles(): ModuleSet = moduleSet("recentFiles") {
+  fun recentFiles(): ModuleSet = plugin("recentFiles") {
     module("intellij.platform.recentFiles")
     module("intellij.platform.recentFiles.frontend")
     module("intellij.platform.recentFiles.backend")
@@ -167,8 +167,6 @@ object CommunityModuleSets {
 
     module("intellij.platform.bookmarks.backend")
     module("intellij.platform.bookmarks.frontend")
-
-    moduleSet(recentFiles())
 
     module("intellij.platform.pluginManager.shared")
     module("intellij.platform.pluginManager.backend")

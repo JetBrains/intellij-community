@@ -40,6 +40,7 @@ import org.jetbrains.intellij.build.productLayout.validator.PluginContentStructu
 import org.jetbrains.intellij.build.productLayout.validator.PluginDependencyDeclarationValidator
 import org.jetbrains.intellij.build.productLayout.validator.PluginDescriptorIdConflictValidator
 import org.jetbrains.intellij.build.productLayout.validator.PluginPluginDependencyValidator
+import org.jetbrains.intellij.build.productLayout.validator.ModuleSetPluginizationValidator
 import org.jetbrains.intellij.build.productLayout.validator.ProductModuleSetValidator
 import org.jetbrains.intellij.build.productLayout.validator.SelfContainedModuleSetValidator
 import org.jetbrains.intellij.build.productLayout.validator.SuppressionConfigValidator
@@ -527,6 +528,7 @@ internal class GenerationPipeline(
           SuppressionConfigGenerator,
           SuppressionConfigValidator,
           TestLibraryScopeValidator,
+          ModuleSetPluginizationValidator,
           SelfContainedModuleSetValidator,
           ContentModuleBackingValidator,
           ProductModuleSetValidator,

@@ -684,7 +684,7 @@ private fun checkProductLayout(context: BuildContext) {
 
   val pluginLayouts = layout.pluginLayouts
   checkPluginDuplicates(pluginLayouts)
-  checkPluginModules(layout.bundledPluginModules, "productProperties.productLayout.bundledPluginModules", context)
+  checkPluginModules(context.getBundledPluginModules(), "effective bundled plugin modules", context)
   checkPluginModules(layout.pluginModulesToPublish, "productProperties.productLayout.pluginModulesToPublish", context)
   checkPluginModules(layout.compatiblePluginsToIgnore, "productProperties.productLayout.compatiblePluginsToIgnore", context)
   if (!layout.buildAllCompatiblePlugins && !layout.compatiblePluginsToIgnore.isEmpty()) {

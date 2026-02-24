@@ -17,6 +17,8 @@ enum class ErrorCategory {
   MISSING_MODULE_SETS,
   /** [SelfContainedValidationError] - hard failure, not suppressible */
   SELF_CONTAINED_VIOLATION,
+  /** [ModuleSetPluginizationError] - hard failure, not suppressible */
+  MODULE_SET_PLUGINIZATION,
 
   // Plugin validation
   /** [PluginDependencyError] - hard failure, not suppressible */
@@ -104,6 +106,7 @@ fun ValidationError.errorId(): String {
     is MissingModuleSetsError -> "missing-sets:$context"
     is DuplicateModulesError -> "duplicates:$context"
     is SelfContainedValidationError -> "self-contained:$context"
+    is ModuleSetPluginizationError -> "module-set-pluginization:$context"
     is MissingContentModulePluginDependencyError -> "missing-plugin-dep:$context"
     is DuplicatePluginContentModulesError -> "plugin-content-dup:$context"
     is PluginDescriptorIdConflictError -> "plugin-descriptor-id-conflict:$context"

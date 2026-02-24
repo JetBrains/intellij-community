@@ -604,6 +604,9 @@ internal object ModelBuildingStage {
 
       // Module sets
       for (moduleSetWithOverrides in spec.moduleSets) {
+        if (moduleSetWithOverrides.moduleSet.pluginSpec != null) {
+          continue
+        }
         builder.linkProductIncludesModuleSet(product.name, moduleSetWithOverrides.moduleSet.name)
       }
 

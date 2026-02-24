@@ -1,0 +1,24 @@
+### auto-generated section `build intellij.moduleSet.plugin.recentFiles` start
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
+
+resourcegroup(
+  name = "moduleSet-plugin-recentFiles_resources",
+  srcs = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_library(
+  name = "moduleSet-plugin-recentFiles",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  resources = [":moduleSet-plugin-recentFiles_resources"]
+)
+
+jvm_library(
+  name = "moduleSet-plugin-recentFiles_test_lib",
+  module_name = "intellij.moduleSet.plugin.recentFiles",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  runtime_deps = [":moduleSet-plugin-recentFiles"]
+)
+### auto-generated section `build intellij.moduleSet.plugin.recentFiles` end
