@@ -1,9 +1,12 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.debugger.streams.trace.breakpoint
 
+import com.intellij.debugger.engine.DebugProcessListener
+import com.intellij.debugger.engine.SuspendContext
+import com.intellij.debugger.engine.SuspendContextImpl
+import com.intellij.debugger.engine.evaluation.EvaluateException
 import com.intellij.debugger.engine.evaluation.EvaluationContextImpl
 import com.intellij.debugger.engine.withDebugContext
-import com.intellij.debugger.impl.ClassLoadingUtils
 import com.intellij.debugger.impl.DebuggerContextImpl
 import com.intellij.debugger.streams.core.StreamDebuggerBundle
 import com.intellij.debugger.streams.core.wrapper.IntermediateStreamCall
@@ -11,7 +14,8 @@ import com.intellij.debugger.streams.core.wrapper.StreamChain
 import com.intellij.debugger.streams.core.wrapper.TerminatorStreamCall
 import com.intellij.debugger.streams.trace.breakpoint.instrumentation.BreakpointBasedHandlerFactory
 import com.intellij.debugger.streams.trace.breakpoint.instrumentation.StreamInstrumentationManager
-import com.intellij.java.debugger.streams.rt.StreamDebuggerUtils
+import com.intellij.openapi.diagnostic.thisLogger
+import com.sun.jdi.InvocationException
 import com.sun.jdi.Value
 import com.sun.jdi.request.EventRequest
 import com.sun.jdi.request.MethodEntryRequest
@@ -20,7 +24,6 @@ import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.currentCoroutineContext
 import org.jetbrains.annotations.Nls
-import kotlin.jvm.javaClass
 
 sealed class EvaluationResult {
   data class Success(val rawTrace: Value) : EvaluationResult()
@@ -28,7 +31,6 @@ sealed class EvaluationResult {
 }
 
 internal class StreamTracingManager(
-  private val debuggerContext: DebuggerContextImpl,
   private val breakpointFactory: JdiBreakpointFactory,
   private val objectStorage: DisableCollectionObjectStorage,
   private val handlerFactory: BreakpointBasedHandlerFactory,
@@ -39,14 +41,14 @@ internal class StreamTracingManager(
 
   private lateinit var instrumentationManager: StreamInstrumentationManager
 
-  suspend fun evaluateChain(breakpointPositions: BreakpointResolveResult.Found, chain: StreamChain): EvaluationResult {
+  suspend fun evaluateChain(debuggerContext: DebuggerContextImpl, breakpointPositions: BreakpointResolveResult.Found, chain: StreamChain): EvaluationResult {
     val evaluationFinished = createEvaluationFinishedFuture()
     withDebugContext(debuggerContext.managerThread!!) {
       val evaluationContextImpl = debuggerContext.createEvaluationContext()
                                   ?: return@withDebugContext EvaluationResult.Error(StreamDebuggerBundle.message("program.is.not.suspended"))
 
-      instrumentationManager = StreamInstrumentationManager.create(handlerFactory, objectStorage, chain, evaluationContextImpl)
       withDebugContext(evaluationContextImpl.suspendContext) {
+        instrumentationManager = StreamInstrumentationManager.create(handlerFactory, objectStorage, chain, evaluationContextImpl)
         val firstRequestor = createRequestors(evaluationContextImpl, chain, breakpointPositions, evaluationFinished)
         firstRequestor.enable()
       }
@@ -55,15 +57,29 @@ internal class StreamTracingManager(
       evaluationContextImpl.debugProcess.suspendManager.resume(evaluationContextImpl.suspendContext)
     }
 
-    evaluationFinished.await()
+    //evaluationFinished.await()
 
     // Collect results from instrumentation
     val result = withDebugContext(debuggerContext.managerThread!!) {
-      val evaluationContextImpl = debuggerContext.createEvaluationContext()
-                                  ?: return@withDebugContext null
+      val ctx =
+        THIS_IS_JUST_TEMPORARY_REMOVE_ME_LATER_OR_I_WILL_BE_DISSAPOINTED_awaitForBreakpoint(debuggerContext) as SuspendContextImpl
 
-      instrumentationManager.restoreQualifierVariableIfReplaced(evaluationContextImpl)
-      instrumentationManager.collectResults(evaluationContextImpl)
+      val evaluationContextImpl = EvaluationContextImpl(ctx, ctx.frameProxy)
+
+      try {
+        withDebugContext(ctx) {
+          instrumentationManager.restoreQualifierVariableIfReplaced(evaluationContextImpl)
+          instrumentationManager.collectResults(evaluationContextImpl)
+        }
+      } catch (e: EvaluateException) {
+        val cause = e.cause as? InvocationException
+        if (cause != null) {
+          cause.exception()
+        } else {
+          thisLogger().error(e)
+          null
+        }
+      }
     }
 
     return if (result != null) {
@@ -71,6 +87,18 @@ internal class StreamTracingManager(
     } else {
       EvaluationResult.Error(StreamDebuggerBundle.message("program.is.not.suspended"))
     }
+  }
+
+  private suspend fun THIS_IS_JUST_TEMPORARY_REMOVE_ME_LATER_OR_I_WILL_BE_DISSAPOINTED_awaitForBreakpoint(debuggerContext: DebuggerContextImpl): SuspendContext {
+    val deferred = CompletableDeferred<SuspendContext>()
+    debuggerContext.debugProcess!!.addDebugProcessListener(object : DebugProcessListener {
+      override fun paused(suspendContext: SuspendContext) {
+        if ((suspendContext as? SuspendContextImpl)?.isResumed == false) {
+          deferred.complete(suspendContext)
+        }
+      }
+    })
+    return deferred.await()
   }
 
   private suspend fun createEvaluationFinishedFuture(): CompletableDeferred<Unit> {
@@ -93,14 +121,14 @@ internal class StreamTracingManager(
     }
     else {
       // if it is a method call, then we set additional breakpoint as for an intermediate operation
-      sourceOperationBreakpoint = createSourceOperationRequestor(evaluationContext, positions.qualifierExpressionMethod/*, time*/)
+      sourceOperationBreakpoint = createSourceOperationRequestor(evaluationContext, positions.qualifierExpressionMethod)
       sourceOperationBreakpoint
     }
 
     intermediateOperationsBreakpoints = chain
       .intermediateCalls.zip(positions.intermediateStepsMethods)
       .mapIndexed { callOrder, (call, methodSignature) ->
-        createIntermediateOperationRequestors(evaluationContext, /*time, */callOrder, call, methodSignature)
+        createIntermediateOperationRequestors(evaluationContext, callOrder, call, methodSignature)
       }
 
     terminalOperationBreakpoint = createTerminalOperationRequestors(
@@ -119,9 +147,9 @@ internal class StreamTracingManager(
     evaluationContext: EvaluationContextImpl,
     methodSignature: JvmMethodSignature,
   ): MethodExitRequest {
-    return breakpointFactory.createMethodExitBreakpoint(evaluationContext, methodSignature) { _, _, value ->
+    return breakpointFactory.createMethodExitBreakpoint(evaluationContext, methodSignature) { evalContext, _, value ->
       enableNextBreakpoint(-1)
-      instrumentationManager.onSourceOperationExit(evaluationContext, value)
+      instrumentationManager.onSourceOperationExit(evalContext, value)
     }
   }
 
@@ -132,13 +160,13 @@ internal class StreamTracingManager(
     methodSignature: JvmMethodSignature,
   ): StreamCallRuntimeInfo {
     // create exit request first to be able to activate it in entry request
-    val exitRequest = breakpointFactory.createMethodExitBreakpoint(evaluationContext, methodSignature) { _, _, value ->
+    val exitRequest = breakpointFactory.createMethodExitBreakpoint(evaluationContext, methodSignature) { evalContext, _, value ->
       enableNextBreakpoint(callOrder)
-      instrumentationManager.onIntermediateOperationExit(evaluationContext, callOrder, value)
+      instrumentationManager.onIntermediateOperationExit(evalContext, callOrder, value)
     }
-    val entryRequest = breakpointFactory.createMethodEntryBreakpoint(evaluationContext, methodSignature) { _, method, args ->
+    val entryRequest = breakpointFactory.createMethodEntryBreakpoint(evaluationContext, methodSignature) { evalContext, method, args ->
       exitRequest.enable()
-      instrumentationManager.onIntermediateOperationEntry(evaluationContext, callOrder, method, args)
+      instrumentationManager.onIntermediateOperationEntry(evalContext, callOrder, method, args)
     }
     return StreamCallRuntimeInfo(entryRequest, exitRequest)
   }
@@ -149,15 +177,15 @@ internal class StreamTracingManager(
     methodSignature: JvmMethodSignature,
     evaluationFinished: CompletableDeferred<Unit>,
   ): StreamCallRuntimeInfo {
-    val exitRequest = breakpointFactory.createMethodExitBreakpoint(evaluationContext, methodSignature) { _, _, value ->
-      instrumentationManager.onTerminalOperationExit(evaluationContext, value)
+    val exitRequest = breakpointFactory.createMethodExitBreakpoint(evaluationContext, methodSignature) { evalContext, _, value ->
+      instrumentationManager.onTerminalOperationExit(evalContext, value)
       evaluationFinished.complete(Unit)
       // TODO: step out or run to position to exit from the stream
       value
     }
-    val entryRequest = breakpointFactory.createMethodEntryBreakpoint(evaluationContext, methodSignature) { _, method, args ->
+    val entryRequest = breakpointFactory.createMethodEntryBreakpoint(evaluationContext, methodSignature) { evalContext, method, args ->
       exitRequest.enable()
-      instrumentationManager.onTerminalOperationEntry(evaluationContext, method, args)
+      instrumentationManager.onTerminalOperationEntry(evalContext, method, args)
     }
     return StreamCallRuntimeInfo(entryRequest, exitRequest)
   }

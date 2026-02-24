@@ -32,8 +32,6 @@ internal class BreakpointBasedStreamTracer(
   resultInterpreter: TraceResultInterpreter,
 ) : AbstractStreamTracer(xDebugProcess.session, xValueInterpreter, resultInterpreter) {
   override suspend fun trace(chain: StreamChain): StreamTracer.Result {
-    val debuggerContext = xDebugProcess.debuggerSession.contextManager.context
-
     val breakpointPositionResolver = JavaBreakpointPositionResolver()
     val positions = breakpointPositionResolver
       .findBreakpointPositions(chain) as? BreakpointResolveResult.Found
@@ -41,37 +39,47 @@ internal class BreakpointBasedStreamTracer(
 
     // Create ObjectStorage for protecting traced objects from GC
     // TODO: perhaps the objects need to be held until the window is closed
-    DisableCollectionObjectStorage().use { objectStorage ->
-      val breakpointFactory = JdiBreakpointFactory()
-      val manager = StreamTracingManager(
-        debuggerContext,
-        breakpointFactory,
-        objectStorage,
-        librarySupport.createRuntimeHandlerFactory(objectStorage)
-      )
+    val objectStorage = DisableCollectionObjectStorage()
+    val breakpointFactory = JdiBreakpointFactory()
+    val manager = StreamTracingManager(
+      breakpointFactory,
+      objectStorage,
+      librarySupport.createRuntimeHandlerFactory(objectStorage)
+    )
 
-      val result = manager.evaluateChain(positions, chain)
-      return when (result) {
+    return try {
+      val result = manager.evaluateChain(
+        xDebugProcess.debuggerSession.contextManager.context,
+        positions,
+        chain
+      )
+      when (result) {
         is EvaluationResult.Error -> StreamTracer.Result.EvaluationFailed("", result.errorMessage)
         is EvaluationResult.Success -> {
           val xValue = createXValue(
-            debuggerContext,
             result.rawTrace,
           ) ?: return StreamTracer.Result.EvaluationFailed("", StreamDebuggerBundle.message("program.is.not.suspended"))
 
           interpretStreamResult(xValue, chain, streamTraceExpression = "")
         }
       }
+    } finally {
+      withDebugContext(xDebugProcess.debuggerSession.contextManager.context.managerThread!!) {
+        objectStorage.releaseAll()
+      }
     }
   }
 
   private suspend fun createXValue(
-    debuggerContext: DebuggerContextImpl,
     jvmValue: Value,
-  ): XValue? = withDebugContext(debuggerContext.managerThread!!) {
-    val evaluationContext = debuggerContext.createEvaluationContext() ?: return@withDebugContext null
-    val nodeManager = xDebugProcess.nodeManager
-    val valueDescriptor = PrimitiveValueDescriptor(xDebugProcess.session.project, jvmValue)
-    InstanceJavaValue(valueDescriptor, evaluationContext, nodeManager)
+  ): XValue? {
+    val debuggerContext = xDebugProcess.debuggerSession.contextManager.context
+    return withDebugContext(debuggerContext.managerThread!!) {
+      val evaluationContext = debuggerContext.createEvaluationContext() ?: return@withDebugContext null
+      if (evaluationContext.suspendContext.isResumed) return@withDebugContext null
+      val nodeManager = xDebugProcess.nodeManager
+      val valueDescriptor = PrimitiveValueDescriptor(xDebugProcess.session.project, jvmValue)
+      InstanceJavaValue(valueDescriptor, evaluationContext, nodeManager)
+    }
   }
 }

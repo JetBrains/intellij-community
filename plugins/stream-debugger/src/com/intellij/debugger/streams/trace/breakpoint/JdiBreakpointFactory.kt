@@ -27,9 +27,9 @@ private val LOG = logger<JdiBreakpointFactory>()
  * `null` in debugee VM == `null` in JDI
  * So you should return same value as passed if you don't want to modify
  */
-typealias ReturnValueTransformer = (SuspendContext, Method, Value?) -> Value?
-typealias ArgumentsTransformer = (SuspendContext, Method, List<Value?>) -> List<Value?>
-typealias ExceptionHandler = (SuspendContext, Location?, ObjectReference) -> Boolean
+typealias ReturnValueTransformer = (EvaluationContextImpl, Method, Value?) -> Value?
+typealias ArgumentsTransformer = (EvaluationContextImpl, Method, List<Value?>) -> List<Value?>
+typealias ExceptionHandler = (EvaluationContextImpl, Location?, ObjectReference) -> Boolean
 
 /**
  * Note:
@@ -46,9 +46,10 @@ internal class JdiBreakpointFactory {
       event.request().disable()
       suspendContext.debugProcess.requestsManager.deleteRequest(requestor)
 
+      val evaluationContext = EvaluationContextImpl(suspendContext, suspendContext.getFrameProxy())
       val argumentValues = getMethodArguments(suspendContext, event.method())
       val newArgumentsList = try {
-        onMethodEntry(suspendContext, event.method(), argumentValues)
+        onMethodEntry(evaluationContext, event.method(), argumentValues)
       }
       catch (e: Throwable) {
         LOG.warn("Error occurred during ${signature} method arguments modification", e)
@@ -93,8 +94,9 @@ internal class JdiBreakpointFactory {
         return@MethodExitRequestor
       }
 
+      val evaluationContext = EvaluationContextImpl(suspendContext, suspendContext.getFrameProxy())
       val replacedReturnValue = try {
-        onMethodExit(suspendContext, event.method(), originalReturnValue)
+        onMethodExit(evaluationContext, event.method(), originalReturnValue)
       }
       catch (e: Throwable) {
         LOG.warn("Error occurred during ${signature} method return value modification", e)
@@ -132,7 +134,8 @@ internal class JdiBreakpointFactory {
                                 exceptionType: ReferenceType? = null,
                                 callback: ExceptionHandler): ExceptionRequest {
     val requestor = ExceptionBreakpointRequestor(evaluationContext.project) { requestor, suspendContext, event ->
-      val breakpointHit = callback(suspendContext, event.catchLocation(), event.exception())
+      val evaluationContext = EvaluationContextImpl(suspendContext, suspendContext.getFrameProxy())
+      val breakpointHit = callback(evaluationContext, event.catchLocation(), event.exception())
       if (breakpointHit) {
         event.request().disable()
         suspendContext.debugProcess.requestsManager.deleteRequest(requestor)

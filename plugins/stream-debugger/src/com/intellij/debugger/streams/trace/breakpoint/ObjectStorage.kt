@@ -4,10 +4,12 @@ package com.intellij.debugger.streams.trace.breakpoint
 import com.intellij.debugger.engine.DebuggerManagerThreadImpl
 import com.intellij.debugger.engine.evaluation.EvaluationContextImpl
 import com.intellij.debugger.impl.ClassLoadingUtils
+import com.intellij.debugger.impl.DebuggerUtilsEx
 import com.intellij.debugger.impl.DebuggerUtilsImpl
 import com.intellij.debugger.streams.trace.breakpoint.instrumentation.ValueContext
 import com.intellij.psi.CommonClassNames
 import com.sun.jdi.ArrayReference
+import com.sun.jdi.ArrayType
 import com.sun.jdi.BooleanValue
 import com.sun.jdi.ClassType
 import com.sun.jdi.DoubleValue
@@ -23,7 +25,7 @@ import com.sun.jdi.Value
  * Interface for preventing garbage collection of objects in the target VM.
  * Objects stored via this interface are protected from GC until explicitly released.
  */
-interface ObjectStorage: AutoCloseable {
+interface ObjectStorage {
   fun store(obj: ObjectReference)
 
   fun storeAll(objects: Collection<ObjectReference>): Unit = objects.forEach { store(it) }
@@ -69,8 +71,6 @@ internal class DisableCollectionObjectStorage : ObjectStorage {
     registeredObjects.forEach { DebuggerUtilsImpl.enableCollection(it) }
     registeredObjects.clear()
   }
-
-  override fun close(): Unit = releaseAll()
 }
 
 private class ValueContextImpl(
@@ -81,13 +81,12 @@ private class ValueContextImpl(
   private val vm = evaluationContext.virtualMachineProxy.virtualMachine
 
   override fun Method.invoke(obj: ObjectReference, args: List<Value?>): Value? =
-    evaluationContext.debugProcess.invokeMethod(evaluationContext, obj, this, args)
+    evaluationContext.debugProcess.invokeInstanceMethod(evaluationContext, obj, this, args, 0, true)
 
   override fun Method.invoke(classType: ClassType, args: List<Value?>): Value? =
-    evaluationContext.debugProcess.invokeMethod(evaluationContext, classType, this, args)
+    evaluationContext.debugProcess.invokeMethod(evaluationContext, classType, this, args, 0, true)
 
-  override fun clazz(className: String): ClassType =
-    evaluationContext.debugProcess.findClass(evaluationContext, className, evaluationContext.classLoader) as ClassType
+  override fun clazz(className: String): ClassType = loadType(className) as ClassType
 
   override fun clazz(cls: Class<*>): ClassType = ClassLoadingUtils.getHelperClass(cls, evaluationContext)!!
 
@@ -97,10 +96,6 @@ private class ValueContextImpl(
 
   override fun instance(cls: Class<*>, constructorSignature: String, args: List<Value?>): ObjectReference {
     val classType = clazz(cls)
-    return doInstantiateClass(classType, constructorSignature, args)
-  }
-
-  private fun doInstantiateClass(classType: ClassType, constructorSignature: String, args: List<Value?>): ObjectReference {
     val constructor = classType.concreteMethodByName("<init>", constructorSignature)
     val instance = evaluationContext.debugProcess.newInstance(
       evaluationContext,
@@ -117,9 +112,10 @@ private class ValueContextImpl(
 
   override fun array(componentType: String, size: Int): ArrayReference {
     val arrayClassName = "$componentType[]"
-    val arraySize = vm.mirrorOf(size)
-    val arrayClassType = clazz(arrayClassName)
-    return doInstantiateClass(arrayClassType, "(I)V", listOf(arraySize)) as ArrayReference
+    val arrayClassType = loadType(arrayClassName) as ArrayType
+    val arrayInstance = DebuggerUtilsEx.mirrorOfArray(arrayClassType, size, evaluationContext)
+    objectStorage.store(arrayInstance)
+    return arrayInstance
   }
 
   override fun array(vararg values: Value?): ArrayReference {
@@ -142,4 +138,7 @@ private class ValueContextImpl(
   override val Long.mirror: LongValue get() = vm.mirrorOf(this)
   override val Boolean.mirror: BooleanValue get() = vm.mirrorOf(this)
   override val Double.mirror: DoubleValue get() = vm.mirrorOf(this)
+
+  private fun loadType(typeName: String): ReferenceType =
+    evaluationContext.debugProcess.findClass(evaluationContext, typeName, evaluationContext.classLoader)
 }

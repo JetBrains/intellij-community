@@ -6,6 +6,7 @@ import com.intellij.debugger.engine.events.SuspendContextCommandImpl
 import com.intellij.debugger.settings.DebuggerSettings
 import com.intellij.debugger.ui.breakpoints.FilteredRequestor
 import com.intellij.debugger.ui.breakpoints.FilteredRequestorImpl
+import com.intellij.debugger.ui.breakpoints.SyntheticBreakpoint
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
 import com.sun.jdi.Method
@@ -27,7 +28,7 @@ internal abstract class MethodBreakpointRequestor(
   project: Project,
   private val method: Method,
   private val requestHit: Boolean,
-) : FilteredRequestorImpl(project) {
+) : FilteredRequestorImpl(project), SyntheticBreakpoint {
   override fun processLocatableEvent(action: SuspendContextCommandImpl, event: LocatableEvent?): Boolean {
     if (event == null) return false
     val context = action.suspendContext ?: return false
