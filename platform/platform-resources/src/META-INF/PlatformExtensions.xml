@@ -2026,6 +2026,8 @@
     <applicationService serviceInterface="com.intellij.openapi.vfs.FileIdAdapter" open="true"
                         serviceImplementation="com.intellij.openapi.vfs.impl.FileIdAdapterImpl"
                         preload="notHeadless"/>
+    <applicationService serviceInterface="com.intellij.platform.lang.FileNameMatcherByIdService"
+                        serviceImplementation="com.intellij.platform.lang.FileNameMatcherByIdServiceImpl"/>
     <applicationService serviceImplementation="com.intellij.openapi.vfs.impl.FilePermissionManagerImpl"
                         serviceInterface="com.intellij.openapi.vfs.impl.FilePermissionManager"
                         client="all"/>
