@@ -20,14 +20,20 @@ import com.intellij.polySymbols.utils.toCodeCompletionItems
 import com.intellij.polySymbols.utils.withMatchedName
 import com.intellij.util.SmartList
 import com.intellij.util.text.CharSequenceSubSequence
+import java.util.Collections
+import java.util.NavigableMap
 import java.util.TreeMap
 
 internal abstract class SearchMap<T> internal constructor(
   private val namesProvider: PolySymbolNamesProvider,
+  useSyncMap: Boolean = false,
 ) {
 
-  private val patterns: TreeMap<SearchMapEntry, MutableList<T>> = TreeMap()
-  private val statics: TreeMap<SearchMapEntry, MutableList<T>> = TreeMap()
+  private val patterns: NavigableMap<SearchMapEntry, MutableList<T>> =
+    if (useSyncMap) Collections.synchronizedNavigableMap(TreeMap()) else TreeMap()
+
+  private val statics: NavigableMap<SearchMapEntry, MutableList<T>> =
+    if (useSyncMap) Collections.synchronizedNavigableMap(TreeMap()) else TreeMap()
 
   internal abstract fun Sequence<T>.mapAndFilter(params: PolySymbolQueryParams): Sequence<PolySymbol>
 
