@@ -30,6 +30,7 @@ interface PluginUpdateHandler {
 data class PluginUpdatesModel(
   val sessionId: String,
   val pluginUpdates: List<PluginDto>,
+  val disabledPluginUpdates: List<PluginDto> = emptyList(),
   val updatesFromCustomRepositories: List<PluginDto>,
   val incompatiblePluginNames: List<String>,
   val internalErrors: Map<String?, String>,
