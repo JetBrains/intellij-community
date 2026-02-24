@@ -2101,19 +2101,17 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
           // removed before highlighting is finished
           MyVerySlowAnnotator.wait.set(false);
           success.set(true);
+          return;
         }
         if (n.isTimedOut()) {
+          String dump = MyVerySlowAnnotator.wait + ThreadDumper.dumpThreadsToString();
           MyVerySlowAnnotator.wait.set(false);
-          throw new RuntimeException(new TimeoutException(ThreadDumper.dumpThreadsToString()));
+          throw new RuntimeException(new TimeoutException(dump));
         }
       };
       TextEditor textEditor = TextEditorProvider.getInstance().getTextEditor(getEditor());
       try {
         myTestDaemonCodeAnalyzer.runPasses(myFile, myEditor.getDocument(), textEditor, new int[0], false, true,checkHighlighted);
-      }
-      catch (Exception e) {
-        MyVerySlowAnnotator.wait.set(false);
-        throw new RuntimeException(e);
       }
       finally {
         MyVerySlowAnnotator.wait.set(false);
