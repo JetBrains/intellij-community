@@ -30,6 +30,7 @@ jvm_library(
     "//platform/platform-util-io:ide-util-io",
     "//platform/execution-impl",
     "//plugins/terminal/frontend",
+    "//plugins/terminal",
   ]
 )
 
@@ -75,6 +76,8 @@ jvm_library(
     "//libraries/junit5:junit5_test_lib",
     "//libraries/assertj-core",
     "//libraries/assertj-core:assertj-core_test_lib",
+    "//plugins/terminal",
+    "//plugins/terminal:terminal_test_lib",
   ],
   runtime_deps = [
     "//platform/platform-impl:ide-impl_test_lib",

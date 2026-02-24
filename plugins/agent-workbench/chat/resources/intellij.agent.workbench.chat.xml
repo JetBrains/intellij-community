@@ -3,6 +3,7 @@
   <dependencies>
     <module name="intellij.agent.workbench.common"/>
     <module name="intellij.agent.workbench.sessions.core"/>
+    <plugin id="org.jetbrains.plugins.terminal"/>
     <module name="intellij.terminal.frontend"/>
   </dependencies>
   <!-- endregion -->

@@ -13,6 +13,7 @@ import com.intellij.openapi.util.UserDataHolderBase
 import com.intellij.terminal.frontend.toolwindow.TerminalToolWindowTab
 import com.intellij.terminal.frontend.toolwindow.TerminalToolWindowTabsManager
 import kotlinx.coroutines.cancel
+import org.jetbrains.plugins.terminal.startup.TerminalProcessType
 import java.awt.BorderLayout
 import java.beans.PropertyChangeListener
 import javax.swing.JComponent
@@ -77,6 +78,7 @@ internal class AgentChatFileEditor(
       val createdTab = terminalManager.createTabBuilder()
         .shouldAddToToolWindow(false)
         .workingDirectory(file.projectPath)
+        .processType(TerminalProcessType.NON_SHELL)
         .tabName(file.threadTitle)
         .shellCommand(file.shellCommand)
         .createTab()
