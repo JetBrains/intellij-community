@@ -6,6 +6,7 @@ import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.registry.Registry
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
@@ -78,11 +79,14 @@ internal class BtaFileWatcher(private val project: Project) {
         private val LOG = logger<BtaFileWatcher>()
         private val POLLING_INTERVAL = 10.seconds
         private const val CRI_PROPERTY = "kotlin.compiler.generateCompilerRefIndex"
+        private const val ENABLE_BTA_CRI_KEY = "kotlin.cri.bta.support.enabled"
 
         /**
-         * Returns `true` when the project uses a BTA-based build system (Gradle or Maven) with CRI generation enabled.
+         * Returns `true` when [ENABLE_BTA_CRI_KEY] is enabled and the project uses a BTA-based build system (Gradle or Maven)
+         * with CRI generation enabled.
          */
-        internal fun isApplicable(project: Project): Boolean = isGradleCriEnabled(project) || isMavenCriEnabled(project)
+        internal fun isApplicable(project: Project): Boolean =
+            Registry.`is`(ENABLE_BTA_CRI_KEY) && (isGradleCriEnabled(project) || isMavenCriEnabled(project))
 
         private fun isGradleCriEnabled(project: Project): Boolean = runReadAction {
             GradleSettings.getInstance(project).linkedProjectsSettings.isNotEmpty()
