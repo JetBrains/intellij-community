@@ -45,6 +45,16 @@ public class HighLevelMultiFileSmartCompletionTestGenerated extends AbstractHigh
         runTest("../../completion/testData/smartMultiFile/CallablesInExcludedPackage/");
     }
 
+    @TestMetadata("FlexibleType")
+    public void testFlexibleType() throws Exception {
+        runTest("../../completion/testData/smartMultiFile/FlexibleType/");
+    }
+
+    @TestMetadata("FlexibleTypeNotNull")
+    public void testFlexibleTypeNotNull() throws Exception {
+        runTest("../../completion/testData/smartMultiFile/FlexibleTypeNotNull/");
+    }
+
     @TestMetadata("FunctionFromAnotherPackage")
     public void testFunctionFromAnotherPackage() throws Exception {
         runTest("../../completion/testData/smartMultiFile/FunctionFromAnotherPackage/");

@@ -16,6 +16,7 @@ import org.jetbrains.kotlin.analysis.api.components.defaultType
 import org.jetbrains.kotlin.analysis.api.components.isAnyType
 import org.jetbrains.kotlin.analysis.api.components.memberScope
 import org.jetbrains.kotlin.analysis.api.components.namedClassSymbol
+import org.jetbrains.kotlin.analysis.api.components.upperBoundIfFlexible
 import org.jetbrains.kotlin.analysis.api.symbols.KaClassKind
 import org.jetbrains.kotlin.analysis.api.symbols.KaClassSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaNamedClassSymbol
@@ -101,7 +102,7 @@ internal class K2TypeInstantiationContributor : K2CompletionContributor<KotlinNa
      */
     context(_: KaSession, context: K2CompletionSectionContext<KotlinNameReferencePositionContext>)
     private fun completeExactExpectedTypeMatch() {
-        val expectedType = context.weighingContext.expectedType ?: return
+        val expectedType = context.weighingContext.expectedType?.upperBoundIfFlexible() ?: return
         val expectedSymbol = expectedType.symbol
         val symbolPsi = expectedSymbol?.psi ?: return
 
@@ -122,7 +123,7 @@ internal class K2TypeInstantiationContributor : K2CompletionContributor<KotlinNa
     @OptIn(KaExperimentalApi::class)
     context(_: KaSession, context: K2CompletionSectionContext<KotlinNameReferencePositionContext>)
     private fun completeSubtypes() {
-        val expectedType = context.weighingContext.expectedType ?: return
+        val expectedType = context.weighingContext.expectedType?.upperBoundIfFlexible() ?: return
         if (expectedType.isAnyType) {
             // There would be too many results as every class would match
             return
