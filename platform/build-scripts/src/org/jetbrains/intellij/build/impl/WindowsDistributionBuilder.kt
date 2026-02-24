@@ -346,10 +346,7 @@ internal class WindowsDistributionBuilder(
       val launcherPropertiesPath = context.paths.tempDir.resolve("launcher-${arch.dirName}.properties")
       val icoFile = computeIcoPath(context)
 
-/* Android Studio: our build number has 5 components, but this code expects only 3.
       val productVersion = context.buildNumber.replace(".SNAPSHOT", ".0") + ".0".repeat(3 - context.buildNumber.count { it == '.' })
-*/
-      val productVersion = context.buildNumber.split('.').take(3).joinToString(".") + ".0"
       val launcherProperties = listOf(
         "CompanyName" to appInfo.companyName,
         "LegalCopyright" to "Copyright 2000-${LocalDate.now().year} ${appInfo.companyName}",
