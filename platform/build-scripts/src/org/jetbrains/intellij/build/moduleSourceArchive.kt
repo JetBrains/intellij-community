@@ -139,7 +139,7 @@ suspend fun zipSourcesOfModules(modules: List<String>, targetFile: Path, include
 
 private fun isRelevantLibrarySourcesModule(moduleName: String, context: BuildContext): Boolean {
   return (moduleName.startsWith("intellij.platform.") && context.findModule("$moduleName.impl") != null
-          || moduleName.startsWith("intellij.libraries.compose.") || moduleName.startsWith("kotlin.")) // Android Studio: include Kotlin sources
+          || moduleName.startsWith("intellij.libraries.compose."))
 }
 
 @OptIn(ExperimentalPathApi::class)
