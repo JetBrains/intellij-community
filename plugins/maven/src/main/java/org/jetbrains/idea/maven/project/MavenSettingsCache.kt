@@ -32,13 +32,14 @@ class MavenSettingsCache(val project: Project) {
 
     val userSettings = MavenEelUtil.getUserSettingsAsync(project, settings.userSettingsFile, settings.mavenConfig)
     val globalSettings = MavenEelUtil.getGlobalSettingsAsync(project, settings.mavenHomeType.staticOrBundled(), settings.mavenConfig)
-    val localRepo = MavenEelUtil.getLocalRepoAsync(project, settings.localRepository, settings.mavenHomeType.staticOrBundled(), settings.userSettingsFile,
-                                                   settings.mavenConfig)
+    val localRepo =
+      MavenEelUtil.getLocalRepoAsync(project, settings.localRepository, settings.mavenHomeType.staticOrBundled(), userSettings.toString(),
+                                     settings.mavenConfig)
     holder = SettingsHolder(userSettings, globalSettings, localRepo)
   }
 
   private fun holder(): SettingsHolder {
-    return holder ?: runBlockingMaybeCancellable { 
+    return holder ?: runBlockingMaybeCancellable {
       reloadAsync()
       holder!!
     }

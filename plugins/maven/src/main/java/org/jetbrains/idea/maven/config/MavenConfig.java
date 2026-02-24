@@ -76,8 +76,17 @@ public @Nullable class MavenConfig {
     return null;
   }
 
+  public @NotNull Path getAbsolutePath(@NotNull Path path) {
+    if (path.isAbsolute()) return path;
+    return Path.of(baseDir).resolve(path);
+  }
+
   public Properties toProperties() {
-    return new Properties();
+    var properties = new Properties();
+    for (Map.Entry<String, String> it : javaProperties.entrySet()) {
+      properties.setProperty(it.getKey(), it.getValue());
+    }
+    return properties;
   }
 
   public boolean isEmpty() {

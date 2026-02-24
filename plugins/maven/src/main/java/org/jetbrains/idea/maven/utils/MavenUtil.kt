@@ -1233,16 +1233,16 @@ object MavenUtil {
     return path
   }
 
-  internal suspend fun doResolveLocalRepository(userSettingsFile: Path?, globalSettingsFile: Path?): Path? {
+  internal suspend fun doResolveLocalRepository(userSettingsFile: Path?, globalSettingsFile: Path?, properties: Properties?): Path? {
     if (userSettingsFile != null) {
-      val fromUserSettings: String? = getRepositoryFromSettings(userSettingsFile)
+      val fromUserSettings: String? = getRepositoryFromSettings(userSettingsFile, properties)
       if (!StringUtil.isEmpty(fromUserSettings)) {
         return Path.of(fromUserSettings)
       }
     }
 
     if (globalSettingsFile != null) {
-      val fromGlobalSettings: String? = getRepositoryFromSettings(globalSettingsFile)
+      val fromGlobalSettings: String? = getRepositoryFromSettings(globalSettingsFile, properties)
       if (!StringUtil.isEmpty(fromGlobalSettings)) {
         return Path.of(fromGlobalSettings)
       }
@@ -1260,6 +1260,9 @@ object MavenUtil {
     }
     catch (e: IOException) {
       MavenLog.LOG.debug("Cannot read file $file", e)
+      return null
+    }catch (e: JDOMException) {
+      MavenLog.LOG.warn("Cannot read file $file", e)
       return null
     }
 
