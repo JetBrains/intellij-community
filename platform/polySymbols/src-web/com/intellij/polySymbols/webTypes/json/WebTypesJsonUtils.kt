@@ -3,9 +3,9 @@ package com.intellij.polySymbols.webTypes.json
 
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.util.text.StringUtil
+import com.intellij.polySymbols.PolySymbol.DocHidePatternProperty
+import com.intellij.polySymbols.PolySymbol.HideFromCompletionProperty
 import com.intellij.polySymbols.PolySymbol
-import com.intellij.polySymbols.PolySymbol.Companion.PROP_DOC_HIDE_PATTERN
-import com.intellij.polySymbols.PolySymbol.Companion.PROP_HIDE_FROM_COMPLETION
 import com.intellij.polySymbols.PolySymbolApiStatus
 import com.intellij.polySymbols.PolySymbolKind
 import com.intellij.polySymbols.PolySymbolModifier
@@ -34,9 +34,9 @@ import com.intellij.polySymbols.impl.canUnwrapSymbols
 import com.intellij.polySymbols.js.JS_EVENTS
 import com.intellij.polySymbols.js.JS_PROPERTIES
 import com.intellij.polySymbols.js.JS_SYMBOLS
+import com.intellij.polySymbols.js.JsSymbolKindProperty
 import com.intellij.polySymbols.js.JsSymbolSymbolKind
 import com.intellij.polySymbols.js.NAMESPACE_JS
-import com.intellij.polySymbols.js.JsSymbolKindProperty
 import com.intellij.polySymbols.query.PolySymbolMatch
 import com.intellij.polySymbols.query.PolySymbolNameConversionRules
 import com.intellij.polySymbols.query.PolySymbolNameConverter
@@ -360,7 +360,7 @@ internal fun DeprecatedHtmlAttributeVueArgument.toHtmlContribution(): BaseContri
   result.docUrl = this.docUrl
   result.pattern = this.pattern
   if (pattern.isMatchAllRegex)
-    result.additionalProperties[PROP_DOC_HIDE_PATTERN.name] = true.toGenericHtmlPropertyValue()
+    result.additionalProperties[DocHidePatternProperty.name] = true.toGenericHtmlPropertyValue()
   return result
 }
 
@@ -371,7 +371,7 @@ internal fun DeprecatedHtmlAttributeVueModifier.toHtmlContribution(): BaseContri
   result.docUrl = this.docUrl
   result.pattern = this.pattern
   if (pattern.isMatchAllRegex)
-    result.additionalProperties[PROP_DOC_HIDE_PATTERN.name] = true.toGenericHtmlPropertyValue()
+    result.additionalProperties[DocHidePatternProperty.name] = true.toGenericHtmlPropertyValue()
   return result
 }
 
@@ -461,8 +461,8 @@ private fun matchAllHtmlContribution(name: String): GenericContribution =
     contribution.pattern = NamePatternRoot().also {
       it.value = ".*"
     }
-    contribution.additionalProperties[PROP_DOC_HIDE_PATTERN.name] = true.toGenericHtmlPropertyValue()
-    contribution.additionalProperties[PROP_HIDE_FROM_COMPLETION.name] = true.toGenericHtmlPropertyValue()
+    contribution.additionalProperties[DocHidePatternProperty.name] = true.toGenericHtmlPropertyValue()
+    contribution.additionalProperties[HideFromCompletionProperty.name] = true.toGenericHtmlPropertyValue()
   }
 
 private val NamePatternRoot?.isMatchAllRegex

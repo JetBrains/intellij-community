@@ -1,6 +1,9 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.polySymbols.testFramework.query
 
+import com.intellij.polySymbols.PolySymbol.DocHidePatternProperty
+import com.intellij.polySymbols.PolySymbol.HideFromCompletionProperty
+import com.intellij.polySymbols.PolySymbol.InjectLanguageProperty
 import com.intellij.polySymbols.PolySymbol
 import com.intellij.polySymbols.PolySymbolApiStatus
 import com.intellij.polySymbols.PolySymbolNameSegment
@@ -31,7 +34,7 @@ open class PolySymbolsDebugOutputPrinter : DebugOutputPrinter() {
 
   protected open val propertiesToPrint: List<PolySymbolProperty<*>> =
     listOf(
-      PolySymbol.PROP_HIDE_FROM_COMPLETION, PolySymbol.PROP_DOC_HIDE_PATTERN, PolySymbol.PROP_INJECT_LANGUAGE,
+      HideFromCompletionProperty, DocHidePatternProperty, InjectLanguageProperty,
       PROP_CSS_ARGUMENTS, JsSymbolKindProperty, WebTypesSymbol.PROP_NO_DOC,
     )
 
@@ -88,7 +91,8 @@ open class PolySymbolsDebugOutputPrinter : DebugOutputPrinter() {
         ?.documentation
 
       val framework = (source as? WebTypesSymbol)?.origin?.framework
-                      ?: (source as? PolySymbolMatch)?.unwrapMatchedSymbols()?.firstNotNullOfOrNull { (it as? WebTypesSymbol)?.origin?.framework }
+                      ?: (source as? PolySymbolMatch)?.unwrapMatchedSymbols()
+                        ?.firstNotNullOfOrNull { (it as? WebTypesSymbol)?.origin?.framework }
                       ?: "<none>"
       printProperty(level,
                     "origin",

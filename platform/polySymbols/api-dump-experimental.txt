@@ -5,13 +5,6 @@
 - com.intellij.model.Symbol
 - com.intellij.navigation.NavigatableSymbol
 - com.intellij.polySymbols.utils.PolySymbolPrioritizedScope
-- *sf:Companion:com.intellij.polySymbols.PolySymbol$Companion
-- sf:PROP_DOC_HIDE_ICON:com.intellij.polySymbols.PolySymbolProperty
-- sf:PROP_DOC_HIDE_PATTERN:com.intellij.polySymbols.PolySymbolProperty
-- sf:PROP_HIDE_FROM_COMPLETION:com.intellij.polySymbols.PolySymbolProperty
-- sf:PROP_IJ_TEXT_ATTRIBUTES_KEY:com.intellij.polySymbols.PolySymbolProperty
-- sf:PROP_INJECT_LANGUAGE:com.intellij.polySymbols.PolySymbolProperty
-- sf:PROP_READ_WRITE_ACCESS:com.intellij.polySymbols.PolySymbolProperty
 - a:createPointer():com.intellij.model.Pointer
 - get(com.intellij.polySymbols.PolySymbolProperty):java.lang.Object
 - getApiStatus():com.intellij.polySymbols.PolySymbolApiStatus
@@ -30,7 +23,21 @@
 - isEquivalentTo(com.intellij.model.Symbol):Z
 - isExtension():Z
 - matchContext(com.intellij.polySymbols.context.PolyContext):Z
-*f:com.intellij.polySymbols.PolySymbol$Companion
+*f:com.intellij.polySymbols.PolySymbol$DocHideIconProperty
+- com.intellij.polySymbols.PolySymbolProperty
+- sf:INSTANCE:com.intellij.polySymbols.PolySymbol$DocHideIconProperty
+*f:com.intellij.polySymbols.PolySymbol$DocHidePatternProperty
+- com.intellij.polySymbols.PolySymbolProperty
+- sf:INSTANCE:com.intellij.polySymbols.PolySymbol$DocHidePatternProperty
+*f:com.intellij.polySymbols.PolySymbol$HideFromCompletionProperty
+- com.intellij.polySymbols.PolySymbolProperty
+- sf:INSTANCE:com.intellij.polySymbols.PolySymbol$HideFromCompletionProperty
+*f:com.intellij.polySymbols.PolySymbol$IjTextAttributesKeyProperty
+- com.intellij.polySymbols.PolySymbolProperty
+- sf:INSTANCE:com.intellij.polySymbols.PolySymbol$IjTextAttributesKeyProperty
+*f:com.intellij.polySymbols.PolySymbol$InjectLanguageProperty
+- com.intellij.polySymbols.PolySymbolProperty
+- sf:INSTANCE:com.intellij.polySymbols.PolySymbol$InjectLanguageProperty
 *:com.intellij.polySymbols.PolySymbol$Priority
 - java.lang.Comparable
 - *sf:Companion:com.intellij.polySymbols.PolySymbol$Priority$Companion
@@ -46,6 +53,9 @@
 *@:com.intellij.polySymbols.PolySymbol$Property
 - java.lang.annotation.Annotation
 - a:property():java.lang.Class
+*f:com.intellij.polySymbols.PolySymbol$ReadWriteAccessProperty
+- com.intellij.polySymbols.PolySymbolProperty
+- sf:INSTANCE:com.intellij.polySymbols.PolySymbol$ReadWriteAccessProperty
 *:com.intellij.polySymbols.PolySymbolApiStatus
 - *sf:Companion:com.intellij.polySymbols.PolySymbolApiStatus$Companion
 - sf:Deprecated:com.intellij.polySymbols.PolySymbolApiStatus$Deprecated
@@ -466,7 +476,6 @@
 - com.intellij.polySymbols.query.PolySymbolScope
 - *sf:Companion:com.intellij.polySymbols.customElements.CustomElementsSymbol$Companion
 - a:createPointer():com.intellij.model.Pointer
-- get(com.intellij.polySymbols.PolySymbolProperty):java.lang.Object
 - getDefaultValue():java.lang.String
 - getDescription():java.lang.String
 - getDocumentationTarget(com.intellij.psi.PsiElement):com.intellij.platform.backend.documentation.DocumentationTarget
@@ -1304,6 +1313,7 @@
 - get(com.intellij.polySymbols.PolySymbolProperty):java.lang.Object
 - f:getApiStatus():com.intellij.polySymbols.PolySymbolApiStatus
 - f:getCodeCompletions(com.intellij.polySymbols.PolySymbolQualifiedName,com.intellij.polySymbols.query.PolySymbolCodeCompletionQueryParams,com.intellij.polySymbols.query.PolySymbolQueryStack):java.util.List
+- f:getDocHideIcon():Z
 - getDocumentationTarget(com.intellij.psi.PsiElement):com.intellij.platform.backend.documentation.DocumentationTarget
 - f:getExtension():Z
 - f:getIcon():javax.swing.Icon

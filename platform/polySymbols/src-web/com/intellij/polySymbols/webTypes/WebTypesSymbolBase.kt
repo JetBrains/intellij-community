@@ -4,8 +4,8 @@ package com.intellij.polySymbols.webTypes
 import com.intellij.model.Pointer
 import com.intellij.model.Symbol
 import com.intellij.platform.backend.documentation.DocumentationTarget
+import com.intellij.polySymbols.PolySymbol.DocHideIconProperty
 import com.intellij.polySymbols.PolySymbol
-import com.intellij.polySymbols.PolySymbol.Companion.PROP_DOC_HIDE_ICON
 import com.intellij.polySymbols.PolySymbolApiStatus
 import com.intellij.polySymbols.PolySymbolKind
 import com.intellij.polySymbols.PolySymbolModifier
@@ -78,11 +78,14 @@ open class WebTypesSymbolBase : WebTypesSymbol {
       .merge()
   }
 
+  @PolySymbol.Property(DocHideIconProperty::class)
+  val docHideIcon: Boolean
+    get() = icon == base.jsonOrigin.defaultIcon
+
   @Suppress("UNCHECKED_CAST")
   override fun <T : Any> get(property: PolySymbolProperty<T>): T? =
     when (property) {
       PROP_HTML_ATTRIBUTE_VALUE -> attributeValue as T?
-      PROP_DOC_HIDE_ICON -> property.tryCast(icon == base.jsonOrigin.defaultIcon)
       PROP_TYPE_SUPPORT -> property.tryCast(base.jsonOrigin.typeSupport)
       base.jsonOrigin.typeSupport?.typeProperty -> {
         property.tryCast(

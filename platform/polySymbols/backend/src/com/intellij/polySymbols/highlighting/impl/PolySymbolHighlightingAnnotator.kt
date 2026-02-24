@@ -23,6 +23,7 @@ import com.intellij.openapi.editor.colors.TextAttributesKey
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.TextRange
 import com.intellij.openapi.util.getOrCreateUserDataUnsafe
+import com.intellij.polySymbols.PolySymbol.IjTextAttributesKeyProperty
 import com.intellij.polySymbols.PolySymbol
 import com.intellij.polySymbols.PolySymbolKind
 import com.intellij.polySymbols.PolySymbolNameSegment
@@ -129,7 +130,7 @@ internal class PolySymbolHighlightingAnnotator : Annotator {
             PolySymbolHighlightingCustomizer.getSymbolTextAttributes(host, symbol, depth)
               ?.let { return@mapNotNull it }
 
-            symbol[PolySymbol.PROP_IJ_TEXT_ATTRIBUTES_KEY]
+            symbol[IjTextAttributesKeyProperty]
               ?.let { TextAttributesKey.find(it) }
               ?.let { return@mapNotNull it }
 

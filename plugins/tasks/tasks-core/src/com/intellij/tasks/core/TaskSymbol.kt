@@ -21,6 +21,7 @@ import com.intellij.platform.backend.documentation.DocumentationTarget
 import com.intellij.platform.backend.navigation.NavigationRequest
 import com.intellij.platform.backend.navigation.NavigationTarget
 import com.intellij.platform.backend.presentation.TargetPresentation
+import com.intellij.polySymbols.PolySymbol.IjTextAttributesKeyProperty
 import com.intellij.polySymbols.PolySymbol
 import com.intellij.polySymbols.PolySymbolKind
 import com.intellij.polySymbols.PolySymbolProperty
@@ -155,9 +156,12 @@ sealed class AbstractTaskSymbol : PolySymbol, DocumentationSymbol {
       description(description.toString())
     }
 
+  @PolySymbol.Property(IjTextAttributesKeyProperty::class)
+  val ijTextAttributesKey: String
+    get() = EditorColors.REFERENCE_HYPERLINK_COLOR.externalName
+
   override fun <T : Any> get(property: PolySymbolProperty<T>): T? =
     when (property) {
-      PolySymbol.PROP_IJ_TEXT_ATTRIBUTES_KEY -> property.tryCast(EditorColors.REFERENCE_HYPERLINK_COLOR.externalName)
       TASK_PROPERTY -> property.tryCast(task)
       else -> super.get(property)
     }

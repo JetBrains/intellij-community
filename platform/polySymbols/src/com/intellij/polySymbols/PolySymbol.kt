@@ -13,7 +13,7 @@ import com.intellij.openapi.util.NlsSafe
 import com.intellij.platform.backend.documentation.DocumentationTarget
 import com.intellij.platform.backend.navigation.NavigationTarget
 import com.intellij.platform.backend.presentation.TargetPresentation
-import com.intellij.polySymbols.PolySymbol.Companion.PROP_DOC_HIDE_ICON
+
 import com.intellij.polySymbols.context.PolyContext
 import com.intellij.polySymbols.documentation.PolySymbolDocumentationCustomizer
 import com.intellij.polySymbols.impl.PolySymbolPropertyGetter
@@ -39,6 +39,7 @@ import com.intellij.util.concurrency.annotations.RequiresReadLock
 import org.jetbrains.annotations.ApiStatus
 import java.util.Locale
 import javax.swing.Icon
+import kotlin.jvm.java
 import kotlin.reflect.KClass
 
 /**
@@ -112,7 +113,7 @@ interface PolySymbol : Symbol, NavigatableSymbol, PolySymbolPrioritizedScope {
 
   /**
    * An optional icon associated with the symbol, which is going to be used across the IDE.
-   * To not show an icon in the documentation, for property [PROP_DOC_HIDE_ICON] return `true`.
+   * To not show an icon in the documentation, for property [DocHideIconProperty] return `true`.
    * If no icon is provided, in code completion a default icon for symbol namespace and kind will be used.
    */
   val icon: Icon?
@@ -271,7 +272,7 @@ interface PolySymbol : Symbol, NavigatableSymbol, PolySymbolPrioritizedScope {
     queryExecutor: PolySymbolQueryExecutor,
     oldName: PolySymbolQualifiedName,
     newName: String,
-    occurence: String
+    occurence: String,
   ): String =
     queryExecutor.namesProvider.adjustRename(oldName, newName, occurence)
 
@@ -318,44 +319,41 @@ interface PolySymbol : Symbol, NavigatableSymbol, PolySymbolPrioritizedScope {
   @Retention(AnnotationRetention.RUNTIME)
   annotation class Property(val property: KClass<*>)
 
-  companion object {
 
-    /**
-     * Supported by `html/elements` and `html/attributes` symbols,
-     * allows to inject the specified language into HTML element text or HTML attribute value.
-     */
-    @JvmField
-    val PROP_INJECT_LANGUAGE: PolySymbolProperty<String> = PolySymbolProperty["inject-language"]
+  /**
+   * By default, all symbols show up in code completion.
+   * Setting this property to true prevents a symbol from showing up in the code completion.
+   */
+  object HideFromCompletionProperty : PolySymbolProperty<Boolean>("hide-from-completion", Boolean::class.java)
 
-    /**
-     * If a symbol uses a RegEx pattern, usually it will be displayed in a documentation
-     * popup section "pattern". Setting this property to `true` hides that section.
-     */
-    @JvmField
-    val PROP_DOC_HIDE_PATTERN: PolySymbolProperty<Boolean> = PolySymbolProperty["doc-hide-pattern"]
+  /**
+   * If a symbol uses a RegEx pattern, usually it will be displayed in a documentation
+   * popup section "pattern". Setting this property to `true` hides that section.
+   */
+  object DocHidePatternProperty : PolySymbolProperty<Boolean>("doc-hide-pattern", Boolean::class.java)
 
-    /**
-     * If a symbol has an icon associated, it will be shown in the documentation in the definition section
-     * by default. Setting this property to `true` hides the icon.
-     */
-    @JvmField
-    val PROP_DOC_HIDE_ICON: PolySymbolProperty<Boolean> = PolySymbolProperty["doc-hide-icon"]
+  /**
+   * If a symbol has an icon associated, it will be shown in the documentation in the definition section
+   * by default. Setting this property to `true` hides the icon.
+   */
+  object DocHideIconProperty : PolySymbolProperty<Boolean>("doc-hide-icon", Boolean::class.java)
 
-    /**
-     * By default, all symbols show up in code completion.
-     * Setting this property to true prevents a symbol from showing up in the code completion.
-     */
-    @JvmField
-    val PROP_HIDE_FROM_COMPLETION: PolySymbolProperty<Boolean> = PolySymbolProperty["hide-from-completion"]
+  /**
+   * Supported by `html/elements` and `html/attributes` symbols,
+   * allows to inject the specified language into HTML element text or HTML attribute value.
+   */
+  object InjectLanguageProperty : PolySymbolProperty<String>("inject-language", String::class.java)
 
-    /**
-     * Text attributes key of an IntelliJ ColorScheme.
-     **/
-    @JvmField
-    val PROP_IJ_TEXT_ATTRIBUTES_KEY: PolySymbolProperty<String> = PolySymbolProperty["ij-text-attributes-key"]
+  /**
+   * Text attributes key of an IntelliJ ColorScheme.
+   */
+  object IjTextAttributesKeyProperty : PolySymbolProperty<String>("ij-text-attributes-key", String::class.java)
 
-    @JvmField
-    val PROP_READ_WRITE_ACCESS: PolySymbolProperty<ReadWriteAccessDetector.Access> = PolySymbolProperty["ij-read-write-access"]
-  }
+  /**
+   * Read/write access information for the symbol.
+   */
+  object ReadWriteAccessProperty : PolySymbolProperty<ReadWriteAccessDetector.Access>("ij-read-write-access",
+                                                                                      ReadWriteAccessDetector.Access::class.java)
+
 }
 
