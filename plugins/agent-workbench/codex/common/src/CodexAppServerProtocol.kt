@@ -114,13 +114,17 @@ private fun parseThreadArray(parser: JsonParser, archived: Boolean, threads: Mut
 
 private fun parseThreadObject(parser: JsonParser, archived: Boolean, cwdFilter: String?): CodexThread? {
   val payload = parseThreadPayload(parser, allowNestedThread = false)
-  val threadId = payload.id ?: return null
   if (!cwdFilter.isNullOrBlank()) {
     val normalizedCwd = payload.cwd?.let(::normalizeRootPath)
     if (normalizedCwd.isNullOrBlank() || normalizedCwd != cwdFilter) {
       return null
     }
   }
+  return createCodexThread(payload = payload, archived = archived)
+}
+
+private fun createCodexThread(payload: ThreadPayload, archived: Boolean): CodexThread? {
+  val threadId = payload.id ?: return null
   val updatedAtValue = normalizeTimestamp(
     payload.updatedAt
       ?: payload.updatedAtAlt
@@ -132,28 +136,21 @@ private fun parseThreadObject(parser: JsonParser, archived: Boolean, cwdFilter: 
   val threadTitle = previewValue?.let { trimTitle(it) }?.takeIf { it.isNotBlank() } ?: "Thread ${threadId.take(8)}"
   return CodexThread(
     id = threadId, title = threadTitle, updatedAt = updatedAtValue, archived = archived,
-    gitBranch = payload.gitBranch, cwd = payload.cwd?.let(::normalizeRootPath),
+    gitBranch = payload.gitBranch,
+    cwd = payload.cwd?.let(::normalizeRootPath),
+    sourceKind = payload.sourceKind,
+    parentThreadId = payload.parentThreadId,
+    agentNickname = payload.agentNickname,
+    agentRole = payload.agentRole,
+    statusKind = payload.statusKind,
+    activeFlags = payload.activeFlags,
   )
 }
 
 private fun parseThreadFromResultObject(parser: JsonParser): CodexThread? {
   val payload = parseThreadPayload(parser, allowNestedThread = true)
   if (payload.nestedThread != null) return payload.nestedThread
-
-  val threadId = payload.id ?: return null
-  val updatedAtValue = normalizeTimestamp(
-    payload.updatedAt
-      ?: payload.updatedAtAlt
-      ?: payload.createdAt
-      ?: payload.createdAtAlt
-      ?: 0L
-  )
-  val previewValue = payload.preview ?: payload.title ?: payload.name ?: payload.summary
-  val threadTitle = previewValue?.let(::trimTitle)?.takeIf { it.isNotBlank() } ?: "Thread ${threadId.take(8)}"
-  return CodexThread(
-    id = threadId, title = threadTitle, updatedAt = updatedAtValue, archived = false,
-    gitBranch = payload.gitBranch, cwd = payload.cwd?.let(::normalizeRootPath),
-  )
+  return createCodexThread(payload = payload, archived = false)
 }
 
 private data class ThreadPayload(
@@ -169,8 +166,25 @@ private data class ThreadPayload(
   val cwd: String?,
   val nestedThread: CodexThread?,
   val gitBranch: String?,
+  val sourceKind: CodexThreadSourceKind,
+  val parentThreadId: String?,
+  val agentNickname: String?,
+  val agentRole: String?,
+  val statusKind: CodexThreadStatusKind,
+  val activeFlags: List<CodexThreadActiveFlag>,
 )
 
+private data class ParsedThreadSource(
+  val sourceKind: CodexThreadSourceKind,
+  val parentThreadId: String?,
+)
+
+private data class ParsedThreadStatus(
+  val statusKind: CodexThreadStatusKind,
+  val activeFlags: List<CodexThreadActiveFlag>,
+)
+
+@Suppress("DuplicatedCode")
 private fun parseThreadPayload(parser: JsonParser, allowNestedThread: Boolean): ThreadPayload {
   var id: String? = null
   var updatedAt: Long? = null
@@ -184,6 +198,12 @@ private fun parseThreadPayload(parser: JsonParser, allowNestedThread: Boolean): 
   var cwd: String? = null
   var nestedThread: CodexThread? = null
   var gitBranch: String? = null
+  var sourceKind: CodexThreadSourceKind = CodexThreadSourceKind.UNKNOWN
+  var parentThreadId: String? = null
+  var agentNickname: String? = null
+  var agentRole: String? = null
+  var statusKind: CodexThreadStatusKind = CodexThreadStatusKind.UNKNOWN
+  var activeFlags: List<CodexThreadActiveFlag> = emptyList()
 
   forEachObjectField(parser) { fieldName ->
     when (fieldName) {
@@ -206,6 +226,19 @@ private fun parseThreadPayload(parser: JsonParser, allowNestedThread: Boolean): 
       "summary" -> summary = readStringOrNull(parser)
       "cwd" -> cwd = readStringOrNull(parser)
       "gitBranch", "git_branch" -> gitBranch = readStringOrNull(parser)
+      "gitInfo", "git_info" -> gitBranch = parseGitBranch(parser) ?: gitBranch
+      "source" -> {
+        val parsedSource = parseThreadSource(parser)
+        sourceKind = parsedSource.sourceKind
+        parentThreadId = parsedSource.parentThreadId
+      }
+      "agentNickname", "agent_nickname" -> agentNickname = readStringOrNull(parser)
+      "agentRole", "agent_role" -> agentRole = readStringOrNull(parser)
+      "status" -> {
+        val parsedStatus = parseThreadStatus(parser)
+        statusKind = parsedStatus.statusKind
+        activeFlags = parsedStatus.activeFlags
+      }
       else -> parser.skipChildren()
     }
     true
@@ -224,7 +257,199 @@ private fun parseThreadPayload(parser: JsonParser, allowNestedThread: Boolean): 
     cwd = cwd,
     nestedThread = nestedThread,
     gitBranch = gitBranch,
+    sourceKind = sourceKind,
+    parentThreadId = parentThreadId,
+    agentNickname = agentNickname,
+    agentRole = agentRole,
+    statusKind = statusKind,
+    activeFlags = activeFlags,
   )
+}
+
+private fun parseGitBranch(parser: JsonParser): String? {
+  if (parser.currentToken != JsonToken.START_OBJECT) {
+    parser.skipChildren()
+    return null
+  }
+
+  var branch: String? = null
+  forEachObjectField(parser) { fieldName ->
+    if (fieldName == "branch") {
+      branch = readStringOrNull(parser)
+    }
+    else {
+      parser.skipChildren()
+    }
+    true
+  }
+  return branch
+}
+
+private fun parseThreadSource(parser: JsonParser): ParsedThreadSource {
+  return when (parser.currentToken) {
+    JsonToken.VALUE_STRING -> ParsedThreadSource(
+      sourceKind = parseSourceKind(readStringOrNull(parser)),
+      parentThreadId = null,
+    )
+    JsonToken.START_OBJECT -> {
+      var sourceKind = CodexThreadSourceKind.UNKNOWN
+      var parentThreadId: String? = null
+      forEachObjectField(parser) { fieldName ->
+        when (fieldName) {
+          "subAgent", "sub_agent", "subagent" -> {
+            val parsed = parseSubAgentSource(parser)
+            sourceKind = parsed.sourceKind
+            parentThreadId = parsed.parentThreadId
+          }
+          else -> parser.skipChildren()
+        }
+        true
+      }
+      ParsedThreadSource(sourceKind = sourceKind, parentThreadId = parentThreadId)
+    }
+    else -> {
+      parser.skipChildren()
+      ParsedThreadSource(sourceKind = CodexThreadSourceKind.UNKNOWN, parentThreadId = null)
+    }
+  }
+}
+
+private fun parseSubAgentSource(parser: JsonParser): ParsedThreadSource {
+  return when (parser.currentToken) {
+    JsonToken.VALUE_STRING -> {
+      val value = readStringOrNull(parser)
+      val sourceKind = when (value) {
+        "review" -> CodexThreadSourceKind.SUB_AGENT_REVIEW
+        "compact" -> CodexThreadSourceKind.SUB_AGENT_COMPACT
+        else -> CodexThreadSourceKind.SUB_AGENT
+      }
+      ParsedThreadSource(sourceKind = sourceKind, parentThreadId = null)
+    }
+    JsonToken.START_OBJECT -> {
+      var sourceKind = CodexThreadSourceKind.SUB_AGENT
+      var parentThreadId: String? = null
+      forEachObjectField(parser) { fieldName ->
+        when (fieldName) {
+          "thread_spawn", "threadSpawn" -> {
+            sourceKind = CodexThreadSourceKind.SUB_AGENT_THREAD_SPAWN
+            parentThreadId = parseThreadSpawnParentId(parser)
+          }
+          "other" -> {
+            sourceKind = CodexThreadSourceKind.SUB_AGENT_OTHER
+            parser.skipChildren()
+          }
+          else -> parser.skipChildren()
+        }
+        true
+      }
+      ParsedThreadSource(sourceKind = sourceKind, parentThreadId = parentThreadId)
+    }
+    else -> {
+      parser.skipChildren()
+      ParsedThreadSource(sourceKind = CodexThreadSourceKind.SUB_AGENT, parentThreadId = null)
+    }
+  }
+}
+
+private fun parseThreadSpawnParentId(parser: JsonParser): String? {
+  if (parser.currentToken != JsonToken.START_OBJECT) {
+    parser.skipChildren()
+    return null
+  }
+
+  var parentThreadId: String? = null
+  forEachObjectField(parser) { fieldName ->
+    when (fieldName) {
+      "parent_thread_id", "parentThreadId" -> parentThreadId = readStringOrNull(parser)
+      else -> parser.skipChildren()
+    }
+    true
+  }
+  return parentThreadId
+}
+
+private fun parseSourceKind(value: String?): CodexThreadSourceKind {
+  val normalized = value
+    ?.trim()
+    ?.takeIf { it.isNotEmpty() }
+    ?.lowercase()
+    ?: return CodexThreadSourceKind.UNKNOWN
+  return when (normalized) {
+    "cli" -> CodexThreadSourceKind.CLI
+    "vscode" -> CodexThreadSourceKind.VSCODE
+    "exec" -> CodexThreadSourceKind.EXEC
+    "appserver", "app_server", "app-server" -> CodexThreadSourceKind.APP_SERVER
+    "subagent", "sub_agent", "sub-agent" -> CodexThreadSourceKind.SUB_AGENT
+    "subagentreview", "sub_agent_review", "sub-agent-review" -> CodexThreadSourceKind.SUB_AGENT_REVIEW
+    "subagentcompact", "sub_agent_compact", "sub-agent-compact" -> CodexThreadSourceKind.SUB_AGENT_COMPACT
+    "subagentthreadspawn", "sub_agent_thread_spawn", "sub-agent-thread-spawn" -> CodexThreadSourceKind.SUB_AGENT_THREAD_SPAWN
+    "subagentother", "sub_agent_other", "sub-agent-other" -> CodexThreadSourceKind.SUB_AGENT_OTHER
+    "unknown" -> CodexThreadSourceKind.UNKNOWN
+    else -> CodexThreadSourceKind.UNKNOWN
+  }
+}
+
+private fun parseThreadStatus(parser: JsonParser): ParsedThreadStatus {
+  return when (parser.currentToken) {
+    JsonToken.VALUE_STRING -> ParsedThreadStatus(
+      statusKind = parseStatusKind(readStringOrNull(parser)),
+      activeFlags = emptyList(),
+    )
+    JsonToken.START_OBJECT -> {
+      var statusKind = CodexThreadStatusKind.UNKNOWN
+      val activeFlags = LinkedHashSet<CodexThreadActiveFlag>()
+      forEachObjectField(parser) { fieldName ->
+        when (fieldName) {
+          "type" -> statusKind = parseStatusKind(readStringOrNull(parser))
+          "activeFlags", "active_flags" -> {
+            if (parser.currentToken == JsonToken.START_ARRAY) {
+              parseActiveFlags(parser, activeFlags)
+            }
+            else {
+              parser.skipChildren()
+            }
+          }
+          else -> parser.skipChildren()
+        }
+        true
+      }
+      ParsedThreadStatus(statusKind = statusKind, activeFlags = ArrayList(activeFlags))
+    }
+    else -> {
+      parser.skipChildren()
+      ParsedThreadStatus(statusKind = CodexThreadStatusKind.UNKNOWN, activeFlags = emptyList())
+    }
+  }
+}
+
+private fun parseActiveFlags(parser: JsonParser, target: MutableSet<CodexThreadActiveFlag>) {
+  while (true) {
+    val token = parser.nextToken() ?: return
+    if (token == JsonToken.END_ARRAY) return
+    if (token != JsonToken.VALUE_STRING) {
+      parser.skipChildren()
+      continue
+    }
+    when (parser.text.lowercase()) {
+      "waitingonapproval", "waiting_on_approval", "waiting-on-approval" -> target.add(CodexThreadActiveFlag.WAITING_ON_APPROVAL)
+      "waitingonuserinput", "waiting_on_user_input", "waiting-on-user-input" -> target.add(CodexThreadActiveFlag.WAITING_ON_USER_INPUT)
+    }
+  }
+}
+
+private fun parseStatusKind(value: String?): CodexThreadStatusKind {
+  val normalized = value
+    ?.trim()
+    ?.takeIf { it.isNotEmpty() }
+    ?.lowercase()
+    ?: return CodexThreadStatusKind.UNKNOWN
+  return when (normalized) {
+    "notloaded", "not_loaded", "not-loaded" -> CodexThreadStatusKind.NOT_LOADED
+    "idle" -> CodexThreadStatusKind.IDLE
+    "active" -> CodexThreadStatusKind.ACTIVE
+    "systemerror", "system_error", "system-error" -> CodexThreadStatusKind.SYSTEM_ERROR
+    else -> CodexThreadStatusKind.UNKNOWN
+  }
 }
 
 private fun normalizeTimestamp(value: Long): Long {

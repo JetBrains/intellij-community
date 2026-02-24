@@ -128,6 +128,27 @@ internal fun writeConfig(path: Path, threads: List<ThreadSpec>) {
         thread.name?.let { generator.writeStringField("name", it) }
         thread.summary?.let { generator.writeStringField("summary", it) }
         thread.cwd?.let { generator.writeStringField("cwd", it) }
+        generator.writeStringField("sourceKind", thread.sourceKind)
+        if (thread.sourceAsString) {
+          generator.writeBooleanField("sourceAsString", true)
+        }
+        if (thread.sourceSubAgentFieldName != "subAgent") {
+          generator.writeStringField("sourceSubAgentFieldName", thread.sourceSubAgentFieldName)
+        }
+        thread.parentThreadId?.let { generator.writeStringField("parentThreadId", it) }
+        thread.agentNickname?.let { generator.writeStringField("agentNickname", it) }
+        thread.agentRole?.let { generator.writeStringField("agentRole", it) }
+        generator.writeStringField("statusType", thread.statusType)
+        if (thread.statusActiveFlagsFieldName != "activeFlags") {
+          generator.writeStringField("statusActiveFlagsFieldName", thread.statusActiveFlagsFieldName)
+        }
+        if (thread.activeFlags.isNotEmpty()) {
+          generator.writeFieldName("activeFlags")
+          generator.writeStartArray()
+          thread.activeFlags.forEach(generator::writeString)
+          generator.writeEndArray()
+        }
+        thread.gitBranch?.let { generator.writeStringField("gitBranch", it) }
         thread.updatedAt?.let { updatedAt ->
           val field = thread.updatedAtField.takeIf { it.isNotBlank() } ?: "updated_at"
           generator.writeNumberField(field, updatedAt)
@@ -156,6 +177,16 @@ internal data class ThreadSpec(
   val createdAt: Long? = null,
   val updatedAtField: String = "updated_at",
   val createdAtField: String = "created_at",
+  val sourceKind: String = "cli",
+  val sourceAsString: Boolean = false,
+  val sourceSubAgentFieldName: String = "subAgent",
+  val parentThreadId: String? = null,
+  val agentNickname: String? = null,
+  val agentRole: String? = null,
+  val statusType: String = "idle",
+  val statusActiveFlagsFieldName: String = "activeFlags",
+  val activeFlags: List<String> = emptyList(),
+  val gitBranch: String? = null,
   val archived: Boolean = false,
 )
 

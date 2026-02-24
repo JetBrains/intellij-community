@@ -69,9 +69,9 @@ Define project/worktree `New Thread` actions (quick provider icon and provider m
 - Codex new-thread opens must start in pending identity state (`codex:new-*`) with `sessionId = null`.
   [@test] ../../chat/testSrc/AgentChatEditorServiceTest.kt
 
-- Rollout backend remains the default discovery source and must surface concrete thread id after first user input.
+- App-server backend remains the default discovery source and must surface concrete thread id after first user input.
   [@test] ../../codex/sessions/testSrc/CodexSessionBackendSelectorTest.kt
-  [@test] ../../codex/sessions/testSrc/CodexRolloutSessionBackendTest.kt
+  [@test] ../../sessions/testSrc/CodexAppServerClientTest.kt
 
 - Provider refresh must rebind pending Codex chat tabs to concrete identities and switch shell command to canonical resume mapping.
   [@test] ../../chat/testSrc/AgentChatEditorServiceTest.kt
@@ -86,7 +86,7 @@ Define project/worktree `New Thread` actions (quick provider icon and provider m
 - Popup keeps normal and YOLO options explicit.
 
 ## Data & Backend
-- Codex creation flow starts with pending identity and is resolved asynchronously by rollout refresh.
+- Codex creation flow starts with pending identity and is resolved asynchronously by app-server refresh.
 - Concrete identity rebinding updates tab identity and command to resume form.
 
 ## Error Handling

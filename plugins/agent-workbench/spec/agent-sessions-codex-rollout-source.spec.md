@@ -18,31 +18,43 @@ Status: Draft
 Date: 2026-02-23
 
 ## Summary
-Define Codex thread-list behavior where discovery defaults to rollout files under `~/.codex/sessions`, while write/archive/unarchive operations continue to use app-server RPC. This spec owns rollout parsing, watcher semantics, backend selection, and Codex activity derivation.
+Define Codex thread-list behavior where discovery defaults to app-server `thread/list`, while rollout parsing remains available as explicit compatibility backend. This spec owns backend selection, app-server sub-agent mapping, rollout compatibility, and Codex activity derivation.
 
 ## Goals
 - Keep Codex thread indicators aligned with rollout activity data.
-- Keep app-server implementation available as explicit compatibility backend.
+- Keep rollout implementation available as explicit compatibility backend.
 - Support archive and archive-undo unarchive operations for rollout-discovered threads through shared app-server write path.
 - Keep backend policy independent from new-thread UI contracts.
 
 ## Non-goals
 - Archived-thread browsing and standalone unarchive entry points outside archive-undo flow.
 - Claude backend behavior.
-- Polling-based refresh loops.
+- Full-state periodic refresh loops when no pending tabs exist.
 
 ## Requirements
 - Codex session listing must be implemented behind `CodexSessionBackend` interface.
   [@test] ../codex/sessions/testSrc/CodexSessionBackendSelectorTest.kt
 
-- `CodexRolloutSessionBackend` must be default backend; `CodexAppServerSessionBackend` must remain available as alternate backend.
+- `CodexAppServerSessionBackend` must be default backend; `CodexRolloutSessionBackend` must remain available as alternate backend.
   [@test] ../codex/sessions/testSrc/CodexSessionBackendSelectorTest.kt
 
-- Backend selection must switch to app-server only when `agent.workbench.codex.sessions.backend=app-server` is explicitly set.
+- Backend selection must switch to rollout only when `agent.workbench.codex.sessions.backend=rollout` is explicitly set.
   [@test] ../codex/sessions/testSrc/CodexSessionBackendSelectorTest.kt
 
-- Unknown backend override values must log warning and fall back to rollout.
+- Unknown backend override values must log warning and fall back to app-server.
   [@test] ../codex/sessions/testSrc/CodexSessionBackendSelectorTest.kt
+
+- App-server backend must request `thread/list` with server-side `cwd` and `sourceKinds` filters so sub-agent sessions are included in listing results.
+  [@test] ../sessions/testSrc/CodexAppServerClientTest.kt
+
+- App-server backend must fold sub-agent thread-spawn sessions under parent threads and hide orphaned sub-agent sessions from tree rows.
+  [@test] ../codex/sessions/testSrc/CodexAppServerSessionBackendTest.kt
+
+- Hidden orphaned sub-agent sessions must be auto-archived with one-shot retry policy and at most one archive attempt per refresh.
+  [@test] ../codex/sessions/testSrc/CodexAppServerSessionBackendTest.kt
+
+- Pending Codex chat tabs must trigger pending-only polling refresh to rebind pending identities when source update notifications are unavailable.
+  [@test] ../sessions/testSrc/AgentSessionsLoadingCoordinatorTest.kt
 
 - Rollout backend scan scope must be limited to `~/.codex/sessions/**/rollout-*.jsonl`.
   [@test] ../codex/sessions/testSrc/CodexRolloutSessionBackendTest.kt
@@ -121,10 +133,10 @@ Define Codex thread-list behavior where discovery defaults to rollout files unde
 - `updatedAt` derives from latest event timestamp with file mtime fallback.
 - `response_item` contributes to activity timing but not title source extraction.
 - Branch value comes from rollout session metadata when present; no branch fallback store is used.
-- Listing stays rollout-backed by default; write operations (`thread/start`, `thread/archive`, `thread/unarchive`, persistence calls) remain app-server RPC.
+- Listing stays app-server-backed by default; write operations (`thread/start`, `thread/archive`, `thread/unarchive`, persistence calls) remain app-server RPC.
 
 ## Error Handling
-- Invalid override values must not disable Codex listing; fallback to rollout must apply.
+- Invalid override values must not disable Codex listing; fallback to app-server must apply.
 - Parse failures must isolate to failing files and preserve valid thread rows from other files.
 - Watcher overflow events may trigger full rescan to recover correctness.
 

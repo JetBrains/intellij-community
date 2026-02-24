@@ -9,6 +9,32 @@ data class CodexSubAgent(
   @JvmField val name: String,
 )
 
+enum class CodexThreadSourceKind {
+  CLI,
+  VSCODE,
+  EXEC,
+  APP_SERVER,
+  SUB_AGENT,
+  SUB_AGENT_REVIEW,
+  SUB_AGENT_COMPACT,
+  SUB_AGENT_THREAD_SPAWN,
+  SUB_AGENT_OTHER,
+  UNKNOWN,
+}
+
+enum class CodexThreadStatusKind {
+  NOT_LOADED,
+  IDLE,
+  ACTIVE,
+  SYSTEM_ERROR,
+  UNKNOWN,
+}
+
+enum class CodexThreadActiveFlag {
+  WAITING_ON_APPROVAL,
+  WAITING_ON_USER_INPUT,
+}
+
 @Immutable
 data class CodexThread(
   @JvmField val id: String,
@@ -19,6 +45,12 @@ data class CodexThread(
   @JvmField val subAgents: List<CodexSubAgent> = emptyList(),
   @JvmField val gitBranch: String? = null,
   @JvmField val cwd: String? = null,
+  @JvmField val sourceKind: CodexThreadSourceKind = CodexThreadSourceKind.UNKNOWN,
+  @JvmField val parentThreadId: String? = null,
+  @JvmField val agentNickname: String? = null,
+  @JvmField val agentRole: String? = null,
+  @JvmField val statusKind: CodexThreadStatusKind = CodexThreadStatusKind.UNKNOWN,
+  @JvmField val activeFlags: List<CodexThreadActiveFlag> = emptyList(),
 )
 
 @Immutable

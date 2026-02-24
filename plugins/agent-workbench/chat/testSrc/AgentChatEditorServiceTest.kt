@@ -242,6 +242,29 @@ class AgentChatEditorServiceTest {
   }
 
   @Test
+  fun testCollectOpenPendingProjectPathsIncludesOnlyCodexPendingTabs(): Unit = timeoutRunBlocking {
+    openChatInModal(
+      threadIdentity = "CLAUDE:new-1",
+      shellCommand = claudeCommand,
+      threadId = "",
+      threadTitle = "Claude pending",
+      subAgentId = null,
+    )
+
+    assertThat(collectOpenPendingAgentChatProjectPaths()).isEmpty()
+
+    openChatInModal(
+      threadIdentity = "CODEX:new-1",
+      shellCommand = codexCommand,
+      threadId = "",
+      threadTitle = "Codex pending",
+      subAgentId = null,
+    )
+
+    assertThat(collectOpenPendingAgentChatProjectPaths()).containsExactly(projectPath)
+  }
+
+  @Test
   fun testDifferentSessionIdentitiesDoNotReuseTab(): Unit = timeoutRunBlocking {
     openChatInModal(
       threadIdentity = "CODEX:session-1",

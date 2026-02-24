@@ -26,6 +26,7 @@ internal class ScriptedSessionSource(
   override val updates: Flow<Unit> = emptyFlow(),
   private val listFromOpenProject: suspend (path: String, project: Project) -> List<AgentSessionThread> = { _, _ -> emptyList() },
   private val listFromClosedProject: suspend (path: String) -> List<AgentSessionThread> = { _ -> emptyList() },
+  private val prefetch: suspend (paths: List<String>) -> Map<String, List<AgentSessionThread>> = { emptyMap() },
 ) : AgentSessionSource {
   override suspend fun listThreadsFromOpenProject(path: String, project: Project): List<AgentSessionThread> {
     return listFromOpenProject(path, project)
@@ -33,6 +34,10 @@ internal class ScriptedSessionSource(
 
   override suspend fun listThreadsFromClosedProject(path: String): List<AgentSessionThread> {
     return listFromClosedProject(path)
+  }
+
+  override suspend fun prefetchThreads(paths: List<String>): Map<String, List<AgentSessionThread>> {
+    return prefetch(paths)
   }
 }
 

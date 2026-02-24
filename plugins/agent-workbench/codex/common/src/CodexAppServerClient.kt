@@ -36,8 +36,20 @@ import kotlin.time.Duration.Companion.milliseconds
 private const val REQUEST_TIMEOUT_MS = 30_000L
 private const val PROCESS_TERMINATION_TIMEOUT_MS = 2_000L
 private const val DEFAULT_IDLE_SHUTDOWN_TIMEOUT_MS = 60_000L
-private const val MAX_PAGES = 10
 private const val PAGE_LIMIT = 50
+
+private val THREAD_LIST_SOURCE_KINDS: List<String> = listOf(
+  "cli",
+  "vscode",
+  "exec",
+  "appServer",
+  "subAgent",
+  "subAgentReview",
+  "subAgentCompact",
+  "subAgentThreadSpawn",
+  "subAgentOther",
+  "unknown",
+)
 
 private val LOG = logger<CodexAppServerClient>()
 
@@ -77,6 +89,10 @@ class CodexAppServerClient(
     cwdFilter: String? = null,
   ): CodexThreadPage {
     val resolvedLimit = limit.coerceAtLeast(1)
+    val normalizedCwdFilter = cwdFilter
+      ?.trim()
+      ?.takeIf { it.isNotEmpty() }
+      ?.let(::normalizeRootPath)
     val response = request(
       method = "thread/list",
       paramsWriter = { generator ->
@@ -86,9 +102,14 @@ class CodexAppServerClient(
         generator.writeStringField("sortKey", "updated_at")
         generator.writeBooleanField("archived", archived)
         cursor?.let { generator.writeStringField("cursor", it) }
+        normalizedCwdFilter?.let { generator.writeStringField("cwd", it) }
+        generator.writeFieldName("sourceKinds")
+        generator.writeStartArray()
+        THREAD_LIST_SOURCE_KINDS.forEach(generator::writeString)
+        generator.writeEndArray()
         generator.writeEndObject()
       },
-      resultParser = { parser -> protocol.parseThreadListResult(parser, archived, cwdFilter) },
+      resultParser = { parser -> protocol.parseThreadListResult(parser, archived, normalizedCwdFilter) },
       defaultResult = ThreadListResult(emptyList(), null),
     )
     return CodexThreadPage(
@@ -100,8 +121,8 @@ class CodexAppServerClient(
   suspend fun listThreads(archived: Boolean, cwdFilter: String? = null): List<CodexThread> {
     val threads = mutableListOf<CodexThread>()
     var cursor: String? = null
-    var pages = 0
-    do {
+    val seenCursors = LinkedHashSet<String>()
+    while (true) {
       val response = listThreadsPage(
         archived = archived,
         cursor = cursor,
@@ -109,9 +130,16 @@ class CodexAppServerClient(
         cwdFilter = cwdFilter,
       )
       threads.addAll(response.threads)
-      cursor = response.nextCursor
-      pages++
-    } while (!cursor.isNullOrBlank() && pages < MAX_PAGES)
+      val nextCursor = response.nextCursor
+      if (nextCursor.isNullOrBlank()) {
+        break
+      }
+      if (!seenCursors.add(nextCursor)) {
+        LOG.warn("thread/list returned a repeating cursor '$nextCursor'; stopping pagination")
+        break
+      }
+      cursor = nextCursor
+    }
     return threads.sortedByDescending { it.updatedAt }
   }
 

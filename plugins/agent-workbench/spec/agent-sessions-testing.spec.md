@@ -67,10 +67,11 @@ Define required coverage ownership for Agent Workbench specs. This file does not
   [@test] ../chat/testSrc/AgentChatFileEditorProviderTest.kt
   [@test] ../chat/testSrc/AgentChatTabSelectionServiceTest.kt
 
-- Codex rollout coverage must include parser/title/activity behavior, watcher behavior (path-scoped + overflow/full-rescan), backend selection defaults/override, and paging no-progress guard behavior.
+- Codex backend coverage must include rollout parser/title/activity behavior, watcher behavior (path-scoped + overflow/full-rescan), app-server sub-agent hierarchy/orphan handling, backend selection defaults/override, and paging no-progress guard behavior.
   [@test] ../codex/sessions/testSrc/CodexRolloutSessionBackendTest.kt
   [@test] ../codex/sessions/testSrc/CodexRolloutSessionBackendFileWatchIntegrationTest.kt
   [@test] ../codex/sessions/testSrc/CodexRolloutSessionsWatcherTest.kt
+  [@test] ../codex/sessions/testSrc/CodexAppServerSessionBackendTest.kt
   [@test] ../codex/sessions/testSrc/CodexSessionBackendSelectorTest.kt
   [@test] ../codex/sessions/testSrc/CodexSessionsPagingLogicTest.kt
 
@@ -91,7 +92,7 @@ Define required coverage ownership for Agent Workbench specs. This file does not
 - New-thread flow: `AgentSessionsToolWindowTest`, `AgentSessionsLoadingCoordinatorTest`, `AgentChatEditorServiceTest`
 - Dedicated frame: `AgentSessionsGearActionsTest`, `AgentSessionsOpenModeRoutingTest`, `AgentSessionsToolWindowTest`
 - Chat tab lifecycle: `AgentChatEditorServiceTest`, `AgentChatFileEditorProviderTest`, `AgentChatTabSelectionServiceTest`
-- Codex rollout backend: `CodexRolloutSessionBackendTest`, `CodexRolloutSessionBackendFileWatchIntegrationTest`, `CodexRolloutSessionsWatcherTest`, `CodexSessionBackendSelectorTest`, `CodexSessionsPagingLogicTest`
+- Codex rollout/backend selection: `CodexRolloutSessionBackendTest`, `CodexRolloutSessionBackendFileWatchIntegrationTest`, `CodexRolloutSessionsWatcherTest`, `CodexAppServerSessionBackendTest`, `CodexSessionBackendSelectorTest`, `CodexSessionsPagingLogicTest`
 - Codex app-server contract: `CodexAppServerClientTest`
 
 ## Contract Suite

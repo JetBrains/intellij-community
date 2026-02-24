@@ -24,6 +24,7 @@ import kotlinx.coroutines.withContext
 private class AgentChatEditorServiceLog
 
 private val LOG = logger<AgentChatEditorServiceLog>()
+private const val CODEX_PROVIDER_ID = "codex"
 
 data class AgentChatPendingTabRebindTarget(
   @JvmField val threadIdentity: String,
@@ -91,12 +92,23 @@ suspend fun openChat(
   }
 }
 
-suspend fun collectOpenAgentChatProjectPaths(): Set<String> = withContext(Dispatchers.UI) {
+suspend fun collectOpenAgentChatProjectPaths(): Set<String> {
+  return collectOpenAgentChatProjectPaths(includePendingOnly = false)
+}
+
+suspend fun collectOpenPendingAgentChatProjectPaths(): Set<String> {
+  return collectOpenAgentChatProjectPaths(includePendingOnly = true)
+}
+
+private suspend fun collectOpenAgentChatProjectPaths(includePendingOnly: Boolean): Set<String> = withContext(Dispatchers.UI) {
   val paths = LinkedHashSet<String>()
   for (project in ProjectManager.getInstance().openProjects) {
     val manager = project.serviceIfCreated<FileEditorManager>() ?: continue
     for (openFile in manager.openFiles) {
       val chatFile = openFile as? AgentChatVirtualFile ?: continue
+      if (includePendingOnly && !isPendingCodexThreadIdentity(chatFile.threadIdentity)) {
+        continue
+      }
       paths.add(normalizeAgentWorkbenchPath(chatFile.projectPath))
     }
   }
@@ -286,6 +298,18 @@ private fun findExistingChat(
 private fun isPendingThreadIdentity(threadIdentity: String): Boolean {
   val separator = threadIdentity.indexOf(':')
   if (separator <= 0 || separator == threadIdentity.lastIndex) {
+    return false
+  }
+  return threadIdentity.substring(separator + 1).startsWith("new-")
+}
+
+private fun isPendingCodexThreadIdentity(threadIdentity: String): Boolean {
+  val separator = threadIdentity.indexOf(':')
+  if (separator <= 0 || separator == threadIdentity.lastIndex) {
+    return false
+  }
+  val providerId = threadIdentity.substring(0, separator).lowercase()
+  if (providerId != CODEX_PROVIDER_ID) {
     return false
   }
   return threadIdentity.substring(separator + 1).startsWith("new-")

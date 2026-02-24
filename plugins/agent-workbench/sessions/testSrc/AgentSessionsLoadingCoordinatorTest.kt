@@ -320,6 +320,224 @@ class AgentSessionsLoadingCoordinatorTest {
     }
   }
 
+  @Test
+  fun refreshFallsBackToPerPathLoadWhenPrefetchOmitsPath() = runBlocking {
+    val projectB = "/work/project-b"
+    val openLoadCounts = LinkedHashMap<String, AtomicInteger>()
+
+    val source = ScriptedSessionSource(
+      provider = AgentSessionProvider.CODEX,
+      prefetch = {
+        mapOf(
+          PROJECT_PATH to listOf(
+            thread(id = "codex-prefetched-a", updatedAt = 600L, title = "Prefetched A", provider = AgentSessionProvider.CODEX)
+          )
+        )
+      },
+      listFromOpenProject = { path, _ ->
+        openLoadCounts.getOrPut(path) { AtomicInteger() }.incrementAndGet()
+        listOf(
+          thread(
+            id = "codex-fallback-${path.substringAfterLast('/')}",
+            updatedAt = 500L,
+            provider = AgentSessionProvider.CODEX,
+          )
+        )
+      },
+    )
+
+    withLoadingCoordinator(
+      sessionSourcesProvider = { listOf(source) },
+      projectEntriesProvider = {
+        listOf(
+          openProjectEntry(PROJECT_PATH, "Project A"),
+          openProjectEntry(projectB, "Project B"),
+        )
+      },
+      isRefreshGateActive = { true },
+    ) { coordinator, stateStore ->
+      coordinator.refresh()
+
+      waitForCondition {
+        val projects = stateStore.snapshot().projects
+        projects.firstOrNull { it.path == PROJECT_PATH }?.hasLoaded == true &&
+        projects.firstOrNull { it.path == projectB }?.hasLoaded == true
+      }
+
+      val projectA = stateStore.snapshot().projects.first { it.path == PROJECT_PATH }
+      val projectBState = stateStore.snapshot().projects.first { it.path == projectB }
+
+      assertThat(projectA.threads.map { it.id }).containsExactly("codex-prefetched-a")
+      assertThat(projectBState.threads.map { it.id }).containsExactly("codex-fallback-project-b")
+      assertThat(openLoadCounts[PROJECT_PATH]?.get() ?: 0).isEqualTo(0)
+      assertThat(openLoadCounts[projectB]?.get() ?: 0).isEqualTo(1)
+    }
+  }
+
+  @Test
+  fun pendingCodexTabsTriggerPollingRefreshWithoutSourceUpdates() = runBlocking {
+    val closedRefreshInvocations = AtomicInteger(0)
+    val receivedTargets = mutableListOf<Map<String, List<AgentChatPendingTabRebindTarget>>>()
+
+    val source = ScriptedSessionSource(
+      provider = AgentSessionProvider.CODEX,
+      supportsUpdates = false,
+      listFromClosedProject = { path ->
+        if (path != PROJECT_PATH) {
+          emptyList()
+        }
+        else {
+          closedRefreshInvocations.incrementAndGet()
+          listOf(thread(id = "codex-polled", updatedAt = 700L, title = "Polled thread", provider = AgentSessionProvider.CODEX))
+        }
+      },
+    )
+
+    withLoadingCoordinator(
+      sessionSourcesProvider = { listOf(source) },
+      isRefreshGateActive = { true },
+      openChatPathsProvider = { setOf(PROJECT_PATH) },
+      openPendingChatPathsProvider = { setOf(PROJECT_PATH) },
+      openChatPendingTabBinder = { targets ->
+        receivedTargets.add(targets)
+        targets.size
+      },
+      pendingCodexRebindPollIntervalMs = 50L,
+    ) { coordinator, _ ->
+      coordinator.observeSessionSourceUpdates()
+
+      waitForCondition {
+        closedRefreshInvocations.get() > 0 && receivedTargets.isNotEmpty()
+      }
+
+      val targets = receivedTargets.last()[PROJECT_PATH]
+      assertThat(targets).isNotNull
+      assertThat(targets!!).hasSize(1)
+      assertThat(targets.single().threadId).isEqualTo("codex-polled")
+    }
+  }
+
+  @Test
+  fun pendingCodexPollingDoesNotRebindToPreviouslyKnownThreadIds() = runBlocking {
+    val closedRefreshInvocations = AtomicInteger(0)
+    val binderInvocations = AtomicInteger(0)
+
+    val source = ScriptedSessionSource(
+      provider = AgentSessionProvider.CODEX,
+      supportsUpdates = false,
+      listFromClosedProject = { path ->
+        if (path != PROJECT_PATH) {
+          emptyList()
+        }
+        else {
+          closedRefreshInvocations.incrementAndGet()
+          listOf(thread(id = "codex-existing", updatedAt = 700L, title = "Existing thread", provider = AgentSessionProvider.CODEX))
+        }
+      },
+    )
+
+    withLoadingCoordinator(
+      sessionSourcesProvider = { listOf(source) },
+      isRefreshGateActive = { true },
+      openChatPathsProvider = { setOf(PROJECT_PATH) },
+      openPendingChatPathsProvider = { setOf(PROJECT_PATH) },
+      openChatPendingTabBinder = {
+        binderInvocations.incrementAndGet()
+        0
+      },
+      pendingCodexRebindPollIntervalMs = 50L,
+    ) { coordinator, stateStore ->
+      stateStore.replaceProjects(
+        projects = listOf(
+          AgentProjectSessions(
+            path = PROJECT_PATH,
+            name = "Project A",
+            isOpen = true,
+            hasLoaded = true,
+            threads = listOf(thread(id = "codex-existing", updatedAt = 100L, provider = AgentSessionProvider.CODEX)),
+          )
+        ),
+        visibleThreadCounts = emptyMap(),
+      )
+
+      coordinator.observeSessionSourceUpdates()
+
+      waitForCondition {
+        closedRefreshInvocations.get() > 0
+      }
+      delay(150.milliseconds)
+
+      assertThat(binderInvocations.get()).isEqualTo(0)
+    }
+  }
+
+  @Test
+  fun pendingCodexPollingRefreshScopesToPendingPathsOnly() = runBlocking {
+    val pendingPath = "/work/project-pending"
+    val refreshedPaths = mutableListOf<String>()
+
+    val source = ScriptedSessionSource(
+      provider = AgentSessionProvider.CODEX,
+      supportsUpdates = false,
+      listFromClosedProject = { path ->
+        synchronized(refreshedPaths) {
+          refreshedPaths.add(path)
+        }
+        when (path) {
+          pendingPath -> listOf(thread(id = "codex-polled", updatedAt = 700L, title = "Polled thread", provider = AgentSessionProvider.CODEX))
+          PROJECT_PATH -> listOf(thread(id = "codex-loaded", updatedAt = 999L, title = "Loaded thread", provider = AgentSessionProvider.CODEX))
+          else -> emptyList()
+        }
+      },
+    )
+
+    withLoadingCoordinator(
+      sessionSourcesProvider = { listOf(source) },
+      isRefreshGateActive = { true },
+      openChatPathsProvider = { setOf(PROJECT_PATH, pendingPath) },
+      openPendingChatPathsProvider = { setOf(pendingPath) },
+      pendingCodexRebindPollIntervalMs = 50L,
+    ) { coordinator, stateStore ->
+      stateStore.replaceProjects(
+        projects = listOf(
+          AgentProjectSessions(
+            path = PROJECT_PATH,
+            name = "Loaded",
+            isOpen = true,
+            hasLoaded = true,
+            threads = listOf(thread(id = "codex-loaded", updatedAt = 100L, provider = AgentSessionProvider.CODEX)),
+          ),
+          AgentProjectSessions(
+            path = pendingPath,
+            name = "Pending",
+            isOpen = true,
+            hasLoaded = false,
+            threads = emptyList(),
+          ),
+        ),
+        visibleThreadCounts = emptyMap(),
+      )
+
+      coordinator.observeSessionSourceUpdates()
+
+      waitForCondition {
+        synchronized(refreshedPaths) {
+          refreshedPaths.contains(pendingPath)
+        }
+      }
+
+      val refreshedPathsSnapshot = synchronized(refreshedPaths) {
+        refreshedPaths.toList()
+      }
+      assertThat(refreshedPathsSnapshot).containsOnly(pendingPath)
+
+      val loadedProject = stateStore.snapshot().projects.first { it.path == PROJECT_PATH }
+      assertThat(
+        loadedProject.threads.firstOrNull { it.provider == AgentSessionProvider.CODEX }?.updatedAt
+      ).isEqualTo(100L)
+    }
+  }
+
 }
 
 private suspend fun withLoadingCoordinator(
@@ -327,11 +545,13 @@ private suspend fun withLoadingCoordinator(
   projectEntriesProvider: suspend () -> List<ProjectEntry> = { emptyList() },
   isRefreshGateActive: suspend () -> Boolean,
   openChatPathsProvider: suspend () -> Set<String> = { emptySet() },
+  openPendingChatPathsProvider: suspend () -> Set<String> = { emptySet() },
   openChatTabPresentationUpdater: suspend (
     Map<Pair<String, String>, String>,
     Map<Pair<String, String>, AgentThreadActivity>,
   ) -> Int = { _, _ -> 0 },
   openChatPendingTabBinder: suspend (Map<String, List<AgentChatPendingTabRebindTarget>>) -> Int = { _ -> 0 },
+  pendingCodexRebindPollIntervalMs: Long = 1_500L,
   action: suspend (AgentSessionsLoadingCoordinator, AgentSessionsStateStore) -> Unit,
 ) {
   @Suppress("RAW_SCOPE_CREATION")
@@ -347,8 +567,10 @@ private suspend fun withLoadingCoordinator(
       stateStore = stateStore,
       isRefreshGateActive = isRefreshGateActive,
       openAgentChatProjectPathsProvider = openChatPathsProvider,
+      openPendingAgentChatProjectPathsProvider = openPendingChatPathsProvider,
       openAgentChatTabPresentationUpdater = openChatTabPresentationUpdater,
       openAgentChatPendingTabBinder = openChatPendingTabBinder,
+      pendingCodexRebindPollIntervalMs = pendingCodexRebindPollIntervalMs,
     )
     action(coordinator, stateStore)
   }

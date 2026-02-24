@@ -8,6 +8,7 @@ import com.intellij.openapi.diagnostic.logger
 
 private const val BACKEND_OVERRIDE_PROPERTY = "agent.workbench.codex.sessions.backend"
 private const val APP_SERVER_BACKEND = "app-server"
+private const val ROLLOUT_BACKEND = "rollout"
 
 private val LOG = logger<CodexSessionBackendSelector>()
 
@@ -26,14 +27,19 @@ internal object CodexSessionBackendSelector {
         CodexAppServerSessionBackend()
       }
 
-      null -> {
-        LOG.debug { "Using Codex session backend: rollout (default)" }
+      ROLLOUT_BACKEND -> {
+        LOG.debug { "Using Codex session backend: $ROLLOUT_BACKEND" }
         CodexRolloutSessionBackend()
       }
 
+      null -> {
+        LOG.debug { "Using Codex session backend: $APP_SERVER_BACKEND (default)" }
+        CodexAppServerSessionBackend()
+      }
+
       else -> {
-        LOG.warn("Unknown Codex session backend '$normalizedOverride', falling back to rollout")
-        CodexRolloutSessionBackend()
+        LOG.warn("Unknown Codex session backend '$normalizedOverride', falling back to $APP_SERVER_BACKEND")
+        CodexAppServerSessionBackend()
       }
     }
   }
