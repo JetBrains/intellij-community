@@ -1,7 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package fleet.fastutil.ints
 
-interface IntMap<V> {
+interface IntMap<out V> {
   val size: Int
   val keys: IntIterator
   val values: Iterator<V>
