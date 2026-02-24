@@ -1,0 +1,11 @@
+<idea-plugin>
+  <dependencies>
+    <module name="intellij.dev.psiViewer"/>
+    <plugin id="com.jetbrains.php"/>
+  </dependencies>
+
+  <extensions defaultExtensionNs="com.intellij.dev">
+    <psiViewer.extension implementation="com.intellij.php.dev.psiViewer.PhpJSPsiViewerExtension"/>
+    <psiViewer.extension implementation="com.intellij.php.dev.psiViewer.PhpJsonPsiViewerExtension"/>
+  </extensions>
+</idea-plugin>
