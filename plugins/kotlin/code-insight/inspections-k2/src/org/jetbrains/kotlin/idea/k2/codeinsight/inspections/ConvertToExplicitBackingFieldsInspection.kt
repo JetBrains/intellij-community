@@ -115,7 +115,7 @@ internal class ConvertToExplicitBackingFieldsInspection :
     }
 
     override fun isApplicableByPsi(element: KtProperty): Boolean {
-        if (element.isVar && element.setter == null) return false
+        if (element.isVar) return false
         if (element.isMember && element.containingClass()?.isAbstract() == true && !element.hasModifier(KtTokens.FINAL_KEYWORD)) return false
         return !element.isPrivate() && element.getter != null
     }
