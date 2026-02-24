@@ -485,7 +485,7 @@
         "lowDate": "2015-07-29",
         "highDate": "2018-01-29"
       },
-      "doc": "<div class=\"notecard note\"><p><strong>Note:</strong> This feature is available in <a href=\"$MDN_URL$/Web/API/Web_Workers_API\">Web Workers</a>, except for <a href=\"$MDN_URL$/Web/API/Service_Worker_API\">Service Workers</a>.</div>\n<p>The <strong><code>revokeObjectURL()</code></strong> static method of the <a href=\"$MDN_URL$/Web/API/URL\"><code>URL</code></a> interface\nreleases an existing object URL which was previously created by calling\n<a href=\"$MDN_URL$/Web/API/URL/createObjectURL_static\" ><code>URL.createObjectURL()</code></a>.\n<p>For more information, see <a href=\"$MDN_URL$/Web/URI/Reference/Schemes/blob\">blob URLs</a>.\n<p>Call this method when you've finished\nusing an object URL to let the browser know not to keep the reference to the file any\nlonger.\n<div class=\"notecard note\">\n<p><strong>Note:</strong>\nThis method is <em>not</em> available in <a href=\"$MDN_URL$/Web/API/Service_Worker_API\">Service Workers</a>, due to\nissues with the <a href=\"$MDN_URL$/Web/API/Blob\"><code>Blob</code></a> interface's life cycle and the potential for leaks.\n</div>",
+      "doc": "<div class=\"notecard note\"><p><strong>Note:</strong> This feature is available in <a href=\"$MDN_URL$/Web/API/Web_Workers_API\">Web Workers</a>, except for <a href=\"$MDN_URL$/Web/API/Service_Worker_API\">Service Workers</a>.</div>\n<p>The <strong><code>revokeObjectURL()</code></strong> static method of the <a href=\"$MDN_URL$/Web/API/URL\"><code>URL</code></a> interface\nreleases an existing object URL which was previously created by calling\n<a href=\"$MDN_URL$/Web/API/URL/createObjectURL_static\" ><code>URL.createObjectURL()</code></a>.\n<p>For more information, see <a href=\"$MDN_URL$/Web/URI/Reference/Schemes/blob\">blob URLs</a>.\n<p>Call this method when you've finished\nusing an object URL to let the browser know not to keep the reference to the file any\nlonger.\n<p>If the <code>objectURL</code> argument passed is not a currently-active object URL — for example if it is an invalid URL, non-object URL, or is already revoked — then calling this method does nothing.\n<div class=\"notecard note\">\n<p><strong>Note:</strong>\nThis method is <em>not</em> available in <a href=\"$MDN_URL$/Web/API/Service_Worker_API\">Service Workers</a>, due to\nissues with the <a href=\"$MDN_URL$/Web/API/Blob\"><code>Blob</code></a> interface's life cycle and the potential for leaks.\n</div>",
       "parameters": {
         "objectURL": "A string representing an object URL that was previously created by\ncalling <a href=\"$MDN_URL$/Web/API/URL/createObjectURL_static\" ><code>createObjectURL()</code></a>."
       },
@@ -14693,7 +14693,9 @@
         "Edge": "97",
         "Firefox": "114",
         "FirefoxAndroid": "114",
-        "Opera": "83"
+        "Opera": "83",
+        "Safari": "26.4",
+        "SafariIOS": "26.4"
       },
       "baseline": {
         "level": "NONE"
@@ -14711,7 +14713,9 @@
         "Edge": "97",
         "Firefox": "114",
         "FirefoxAndroid": "114",
-        "Opera": "83"
+        "Opera": "83",
+        "Safari": "26.4",
+        "SafariIOS": "26.4"
       },
       "baseline": {
         "level": "NONE"
@@ -14736,7 +14740,9 @@
         "Edge": "97",
         "Firefox": "114",
         "FirefoxAndroid": "114",
-        "Opera": "83"
+        "Opera": "83",
+        "Safari": "26.4",
+        "SafariIOS": "26.4"
       },
       "baseline": {
         "level": "NONE"
@@ -14746,17 +14752,18 @@
     "webtransport.congestioncontrol": {
       "url": "$MDN_URL$/web/api/webtransport/congestioncontrol",
       "status": [
-        "Experimental",
         "StandardTrack"
       ],
       "compatibility": {
         "Firefox": "114",
-        "FirefoxAndroid": "114"
+        "FirefoxAndroid": "114",
+        "Safari": "26.4",
+        "SafariIOS": "26.4"
       },
       "baseline": {
         "level": "NONE"
       },
-      "doc": "<div class=\"notecard experimental\"><p><strong>Experimental:</strong> <strong>This is an <a href=\"$MDN_URL$/MDN/Writing_guidelines/Experimental_deprecated_obsolete#experimental\">experimental technology</a></strong><br>Check the <a href=\"#browser_compatibility\">Browser compatibility table</a> carefully before using this in production.</div>\n<div class=\"notecard secure\"><p><strong>Secure context:</strong> This feature is available only in <a href=\"$MDN_URL$/Web/Security/Defenses/Secure_Contexts\">secure contexts</a> (HTTPS), in some or all <a href=\"#browser_compatibility\">supporting browsers</a>.</div>\n<div class=\"notecard note\"><p><strong>Note:</strong> This feature is available in <a href=\"$MDN_URL$/Web/API/Web_Workers_API\">Web Workers</a>.</div>\n<p>The <strong><code>congestionControl</code></strong> read-only property of the <a href=\"$MDN_URL$/Web/API/WebTransport\"><code>WebTransport</code></a> interface indicates the application's preference for either high throughput or low-latency when sending data.\n<p>The value is set in the <a href=\"$MDN_URL$/Web/API/WebTransport/WebTransport#congestioncontrol\"><code>WebTransport()</code> constructor options</a>."
+      "doc": "<div class=\"notecard secure\"><p><strong>Secure context:</strong> This feature is available only in <a href=\"$MDN_URL$/Web/Security/Defenses/Secure_Contexts\">secure contexts</a> (HTTPS), in some or all <a href=\"#browser_compatibility\">supporting browsers</a>.</div>\n<div class=\"notecard note\"><p><strong>Note:</strong> This feature is available in <a href=\"$MDN_URL$/Web/API/Web_Workers_API\">Web Workers</a>.</div>\n<p>The <strong><code>congestionControl</code></strong> read-only property of the <a href=\"$MDN_URL$/Web/API/WebTransport\"><code>WebTransport</code></a> interface indicates the application's preference for either high throughput or low-latency when sending data.\n<p>The value is set in the <a href=\"$MDN_URL$/Web/API/WebTransport/WebTransport#congestioncontrol\"><code>WebTransport()</code> constructor options</a>."
     },
     "webtransport.createbidirectionalstream": {
       "url": "$MDN_URL$/web/api/webtransport/createbidirectionalstream",
@@ -14769,7 +14776,9 @@
         "Edge": "97",
         "Firefox": "114",
         "FirefoxAndroid": "114",
-        "Opera": "83"
+        "Opera": "83",
+        "Safari": "26.4",
+        "SafariIOS": "26.4"
       },
       "baseline": {
         "level": "NONE"
@@ -14792,7 +14801,9 @@
         "Chrome": "97",
         "ChromeAndroid": "97",
         "Edge": "97",
-        "Opera": "83"
+        "Opera": "83",
+        "Safari": "26.4",
+        "SafariIOS": "26.4"
       },
       "baseline": {
         "level": "NONE"
@@ -14817,7 +14828,9 @@
         "Edge": "97",
         "Firefox": "114",
         "FirefoxAndroid": "114",
-        "Opera": "83"
+        "Opera": "83",
+        "Safari": "26.4",
+        "SafariIOS": "26.4"
       },
       "baseline": {
         "level": "NONE"
@@ -14827,14 +14840,16 @@
     "webtransport.getstats": {
       "url": "$MDN_URL$/web/api/webtransport/getstats",
       "status": [
-        "Experimental",
         "StandardTrack"
       ],
-      "compatibility": {},
+      "compatibility": {
+        "Safari": "26.4",
+        "SafariIOS": "26.4"
+      },
       "baseline": {
         "level": "NONE"
       },
-      "doc": "<div class=\"notecard experimental\"><p><strong>Experimental:</strong> <strong>This is an <a href=\"$MDN_URL$/MDN/Writing_guidelines/Experimental_deprecated_obsolete#experimental\">experimental technology</a></strong><br>Check the <a href=\"#browser_compatibility\">Browser compatibility table</a> carefully before using this in production.</div>\n<div class=\"notecard secure\"><p><strong>Secure context:</strong> This feature is available only in <a href=\"$MDN_URL$/Web/Security/Defenses/Secure_Contexts\">secure contexts</a> (HTTPS), in some or all <a href=\"#browser_compatibility\">supporting browsers</a>.</div>\n<div class=\"notecard note\"><p><strong>Note:</strong> This feature is available in <a href=\"$MDN_URL$/Web/API/Web_Workers_API\">Web Workers</a>.</div>\n<p>The <strong><code>getStats()</code></strong> method of the <a href=\"$MDN_URL$/Web/API/WebTransport\"><code>WebTransport</code></a> interface asynchronously returns an object containing HTTP/3 connection statistics.",
+      "doc": "<div class=\"notecard secure\"><p><strong>Secure context:</strong> This feature is available only in <a href=\"$MDN_URL$/Web/Security/Defenses/Secure_Contexts\">secure contexts</a> (HTTPS), in some or all <a href=\"#browser_compatibility\">supporting browsers</a>.</div>\n<div class=\"notecard note\"><p><strong>Note:</strong> This feature is available in <a href=\"$MDN_URL$/Web/API/Web_Workers_API\">Web Workers</a>.</div>\n<p>The <strong><code>getStats()</code></strong> method of the <a href=\"$MDN_URL$/Web/API/WebTransport\"><code>WebTransport</code></a> interface asynchronously returns an object containing HTTP/3 connection statistics.",
       "returns": "A <a href=\"$MDN_URL$/Web/JavaScript/Reference/Global_Objects/Promise\"><code>Promise</code></a> that resolves to an object containing HTTP/3 connection statistics.\nThe returned object may have the following properties/statistics:\n<dl>\n<dt id=\"timestamp\"><a href=\"#timestamp\"><code>timestamp</code></a></dt>\n<dd>\n<p>A <a href=\"$MDN_URL$/Web/API/DOMHighResTimeStamp\"><code>DOMHighResTimeStamp</code></a> indicating the timestamp at which the statistics were gathered, relative to Jan 1, 1970, UTC.\n</dd>\n<dt id=\"bytessent\"><a href=\"#bytessent\"><code>bytesSent</code></a></dt>\n<dd>\n<p>A positive integer indicating the number of bytes sent on the QUIC connection, including retransmissions.\nNote that this count does not include additional data from protocols used by QUIC, such as UDP, or any other outer framing.\n</dd>\n<dt id=\"packetssent\"><a href=\"#packetssent\"><code>packetsSent</code></a></dt>\n<dd>\n<p>A positive integer indicating the number of packets sent on the QUIC connection, including those that are known to have been lost.\n</dd>\n<dt id=\"packetslost\"><a href=\"#packetslost\"><code>packetsLost</code></a></dt>\n<dd>\n<p>A positive integer indicating the number of packets lost on the QUIC connection.\nThis value will increase as packets are declared lost, and decrease if they are subsequently received.\n</dd>\n<dt id=\"numoutgoingstreamscreated\"><a href=\"#numoutgoingstreamscreated\"><code>numOutgoingStreamsCreated</code></a></dt>\n<dd>\n<p>A positive integer indicating the number of outgoing QUIC streams created on the QUIC connection.\n</dd>\n<dt id=\"numincomingstreamscreated\"><a href=\"#numincomingstreamscreated\"><code>numIncomingStreamsCreated</code></a></dt>\n<dd>\n<p>A positive integer indicating the number of incoming QUIC streams created on the QUIC connection.\n</dd>\n<dt id=\"bytesreceived\"><a href=\"#bytesreceived\"><code>bytesReceived</code></a></dt>\n<dd>\n<p>A positive integer indicating the total number of bytes received on the QUIC connection.\nThis count includes duplicate data from streams, but does not include additional data for protocols used by QUIC, such as UDP, or any other outer framing.\n</dd>\n<dt id=\"packetsreceived\"><a href=\"#packetsreceived\"><code>packetsReceived</code></a></dt>\n<dd>\n<p>A positive integer indicating the total number of packets received on the QUIC connection, including packets that were not processable.\n</dd>\n<dt id=\"smoothedrtt\"><a href=\"#smoothedrtt\"><code>smoothedRtt</code></a></dt>\n<dd>\n<p>A <a href=\"$MDN_URL$/Web/API/DOMHighResTimeStamp\"><code>DOMHighResTimeStamp</code></a> containing the smoothed <a href=\"$MDN_URL$/Glossary/Round_Trip_Time\">round-trip time (RTT)</a> currently observed on the connection, calculated as an exponentially weighted moving average of an endpoint's RTT samples after taking account of acknowledgement delays.\n</dd>\n<dt id=\"rttvariation\"><a href=\"#rttvariation\"><code>rttVariation</code></a></dt>\n<dd>\n<p>A <a href=\"$MDN_URL$/Web/API/DOMHighResTimeStamp\"><code>DOMHighResTimeStamp</code></a> containing the mean variation in round-trip time samples currently observed on the connection.\n</dd>\n<dt id=\"minrtt\"><a href=\"#minrtt\"><code>minRtt</code></a></dt>\n<dd>\n<p>A <a href=\"$MDN_URL$/Web/API/DOMHighResTimeStamp\"><code>DOMHighResTimeStamp</code></a> containing the minimum round-trip time observed on the entire connection.\n</dd>\n<dt id=\"datagrams\"><a href=\"#datagrams\"><code>datagrams</code></a></dt>\n<dd>\n<p>An object containing statistics for datagram transmission over the connection.\nThe object has the following properties:\n<dl>\n<dt id=\"timestamp_2\"><a href=\"#timestamp_2\"><code>timestamp</code></a></dt>\n<dd>\n<p>A <a href=\"$MDN_URL$/Web/API/DOMHighResTimeStamp\"><code>DOMHighResTimeStamp</code></a> indicating the timestamp at which the statistics were gathered, relative to Jan 1, 1970, UTC.\n</dd>\n<dt id=\"expiredoutgoing\"><a href=\"#expiredoutgoing\"><code>expiredOutgoing</code></a></dt>\n<dd>\n<p>A positive integer indicating the number of datagrams that were dropped from the queue for sending because they expired.\nNote that the maximum age before a datagram in the send-queue expires can be found in <a href=\"$MDN_URL$/Web/API/WebTransportDatagramDuplexStream/outgoingMaxAge\"><code>outgoingMaxAge</code></a>.\n</dd>\n<dt id=\"droppedincoming\"><a href=\"#droppedincoming\"><code>droppedIncoming</code></a></dt>\n<dd>\n<p>A positive integer indicating the number incoming datagrams that were dropped.\nIncoming datagrams are dropped if the application does not read them before new datagrams overflow the <a href=\"$MDN_URL$/Web/API/WebTransportDatagramDuplexStream/readable\"><code>readable</code> stream</a> receive queue.\n</dd>\n<dt id=\"lostoutgoing\"><a href=\"#lostoutgoing\"><code>lostOutgoing</code></a></dt>\n<dd>\n<p>A positive integer indicating the number of sent datagrams that were declared lost.\nNote that a datagram may be declared lost if, for example, no acknowledgement arrived within a timeout, or an acknowledgement for a later datagram was received first.\n</dd>\n</dl>\n</dd>\n</dl>\n<!--  Note, this is not in Firefox IDL, and method not yet implemented by others in https://searchfox.org/firefox-main/commit/4e6970cd336f1b642c0be6c9b697b4db5f7b6aeb\n- `estimatedSendRate`\n  - : A positive integer indicating the estimated rate at which queued data will be sent by the user agent, in bits per second.\n    This rate applies to all streams and datagrams that share a `WebTransport` session.\n    The member is not present when the session is pooled with others in a shared connection (see [`allowPooling`]($MDN_URL$/Web/API/WebTransport/WebTransport#allowpooling) in the `WebTransport` constructor), or if the user agent does not yet have an estimate.\n -->"
     },
     "webtransport.incomingbidirectionalstreams": {
@@ -14848,7 +14863,9 @@
         "Edge": "97",
         "Firefox": "114",
         "FirefoxAndroid": "114",
-        "Opera": "83"
+        "Opera": "83",
+        "Safari": "26.4",
+        "SafariIOS": "26.4"
       },
       "baseline": {
         "level": "NONE"
@@ -14866,7 +14883,9 @@
         "Edge": "97",
         "Firefox": "114",
         "FirefoxAndroid": "114",
-        "Opera": "83"
+        "Opera": "83",
+        "Safari": "26.4",
+        "SafariIOS": "26.4"
       },
       "baseline": {
         "level": "NONE"
@@ -14884,7 +14903,9 @@
         "Edge": "97",
         "Firefox": "114",
         "FirefoxAndroid": "114",
-        "Opera": "83"
+        "Opera": "83",
+        "Safari": "26.4",
+        "SafariIOS": "26.4"
       },
       "baseline": {
         "level": "NONE"
@@ -14894,17 +14915,18 @@
     "webtransport.reliability": {
       "url": "$MDN_URL$/web/api/webtransport/reliability",
       "status": [
-        "Experimental",
         "StandardTrack"
       ],
       "compatibility": {
         "Firefox": "114",
-        "FirefoxAndroid": "114"
+        "FirefoxAndroid": "114",
+        "Safari": "26.4",
+        "SafariIOS": "26.4"
       },
       "baseline": {
         "level": "NONE"
       },
-      "doc": "<div class=\"notecard experimental\"><p><strong>Experimental:</strong> <strong>This is an <a href=\"$MDN_URL$/MDN/Writing_guidelines/Experimental_deprecated_obsolete#experimental\">experimental technology</a></strong><br>Check the <a href=\"#browser_compatibility\">Browser compatibility table</a> carefully before using this in production.</div>\n<div class=\"notecard secure\"><p><strong>Secure context:</strong> This feature is available only in <a href=\"$MDN_URL$/Web/Security/Defenses/Secure_Contexts\">secure contexts</a> (HTTPS), in some or all <a href=\"#browser_compatibility\">supporting browsers</a>.</div>\n<div class=\"notecard note\"><p><strong>Note:</strong> This feature is available in <a href=\"$MDN_URL$/Web/API/Web_Workers_API\">Web Workers</a>.</div>\n<p>The <strong><code>reliability</code></strong> read-only property of the <a href=\"$MDN_URL$/Web/API/WebTransport\"><code>WebTransport</code></a> interface indicates whether the connection supports reliable transports only, or whether it also supports unreliable transports (such as UDP)."
+      "doc": "<div class=\"notecard secure\"><p><strong>Secure context:</strong> This feature is available only in <a href=\"$MDN_URL$/Web/Security/Defenses/Secure_Contexts\">secure contexts</a> (HTTPS), in some or all <a href=\"#browser_compatibility\">supporting browsers</a>.</div>\n<div class=\"notecard note\"><p><strong>Note:</strong> This feature is available in <a href=\"$MDN_URL$/Web/API/Web_Workers_API\">Web Workers</a>.</div>\n<p>The <strong><code>reliability</code></strong> read-only property of the <a href=\"$MDN_URL$/Web/API/WebTransport\"><code>WebTransport</code></a> interface indicates whether the connection supports reliable transports only, or whether it also supports unreliable transports (such as UDP)."
     },
     "webtransport.webtransport": {
       "url": "$MDN_URL$/web/api/webtransport/webtransport",
@@ -14917,7 +14939,9 @@
         "Edge": "97",
         "Firefox": "114",
         "FirefoxAndroid": "114",
-        "Opera": "83"
+        "Opera": "83",
+        "Safari": "26.4",
+        "SafariIOS": "26.4"
       },
       "baseline": {
         "level": "NONE"
@@ -14944,7 +14968,9 @@
         "Edge": "97",
         "Firefox": "114",
         "FirefoxAndroid": "114",
-        "Opera": "83"
+        "Opera": "83",
+        "Safari": "26.4",
+        "SafariIOS": "26.4"
       },
       "baseline": {
         "level": "NONE"
@@ -14962,7 +14988,9 @@
         "Edge": "97",
         "Firefox": "114",
         "FirefoxAndroid": "114",
-        "Opera": "83"
+        "Opera": "83",
+        "Safari": "26.4",
+        "SafariIOS": "26.4"
       },
       "baseline": {
         "level": "NONE"
@@ -14980,7 +15008,9 @@
         "Edge": "97",
         "Firefox": "114",
         "FirefoxAndroid": "114",
-        "Opera": "83"
+        "Opera": "83",
+        "Safari": "26.4",
+        "SafariIOS": "26.4"
       },
       "baseline": {
         "level": "NONE"
@@ -14998,7 +15028,9 @@
         "Edge": "97",
         "Firefox": "114",
         "FirefoxAndroid": "114",
-        "Opera": "83"
+        "Opera": "83",
+        "Safari": "26.4",
+        "SafariIOS": "26.4"
       },
       "baseline": {
         "level": "NONE"
@@ -15016,7 +15048,9 @@
         "Edge": "97",
         "Firefox": "114",
         "FirefoxAndroid": "114",
-        "Opera": "83"
+        "Opera": "83",
+        "Safari": "26.4",
+        "SafariIOS": "26.4"
       },
       "baseline": {
         "level": "NONE"
@@ -15034,7 +15068,9 @@
         "Edge": "97",
         "Firefox": "114",
         "FirefoxAndroid": "114",
-        "Opera": "83"
+        "Opera": "83",
+        "Safari": "26.4",
+        "SafariIOS": "26.4"
       },
       "baseline": {
         "level": "NONE"
@@ -15052,7 +15088,9 @@
         "Edge": "97",
         "Firefox": "114",
         "FirefoxAndroid": "114",
-        "Opera": "83"
+        "Opera": "83",
+        "Safari": "26.4",
+        "SafariIOS": "26.4"
       },
       "baseline": {
         "level": "NONE"
@@ -15070,7 +15108,9 @@
         "Edge": "97",
         "Firefox": "114",
         "FirefoxAndroid": "114",
-        "Opera": "83"
+        "Opera": "83",
+        "Safari": "26.4",
+        "SafariIOS": "26.4"
       },
       "baseline": {
         "level": "NONE"
@@ -15088,7 +15128,9 @@
         "Edge": "97",
         "Firefox": "114",
         "FirefoxAndroid": "114",
-        "Opera": "83"
+        "Opera": "83",
+        "Safari": "26.4",
+        "SafariIOS": "26.4"
       },
       "baseline": {
         "level": "NONE"
@@ -15106,7 +15148,9 @@
         "Edge": "97",
         "Firefox": "114",
         "FirefoxAndroid": "114",
-        "Opera": "83"
+        "Opera": "83",
+        "Safari": "26.4",
+        "SafariIOS": "26.4"
       },
       "baseline": {
         "level": "NONE"
@@ -15116,7 +15160,6 @@
     "webtransportdatagramduplexstream.writable": {
       "url": "$MDN_URL$/web/api/webtransportdatagramduplexstream/writable",
       "status": [
-        "StandardTrack",
         "Deprecated"
       ],
       "compatibility": {
@@ -15127,7 +15170,7 @@
         "FirefoxAndroid": "114",
         "Opera": "83"
       },
-      "doc": "<div class=\"notecard secure\"><p><strong>Secure context:</strong> This feature is available only in <a href=\"$MDN_URL$/Web/Security/Defenses/Secure_Contexts\">secure contexts</a> (HTTPS), in some or all <a href=\"#browser_compatibility\">supporting browsers</a>.</div>\n<div class=\"notecard note\"><p><strong>Note:</strong> This feature is available in <a href=\"$MDN_URL$/Web/API/Web_Workers_API\">Web Workers</a>.</div>\n<div class=\"notecard deprecated\"><p><strong>Deprecated:</strong> This feature is no longer recommended. Though some browsers might still support it, it may have already been removed from the relevant web standards, may be in the process of being dropped, or may only be kept for compatibility purposes. Avoid using it, and update existing code if possible; see the <a href=\"#browser_compatibility\">compatibility table</a> at the bottom of this page to guide your decision. Be aware that this feature may cease to work at any time.</div>\n<p>The <strong><code>writable</code></strong> read-only property of the <a href=\"$MDN_URL$/Web/API/WebTransportDatagramDuplexStream\"><code>WebTransportDatagramDuplexStream</code></a> interface returns a <a href=\"$MDN_URL$/Web/API/WritableStream\"><code>WritableStream</code></a> instance that can be used to unreliably write outgoing datagrams to the stream.\n<p>\"Unreliably\" means that transmission of data is not guaranteed, nor is arrival in a specific order. This is fine in some situations and provides very fast delivery. For example, you might want to transmit regular game state updates where each message supersedes the last one that arrives, and order is not important."
+      "doc": "<div class=\"notecard secure\"><p><strong>Secure context:</strong> This feature is available only in <a href=\"$MDN_URL$/Web/Security/Defenses/Secure_Contexts\">secure contexts</a> (HTTPS), in some or all <a href=\"#browser_compatibility\">supporting browsers</a>.</div>\n<div class=\"notecard note\"><p><strong>Note:</strong> This feature is available in <a href=\"$MDN_URL$/Web/API/Web_Workers_API\">Web Workers</a>.</div>\n<div class=\"notecard deprecated\"><p><strong>Deprecated:</strong> This feature is no longer recommended. Though some browsers might still support it, it may have already been removed from the relevant web standards, may be in the process of being dropped, or may only be kept for compatibility purposes. Avoid using it, and update existing code if possible; see the <a href=\"#browser_compatibility\">compatibility table</a> at the bottom of this page to guide your decision. Be aware that this feature may cease to work at any time.</div>\n<div class=\"notecard nonstandard\"><p><strong>Non-standard:</strong> This feature is not standardized. We do not recommend using non-standard features in production, as they have limited browser support, and may change or be removed. However, they can be a suitable alternative in specific cases where no standard option exists.</div>\n<p>The <strong><code>writable</code></strong> read-only property of the <a href=\"$MDN_URL$/Web/API/WebTransportDatagramDuplexStream\"><code>WebTransportDatagramDuplexStream</code></a> interface returns a <a href=\"$MDN_URL$/Web/API/WritableStream\"><code>WritableStream</code></a> instance that can be used to unreliably write outgoing datagrams to the stream.\n<p>\"Unreliably\" means that transmission of data is not guaranteed, nor is arrival in a specific order. This is fine in some situations and provides very fast delivery. For example, you might want to transmit regular game state updates where each message supersedes the last one that arrives, and order is not important."
     },
     "webtransporterror": {
       "url": "$MDN_URL$/web/api/webtransporterror",
@@ -15140,7 +15183,9 @@
         "Edge": "97",
         "Firefox": "114",
         "FirefoxAndroid": "114",
-        "Opera": "83"
+        "Opera": "83",
+        "Safari": "26.4",
+        "SafariIOS": "26.4"
       },
       "baseline": {
         "level": "NONE"
@@ -15158,7 +15203,9 @@
         "Edge": "97",
         "Firefox": "114",
         "FirefoxAndroid": "114",
-        "Opera": "83"
+        "Opera": "83",
+        "Safari": "26.4",
+        "SafariIOS": "26.4"
       },
       "baseline": {
         "level": "NONE"
@@ -15176,7 +15223,9 @@
         "Edge": "97",
         "Firefox": "114",
         "FirefoxAndroid": "114",
-        "Opera": "83"
+        "Opera": "83",
+        "Safari": "26.4",
+        "SafariIOS": "26.4"
       },
       "baseline": {
         "level": "NONE"
@@ -15194,7 +15243,9 @@
         "Edge": "97",
         "Firefox": "114",
         "FirefoxAndroid": "114",
-        "Opera": "83"
+        "Opera": "83",
+        "Safari": "26.4",
+        "SafariIOS": "26.4"
       },
       "baseline": {
         "level": "NONE"
@@ -15207,79 +15258,84 @@
     "webtransportreceivestream": {
       "url": "$MDN_URL$/web/api/webtransportreceivestream",
       "status": [
-        "Experimental",
         "StandardTrack"
       ],
       "compatibility": {
         "Firefox": "114",
-        "FirefoxAndroid": "114"
+        "FirefoxAndroid": "114",
+        "Safari": "26.4",
+        "SafariIOS": "26.4"
       },
       "baseline": {
         "level": "NONE"
       },
-      "doc": "<div class=\"notecard experimental\"><p><strong>Experimental:</strong> <strong>This is an <a href=\"$MDN_URL$/MDN/Writing_guidelines/Experimental_deprecated_obsolete#experimental\">experimental technology</a></strong><br>Check the <a href=\"#browser_compatibility\">Browser compatibility table</a> carefully before using this in production.</div>\n<div class=\"notecard secure\"><p><strong>Secure context:</strong> This feature is available only in <a href=\"$MDN_URL$/Web/Security/Defenses/Secure_Contexts\">secure contexts</a> (HTTPS), in some or all <a href=\"#browser_compatibility\">supporting browsers</a>.</div>\n<div class=\"notecard note\"><p><strong>Note:</strong> This feature is available in <a href=\"$MDN_URL$/Web/API/Web_Workers_API\">Web Workers</a>.</div>\n<p>The <code>WebTransportReceiveStream</code> interface of the <a href=\"$MDN_URL$/Web/API/WebTransport_API\" >WebTransport API</a> is a <a href=\"$MDN_URL$/Web/API/ReadableStream\"><code>ReadableStream</code></a> that can be used to read from an incoming unidirectional or bidirectional <a href=\"$MDN_URL$/Web/API/WebTransport\"><code>WebTransport</code></a> stream.\n<p>The stream is a <a href=\"$MDN_URL$/Web/API/Streams_API/Using_readable_byte_streams\">readable byte stream</a> of <a href=\"$MDN_URL$/Web/JavaScript/Reference/Global_Objects/Uint8Array\"><code>Uint8Array</code></a>, and can be consumed using either a BYOB reader (<a href=\"$MDN_URL$/Web/API/ReadableStreamBYOBReader\"><code>ReadableStreamBYOBReader</code></a>) or the default reader (<a href=\"$MDN_URL$/Web/API/ReadableStreamDefaultReader\"><code>ReadableStreamDefaultReader</code></a>).\n<p>Objects of this type are not constructed directly.\nInstead they are obtained using the <a href=\"$MDN_URL$/Web/API/WebTransport/incomingUnidirectionalStreams\"><code>WebTransport.incomingUnidirectionalStream</code></a> property.\n<p><code>WebTransportReceiveStream</code> is a <a href=\"$MDN_URL$/Web/API/Web_Workers_API/Transferable_objects\">transferable object</a>."
+      "doc": "<div class=\"notecard secure\"><p><strong>Secure context:</strong> This feature is available only in <a href=\"$MDN_URL$/Web/Security/Defenses/Secure_Contexts\">secure contexts</a> (HTTPS), in some or all <a href=\"#browser_compatibility\">supporting browsers</a>.</div>\n<div class=\"notecard note\"><p><strong>Note:</strong> This feature is available in <a href=\"$MDN_URL$/Web/API/Web_Workers_API\">Web Workers</a>.</div>\n<p>The <code>WebTransportReceiveStream</code> interface of the <a href=\"$MDN_URL$/Web/API/WebTransport_API\" >WebTransport API</a> is a <a href=\"$MDN_URL$/Web/API/ReadableStream\"><code>ReadableStream</code></a> that can be used to read from an incoming unidirectional or bidirectional <a href=\"$MDN_URL$/Web/API/WebTransport\"><code>WebTransport</code></a> stream.\n<p>The stream is a <a href=\"$MDN_URL$/Web/API/Streams_API/Using_readable_byte_streams\">readable byte stream</a> of <a href=\"$MDN_URL$/Web/JavaScript/Reference/Global_Objects/Uint8Array\"><code>Uint8Array</code></a>, and can be consumed using either a BYOB reader (<a href=\"$MDN_URL$/Web/API/ReadableStreamBYOBReader\"><code>ReadableStreamBYOBReader</code></a>) or the default reader (<a href=\"$MDN_URL$/Web/API/ReadableStreamDefaultReader\"><code>ReadableStreamDefaultReader</code></a>).\n<p>Objects of this type are not constructed directly.\nInstead they are obtained using the <a href=\"$MDN_URL$/Web/API/WebTransport/incomingUnidirectionalStreams\"><code>WebTransport.incomingUnidirectionalStream</code></a> property.\n<p><code>WebTransportReceiveStream</code> is a <a href=\"$MDN_URL$/Web/API/Web_Workers_API/Transferable_objects\">transferable object</a>."
     },
     "webtransportreceivestream.getstats": {
       "url": "$MDN_URL$/web/api/webtransportreceivestream/getstats",
       "status": [
-        "Experimental",
         "StandardTrack"
       ],
       "compatibility": {
         "Firefox": "114",
-        "FirefoxAndroid": "114"
+        "FirefoxAndroid": "114",
+        "Safari": "26.4",
+        "SafariIOS": "26.4"
       },
       "baseline": {
         "level": "NONE"
       },
-      "doc": "<div class=\"notecard experimental\"><p><strong>Experimental:</strong> <strong>This is an <a href=\"$MDN_URL$/MDN/Writing_guidelines/Experimental_deprecated_obsolete#experimental\">experimental technology</a></strong><br>Check the <a href=\"#browser_compatibility\">Browser compatibility table</a> carefully before using this in production.</div>\n<div class=\"notecard secure\"><p><strong>Secure context:</strong> This feature is available only in <a href=\"$MDN_URL$/Web/Security/Defenses/Secure_Contexts\">secure contexts</a> (HTTPS), in some or all <a href=\"#browser_compatibility\">supporting browsers</a>.</div>\n<div class=\"notecard note\"><p><strong>Note:</strong> This feature is available in <a href=\"$MDN_URL$/Web/API/Web_Workers_API\">Web Workers</a>.</div>\n<p>The <strong><code>getStats()</code></strong> method of the <a href=\"$MDN_URL$/Web/API/WebTransportReceiveStream\"><code>WebTransportReceiveStream</code></a> interface asynchronously returns an object containing statistics for the current stream.\n<p>The statistics include the total number of ordered bytes that have arrived on this stream (ignoring network overhead, up until the first missing byte) and the total number that have been read by the application.\nIt therefore provides a measure of how quickly the application is consuming bytes from the server on this particular stream.",
+      "doc": "<div class=\"notecard secure\"><p><strong>Secure context:</strong> This feature is available only in <a href=\"$MDN_URL$/Web/Security/Defenses/Secure_Contexts\">secure contexts</a> (HTTPS), in some or all <a href=\"#browser_compatibility\">supporting browsers</a>.</div>\n<div class=\"notecard note\"><p><strong>Note:</strong> This feature is available in <a href=\"$MDN_URL$/Web/API/Web_Workers_API\">Web Workers</a>.</div>\n<p>The <strong><code>getStats()</code></strong> method of the <a href=\"$MDN_URL$/Web/API/WebTransportReceiveStream\"><code>WebTransportReceiveStream</code></a> interface asynchronously returns an object containing statistics for the current stream.\n<p>The statistics include the total number of ordered bytes that have arrived on this stream (ignoring network overhead, up until the first missing byte) and the total number that have been read by the application.\nIt therefore provides a measure of how quickly the application is consuming bytes from the server on this particular stream.",
       "returns": "A <a href=\"$MDN_URL$/Web/JavaScript/Reference/Global_Objects/Promise\"><code>Promise</code></a> that resolves to an object containing statistics about the current stream.\nThe returned object has the following properties:\n<dl>\n<dt id=\"timestamp\"><a href=\"#timestamp\"><code>timestamp</code></a></dt>\n<dd>\n<p>A <a href=\"$MDN_URL$/Web/API/DOMHighResTimeStamp\"><code>DOMHighResTimeStamp</code></a> indicating the timestamp at which the statistics were gathered, relative to Jan 1, 1970, UTC.\n</dd>\n<dt id=\"bytesreceived\"><a href=\"#bytesreceived\"><code>bytesReceived</code></a></dt>\n<dd>\n<p>A positive integer indicating the number of bytes received by this stream, up to the first missing byte.\nThe number does not include any network overhead, and can only increase.\n</dd>\n<dt id=\"bytesread\"><a href=\"#bytesread\"><code>bytesRead</code></a></dt>\n<dd>\n<p>A positive integer indicating the number of bytes the application has read from this <code>WebTransportReceiveStream</code> stream.\nThis number can only increase, and is always less than or equal to <code>bytesReceived</code>.\n</dd>\n</dl>"
     },
     "webtransportsendstream": {
       "url": "$MDN_URL$/web/api/webtransportsendstream",
       "status": [
-        "Experimental",
         "StandardTrack"
       ],
       "compatibility": {
         "Firefox": "114",
-        "FirefoxAndroid": "114"
+        "FirefoxAndroid": "114",
+        "Safari": "26.4",
+        "SafariIOS": "26.4"
       },
       "baseline": {
         "level": "NONE"
       },
-      "doc": "<div class=\"notecard experimental\"><p><strong>Experimental:</strong> <strong>This is an <a href=\"$MDN_URL$/MDN/Writing_guidelines/Experimental_deprecated_obsolete#experimental\">experimental technology</a></strong><br>Check the <a href=\"#browser_compatibility\">Browser compatibility table</a> carefully before using this in production.</div>\n<div class=\"notecard secure\"><p><strong>Secure context:</strong> This feature is available only in <a href=\"$MDN_URL$/Web/Security/Defenses/Secure_Contexts\">secure contexts</a> (HTTPS), in some or all <a href=\"#browser_compatibility\">supporting browsers</a>.</div>\n<div class=\"notecard note\"><p><strong>Note:</strong> This feature is available in <a href=\"$MDN_URL$/Web/API/Web_Workers_API\">Web Workers</a>.</div>\n<p>The <code>WebTransportSendStream</code> interface of the <a href=\"$MDN_URL$/Web/API/WebTransport_API\" >WebTransport API</a> is a specialized <a href=\"$MDN_URL$/Web/API/WritableStream\"><code>WritableStream</code></a> that is used to send outbound data in both unidirectional or bidirectional <a href=\"$MDN_URL$/Web/API/WebTransport\"><code>WebTransport</code></a> streams.\n<p>The send stream is a <a href=\"$MDN_URL$/Web/API/Streams_API/Using_writable_streams\">writable stream</a> of <a href=\"$MDN_URL$/Web/JavaScript/Reference/Global_Objects/Uint8Array\"><code>Uint8Array</code></a>, that can be written to in order to send data to a server.\nIt additionally provides streaming features such as setting the send order, and getting stream statistics.\n<p>Objects of this type are not constructed directly.\nWhen creating a unidirectional stream the <a href=\"$MDN_URL$/Web/API/WebTransport/createUnidirectionalStream\"><code>WebTransport.createUnidirectionalStream()</code></a> returns an object of this type for sending data.\nWhen creating a bidirectional stream using <a href=\"$MDN_URL$/Web/API/WebTransport/createBidirectionalStream\"><code>WebTransport.createBidirectionalStream()</code></a>, the method returns a <a href=\"$MDN_URL$/Web/API/WebTransportBidirectionalStream\"><code>WebTransportBidirectionalStream</code></a>, and the send stream object can be obtained from its <a href=\"$MDN_URL$/Web/API/WebTransportBidirectionalStream/writable\" ><code>writable</code></a> property.\nWhen a bidirectional stream is initiated by the remote end, an object of this type can similarly be obtained using <a href=\"$MDN_URL$/Web/API/WebTransport/incomingBidirectionalStreams\"><code>WebTransport.incomingBidirectionalStreams</code></a>.\n<p><code>WebTransportSendStream</code> is a <a href=\"$MDN_URL$/Web/API/Web_Workers_API/Transferable_objects\">transferable object</a>."
+      "doc": "<div class=\"notecard secure\"><p><strong>Secure context:</strong> This feature is available only in <a href=\"$MDN_URL$/Web/Security/Defenses/Secure_Contexts\">secure contexts</a> (HTTPS), in some or all <a href=\"#browser_compatibility\">supporting browsers</a>.</div>\n<div class=\"notecard note\"><p><strong>Note:</strong> This feature is available in <a href=\"$MDN_URL$/Web/API/Web_Workers_API\">Web Workers</a>.</div>\n<p>The <code>WebTransportSendStream</code> interface of the <a href=\"$MDN_URL$/Web/API/WebTransport_API\" >WebTransport API</a> is a specialized <a href=\"$MDN_URL$/Web/API/WritableStream\"><code>WritableStream</code></a> that is used to send outbound data in both unidirectional or bidirectional <a href=\"$MDN_URL$/Web/API/WebTransport\"><code>WebTransport</code></a> streams.\n<p>The send stream is a <a href=\"$MDN_URL$/Web/API/Streams_API/Using_writable_streams\">writable stream</a> of <a href=\"$MDN_URL$/Web/JavaScript/Reference/Global_Objects/Uint8Array\"><code>Uint8Array</code></a>, that can be written to in order to send data to a server.\nIt additionally provides streaming features such as setting the send order, and getting stream statistics.\n<p>Objects of this type are not constructed directly.\nWhen creating a unidirectional stream the <a href=\"$MDN_URL$/Web/API/WebTransport/createUnidirectionalStream\"><code>WebTransport.createUnidirectionalStream()</code></a> returns an object of this type for sending data.\nWhen creating a bidirectional stream using <a href=\"$MDN_URL$/Web/API/WebTransport/createBidirectionalStream\"><code>WebTransport.createBidirectionalStream()</code></a>, the method returns a <a href=\"$MDN_URL$/Web/API/WebTransportBidirectionalStream\"><code>WebTransportBidirectionalStream</code></a>, and the send stream object can be obtained from its <a href=\"$MDN_URL$/Web/API/WebTransportBidirectionalStream/writable\" ><code>writable</code></a> property.\nWhen a bidirectional stream is initiated by the remote end, an object of this type can similarly be obtained using <a href=\"$MDN_URL$/Web/API/WebTransport/incomingBidirectionalStreams\"><code>WebTransport.incomingBidirectionalStreams</code></a>.\n<p><code>WebTransportSendStream</code> is a <a href=\"$MDN_URL$/Web/API/Web_Workers_API/Transferable_objects\">transferable object</a>."
     },
     "webtransportsendstream.getstats": {
       "url": "$MDN_URL$/web/api/webtransportsendstream/getstats",
       "status": [
-        "Experimental",
         "StandardTrack"
       ],
       "compatibility": {
         "Firefox": "114",
-        "FirefoxAndroid": "114"
+        "FirefoxAndroid": "114",
+        "Safari": "26.4",
+        "SafariIOS": "26.4"
       },
       "baseline": {
         "level": "NONE"
       },
-      "doc": "<div class=\"notecard experimental\"><p><strong>Experimental:</strong> <strong>This is an <a href=\"$MDN_URL$/MDN/Writing_guidelines/Experimental_deprecated_obsolete#experimental\">experimental technology</a></strong><br>Check the <a href=\"#browser_compatibility\">Browser compatibility table</a> carefully before using this in production.</div>\n<div class=\"notecard secure\"><p><strong>Secure context:</strong> This feature is available only in <a href=\"$MDN_URL$/Web/Security/Defenses/Secure_Contexts\">secure contexts</a> (HTTPS), in some or all <a href=\"#browser_compatibility\">supporting browsers</a>.</div>\n<div class=\"notecard note\"><p><strong>Note:</strong> This feature is available in <a href=\"$MDN_URL$/Web/API/Web_Workers_API\">Web Workers</a>.</div>\n<p>The <strong><code>getStats()</code></strong> method of the <a href=\"$MDN_URL$/Web/API/WebTransportSendStream\"><code>WebTransportSendStream</code></a> interface asynchronously returns an object containing statistics for the current stream.\n<p>The statistics include the total number of bytes written to the stream, the number that have been sent (ignoring packet overhead), and the number of bytes that have been set at least once, and the number that have been acknowledged (up until the first sequentially-ordered non-acknowledged byte).\nIt therefore provides a measure of how quickly the application is sending bytes to the server on this particular stream.",
+      "doc": "<div class=\"notecard secure\"><p><strong>Secure context:</strong> This feature is available only in <a href=\"$MDN_URL$/Web/Security/Defenses/Secure_Contexts\">secure contexts</a> (HTTPS), in some or all <a href=\"#browser_compatibility\">supporting browsers</a>.</div>\n<div class=\"notecard note\"><p><strong>Note:</strong> This feature is available in <a href=\"$MDN_URL$/Web/API/Web_Workers_API\">Web Workers</a>.</div>\n<p>The <strong><code>getStats()</code></strong> method of the <a href=\"$MDN_URL$/Web/API/WebTransportSendStream\"><code>WebTransportSendStream</code></a> interface asynchronously returns an object containing statistics for the current stream.\n<p>The statistics include the total number of bytes written to the stream, the number that have been sent (ignoring packet overhead), and the number of bytes that have been set at least once, and the number that have been acknowledged (up until the first sequentially-ordered non-acknowledged byte).\nIt therefore provides a measure of how quickly the application is sending bytes to the server on this particular stream.",
       "returns": "A <a href=\"$MDN_URL$/Web/JavaScript/Reference/Global_Objects/Promise\"><code>Promise</code></a> that resolves to an object containing statistics about the current stream.\nThe returned object has the following properties:\n<dl>\n<dt id=\"bytesacknowledged\"><a href=\"#bytesacknowledged\"><code>bytesAcknowledged</code></a></dt>\n<dd>\n<p>A positive integer indicating the number of bytes written to this stream that have been sent and acknowledged as received by the server, using QUIC's ACK mechanism.\nOnly sequential bytes up to, but not including, the first non-acknowledged byte, are counted.\nThis number can only increase and is always less than or equal to <code>bytesSent</code>.\nWhen the connection is over HTTP/2, the value will match <code>bytesSent</code>.\n</dd>\n<dt id=\"bytessent\"><a href=\"#bytessent\"><code>bytesSent</code></a></dt>\n<dd>\n<p>A positive integer indicating the number of bytes written to this stream that have been sent at least once (but not necessarily acknowledged).\nThis number can only increase, and is always less than or equal to <code>bytesWritten</code>.\nNote that this count does not include bytes sent as network overhead (such as packet headers).\n</dd>\n<dt id=\"byteswritten\"><a href=\"#byteswritten\"><code>bytesWritten</code></a></dt>\n<dd>\n<p>A positive integer indicating the number of bytes successfully written to this stream.\nThis number can only increase.\n</dd>\n</dl>"
     },
     "webtransportsendstream.sendorder": {
       "url": "$MDN_URL$/web/api/webtransportsendstream/sendorder",
       "status": [
-        "Experimental",
         "StandardTrack"
       ],
       "compatibility": {
         "Firefox": "121",
-        "FirefoxAndroid": "121"
+        "FirefoxAndroid": "121",
+        "Safari": "26.4",
+        "SafariIOS": "26.4"
       },
       "baseline": {
         "level": "NONE"
       },
-      "doc": "<div class=\"notecard experimental\"><p><strong>Experimental:</strong> <strong>This is an <a href=\"$MDN_URL$/MDN/Writing_guidelines/Experimental_deprecated_obsolete#experimental\">experimental technology</a></strong><br>Check the <a href=\"#browser_compatibility\">Browser compatibility table</a> carefully before using this in production.</div>\n<div class=\"notecard secure\"><p><strong>Secure context:</strong> This feature is available only in <a href=\"$MDN_URL$/Web/Security/Defenses/Secure_Contexts\">secure contexts</a> (HTTPS), in some or all <a href=\"#browser_compatibility\">supporting browsers</a>.</div>\n<div class=\"notecard note\"><p><strong>Note:</strong> This feature is available in <a href=\"$MDN_URL$/Web/API/Web_Workers_API\">Web Workers</a>.</div>\n<p>The <strong><code>sendOrder</code></strong> property of the <a href=\"$MDN_URL$/Web/API/WebTransportSendStream\"><code>WebTransportSendStream</code></a> interface indicates the send priority of this stream relative to other streams for which the value has been set.\n<p>Queued bytes are sent first for streams that have a higher value.\nIf not set, the send order depends on the implementation."
+      "doc": "<div class=\"notecard secure\"><p><strong>Secure context:</strong> This feature is available only in <a href=\"$MDN_URL$/Web/Security/Defenses/Secure_Contexts\">secure contexts</a> (HTTPS), in some or all <a href=\"#browser_compatibility\">supporting browsers</a>.</div>\n<div class=\"notecard note\"><p><strong>Note:</strong> This feature is available in <a href=\"$MDN_URL$/Web/API/Web_Workers_API\">Web Workers</a>.</div>\n<p>The <strong><code>sendOrder</code></strong> property of the <a href=\"$MDN_URL$/Web/API/WebTransportSendStream\"><code>WebTransportSendStream</code></a> interface indicates the send priority of this stream relative to other streams for which the value has been set.\n<p>Queued bytes are sent first for streams that have a higher value.\nIf not set, the send order depends on the implementation."
     },
     "wgsllanguagefeatures": {
       "url": "$MDN_URL$/web/api/wgsllanguagefeatures",
@@ -17395,7 +17451,7 @@
       "parameters": {
         "func": "A <a href=\"$MDN_URL$/Web/JavaScript/Reference/Global_Objects/Function\"><code>function</code></a> to be executed after the timer expires.",
         "code": "A <a href=\"$MDN_URL$/Web/API/TrustedScript\"><code>TrustedScript</code></a> or a string of arbitrary code that is compiled and executed every <code>delay</code> milliseconds.\nThis can be used instead of passing a function, but is <em>strongly discouraged</em> for the same reasons that make using <a href=\"$MDN_URL$/Web/JavaScript/Reference/Global_Objects/eval\"><code>eval()</code></a> a security risk.",
-        "delay": "The time that the timer should wait before the specified function or code is executed, in milliseconds.\nDefaults to 0 if not specified.\n<p>Note:\n<ul>\n<li>The delay has a maximum value of 2147483647 ms — specifying larger values may result in overflow or a 0 value being used.\nSee <a href=\"#maximum_delay_value\">maximum delay value</a> below for more information.</li>\n<li>The actual delay may be longer than set.\nFor example, setting <code>delay</code> to 0 will execute in the next event cycle rather than \"immediately\".\nSee <a href=\"#reasons_for_longer_delays_than_specified\">Reasons for longer delays than specified</a> for more information.</li>\n<li>If the value isn't a number, implicit <a href=\"$MDN_URL$/Glossary/Type_coercion\">type coercion</a> is silently done on the value to convert it to a number.\nThis can lead to unexpected and surprising results — see <a href=\"#non-number_delay_values_are_silently_coerced_into_numbers\">Non-number delay values are silently coerced into numbers</a> for an example.</li>\n</ul>",
+        "delay": "A non-negative integer indicating how long the timer should wait before the specified function or code is executed, in milliseconds.\nDefaults to 0 if not specified.\n<p>Note:\n<ul>\n<li>The delay has a maximum value of 2147483647 ms — specifying larger values may result in overflow or a 0 value being used.\nSee <a href=\"#maximum_delay_value\">maximum delay value</a> below for more information.</li>\n<li>The actual delay may be longer than set.\nFor example, setting <code>delay</code> to 0 will execute in the next event cycle rather than \"immediately\".\nSee <a href=\"#reasons_for_longer_delays_than_specified\">Reasons for longer delays than specified</a> for more information.</li>\n<li>If the value isn't a number, implicit <a href=\"$MDN_URL$/Glossary/Type_coercion\">type coercion</a> is silently done on the value to convert it to a number.\nThis can lead to unexpected and surprising results — see <a href=\"#non-number_delay_values_are_silently_coerced_into_numbers\">Non-number delay values are silently coerced into numbers</a> for an example.</li>\n<li>Negative values behave the same as 0.</li>\n</ul>",
         "param1, …, paramN": "Additional arguments which are passed through to the function specified by <code>func</code>."
       },
       "returns": "A positive integer (typically within the range of 1 to 2,147,483,647) that uniquely identifies the timer created by the call.\nThis identifier, often referred to as a \"timeout ID\", can be passed to <a href=\"$MDN_URL$/Web/API/Window/clearTimeout\" title=\"clearTimeout()\"><code>clearTimeout()</code></a> to cancel the timer.\n<p>Within the same global environment (e.g., a specific window or worker) the timeout ID is guaranteed not to be reused for any new timer as long as the original timer remains active.\nHowever, separate global environments maintain their own independent pools of timer IDs.",

@@ -19,6 +19,9 @@
         "Chrome": "138",
         "Opera": "122"
       },
+      "baseline": {
+        "level": "NONE"
+      },
       "doc": "<div class=\"notecard experimental\"><p><strong>Experimental:</strong> <strong>This is an <a href=\"$MDN_URL$/MDN/Writing_guidelines/Experimental_deprecated_obsolete#experimental\">experimental technology</a></strong><br>Check the <a href=\"#browser_compatibility\">Browser compatibility table</a> carefully before using this in production.</div>\n<div class=\"notecard secure\"><p><strong>Secure context:</strong> This feature is available only in <a href=\"$MDN_URL$/Web/Security/Defenses/Secure_Contexts\">secure contexts</a> (HTTPS), in some or all <a href=\"#browser_compatibility\">supporting browsers</a>.</div>\n<p>The <strong><code>LanguageDetector</code></strong> interface of the <a href=\"$MDN_URL$/Web/API/Translator_and_Language_Detector_APIs\" >Translator and Language Detector APIs</a> contains all the language detection functionality, including checking AI model availability, creating a new <code>LanguageDetector</code> instance, using it to detect a language, and more."
     },
     "languagedetector.availability": {
@@ -30,6 +33,9 @@
       "compatibility": {
         "Chrome": "138",
         "Opera": "122"
+      },
+      "baseline": {
+        "level": "NONE"
       },
       "doc": "<div class=\"notecard experimental\"><p><strong>Experimental:</strong> <strong>This is an <a href=\"$MDN_URL$/MDN/Writing_guidelines/Experimental_deprecated_obsolete#experimental\">experimental technology</a></strong><br>Check the <a href=\"#browser_compatibility\">Browser compatibility table</a> carefully before using this in production.</div>\n<div class=\"notecard secure\"><p><strong>Secure context:</strong> This feature is available only in <a href=\"$MDN_URL$/Web/Security/Defenses/Secure_Contexts\">secure contexts</a> (HTTPS), in some or all <a href=\"#browser_compatibility\">supporting browsers</a>.</div>\n<p>The <strong><code>availability()</code></strong> static method of the <a href=\"$MDN_URL$/Web/API/LanguageDetector\"><code>LanguageDetector</code></a> interface returns an enumerated value that indicates whether the browser AI model supports a given <code>LanguageDetector</code> configuration.",
       "parameters": {
@@ -51,6 +57,9 @@
       "compatibility": {
         "Chrome": "138",
         "Opera": "122"
+      },
+      "baseline": {
+        "level": "NONE"
       },
       "doc": "<div class=\"notecard experimental\"><p><strong>Experimental:</strong> <strong>This is an <a href=\"$MDN_URL$/MDN/Writing_guidelines/Experimental_deprecated_obsolete#experimental\">experimental technology</a></strong><br>Check the <a href=\"#browser_compatibility\">Browser compatibility table</a> carefully before using this in production.</div>\n<div class=\"notecard secure\"><p><strong>Secure context:</strong> This feature is available only in <a href=\"$MDN_URL$/Web/Security/Defenses/Secure_Contexts\">secure contexts</a> (HTTPS), in some or all <a href=\"#browser_compatibility\">supporting browsers</a>.</div>\n<p>The <strong><code>create()</code></strong> static method of the <a href=\"$MDN_URL$/Web/API/LanguageDetector\"><code>LanguageDetector</code></a> interface creates a new <code>LanguageDetector</code> instance to detect languages.\n<div class=\"notecard note\">\n<p><strong>Note:</strong>\nThe <code>create()</code> method requires <a href=\"$MDN_URL$/Glossary/Transient_activation\">transient activation</a>, that is, it must be invoked in response to a user action such as a mouse click or button press.\n</div>",
       "parameters": {
@@ -75,6 +84,9 @@
         "Chrome": "138",
         "Opera": "122"
       },
+      "baseline": {
+        "level": "NONE"
+      },
       "doc": "<div class=\"notecard experimental\"><p><strong>Experimental:</strong> <strong>This is an <a href=\"$MDN_URL$/MDN/Writing_guidelines/Experimental_deprecated_obsolete#experimental\">experimental technology</a></strong><br>Check the <a href=\"#browser_compatibility\">Browser compatibility table</a> carefully before using this in production.</div>\n<div class=\"notecard secure\"><p><strong>Secure context:</strong> This feature is available only in <a href=\"$MDN_URL$/Web/Security/Defenses/Secure_Contexts\">secure contexts</a> (HTTPS), in some or all <a href=\"#browser_compatibility\">supporting browsers</a>.</div>\n<p>The <strong><code>destroy()</code></strong> method of the <a href=\"$MDN_URL$/Web/API/LanguageDetector\"><code>LanguageDetector</code></a> interface releases the resources assigned to the <code>LanguageDetector</code> instance it is called on and stops any further activity on it. This means that any ongoing and subsequent method calls made on the <code>LanguageDetector</code> will reject with an <code>AbortError</code>.\n<p>It makes sense to destroy <code>LanguageDetector</code> objects if they are no longer being used, as they tie up significant resources in their handling.",
       "returns": "None (<a href=\"$MDN_URL$/Web/JavaScript/Reference/Global_Objects/undefined\"><code>undefined</code></a>)."
     },
@@ -87,6 +99,9 @@
       "compatibility": {
         "Chrome": "138",
         "Opera": "122"
+      },
+      "baseline": {
+        "level": "NONE"
       },
       "doc": "<div class=\"notecard experimental\"><p><strong>Experimental:</strong> <strong>This is an <a href=\"$MDN_URL$/MDN/Writing_guidelines/Experimental_deprecated_obsolete#experimental\">experimental technology</a></strong><br>Check the <a href=\"#browser_compatibility\">Browser compatibility table</a> carefully before using this in production.</div>\n<div class=\"notecard secure\"><p><strong>Secure context:</strong> This feature is available only in <a href=\"$MDN_URL$/Web/Security/Defenses/Secure_Contexts\">secure contexts</a> (HTTPS), in some or all <a href=\"#browser_compatibility\">supporting browsers</a>.</div>\n<p>The <strong><code>detect()</code></strong> method of the <a href=\"$MDN_URL$/Web/API/LanguageDetector\"><code>LanguageDetector</code></a> interface detects the closest matching language or languages that a given text string is most likely to be written in.",
       "parameters": {
@@ -110,6 +125,9 @@
         "Chrome": "138",
         "Opera": "122"
       },
+      "baseline": {
+        "level": "NONE"
+      },
       "doc": "<div class=\"notecard experimental\"><p><strong>Experimental:</strong> <strong>This is an <a href=\"$MDN_URL$/MDN/Writing_guidelines/Experimental_deprecated_obsolete#experimental\">experimental technology</a></strong><br>Check the <a href=\"#browser_compatibility\">Browser compatibility table</a> carefully before using this in production.</div>\n<div class=\"notecard secure\"><p><strong>Secure context:</strong> This feature is available only in <a href=\"$MDN_URL$/Web/Security/Defenses/Secure_Contexts\">secure contexts</a> (HTTPS), in some or all <a href=\"#browser_compatibility\">supporting browsers</a>.</div>\n<p>The <strong><code>expectedInputLanguages</code></strong> read-only property of the <a href=\"$MDN_URL$/Web/API/LanguageDetector\"><code>LanguageDetector</code></a> interface returns the expected languages to be detected in the input text. Specifying expected input languages helps improve the accuracy of the language detection.\n<p>A <code>LanguageDetector</code> instance's <code>expectedInputLanguages</code> are set when creating it via a <a href=\"$MDN_URL$/Web/API/LanguageDetector/create_static\" ><code>create()</code></a> call."
     },
     "languagedetector.inputquota": {
@@ -122,6 +140,9 @@
         "Chrome": "138",
         "Opera": "122"
       },
+      "baseline": {
+        "level": "NONE"
+      },
       "doc": "<div class=\"notecard experimental\"><p><strong>Experimental:</strong> <strong>This is an <a href=\"$MDN_URL$/MDN/Writing_guidelines/Experimental_deprecated_obsolete#experimental\">experimental technology</a></strong><br>Check the <a href=\"#browser_compatibility\">Browser compatibility table</a> carefully before using this in production.</div>\n<div class=\"notecard secure\"><p><strong>Secure context:</strong> This feature is available only in <a href=\"$MDN_URL$/Web/Security/Defenses/Secure_Contexts\">secure contexts</a> (HTTPS), in some or all <a href=\"#browser_compatibility\">supporting browsers</a>.</div>\n<p>The <strong><code>inputQuota</code></strong> read-only property of the <a href=\"$MDN_URL$/Web/API/LanguageDetector\"><code>LanguageDetector</code></a> interface returns the input quota available to the browser for detecting languages."
     },
     "languagedetector.measureinputusage": {
@@ -133,6 +154,9 @@
       "compatibility": {
         "Chrome": "138",
         "Opera": "122"
+      },
+      "baseline": {
+        "level": "NONE"
       },
       "doc": "<div class=\"notecard experimental\"><p><strong>Experimental:</strong> <strong>This is an <a href=\"$MDN_URL$/MDN/Writing_guidelines/Experimental_deprecated_obsolete#experimental\">experimental technology</a></strong><br>Check the <a href=\"#browser_compatibility\">Browser compatibility table</a> carefully before using this in production.</div>\n<div class=\"notecard secure\"><p><strong>Secure context:</strong> This feature is available only in <a href=\"$MDN_URL$/Web/Security/Defenses/Secure_Contexts\">secure contexts</a> (HTTPS), in some or all <a href=\"#browser_compatibility\">supporting browsers</a>.</div>\n<p>The <strong><code>measureInputUsage()</code></strong> method of the <a href=\"$MDN_URL$/Web/API/LanguageDetector\"><code>LanguageDetector</code></a> interface reports how much input quota would be used by a language detection operation for a given text input.",
       "parameters": {
@@ -1628,8 +1652,9 @@
         "SafariIOS": "11"
       },
       "baseline": {
-        "level": "LOW",
-        "lowDate": "2023-08-01"
+        "level": "HIGH",
+        "lowDate": "2023-08-01",
+        "highDate": "2026-02-01"
       },
       "doc": "<div class=\"notecard secure\"><p><strong>Secure context:</strong> This feature is available only in <a href=\"$MDN_URL$/Web/Security/Defenses/Secure_Contexts\">secure contexts</a> (HTTPS), in some or all <a href=\"#browser_compatibility\">supporting browsers</a>.</div>\n<p>The <strong><code>enumerateDevices()</code></strong> method of the <a href=\"$MDN_URL$/Web/API/MediaDevices\"><code>MediaDevices</code></a> interface requests a list of the currently available media input and output devices, such as microphones, cameras, headsets, and so forth.\nThe returned <a href=\"$MDN_URL$/Web/JavaScript/Reference/Global_Objects/Promise\"><code>Promise</code></a> is resolved with an array of <a href=\"$MDN_URL$/Web/API/MediaDeviceInfo\"><code>MediaDeviceInfo</code></a> objects describing the devices.\n<p>The returned list will omit any devices that are blocked by the document <a href=\"$MDN_URL$/Web/HTTP/Reference/Headers/Permissions-Policy\">Permission Policy</a>: <a href=\"$MDN_URL$/Web/HTTP/Reference/Headers/Permissions-Policy/microphone\"><code>microphone</code></a>, <a href=\"$MDN_URL$/Web/HTTP/Reference/Headers/Permissions-Policy/camera\"><code>camera</code></a>, <a href=\"$MDN_URL$/Web/HTTP/Reference/Headers/Permissions-Policy/speaker-selection\"><code>speaker-selection</code></a> (for output devices), and so on.\nAccess to particular non-default devices is also gated by the <a href=\"$MDN_URL$/Web/API/Permissions_API\">Permissions API</a>, and the list will omit devices for which the user has not granted explicit permission.",
       "returns": "A <a href=\"$MDN_URL$/Web/JavaScript/Reference/Global_Objects/Promise\"><code>Promise</code></a> that is fulfilled with an array of <a href=\"$MDN_URL$/Web/API/MediaDeviceInfo\"><code>MediaDeviceInfo</code></a> objects.\nEach object in the array describes one of the available media input and output devices.\nThe order is significant — the default capture devices will be listed first.\n<p>Other than default devices, only devices for which permission has been granted are \"available\".\n<p>If the media device is an input device, an <a href=\"$MDN_URL$/Web/API/InputDeviceInfo\"><code>InputDeviceInfo</code></a> object will be returned instead.\n<p>If enumeration fails, the promise is rejected."
@@ -8795,7 +8820,35 @@
         "FirefoxAndroid": "147",
         "Opera": "125"
       },
-      "doc": "The <strong><code>NavigationPrecommitController</code></strong> interface of the <a href=\"$MDN_URL$/Web/API/Navigation_API\" >Navigation API</a> defines redirect behavior for a navigation <a href=\"$MDN_URL$/Web/API/NavigateEvent/intercept#precommithandler\">precommit handler</a>."
+      "baseline": {
+        "level": "NONE"
+      },
+      "doc": "The <strong><code>NavigationPrecommitController</code></strong> interface of the <a href=\"$MDN_URL$/Web/API/Navigation_API\" >Navigation API</a> is passed as an argument to a navigation <a href=\"$MDN_URL$/Web/API/NavigateEvent/intercept#precommithandler\">precommit handler</a> callback.\n<p>The callback is used to handle any modifications to the navigation that are required before it is committed (and the destination URL is actually displayed in the browser), such as cancelling or redirecting it somewhere else as required.\nThis interface provides methods to redirect to a new URL and update history and state, and to dynamically configure post-commit navigation behavior."
+    },
+    "navigationprecommitcontroller.addhandler": {
+      "url": "$MDN_URL$/web/api/navigationprecommitcontroller/addhandler",
+      "status": [
+        "StandardTrack"
+      ],
+      "compatibility": {
+        "Chrome": "146",
+        "ChromeAndroid": "146",
+        "Edge": "146",
+        "Firefox": "148",
+        "FirefoxAndroid": "148"
+      },
+      "baseline": {
+        "level": "NONE"
+      },
+      "doc": "The <strong><code>addHandler()</code></strong> method of the <a href=\"$MDN_URL$/Web/API/NavigationPrecommitController\"><code>NavigationPrecommitController</code></a> interface allows you to dynamically add a handler callback function in precommit code, which will then be run after the navigation has committed.\n<p>This is useful when the navigation workflow depends on information that is not know until precommit code has started running.\nIf the precommit and (post-commit) handler are independent, the handler can be specified in the in the <a href=\"$MDN_URL$/Web/API/NavigateEvent/intercept#handler\"><code>options.handler</code></a> argument passed to <a href=\"$MDN_URL$/Web/API/NavigateEvent/intercept\"><code>NavigateEvent.intercept()</code></a>.",
+      "parameters": {
+        "handler": "A callback function that defines the post-commit navigation handling behavior should be; it returns a promise.\n<p>The handler callback is invoked as though it was passed to the <code>NavigateEvent.intercept()</code> method, and will run after the <a href=\"$MDN_URL$/Web/API/Navigation/currentEntry\" ><code>currentEntry</code></a> property has been updated."
+      },
+      "returns": "None (<code>undefined</code>).",
+      "throws": {
+        "InvalidStateError DOMException": "Thrown if:\n<ul>\n<li>The originating <a href=\"$MDN_URL$/Web/API/NavigateEvent\"><code>NavigateEvent</code></a> was not intercepted or has been canceled.</li>\n<li>The <a href=\"$MDN_URL$/Web/API/Document\"><code>Document</code></a> is not fully active.</li>\n</ul>",
+        "SecurityError DOMException": "Thrown if the event <a href=\"$MDN_URL$/Web/API/Event/isTrusted\" ><code>isTrusted</code></a> attribute is <code>false</code>."
+      }
     },
     "navigationprecommitcontroller.redirect": {
       "url": "$MDN_URL$/web/api/navigationprecommitcontroller/redirect",
@@ -8809,6 +8862,9 @@
         "Firefox": "147",
         "FirefoxAndroid": "147",
         "Opera": "125"
+      },
+      "baseline": {
+        "level": "NONE"
       },
       "doc": "The <strong><code>redirect()</code></strong> method of the\n<a href=\"$MDN_URL$/Web/API/NavigationPrecommitController\"><code>NavigationPrecommitController</code></a> interface redirects the browser to a specified URL and specifies history behavior and any desired state information.",
       "parameters": {
@@ -9117,6 +9173,21 @@
         "SafariIOS": ""
       },
       "doc": "The <strong><code>Navigator.appVersion</code></strong> read-only property of the <a href=\"$MDN_URL$/Web/API/Navigator\"><code>Navigator</code></a> interface returns a string representing version information about the browser."
+    },
+    "navigator.audiosession": {
+      "url": "$MDN_URL$/web/api/navigator/audiosession",
+      "status": [
+        "Experimental",
+        "StandardTrack"
+      ],
+      "compatibility": {
+        "Safari": "16.4",
+        "SafariIOS": "16.4"
+      },
+      "baseline": {
+        "level": "NONE"
+      },
+      "doc": "<div class=\"notecard experimental\"><p><strong>Experimental:</strong> <strong>This is an <a href=\"$MDN_URL$/MDN/Writing_guidelines/Experimental_deprecated_obsolete#experimental\">experimental technology</a></strong><br>Check the <a href=\"#browser_compatibility\">Browser compatibility table</a> carefully before using this in production.</div>\n<p>The <strong><code>audioSession</code></strong> read-only property of the <a href=\"$MDN_URL$/Web/API/Navigator\"><code>Navigator</code></a> interface returns the <a href=\"$MDN_URL$/Web/API/AudioSession\"><code>AudioSession</code></a> object for the current document.\n<p>The <a href=\"$MDN_URL$/Web/API/AudioSession\"><code>AudioSession</code></a> interface can be used to control how audio from a web application interacts with other audio playing on a device, for example, allowing developers to specify whether their application's audio should play on its own, or along with other device audio."
     },
     "navigator.bluetooth": {
       "url": "$MDN_URL$/web/api/navigator/bluetooth",
@@ -11805,6 +11876,8 @@
         "Chrome": "",
         "ChromeAndroid": "",
         "Edge": "",
+        "Firefox": "3.5",
+        "FirefoxAndroid": "4",
         "Opera": "9",
         "Safari": "3",
         "SafariIOS": "3"
@@ -18289,7 +18362,7 @@
       },
       "doc": "<div class=\"notecard experimental\"><p><strong>Experimental:</strong> <strong>This is an <a href=\"$MDN_URL$/MDN/Writing_guidelines/Experimental_deprecated_obsolete#experimental\">experimental technology</a></strong><br>Check the <a href=\"#browser_compatibility\">Browser compatibility table</a> carefully before using this in production.</div>\n<div class=\"notecard note\"><p><strong>Note:</strong> This feature is only available in <a href=\"$MDN_URL$/Web/API/Service_Worker_API\">Service Workers</a>.</div>\n<p>The <strong><code>respondWith()</code></strong> method of the <a href=\"$MDN_URL$/Web/API/PaymentRequestEvent\"><code>PaymentRequestEvent</code></a> interface prevents the default event handling and allows you to provide a <a href=\"$MDN_URL$/Web/JavaScript/Reference/Global_Objects/Promise\"><code>Promise</code></a> for a payment handler response object yourself.",
       "parameters": {
-        "promise": "A payment handler response object or a <a href=\"$MDN_URL$/Web/JavaScript/Reference/Global_Objects/Promise\"><code>Promise</code></a> that resolves to one. This object should contain the following properties:\n<dl>\n<dt id=\"methodname\"><a href=\"#methodname\"><code>methodName</code></a></dt>\n<dd>\n<p>The payment method identifier for the payment method that the user selected to fulfill the transaction.\n</dd>\n<dt id=\"details\"><a href=\"#details\"><code>details</code></a></dt>\n<dd>\n<p>A JSON-serializable object that provides a payment method-specific message used by the merchant to process the transaction and determine a successful fund transfer. See <a href=\"https://w3c.github.io/payment-handler/#details-attribute\" class=\"external\" target=\"_blank\">7.1.2 details attribute</a> for more details.\n</dd>\n</dl>"
+        "promise": "A payment handler response object or a <a href=\"$MDN_URL$/Web/JavaScript/Reference/Global_Objects/Promise\"><code>Promise</code></a> that resolves to one. This object should contain the following properties:\n<dl>\n<dt id=\"methodname\"><a href=\"#methodname\"><code>methodName</code></a></dt>\n<dd>\n<p>The payment method identifier for the payment method that the user selected to fulfill the transaction.\n</dd>\n<dt id=\"details\"><a href=\"#details\"><code>details</code></a></dt>\n<dd>\n<p>A JSON-serializable object that provides a payment method-specific message used by the merchant to process the transaction and determine a successful fund transfer. See <a href=\"https://w3c.github.io/web-based-payment-handler/#details-attribute\" class=\"external\" target=\"_blank\">8.1.2 <code>details</code> attribute</a> for more details.\n</dd>\n</dl>"
       },
       "returns": "None (<a href=\"$MDN_URL$/Web/JavaScript/Reference/Global_Objects/undefined\"><code>undefined</code></a>)."
     },
@@ -20651,7 +20724,6 @@
     "performanceresourcetiming.deliverytype": {
       "url": "$MDN_URL$/web/api/performanceresourcetiming/deliverytype",
       "status": [
-        "Experimental",
         "StandardTrack"
       ],
       "compatibility": {
@@ -20659,12 +20731,14 @@
         "ChromeAndroid": "117",
         "Edge": "117",
         "Opera": "103",
+        "Safari": "26.4",
+        "SafariIOS": "26.4",
         "Nodejs": "22.2.0"
       },
       "baseline": {
         "level": "NONE"
       },
-      "doc": "<div class=\"notecard note\"><p><strong>Note:</strong> This feature is available in <a href=\"$MDN_URL$/Web/API/Web_Workers_API\">Web Workers</a>.</div>\n<div class=\"notecard experimental\"><p><strong>Experimental:</strong> <strong>This is an <a href=\"$MDN_URL$/MDN/Writing_guidelines/Experimental_deprecated_obsolete#experimental\">experimental technology</a></strong><br>Check the <a href=\"#browser_compatibility\">Browser compatibility table</a> carefully before using this in production.</div>\n<p>The <strong><code>deliveryType</code></strong> read-only property is a string indicating how the resource was delivered — for example from the cache or from a navigational prefetch."
+      "doc": "<div class=\"notecard note\"><p><strong>Note:</strong> This feature is available in <a href=\"$MDN_URL$/Web/API/Web_Workers_API\">Web Workers</a>.</div>\n<p>The <strong><code>deliveryType</code></strong> read-only property is a string indicating how the resource was delivered — for example from the cache or from a navigational prefetch."
     },
     "performanceresourcetiming.domainlookupend": {
       "url": "$MDN_URL$/web/api/performanceresourcetiming/domainlookupend",
@@ -20761,33 +20835,35 @@
     "performanceresourcetiming.finalresponseheadersstart": {
       "url": "$MDN_URL$/web/api/performanceresourcetiming/finalresponseheadersstart",
       "status": [
-        "Experimental",
         "StandardTrack"
       ],
       "compatibility": {
         "Chrome": "133",
         "ChromeAndroid": "133",
         "Edge": "133",
-        "Opera": "118"
+        "Opera": "118",
+        "Safari": "26.4",
+        "SafariIOS": "26.4"
       },
-      "doc": "<div class=\"notecard note\"><p><strong>Note:</strong> This feature is available in <a href=\"$MDN_URL$/Web/API/Web_Workers_API\">Web Workers</a>.</div>\n<div class=\"notecard experimental\"><p><strong>Experimental:</strong> <strong>This is an <a href=\"$MDN_URL$/MDN/Writing_guidelines/Experimental_deprecated_obsolete#experimental\">experimental technology</a></strong><br>Check the <a href=\"#browser_compatibility\">Browser compatibility table</a> carefully before using this in production.</div>\n<p>The <strong><code>finalResponseHeadersStart</code></strong> read-only property returns a <a href=\"$MDN_URL$/Web/API/DOMHighResTimeStamp\" ><code>timestamp</code></a> immediately after the browser receives the first byte of the final document response (for example, 200 OK) from the server.\n<p>This differs from <strong><a href=\"$MDN_URL$/Web/API/PerformanceResourceTiming/requestStart\" ><code>requestStart</code></a></strong> (which may also be represented as <strong><a href=\"$MDN_URL$/Web/API/PerformanceResourceTiming/firstInterimResponseStart\" ><code>firstInterimResponseStart</code></a></strong>), as this starts from the first bytes of any response including interim responses (for example, 103 Early Hints) with the final response coming potentially much later.\n<p>When there are no interim responses, <code>requestStart</code> is the same as <code>finalResponseHeadersStart</code> and <code>firstInterimResponseStart</code> is 0.\n<p>There is no <em>end</em> property for <code>finalResponseHeadersStart</code>."
+      "doc": "<div class=\"notecard note\"><p><strong>Note:</strong> This feature is available in <a href=\"$MDN_URL$/Web/API/Web_Workers_API\">Web Workers</a>.</div>\n<p>The <strong><code>finalResponseHeadersStart</code></strong> read-only property returns a <a href=\"$MDN_URL$/Web/API/DOMHighResTimeStamp\" ><code>timestamp</code></a> immediately after the browser receives the first byte of the final document response (for example, 200 OK) from the server.\n<p>This differs from <strong><a href=\"$MDN_URL$/Web/API/PerformanceResourceTiming/requestStart\" ><code>requestStart</code></a></strong> (which may also be represented as <strong><a href=\"$MDN_URL$/Web/API/PerformanceResourceTiming/firstInterimResponseStart\" ><code>firstInterimResponseStart</code></a></strong>), as this starts from the first bytes of any response including interim responses (for example, 103 Early Hints) with the final response coming potentially much later.\n<p>When there are no interim responses, <code>requestStart</code> is the same as <code>finalResponseHeadersStart</code> and <code>firstInterimResponseStart</code> is 0.\n<p>There is no <em>end</em> property for <code>finalResponseHeadersStart</code>."
     },
     "performanceresourcetiming.firstinterimresponsestart": {
       "url": "$MDN_URL$/web/api/performanceresourcetiming/firstinterimresponsestart",
       "status": [
-        "Experimental",
         "StandardTrack"
       ],
       "compatibility": {
         "Chrome": "115",
         "ChromeAndroid": "115",
         "Edge": "115",
-        "Opera": "101"
+        "Opera": "101",
+        "Safari": "26.4",
+        "SafariIOS": "26.4"
       },
       "baseline": {
         "level": "NONE"
       },
-      "doc": "<div class=\"notecard note\"><p><strong>Note:</strong> This feature is available in <a href=\"$MDN_URL$/Web/API/Web_Workers_API\">Web Workers</a>.</div>\n<div class=\"notecard experimental\"><p><strong>Experimental:</strong> <strong>This is an <a href=\"$MDN_URL$/MDN/Writing_guidelines/Experimental_deprecated_obsolete#experimental\">experimental technology</a></strong><br>Check the <a href=\"#browser_compatibility\">Browser compatibility table</a> carefully before using this in production.</div>\n<p>The <strong><code>firstInterimResponseStart</code></strong> read-only property returns a <a href=\"$MDN_URL$/Web/API/DOMHighResTimeStamp\" ><code>timestamp</code></a> immediately after the browser receives the first byte of the interim 1xx response (for example, 100 Continue or 103 Early Hints) from the server.\n<p>There is no <em>end</em> property for <code>firstInterimResponseStart</code>."
+      "doc": "<div class=\"notecard note\"><p><strong>Note:</strong> This feature is available in <a href=\"$MDN_URL$/Web/API/Web_Workers_API\">Web Workers</a>.</div>\n<p>The <strong><code>firstInterimResponseStart</code></strong> read-only property returns a <a href=\"$MDN_URL$/Web/API/DOMHighResTimeStamp\" ><code>timestamp</code></a> immediately after the browser receives the first byte of the interim 1xx response (for example, 100 Continue or 103 Early Hints) from the server.\n<p>There is no <em>end</em> property for <code>firstInterimResponseStart</code>."
     },
     "performanceresourcetiming.initiatortype": {
       "url": "$MDN_URL$/web/api/performanceresourcetiming/initiatortype",
@@ -23820,7 +23896,7 @@
         "lowDate": "2025-02-06"
       },
       "doc": "<div class=\"notecard secure\"><p><strong>Secure context:</strong> This feature is available only in <a href=\"$MDN_URL$/Web/Security/Defenses/Secure_Contexts\">secure contexts</a> (HTTPS), in some or all <a href=\"#browser_compatibility\">supporting browsers</a>.</div>\n<p>The <strong><code>getClientCapabilities()</code></strong> static method of the <a href=\"$MDN_URL$/Web/API/PublicKeyCredential\"><code>PublicKeyCredential</code></a> interface returns a <a href=\"$MDN_URL$/Web/JavaScript/Reference/Global_Objects/Promise\"><code>Promise</code></a> that resolves with an object that can be used to check whether or not particular WebAuthn client capabilities and <a href=\"$MDN_URL$/Web/API/Web_Authentication_API/WebAuthn_extensions\">extensions</a> are supported.\n<p>A relying party (RP) can use this information to appropriately customize its sign-in and sign-up user interfaces and workflows.",
-      "returns": "A <a href=\"$MDN_URL$/Web/JavaScript/Reference/Global_Objects/Promise\"><code>Promise</code></a> that resolves to an object where the property names are the client capability strings, and the values are boolean values that indicate whether or not the corresponding capability or extension is supported.\n<p>The WebAuthn client capability strings are:\n<dl>\n<dt id=\"conditionalcreate\"><a href=\"#conditionalcreate\"><code>\"conditionalCreate\"</code></a></dt>\n<dd>\n<p>The client is capable of creating <a href=\"$MDN_URL$/Web/API/Web_Authentication_API#discoverable_credentials_and_conditional_mediation\">discoverable credentials</a>.\n</dd>\n<dt id=\"conditionalget\"><a href=\"#conditionalget\"><code>\"conditionalGet\"</code></a></dt>\n<dd>\n<p>The client is capable of authenticating using <a href=\"$MDN_URL$/Web/API/Web_Authentication_API#discoverable_credentials_and_conditional_mediation\">discoverable credentials</a>.\nThis capability is equivalent to <a href=\"$MDN_URL$/Web/API/PublicKeyCredential/isConditionalMediationAvailable_static\"><code>isConditionalMediationAvailable()</code></a> resolving to <code>true</code>.\n</dd>\n<dt id=\"hybridtransport\"><a href=\"#hybridtransport\"><code>\"hybridTransport\"</code></a></dt>\n<dd>\n<p>The client supports usage of the <a href=\"$MDN_URL$/Web/API/AuthenticatorAttestationResponse/getTransports#hybrid\">hybrid</a> transport.\nThis means that the client can use authenticators that rely on Bluetooth, NFC, or USB.\n</dd>\n<dt id=\"passkeyplatformauthenticator\"><a href=\"#passkeyplatformauthenticator\"><code>\"passkeyPlatformAuthenticator\"</code></a></dt>\n<dd>\n<p>The client allows usage of a passkey authenticator that supports <a href=\"$MDN_URL$/Glossary/Multi-factor_authentication\">multi-factor authentication</a> mechanisms such as a PIN or biometric check.\nThe authenticator can be part of the same platform (device) as the client, or connected via a hybrid transport such as Bluetooth or USB.\nThe credentials are stored on the authenticator.\nSee <a href=\"https://developers.google.com/identity/passkeys/developer-guides\" class=\"external\" target=\"_blank\">Passkeys developer guide for relying parties</a>.\n</dd>\n<dt id=\"userverifyingplatformauthenticator\"><a href=\"#userverifyingplatformauthenticator\"><code>userVerifyingPlatformAuthenticator</code></a></dt>\n<dd>\n<p>The client has a platform authenticator (part of the same device) that supports <a href=\"$MDN_URL$/Glossary/Multi-factor_authentication\">multi-factor authentication</a> mechanisms, such as a PIN or biometric check.\nThe credentials may be stored on either the RP or the authenticator.\n</dd>\n<dt id=\"relatedorigins\"><a href=\"#relatedorigins\"><code>relatedOrigins</code></a></dt>\n<dd>\n<p>The client supports <a href=\"https://web.dev/articles/webauthn-related-origin-requests\" class=\"external\" target=\"_blank\">Related Origin Requests</a>.\nThese clients allow a passkey to be used across multiple sites that have the same origin.\n</dd>\n<dt id=\"signalallacceptedcredentials\"><a href=\"#signalallacceptedcredentials\"><code>signalAllAcceptedCredentials</code></a></dt>\n<dd>\n<p>The client supports the <a href=\"$MDN_URL$/Web/API/PublicKeyCredential/signalAllAcceptedCredentials_static\"><code>PublicKeyCredential.signalAllAcceptedCredentials()</code></a> static method.\nIf not supported, RP workflows will need to prompt the user to manually delete credentials on the authenticator.\n</dd>\n<dt id=\"signalcurrentuserdetails\"><a href=\"#signalcurrentuserdetails\"><code>signalCurrentUserDetails</code></a></dt>\n<dd>\n<p>The client supports the <a href=\"$MDN_URL$/Web/API/PublicKeyCredential/signalCurrentUserDetails_static\"><code>PublicKeyCredential.signalCurrentUserDetails()</code></a> static method.\nIf not supported, RP workflows will need to prompt the user to manually update user details on the authenticator.\n</dd>\n<dt id=\"signalunknowncredential\"><a href=\"#signalunknowncredential\"><code>signalUnknownCredential</code></a></dt>\n<dd>\n<p>The client supports the <a href=\"$MDN_URL$/Web/API/PublicKeyCredential/signalUnknownCredential_static\"><code>PublicKeyCredential.signalUnknownCredential()</code></a> static method.\nIf not supported, RP workflows will need to prompt the user to manually delete credentials from the authenticator.\n</dd>\n</dl>\n<p>The <a href=\"$MDN_URL$/Web/API/Web_Authentication_API/WebAuthn_extensions\">web extension</a> strings are formatted by prefixing the <a href=\"$MDN_URL$/Web/API/Web_Authentication_API/WebAuthn_extensions#available_extensions\">extension identifier</a> with the prefix <code>extension:</code>.\nFor example, the key <code>extension:appid</code> can be used to check if the <a href=\"$MDN_URL$/Web/API/Web_Authentication_API/WebAuthn_extensions#appid\"><code>appid</code> extension</a> is supported.",
+      "returns": "A <a href=\"$MDN_URL$/Web/JavaScript/Reference/Global_Objects/Promise\"><code>Promise</code></a> that resolves to an object where the property names are the client capability strings, and the values are boolean values that indicate whether or not the corresponding capability or extension is supported.\n<p>The WebAuthn client capability strings are:\n<dl>\n<dt id=\"conditionalcreate\"><a href=\"#conditionalcreate\"><code>\"conditionalCreate\"</code></a></dt>\n<dd>\n<p>The client is capable of creating <a href=\"$MDN_URL$/Web/API/Web_Authentication_API#discoverable_and_non-discoverable_credentials\">discoverable credentials</a>.\n</dd>\n<dt id=\"conditionalget\"><a href=\"#conditionalget\"><code>\"conditionalGet\"</code></a></dt>\n<dd>\n<p>The client is capable of <a href=\"$MDN_URL$/Web/API/Web_Authentication_API#autofill_ui\">conditional mediation</a>.\nThis capability is equivalent to <a href=\"$MDN_URL$/Web/API/PublicKeyCredential/isConditionalMediationAvailable_static\"><code>isConditionalMediationAvailable()</code></a> resolving to <code>true</code>.\n</dd>\n<dt id=\"hybridtransport\"><a href=\"#hybridtransport\"><code>\"hybridTransport\"</code></a></dt>\n<dd>\n<p>The client supports usage of the <a href=\"$MDN_URL$/Web/API/AuthenticatorAttestationResponse/getTransports#hybrid\">hybrid</a> transport.\nThis means that the client can use authenticators that rely on Bluetooth, NFC, or USB.\n</dd>\n<dt id=\"passkeyplatformauthenticator\"><a href=\"#passkeyplatformauthenticator\"><code>\"passkeyPlatformAuthenticator\"</code></a></dt>\n<dd>\n<p>The client allows usage of a passkey authenticator that supports <a href=\"$MDN_URL$/Glossary/Multi-factor_authentication\">multi-factor authentication</a> mechanisms such as a PIN or biometric check.\nThe authenticator can be part of the same platform (device) as the client, or connected via a hybrid transport such as Bluetooth or USB.\nThe credentials are stored on the authenticator.\nSee <a href=\"https://developers.google.com/identity/passkeys/developer-guides\" class=\"external\" target=\"_blank\">Passkeys developer guide for relying parties</a>.\n</dd>\n<dt id=\"userverifyingplatformauthenticator\"><a href=\"#userverifyingplatformauthenticator\"><code>userVerifyingPlatformAuthenticator</code></a></dt>\n<dd>\n<p>The client has a platform authenticator (part of the same device) that supports <a href=\"$MDN_URL$/Glossary/Multi-factor_authentication\">multi-factor authentication</a> mechanisms, such as a PIN or biometric check.\nThe credentials may be stored on either the RP or the authenticator.\n</dd>\n<dt id=\"relatedorigins\"><a href=\"#relatedorigins\"><code>relatedOrigins</code></a></dt>\n<dd>\n<p>The client supports <a href=\"https://web.dev/articles/webauthn-related-origin-requests\" class=\"external\" target=\"_blank\">Related Origin Requests</a>.\nThese clients allow a passkey to be used across multiple sites that have the same origin.\n</dd>\n<dt id=\"signalallacceptedcredentials\"><a href=\"#signalallacceptedcredentials\"><code>signalAllAcceptedCredentials</code></a></dt>\n<dd>\n<p>The client supports the <a href=\"$MDN_URL$/Web/API/PublicKeyCredential/signalAllAcceptedCredentials_static\"><code>PublicKeyCredential.signalAllAcceptedCredentials()</code></a> static method.\nIf not supported, RP workflows will need to prompt the user to manually delete credentials on the authenticator.\n</dd>\n<dt id=\"signalcurrentuserdetails\"><a href=\"#signalcurrentuserdetails\"><code>signalCurrentUserDetails</code></a></dt>\n<dd>\n<p>The client supports the <a href=\"$MDN_URL$/Web/API/PublicKeyCredential/signalCurrentUserDetails_static\"><code>PublicKeyCredential.signalCurrentUserDetails()</code></a> static method.\nIf not supported, RP workflows will need to prompt the user to manually update user details on the authenticator.\n</dd>\n<dt id=\"signalunknowncredential\"><a href=\"#signalunknowncredential\"><code>signalUnknownCredential</code></a></dt>\n<dd>\n<p>The client supports the <a href=\"$MDN_URL$/Web/API/PublicKeyCredential/signalUnknownCredential_static\"><code>PublicKeyCredential.signalUnknownCredential()</code></a> static method.\nIf not supported, RP workflows will need to prompt the user to manually delete credentials from the authenticator.\n</dd>\n</dl>\n<p>The <a href=\"$MDN_URL$/Web/API/Web_Authentication_API/WebAuthn_extensions\">web extension</a> strings are formatted by prefixing the <a href=\"$MDN_URL$/Web/API/Web_Authentication_API/WebAuthn_extensions#available_extensions\">extension identifier</a> with the prefix <code>extension:</code>.\nFor example, the key <code>extension:appid</code> can be used to check if the <a href=\"$MDN_URL$/Web/API/Web_Authentication_API/WebAuthn_extensions#appid\"><code>appid</code> extension</a> is supported.",
       "throws": {
         "SecurityError DOMException": "The RP domain is not valid."
       }
@@ -23874,7 +23950,7 @@
         "level": "LOW",
         "lowDate": "2023-10-24"
       },
-      "doc": "<div class=\"notecard secure\"><p><strong>Secure context:</strong> This feature is available only in <a href=\"$MDN_URL$/Web/Security/Defenses/Secure_Contexts\">secure contexts</a> (HTTPS), in some or all <a href=\"#browser_compatibility\">supporting browsers</a>.</div>\n<p>The <strong><code>isConditionalMediationAvailable()</code></strong> static method of the <a href=\"$MDN_URL$/Web/API/PublicKeyCredential\"><code>PublicKeyCredential</code></a> interface returns a <a href=\"$MDN_URL$/Web/JavaScript/Reference/Global_Objects/Promise\"><code>Promise</code></a> which resolves to <code>true</code> if <a href=\"$MDN_URL$/Web/API/Web_Authentication_API#discoverable_credentials_and_conditional_mediation\">conditional mediation</a> is available.",
+      "doc": "<div class=\"notecard secure\"><p><strong>Secure context:</strong> This feature is available only in <a href=\"$MDN_URL$/Web/Security/Defenses/Secure_Contexts\">secure contexts</a> (HTTPS), in some or all <a href=\"#browser_compatibility\">supporting browsers</a>.</div>\n<p>The <strong><code>isConditionalMediationAvailable()</code></strong> static method of the <a href=\"$MDN_URL$/Web/API/PublicKeyCredential\"><code>PublicKeyCredential</code></a> interface returns a <a href=\"$MDN_URL$/Web/JavaScript/Reference/Global_Objects/Promise\"><code>Promise</code></a> which resolves to <code>true</code> if <a href=\"$MDN_URL$/Web/API/Web_Authentication_API#autofill_ui\">conditional mediation</a> is available.",
       "returns": "A <a href=\"$MDN_URL$/Web/JavaScript/Reference/Global_Objects/Promise\"><code>Promise</code></a> which resolves to a boolean value indicating whether or not conditional mediation is available.",
       "throws": {
         "SecurityError DOMException": "The RP domain is not valid."

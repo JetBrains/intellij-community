@@ -3075,6 +3075,7 @@
         "Chrome": "20",
         "ChromeAndroid": "33",
         "Edge": "12",
+        "Firefox": "4",
         "Opera": "9.5",
         "Safari": "12.1",
         "SafariIOS": "12.2"
@@ -3328,7 +3329,7 @@
         "lowDate": "2022-03-14",
         "highDate": "2024-09-14"
       },
-      "doc": "The <strong><code>&lt;dialog&gt;</code></strong> <a href=\"$MDN_URL$/Web/HTML\">HTML</a> element represents a modal or non-modal dialog box or other interactive component, such as a dismissible alert, inspector, or subwindow.\n<p>The HTML <code>&lt;dialog&gt;</code> element is used to create both modal and non-modal dialog boxes. Modal dialog boxes interrupt interaction with the rest of the page being inert, while non-modal dialog boxes allow interaction with the rest of the page.\n<p>JavaScript should be used to display the <code>&lt;dialog&gt;</code> element. Use the <a href=\"$MDN_URL$/Web/API/HTMLDialogElement/showModal\" ><code>.showModal()</code></a> method to display a modal dialog and the <a href=\"$MDN_URL$/Web/API/HTMLDialogElement/show\" ><code>.show()</code></a> method to display a non-modal dialog. The dialog box can be closed using the <a href=\"$MDN_URL$/Web/API/HTMLDialogElement/close\" ><code>.close()</code></a> method or using the <a href=\"$MDN_URL$/Web/HTML/Reference/Elements/form#method\"><code>dialog</code></a> method when submitting a <code>&lt;form&gt;</code> that is nested within the <code>&lt;dialog&gt;</code> element. Modal dialogs can also be closed by pressing the <kbd>Esc</kbd> key.",
+      "doc": "The <strong><code>&lt;dialog&gt;</code></strong> <a href=\"$MDN_URL$/Web/HTML\">HTML</a> element represents a modal or non-modal dialog box or other interactive component, such as a dismissible alert, inspector, or subwindow.\n<p>The HTML <code>&lt;dialog&gt;</code> element is used to create both modal and non-modal dialog boxes.\nModal dialog boxes block interaction with other UI elements, making the rest of the page <a href=\"$MDN_URL$/Web/HTML/Reference/Global_attributes/inert#:~:text=When,clicked\">inert</a>, while non-modal dialog boxes allow interaction with the rest of the page.",
       "details": {
         "<a href=\"$MDN_URL$/Web/HTML/Guides/Content_categories\">Content categories</a>": "<a href=\"$MDN_URL$/Web/HTML/Guides/Content_categories#flow_content\">Flow content</a>\n,\nsectioning root\n",
         "Permitted content": "<a href=\"$MDN_URL$/Web/HTML/Guides/Content_categories#flow_content\">Flow content</a>\n",
@@ -4535,6 +4536,56 @@
             "level": "NONE"
           },
           "doc": "This attribute specifies the number and size of vertical spaces in a frameset."
+        }
+      }
+    },
+    "geolocation": {
+      "url": "$MDN_URL$/web/html/reference/elements/geolocation",
+      "status": [
+        "Experimental",
+        "StandardTrack"
+      ],
+      "compatibility": {
+        "Chrome": "144",
+        "ChromeAndroid": "144",
+        "Edge": "144"
+      },
+      "doc": "<div class=\"notecard experimental\"><p><strong>Experimental:</strong> <strong>This is an <a href=\"$MDN_URL$/MDN/Writing_guidelines/Experimental_deprecated_obsolete#experimental\">experimental technology</a></strong><br>Check the <a href=\"#browser_compatibility\">Browser compatibility table</a> carefully before using this in production.</div>\n<p>The <strong><code>&lt;geolocation&gt;</code></strong> <a href=\"$MDN_URL$/Web/HTML\">HTML</a> element creates an interactive control for the user to share their location data with the page.\n<p>It provides:\n<ul>\n<li>An intuitive browser-defined UI.</li>\n<li>A process for handling the necessary permissions for the <code>geolocation</code> feature.</li>\n<li>API features for accessing location data and responding to received location data and permission changes.</li>\n</ul>\n<p>The <code>&lt;geolocation&gt;</code> element provides a declarative browser-defined control for sharing location data. In Chrome, for example, the button features a \"map pin\" icon and intuitive text (\"Use location\" in English content).\n<p>It also allows for intuitive management of user permissions.\nFor example, in Chrome, if the user previously denied permission to access location data, or dismissed the permission dialog without making a choice, they are free to press the button again to update their choice.\nIn cases where they previously denied permission, subsequent dialogs will inform them that they previously didn't allow location data to be shared, and ask them whether they want to continue not allowing it, or to allow it.\n<p>A key aspect of the <code>&lt;geolocation&gt;</code> element is that it reflects the user's conscious choice, and blocks possible usage that might trick the user into providing their location data unwittingly (see <a href=\"#geolocation_blocking\"><code>&lt;geolocation&gt;</code> blocking</a> for more information).\n<p>The element's DOM API interface, <a href=\"$MDN_URL$/Web/API/HTMLGeolocationElement\"><code>HTMLGeolocationElement</code></a>, provides features to access returned position data, current permission status, and errors if the data retrieval was unsuccessful, reducing the amount of JavaScript logic that needs to be written. It also has events available to run code in response to location data being received, changes in permission status, and user interactions with the permission dialog.\n<div class=\"notecard note\">\n<p><strong>Note:</strong>\nFor performance reasons, a maximum of three <code>&lt;geolocation&gt;</code> elements are allowed on any one page. If this quota is exceeded, all <code>&lt;geolocation&gt;</code> elements have their functionality disabled.\n</div>",
+      "details": {
+        "<a href=\"$MDN_URL$/Web/HTML/Guides/Content_categories\">Content categories</a>": "<a href=\"$MDN_URL$/Web/HTML/Guides/Content_categories#flow_content\">Flow content</a>\n,\n<a href=\"$MDN_URL$/Web/HTML/Guides/Content_categories#phrasing_content\">phrasing content</a>\n, interactive content, palpable content.\n",
+        "Permitted content": "Any suitable transparent fallback content.\n",
+        "Tag omission": "None, both the starting and ending tag are mandatory.\n",
+        "Permitted parents": "Any element that accepts phrasing content.\n",
+        "Implicit ARIA role": "<a href=\"https://w3c.github.io/html-aria/#dfn-no-corresponding-role\" class=\"external\" target=\"_blank\">No corresponding role</a>\n",
+        "Permitted ARIA roles": "<a href=\"$MDN_URL$/Web/Accessibility/ARIA/Reference/Roles/button_role\"><code>button</code></a>\n",
+        "DOM interface": "<a href=\"$MDN_URL$/Web/API/HTMLGeolocationElement\"><code>HTMLGeolocationElement</code></a>\n"
+      },
+      "attrs": {
+        "autolocate": {
+          "url": "$MDN_URL$/web/html/reference/elements/geolocation#autolocate",
+          "status": [
+            "Experimental",
+            "StandardTrack"
+          ],
+          "compatibility": {
+            "Chrome": "144",
+            "ChromeAndroid": "144",
+            "Edge": "144"
+          },
+          "doc": "A boolean attribute that, when set to <code>true</code>, specifies that the browser should immediately retrieve location data when the <code>&lt;geolocation&gt;</code> element is rendered, provided permission was previously granted. If set to <code>false</code>, location data is not retrieved until the user activates the control. Defaults to <code>false</code>.\n<p>If permission was not previously granted, this attribute has no effect."
+        },
+        "watch": {
+          "url": "$MDN_URL$/web/html/reference/elements/geolocation#watch",
+          "status": [
+            "Experimental",
+            "StandardTrack"
+          ],
+          "compatibility": {
+            "Chrome": "144",
+            "ChromeAndroid": "144",
+            "Edge": "144"
+          },
+          "doc": "A boolean attribute that, when set to <code>true</code>, specifies that the browser should retrieve location data whenever the position of the user's device changes. If set to <code>false</code>, location data is only retrieved once. Defaults to <code>false</code>."
         }
       }
     },
@@ -6033,8 +6084,9 @@
             "SafariIOS": "6"
           },
           "baseline": {
-            "level": "LOW",
-            "lowDate": "2023-08-01"
+            "level": "HIGH",
+            "lowDate": "2023-08-01",
+            "highDate": "2026-02-01"
           },
           "doc": "Valid for <code>hidden</code>, <code>text</code>, <code>search</code>, <code>url</code>, <code>tel</code>, and <code>email</code> input types, the <code>dirname</code> attribute enables the submission of the directionality of the element. When included, the form control will submit with two name/value pairs: the first being the <a href=\"#name\"><code>name</code></a> and <a href=\"#value\"><code>value</code></a>, and the second being the value of the <code>dirname</code> attribute as the name, with a value of <code>ltr</code> or <code>rtl</code> as set by the browser.\n<div>\n```html\n<form action=\"page.html\" method=\"post\">\n  <label>\n    Fruit:\n    <input type=\"text\" name=\"fruit\" dirname=\"fruit-dir\" value=\"cherry\" />\n  </label>\n  <input type=\"submit\" />\n</form>\n<!-- page.html?fruit=cherry&fruit-dir=ltr -->\n```\n</div>\n<p>When the form above is submitted, the input cause both the <code>name</code> / <code>value</code> pair of <code>fruit=cherry</code> and the <code>dirname</code> / direction pair of <code>fruit-dir=ltr</code> to be sent.\nFor more information, see the <a href=\"$MDN_URL$/Web/HTML/Reference/Attributes/dirname\"><code>dirname</code> attribute</a>."
         },
@@ -6210,24 +6262,6 @@
         },
         "list": {
           "url": "$MDN_URL$/web/html/reference/elements/input#list",
-          "status": [
-            "StandardTrack"
-          ],
-          "compatibility": {
-            "Chrome": "20",
-            "ChromeAndroid": "25",
-            "Edge": "12",
-            "Firefox": "4",
-            "FirefoxAndroid": "4",
-            "Opera": "12.1",
-            "Safari": "12.1",
-            "SafariIOS": "12.2"
-          },
-          "baseline": {
-            "level": "HIGH",
-            "lowDate": "2019-03-25",
-            "highDate": "2021-09-25"
-          },
           "doc": "The value given to the <code>list</code> attribute should be the <a href=\"$MDN_URL$/Web/API/Element/id\" ><code>id</code></a> of a <a href=\"$MDN_URL$/Web/HTML/Reference/Elements/datalist\"><code>&lt;datalist&gt;</code></a> element located in the same document. The <code>&lt;datalist&gt;</code> provides a list of predefined values to suggest to the user for this input. Any values in the list that are not compatible with the <a href=\"#type\"><code>type</code></a> are not included in the suggested options. The values provided are suggestions, not requirements: users can select from this predefined list or provide a different value.\n<p>It is valid on <code>text</code>, <code>search</code>, <code>url</code>, <code>tel</code>, <code>email</code>, <code>date</code>, <code>month</code>, <code>week</code>, <code>time</code>, <code>datetime-local</code>, <code>number</code>, <code>range</code>, and <code>color</code>.\n<p>Per the specifications, the <code>list</code> attribute is not supported by the <code>hidden</code>, <code>password</code>, <code>checkbox</code>, <code>radio</code>, <code>file</code>, or any of the button types.\n<p>Depending on the browser, the user may see a custom color palette suggested, tic marks along a range, or even an input that opens like a <a href=\"$MDN_URL$/Web/HTML/Reference/Elements/select\"><code>&lt;select&gt;</code></a> but allows for non-listed values. Check out the <a href=\"$MDN_URL$/Web/HTML/Reference/Elements/datalist#browser_compatibility\">browser compatibility table</a> for the other input types.\n<p>See the <a href=\"$MDN_URL$/Web/HTML/Reference/Elements/datalist\"><code>&lt;datalist&gt;</code></a> element."
         },
         "max": {
@@ -11271,6 +11305,10 @@
           },
           "doc": "Sets the value of the <a href=\"$MDN_URL$/Web/API/ShadowRoot/clonable\"><code>clonable</code></a> property of a <a href=\"$MDN_URL$/Web/API/ShadowRoot\"><code>ShadowRoot</code></a> created using this element to <code>true</code>.\nIf set, a clone of the shadow host (the parent element of this <code>&lt;template&gt;</code>) created with <a href=\"$MDN_URL$/Web/API/Node/cloneNode\"><code>Node.cloneNode()</code></a> or <a href=\"$MDN_URL$/Web/API/Document/importNode\"><code>Document.importNode()</code></a> will include a shadow root in the copy."
         },
+        "shadowrootcustomelementregistry": {
+          "url": "$MDN_URL$/web/html/reference/elements/template#shadowrootcustomelementregistry",
+          "doc": "Sets the <a href=\"$MDN_URL$/Web/API/ShadowRoot/customElementRegistry\"><code>customElementRegistry</code></a> property of a <a href=\"$MDN_URL$/Web/API/ShadowRoot\"><code>ShadowRoot</code></a> created using this element to <code>null</code>, rather than the document's <a href=\"$MDN_URL$/Web/API/Document/customElementRegistry\">custom element registry</a>.\nThis allows a scoped <a href=\"$MDN_URL$/Web/API/CustomElementRegistry\"><code>CustomElementRegistry</code></a> to be attached later using <a href=\"$MDN_URL$/Web/API/CustomElementRegistry/initialize\"><code>CustomElementRegistry.initialize()</code></a>."
+        },
         "shadowrootdelegatesfocus": {
           "url": "$MDN_URL$/web/html/reference/elements/template#shadowrootdelegatesfocus",
           "status": [
@@ -11447,8 +11485,9 @@
             "SafariIOS": "6"
           },
           "baseline": {
-            "level": "LOW",
-            "lowDate": "2023-08-01"
+            "level": "HIGH",
+            "lowDate": "2023-08-01",
+            "highDate": "2026-02-01"
           },
           "doc": "This attribute is used to indicate the text directionality of the element contents.\nFor more information, see the <a href=\"$MDN_URL$/Web/HTML/Reference/Attributes/dirname\"><code>dirname</code> attribute</a>."
         },

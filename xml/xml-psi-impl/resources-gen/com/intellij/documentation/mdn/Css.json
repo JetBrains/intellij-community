@@ -1360,14 +1360,15 @@
             "ChromeAndroid": "42",
             "Edge": "79",
             "Firefox": "47",
-            "FirefoxAndroid": "116",
+            "FirefoxAndroid": "47",
             "Opera": "29",
             "Safari": "13",
             "SafariIOS": "12.2"
           },
           "baseline": {
-            "level": "LOW",
-            "lowDate": "2023-08-01"
+            "level": "HIGH",
+            "lowDate": "2020-01-15",
+            "highDate": "2022-07-15"
           },
           "doc": "The <strong><code>display-mode</code></strong> <a href=\"$MDN_URL$/Web/CSS\">CSS</a> <a href=\"$MDN_URL$/Web/CSS/Reference/At-rules/@media#media_features\">media feature</a> can be used to test whether a web app is being displayed in a normal browser tab or in some alternative way, such as a standalone app or fullscreen mode.\n<p>For example:\n<ul>\n<li>\n<p>A <a href=\"$MDN_URL$/Web/Progressive_web_apps\">progressive web app</a> <a href=\"$MDN_URL$/Web/Progressive_web_apps/How_to/Create_a_standalone_app\">can set its display mode</a> by setting the <a href=\"$MDN_URL$/Web/Progressive_web_apps/Manifest/Reference/display\"><code>display</code></a> member in its manifest. In this case, the value of <code>display-mode</code> identifies the value that was set (but note that this may not be the same as the value requested in the manifest, since a browser may not support the requested mode).\n</li>\n<li>\n<p>Any web app can use the <a href=\"$MDN_URL$/Web/API/Fullscreen_API\">Fullscreen API</a> or the <a href=\"$MDN_URL$/Web/API/Document_Picture-in-Picture_API\">Document Picture-in-Picture API</a> to set the display mode, and in this case the value of <code>display-mode</code> identifies the mode that was set.\n</li>\n</ul>\n<p>The <code>display-mode</code> value applies to the top-level browsing context and any child browsing contexts."
         },
@@ -1743,6 +1744,19 @@
         },
         "scan": {
           "url": "$MDN_URL$/web/css/reference/at-rules/@media/scan",
+          "status": [
+            "StandardTrack"
+          ],
+          "compatibility": {
+            "Chrome": "104",
+            "ChromeAndroid": "104",
+            "Edge": "104",
+            "Firefox": "63",
+            "FirefoxAndroid": "63",
+            "Opera": "90",
+            "Safari": "16.4",
+            "SafariIOS": "16.4"
+          },
           "doc": "The <strong><code>scan</code></strong> <a href=\"$MDN_URL$/Web/CSS\">CSS</a> <a href=\"$MDN_URL$/Web/CSS/Reference/At-rules/@media#media_features\">media feature</a> is used to apply CSS styles based on the scanning process of the output device."
         },
         "scripting": {
@@ -5667,7 +5681,8 @@
         "Chrome": "135",
         "ChromeAndroid": "135",
         "Edge": "135",
-        "Firefox": "preview",
+        "Firefox": "148",
+        "FirefoxAndroid": "148",
         "Opera": "120",
         "Safari": "18.4",
         "SafariIOS": "18.4"
@@ -6778,7 +6793,7 @@
         "level": "NONE"
       },
       "doc": "The <strong><code>alignment-baseline</code></strong> <a href=\"$MDN_URL$/Web/CSS\">CSS</a> property specifies the specific <a href=\"$MDN_URL$/Glossary/Baseline/Typography\">baseline</a> used to align the box's text and inline-level contents. <strong>Baseline alignment</strong> is the relationship among the baselines of multiple alignment subjects within an alignment context. When performing baseline alignment, the <code>alignment-baseline</code> property value specifies which baseline of the box is aligned to the corresponding baseline of its alignment context.\n<div class=\"notecard note\">\n<p><strong>Note:</strong>\nThe <code>alignment-baseline</code> property only has an effect on inline-level boxes, flex items, grid items, table cells, and the <a href=\"$MDN_URL$/Web/SVG/Reference/Element/text\"><code>&lt;text&gt;</code></a>, <a href=\"$MDN_URL$/Web/SVG/Reference/Element/textPath\"><code>&lt;textPath&gt;</code></a>, and <a href=\"$MDN_URL$/Web/SVG/Reference/Element/tspan\"><code>&lt;tspan&gt;</code></a> SVG elements. If present, it overrides the shape's <a href=\"$MDN_URL$/Web/SVG/Reference/Attribute/alignment-baseline\"><code>alignment-baseline</code></a> attribute.\n</div>\n<p>In an inline formatting context, inline-level box fragments and glyphs share an alignment context established by their parent inline box fragment along its inline axis. In SVG text layout, these values instead specify the baseline that is aligned to the SVG current text position.",
-      "formalSyntax": "baseline | text-bottom | alphabetic | ideographic | middle | central | mathematical | text-top",
+      "formalSyntax": "baseline | &lt;baseline-metric&gt;\n  &lt;baseline-metric&gt; = text-bottom | alphabetic | ideographic | middle | central | mathematical | hanging | text-top",
       "values": {
         "baseline": "Use the <a href=\"$MDN_URL$/Web/CSS/Reference/Properties/dominant-baseline\"><code>dominant-baseline</code></a> value of the parent.",
         "alphabetic": "Used in writing Latin, Cyrillic, Greek, and many other scripts; matches the box's alphabetic baseline to that of its parent, corresponding to the bottom of most, but not all characters.",
@@ -7733,6 +7748,30 @@
         "&lt;percentage&gt;": "Stretches the image in the corresponding dimension to the specified percentage of the <em>background positioning area</em>.\nThe background positioning area is determined by the value of <a href=\"$MDN_URL$/Web/CSS/Reference/Properties/background-origin\"><code>background-origin</code></a> (by default, the padding box).\nHowever, if the background's <a href=\"$MDN_URL$/Web/CSS/Reference/Properties/background-attachment\"><code>background-attachment</code></a> value is <code>fixed</code>, the positioning area is instead the entire <a href=\"$MDN_URL$/Glossary/Viewport\">viewport</a>.\nNegative values are not allowed."
       }
     },
+    "baseline-shift": {
+      "url": "$MDN_URL$/web/css/reference/properties/baseline-shift",
+      "status": [
+        "StandardTrack"
+      ],
+      "compatibility": {
+        "Chrome": "1",
+        "ChromeAndroid": "18",
+        "Edge": "79",
+        "Opera": "15",
+        "Safari": "4",
+        "SafariIOS": "3.2"
+      },
+      "baseline": {
+        "level": "NONE"
+      },
+      "doc": "The <strong><code>baseline-shift</code></strong> <a href=\"$MDN_URL$/Web/CSS\">CSS</a> property repositions the dominant-baseline of a text element relative to the dominant-baseline of its parent text content element. The shifted element might be a sub- or superscript. If the property is present, the value overrides the element's <a href=\"$MDN_URL$/Web/SVG/Reference/Attribute/baseline-shift\"><code>baseline-shift</code></a> attribute.\n<div class=\"notecard note\">\n<p><strong>Note:</strong>\nThe <code>baseline-shift</code> property only applies to <a href=\"$MDN_URL$/Web/SVG/Reference/Element/textPath\"><code>&lt;textPath&gt;</code></a> and <a href=\"$MDN_URL$/Web/SVG/Reference/Element/tspan\"><code>&lt;tspan&gt;</code></a> elements nested in an <a href=\"$MDN_URL$/Web/SVG/Reference/Element/svg\"><code>&lt;svg&gt;</code></a>. It doesn't apply to other SVG, HTML, or pseudo-elements.\n</div>",
+      "formalSyntax": "&lt;length-percentage&gt; | sub | super | top | center | bottom\n  &lt;length-percentage&gt; = &lt;length&gt; | &lt;percentage&gt;",
+      "values": {
+        "sub": "The dominant-baseline is shifted to the default position for subscripts.",
+        "super": "The dominant-baseline is shifted to the default position for superscripts.",
+        "&lt;length-percentage&gt;": "Raises (if positive) or lowers (if negative) the dominant-baseline of the text content element by the specified length or percentage, with the percentage being relative to the dominant-baseline of the parent text content element's <a href=\"$MDN_URL$/Web/CSS/Reference/Properties/line-height\"><code>line-height</code></a>."
+      }
+    },
     "baseline-source": {
       "url": "$MDN_URL$/web/css/reference/properties/baseline-source",
       "status": [
@@ -8278,7 +8317,7 @@
       "doc": "The <strong><code>border-bottom-width</code></strong> <a href=\"$MDN_URL$/Web/CSS\">CSS</a> property sets the width of the bottom border of an element.",
       "formalSyntax": "&lt;line-width&gt;\n  &lt;line-width&gt; = &lt;length [0,∞]&gt; | thin | medium | thick",
       "values": {
-        "&lt;line-width&gt;": "Defines the width of the border, either as an explicit nonnegative <a href=\"$MDN_URL$/Web/CSS/Reference/Values/length\"><code>&lt;length&gt;</code></a> or a keyword. If it's a keyword, it must be one of the following values:\n<ul>\n<li><code>thin</code></li>\n<li><code>medium</code></li>\n<li><code>thick</code></li>\n</ul>"
+        "&lt;line-width&gt;": "Defines the width of the border, either as an explicit nonnegative <a href=\"$MDN_URL$/Web/CSS/Reference/Values/length\"><code>&lt;length&gt;</code></a> or a keyword. If it's a keyword, it must be one of the following values:\n<ul>\n<li><code>thin</code>\n<ul>\n<li>Same as <code>1px</code>.</li>\n</ul>\n</li>\n<li><code>medium</code>\n<ul>\n<li>Same as <code>3px</code>.</li>\n</ul>\n</li>\n<li><code>thick</code>\n<ul>\n<li>Same as <code>5px</code>.</li>\n</ul>\n</li>\n</ul>"
       }
     },
     "border-collapse": {
@@ -8973,7 +9012,7 @@
       "doc": "The <strong><code>border-left-width</code></strong> <a href=\"$MDN_URL$/Web/CSS\">CSS</a> property sets the width of the left border of an element.",
       "formalSyntax": "&lt;line-width&gt;\n  &lt;line-width&gt; = &lt;length [0,∞]&gt; | thin | medium | thick",
       "values": {
-        "&lt;line-width&gt;": "Defines the width of the border, either as an explicit nonnegative <a href=\"$MDN_URL$/Web/CSS/Reference/Values/length\"><code>&lt;length&gt;</code></a> or a keyword. If it's a keyword, it must be one of the following values:\n<ul>\n<li><code>thin</code></li>\n<li><code>medium</code></li>\n<li><code>thick</code></li>\n</ul>"
+        "&lt;line-width&gt;": "Defines the width of the border, either as an explicit nonnegative <a href=\"$MDN_URL$/Web/CSS/Reference/Values/length\"><code>&lt;length&gt;</code></a> or a keyword. If it's a keyword, it must be one of the following values:\n<ul>\n<li><code>thin</code>\n<ul>\n<li>Same as <code>1px</code>.</li>\n</ul>\n</li>\n<li><code>medium</code>\n<ul>\n<li>Same as <code>3px</code>.</li>\n</ul>\n</li>\n<li><code>thick</code>\n<ul>\n<li>Same as <code>5px</code>.</li>\n</ul>\n</li>\n</ul>"
       }
     },
     "border-radius": {
@@ -9110,7 +9149,7 @@
       "doc": "The <strong><code>border-right-width</code></strong> <a href=\"$MDN_URL$/Web/CSS\">CSS</a> property sets the width of the right border of an element.",
       "formalSyntax": "&lt;line-width&gt;\n  &lt;line-width&gt; = &lt;length [0,∞]&gt; | thin | medium | thick",
       "values": {
-        "&lt;line-width&gt;": "Defines the width of the border, either as an explicit nonnegative <a href=\"$MDN_URL$/Web/CSS/Reference/Values/length\"><code>&lt;length&gt;</code></a> or a keyword. If it's a keyword, it must be one of the following values:\n<ul>\n<li><code>thin</code></li>\n<li><code>medium</code></li>\n<li><code>thick</code></li>\n</ul>"
+        "&lt;line-width&gt;": "Defines the width of the border, either as an explicit nonnegative <a href=\"$MDN_URL$/Web/CSS/Reference/Values/length\"><code>&lt;length&gt;</code></a> or a keyword. If it's a keyword, it must be one of the following values:\n<ul>\n<li><code>thin</code>\n<ul>\n<li>Same as <code>1px</code>.</li>\n</ul>\n</li>\n<li><code>medium</code>\n<ul>\n<li>Same as <code>3px</code>.</li>\n</ul>\n</li>\n<li><code>thick</code>\n<ul>\n<li>Same as <code>5px</code>.</li>\n</ul>\n</li>\n</ul>"
       }
     },
     "border-spacing": {
@@ -9369,7 +9408,7 @@
       "doc": "The <strong><code>border-top-width</code></strong> <a href=\"$MDN_URL$/Web/CSS\">CSS</a> property sets the width of the top border of an element.",
       "formalSyntax": "&lt;line-width&gt;\n  &lt;line-width&gt; = &lt;length [0,∞]&gt; | thin | medium | thick",
       "values": {
-        "&lt;line-width&gt;": "Defines the width of the border, either as an explicit nonnegative <a href=\"$MDN_URL$/Web/CSS/Reference/Values/length\"><code>&lt;length&gt;</code></a> or a keyword. If it's a keyword, it must be one of the following values:\n<ul>\n<li><code>thin</code></li>\n<li><code>medium</code></li>\n<li><code>thick</code></li>\n</ul>"
+        "&lt;line-width&gt;": "Defines the width of the border, either as an explicit nonnegative <a href=\"$MDN_URL$/Web/CSS/Reference/Values/length\"><code>&lt;length&gt;</code></a> or a keyword. If it's a keyword, it must be one of the following values:\n<ul>\n<li><code>thin</code>\n<ul>\n<li>Same as <code>1px</code>.</li>\n</ul>\n</li>\n<li><code>medium</code>\n<ul>\n<li>Same as <code>3px</code>.</li>\n</ul>\n</li>\n<li><code>thick</code>\n<ul>\n<li>Same as <code>5px</code>.</li>\n</ul>\n</li>\n</ul>"
       }
     },
     "border-width": {
@@ -9395,7 +9434,7 @@
       "doc": "The <strong><code>border-width</code></strong> <a href=\"$MDN_URL$/Web/CSS/Guides/Cascade/Shorthand_properties\">shorthand</a> <a href=\"$MDN_URL$/Web/CSS\">CSS</a> property sets the width of an element's border.",
       "formalSyntax": "&lt;'border-top-width'&gt;{1,4}\n  &lt;border-top-width&gt; = &lt;line-width&gt;\n  &lt;line-width&gt; = &lt;length [0,∞]&gt; | thin | medium | thick",
       "values": {
-        "&lt;line-width&gt;": "Defines the width of the border, either as an explicit nonnegative <a href=\"$MDN_URL$/Web/CSS/Reference/Values/length\"><code>&lt;length&gt;</code></a> or a keyword. If it's a keyword, it must be one of the following values:\n<ul>\n<li><code>thin</code></li>\n<li><code>medium</code></li>\n<li><code>thick</code></li>\n</ul>"
+        "&lt;line-width&gt;": "Defines the width of the border, either as an explicit nonnegative <a href=\"$MDN_URL$/Web/CSS/Reference/Values/length\"><code>&lt;length&gt;</code></a> or a keyword. If it's a keyword, it must be one of the following values:\n<ul>\n<li><code>thin</code>\n<ul>\n<li>Same as <code>1px</code>.</li>\n</ul>\n</li>\n<li><code>medium</code>\n<ul>\n<li>Same as <code>3px</code>.</li>\n</ul>\n</li>\n<li><code>thick</code>\n<ul>\n<li>Same as <code>5px</code>.</li>\n</ul>\n</li>\n</ul>"
       }
     },
     "bottom": {
@@ -9683,8 +9722,8 @@
       "values": {
         "auto": "Allows, but does not force, any break (page, column, or region) to be inserted right before the principal box.",
         "avoid": "Avoids any break (page, column, or region) from being inserted right before the principal box.",
-        "always": "Forces a page break right after the principal box. The type of this break is that of the immediately-containing fragmentation context. If we are inside a multicol container then it would force a column break, inside paged media (but not inside a multicol container) a page break.",
-        "all": "Forces a page break right after the principal box. Breaking through all possible fragmentation contexts. So a break inside a multicol container, which was inside a page container would force a column and page break.",
+        "always": "Forces a page break right before the principal box. The type of this break is that of the immediately-containing fragmentation context. If we are inside a multicol container then it would force a column break, inside paged media (but not inside a multicol container) a page break.",
+        "all": "Forces a page break right before the principal box. Breaking through all possible fragmentation contexts. So a break inside a multicol container, which was inside a page container would force a column and page break.",
         "avoid-page": "Avoids any page break right before the principal box.",
         "page": "Forces a page break right before the principal box.",
         "left": "Forces one or two page breaks right before the principal box, whichever will make the next page into a left page. It's the page placed on the left side of the spine of the book or the back side of the page in duplex printing.",
@@ -11297,7 +11336,7 @@
         "highDate": "2022-07-15"
       },
       "doc": "The <strong><code>dominant-baseline</code></strong> <a href=\"$MDN_URL$/Web/CSS\">CSS</a> property specifies the specific <a href=\"$MDN_URL$/Glossary/Baseline/Typography\">baseline</a> used to align the box's text and inline-level contents. It also indicates the default alignment baseline of any boxes participating in baseline alignment in the box's alignment context. If present, it overrides the shape's <a href=\"$MDN_URL$/Web/SVG/Reference/Attribute/dominant-baseline\"><code>dominant-baseline</code></a> attribute.\n<p>Baselines are selected from the font baseline table. If there is no baseline table in the nominal font, or if the baseline table lacks an entry for the desired baseline, then the browser may use heuristics to determine the position of the desired baseline.\n<p>The <code>dominant-baseline</code> property is used to determine or re-determine a <em>scaled-baseline-table</em>. A scaled-baseline-table is a compound value with three components:\n<ol>\n<li>a baseline-identifier for the dominant-baseline,</li>\n<li>a baseline-table, and</li>\n<li>a baseline-table font-size.</li>\n</ol>\n<p>Some values of <code>dominant-baseline</code> re-determine all three values. Others only re-establish the baseline-table font-size. When the initial value, <code>auto</code>, would give an undesired result, this property can be used to explicitly set the desired scaled-baseline-table.\n<div class=\"notecard note\">\n<p><strong>Note:</strong>\nThe <code>dominant-baseline</code> property only has an effect on the <a href=\"$MDN_URL$/Web/SVG/Reference/Element/text\"><code>&lt;text&gt;</code></a>, <a href=\"$MDN_URL$/Web/SVG/Reference/Element/textPath\"><code>&lt;textPath&gt;</code></a>, and <a href=\"$MDN_URL$/Web/SVG/Reference/Element/tspan\"><code>&lt;tspan&gt;</code></a> SVG elements.\n</div>",
-      "formalSyntax": "auto | text-bottom | alphabetic | ideographic | middle | central | mathematical | hanging | text-top",
+      "formalSyntax": "auto | &lt;baseline-metric&gt;\n  &lt;baseline-metric&gt; = text-bottom | alphabetic | ideographic | middle | central | mathematical | hanging | text-top",
       "values": {
         "auto": "If this property is applied to a <a href=\"$MDN_URL$/Web/SVG/Reference/Element/text\"><code>&lt;text&gt;</code></a> element, then the computed value depends on the value of the <a href=\"$MDN_URL$/Web/SVG/Reference/Attribute/writing-mode\"><code>writing-mode</code></a> attribute.\n<p>If the <a href=\"$MDN_URL$/Web/SVG/Reference/Attribute/writing-mode\"><code>writing-mode</code></a> is horizontal, then the value of the dominant-baseline component is <code>alphabetic</code>. Otherwise, if the <a href=\"$MDN_URL$/Web/SVG/Reference/Attribute/writing-mode\"><code>writing-mode</code></a> is vertical, then the value of the dominant-baseline component is <code>central</code>.\n<p>If this property is applied to a <a href=\"$MDN_URL$/Web/SVG/Reference/Element/tspan\"><code>&lt;tspan&gt;</code></a>, or <a href=\"$MDN_URL$/Web/SVG/Reference/Element/textPath\"><code>&lt;textPath&gt;</code></a> element, then the dominant-baseline and the baseline-table components remain the same as those of the parent text content element.\n<p>If the computed <a href=\"$MDN_URL$/Web/SVG/Reference/Attribute/baseline-shift\"><code>baseline-shift</code></a> value actually shifts the baseline, then the baseline-table font-size component is set to the value of the <a href=\"$MDN_URL$/Web/SVG/Reference/Attribute/font-size\"><code>font-size</code></a> attribute on the element on which the <code>dominant-baseline</code> attribute occurs, otherwise the baseline-table font-size remains the same as that of the element.\n<p>If there is no parent text content element, the scaled-baseline-table value is constructed as for <a href=\"$MDN_URL$/Web/SVG/Reference/Element/text\"><code>&lt;text&gt;</code></a> elements.",
         "alphabetic": "The baseline-identifier for the dominant-baseline is set to be <code>alphabetic</code>, the derived baseline-table is constructed using the <code>alphabetic</code> baseline-table in the font, and the baseline-table font-size is changed to the value of the element's <a href=\"$MDN_URL$/Web/SVG/Reference/Attribute/font-size\"><code>font-size</code></a> SVG attribute or the CSS <a href=\"$MDN_URL$/Web/CSS/Reference/Properties/font-size\"><code>font-size</code></a>, if set.",
@@ -11871,7 +11910,7 @@
       "formalSyntax": "normal | &lt;feature-tag-value&gt;#\n  &lt;feature-tag-value&gt; = &lt;opentype-tag&gt; [ &lt;integer [0,∞]&gt; | on | off ]?\n  &lt;opentype-tag&gt; = &lt;string&gt;\n  &lt;integer&gt; = &lt;number-token&gt;",
       "values": {
         "normal": "Indicates that text is laid out using default font settings. This is the default value.",
-        "&lt;feature-tag-value&gt;": "Represents a space-separated tuple consisting of a tag name and an optional value.\n<p>The tag name is always a <a href=\"$MDN_URL$/Web/CSS/Reference/Values/string\"><code>&lt;string&gt;</code></a> of four <a href=\"$MDN_URL$/Glossary/ASCII\">ASCII</a> characters. If the tag name has more or fewer characters or if it contains characters outside the <code>U+20</code> – <code>U+7E</code> code point range, the descriptor is invalid.\n<p>The optional value can be a positive integer or the keyword <code>on</code> or <code>off</code>. The keywords <code>on</code> and <code>off</code> are synonyms for the values <code>1</code> and <code>0</code>, respectively. If no value is set, the default is <code>1</code>. For non-boolean OpenType features (e.g., <a href=\"https://learn.microsoft.com/en-ca/typography/opentype/spec/features_pt#tag-salt\" class=\"external\" target=\"_blank\">stylistic alternates</a>), the value implies a particular glyph to be selected; for boolean features, the value turns the feature on or off."
+        "&lt;feature-tag-value&gt;": "Represents a space-separated tuple consisting of a tag name and an optional value.\n<dl>\n<dt id=\"tag_name\"><a href=\"#tag_name\">Tag name</a></dt>\n<dd>\n<p>The tag name is always a <a href=\"$MDN_URL$/Web/CSS/Reference/Values/string\"><code>&lt;string&gt;</code></a> of four <a href=\"$MDN_URL$/Glossary/ASCII\">ASCII</a> characters. If the tag name has more or fewer characters or if it contains characters outside the <code>U+20</code> – <code>U+7E</code> code point range, the descriptor is invalid.\n</dd>\n<dt id=\"optional_value\"><a href=\"#optional_value\">Optional value</a></dt>\n<dd>\n<p>The optional value can be a positive integer or the keyword <code>on</code> or <code>off</code>. The keywords <code>on</code> and <code>off</code> are synonyms for the values <code>1</code> and <code>0</code>, respectively. If no value is set, the default is <code>1</code>. For non-boolean OpenType features (e.g., <a href=\"https://learn.microsoft.com/en-ca/typography/opentype/spec/features_pt#tag-salt\" class=\"external\" target=\"_blank\">stylistic alternates</a>), the value implies a particular glyph to be selected; for boolean features, the value turns the feature on or off.\n</dd>\n</dl>"
       }
     },
     "font-kerning": {
@@ -12466,7 +12505,8 @@
         "SafariIOS": "9.3"
       },
       "baseline": {
-        "level": "NONE"
+        "level": "LOW",
+        "lowDate": "2023-09-15"
       },
       "doc": "The <strong><code>font-variant-position</code></strong> <a href=\"$MDN_URL$/Web/CSS\">CSS</a> property controls the use of alternate, smaller glyphs that are positioned as superscript or subscript.\n<p>The glyphs are positioned relative to the baseline of the font, which remains unchanged. These glyphs are typically used in <a href=\"$MDN_URL$/Web/HTML/Reference/Elements/sub\"><code>&lt;sub&gt;</code></a> and <a href=\"$MDN_URL$/Web/HTML/Reference/Elements/sup\"><code>&lt;sup&gt;</code></a> elements.\n<p>When the usage of these alternate glyphs is activated, if one character in the run doesn't have such a typographically-enhanced glyph, the whole set of characters of the run is rendered using a fallback method, synthesizing these glyphs.\n<p>These alternate glyphs share the same em-box and the same baseline as the rest of the font. They are merely graphically enhanced, and have no effect on the line-height and other box characteristics.",
       "formalSyntax": "normal | sub | super",
@@ -14947,7 +14987,9 @@
         "Edge": "109",
         "Firefox": "117",
         "FirefoxAndroid": "117",
-        "Opera": "95"
+        "Opera": "95",
+        "Safari": "26.4",
+        "SafariIOS": "26.4"
       },
       "baseline": {
         "level": "NONE"
@@ -20307,7 +20349,7 @@
         "highDate": "2018-01-29"
       },
       "doc": "The <strong><code>vertical-align</code></strong> <a href=\"$MDN_URL$/Web/CSS\">CSS</a> property sets vertical alignment of an inline, inline-block or table-cell box.",
-      "formalSyntax": "[ first | last ] || &lt;'alignment-baseline'&gt; || &lt;'baseline-shift'&gt;\n  &lt;alignment-baseline&gt; = baseline | text-bottom | alphabetic | ideographic | middle | central | mathematical | text-top\n  &lt;baseline-shift&gt; = &lt;length-percentage&gt; | sub | super | top | center | bottom\n  &lt;length-percentage&gt; = &lt;length&gt; | &lt;percentage&gt;"
+      "formalSyntax": "[ first | last ] || &lt;'alignment-baseline'&gt; || &lt;'baseline-shift'&gt;\n  &lt;alignment-baseline&gt; = baseline | &lt;baseline-metric&gt;\n  &lt;baseline-shift&gt; = &lt;length-percentage&gt; | sub | super | top | center | bottom\n  &lt;baseline-metric&gt; = text-bottom | alphabetic | ideographic | middle | central | mathematical | hanging | text-top\n  &lt;length-percentage&gt; = &lt;length&gt; | &lt;percentage&gt;"
     },
     "view-timeline": {
       "url": "$MDN_URL$/web/css/reference/properties/view-timeline",
@@ -20591,7 +20633,9 @@
         "max-content": "The intrinsic preferred width.",
         "min-content": "The intrinsic minimum width.",
         "fit-content": "Use the available space, but not more than <a href=\"$MDN_URL$/Web/CSS/Reference/Values/max-content\">max-content</a>, i.e., <code>min(max-content, max(min-content, stretch))</code>.",
-        "fit-content(&lt;length-percentage&gt;)": "Uses the fit-content formula with the available space replaced by the specified argument, i.e., <code>min(max-content, max(min-content, &lt;length-percentage&gt;))</code>.",
+        "anchor-size()": "Sets the width relative to a dimension of an anchor element. When defining the <code>width</code> of an anchor-positioned element, the first parameter defaults to the associated anchor's width. If applied to a non-anchor-positioned element, it sets the width to the fallback value. If no fallback is defined, the declaration is ignored.",
+        "calc-size()": "Sets the width to a modified intrinsic size.",
+        "fit-content(&lt;length-percentage&gt;)": "Uses the fit-content formula with the available space replaced by the specified argument, clamping the width according to the formula <code>min(maximum size, max(minimum size, &lt;length-percentage&gt;))</code>.",
         "stretch": "Sets the width of the element's <a href=\"$MDN_URL$/Learn_web_development/Core/Styling_basics/Box_model#parts_of_a_box\">margin box</a> to the width of its <a href=\"$MDN_URL$/Web/CSS/Guides/Display/Containing_block#identifying_the_containing_block\">containing block</a>. It attempts to make the margin box fill the available space in the containing block, so in a way behaving similar to <code>100%</code> but applying the resulting size to the margin box rather than the box determined by <a href=\"$MDN_URL$/Web/CSS/Reference/Properties/box-sizing\">box-sizing</a>."
       }
     },
@@ -21009,16 +21053,12 @@
         "Chrome": "110",
         "ChromeAndroid": "110",
         "Edge": "110",
-        "Firefox": "86",
-        "FirefoxAndroid": "86",
         "Opera": "96",
         "Safari": "15",
         "SafariIOS": "15"
       },
       "baseline": {
-        "level": "HIGH",
-        "lowDate": "2023-02-09",
-        "highDate": "2025-08-09"
+        "level": "NONE"
       },
       "doc": "The <strong><code>:autofill</code></strong> <a href=\"$MDN_URL$/Web/CSS\">CSS</a> <a href=\"$MDN_URL$/Web/CSS/Reference/Selectors/Pseudo-classes\">pseudo-class</a> matches when an <a href=\"$MDN_URL$/Web/HTML/Reference/Elements/input\"><code>&lt;input&gt;</code></a> element has its value autofilled by the browser. The class stops matching if the user edits the field."
     },
@@ -21213,8 +21253,9 @@
         "SafariIOS": "6"
       },
       "baseline": {
-        "level": "LOW",
-        "lowDate": "2023-08-01"
+        "level": "HIGH",
+        "lowDate": "2023-08-01",
+        "highDate": "2026-02-01"
       },
       "doc": "The <strong><code>:first</code></strong> <a href=\"$MDN_URL$/Web/CSS\">CSS</a> <a href=\"$MDN_URL$/Web/CSS/Reference/Selectors/Pseudo-classes\">pseudo-class</a>, used with the <a href=\"$MDN_URL$/Web/CSS/Reference/At-rules/@page\"><code>@page</code></a> <a href=\"$MDN_URL$/Web/CSS/Guides/Syntax/At-rules\">at-rule</a>, represents the first page of a printed document. (See <a href=\"$MDN_URL$/Web/CSS/Reference/Selectors/:first-child\"><code>:first-child</code></a> for general first element of a node.)\n<div>\n```css\n/* Selects the first page when printing */\n@page :first {\n  margin-left: 50%;\n  margin-top: 50%;\n}\n```\n</div>\n<div class=\"notecard note\">\n<p><strong>Note:</strong>\nYou can't change all CSS properties with this pseudo-class. You can only change the margins, <a href=\"$MDN_URL$/Web/CSS/Reference/Properties/orphans\"><code>orphans</code></a>, <a href=\"$MDN_URL$/Web/CSS/Reference/Properties/widows\"><code>widows</code></a>, and page breaks of the document. Furthermore, you may only use <a href=\"$MDN_URL$/Web/CSS/Reference/Values/length#absolute_length_units\">absolute-length</a> units when defining the margins. All other properties will be ignored.\n</div>"
     },
@@ -23151,7 +23192,7 @@
         "ChromeAndroid": "144",
         "Edge": "144"
       },
-      "doc": "The <strong><code>::search-text</code></strong> <a href=\"$MDN_URL$/Web/CSS\">CSS</a> <a href=\"$MDN_URL$/Web/CSS/Reference/Selectors/Pseudo-elements\">pseudo-element</a> applies styles to search results identified by the user agent's \"Find\" or \"Find in page\" text search feature."
+      "doc": "<div class=\"notecard experimental\"><p><strong>Experimental:</strong> <strong>This is an <a href=\"$MDN_URL$/MDN/Writing_guidelines/Experimental_deprecated_obsolete#experimental\">experimental technology</a></strong><br>Check the <a href=\"#browser_compatibility\">Browser compatibility table</a> carefully before using this in production.</div>\n<p>The <strong><code>::search-text</code></strong> <a href=\"$MDN_URL$/Web/CSS\">CSS</a> <a href=\"$MDN_URL$/Web/CSS/Reference/Selectors/Pseudo-elements\">pseudo-element</a> applies styles to search results identified by the user agent's \"Find\" or \"Find in page\" text search feature."
     },
     "selection": {
       "url": "$MDN_URL$/web/css/reference/selectors/_doublecolon_selection",

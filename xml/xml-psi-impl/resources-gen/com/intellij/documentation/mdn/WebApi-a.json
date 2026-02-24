@@ -2238,7 +2238,10 @@
         "lowDate": "2015-07-29",
         "highDate": "2018-01-29"
       },
-      "doc": "The <strong><code>buffer</code></strong> property of the <a href=\"$MDN_URL$/Web/API/AudioBufferSourceNode\"><code>AudioBufferSourceNode</code></a> interface provides the ability to play back audio using an <a href=\"$MDN_URL$/Web/API/AudioBuffer\"><code>AudioBuffer</code></a> as the source of the sound data.\n<p>If the <code>buffer</code> property is set to the value <code>null</code>, the node\ngenerates a single channel containing silence (that is, every sample is 0)."
+      "doc": "The <strong><code>buffer</code></strong> property of the <a href=\"$MDN_URL$/Web/API/AudioBufferSourceNode\"><code>AudioBufferSourceNode</code></a> interface provides the ability to play back audio using an <a href=\"$MDN_URL$/Web/API/AudioBuffer\"><code>AudioBuffer</code></a> as the source of the sound data.\n<p>If the <code>buffer</code> property is set to the value <code>null</code>, the node\ngenerates a single channel containing silence (that is, every sample is 0).",
+      "throws": {
+        "InvalidStateError DOMException": "Thrown if the <code>buffer</code> property has already been set to a non-<code>null</code> value, and is then set to a non-<code>null</code> value again."
+      }
     },
     "audiobuffersourcenode.detune": {
       "url": "$MDN_URL$/web/api/audiobuffersourcenode/detune",
@@ -3848,7 +3851,7 @@
       "parameters": {
         "destination": "An <a href=\"$MDN_URL$/Web/API/AudioNode\"><code>AudioNode</code></a> or <a href=\"$MDN_URL$/Web/API/AudioParam\"><code>AudioParam</code></a> specifying the node or nodes to disconnect from. If this value is an <code>AudioNode</code>, a single node is disconnected from, with any other, optional, parameters (<code>output</code> and/or <code>input</code>) further limiting which inputs and/or outputs should be disconnected. If this value is an <code>AudioParam</code>, then the connection to that <code>AudioParam</code> is terminated, and the node's contributions to that computed parameter become 0 going forward once the change takes effect.",
         "output": "An index describing which output from the current <code>AudioNode</code> is to be disconnected. The index numbers are defined according to the number of output channels (see <a href=\"$MDN_URL$/Web/API/Web_Audio_API/Basic_concepts_behind_Web_Audio_API#audio_channels\">Audio channels</a>).",
-        "input": "An index describing which input into the specified destination <code>AudioNode</code> is to be disconnected. The index numbers are defined according to the number of input channels (see <a href=\"$MDN_URL$/Web/API/Web_Audio_API/Basic_concepts_behind_Web_Audio_API#audio_channels\">Audio channels</a>)."
+        "input": "An index describing which input into the specified destination <code>AudioNode</code> is to be disconnected. The index numbers are defined according to the number of input channels (see <a href=\"$MDN_URL$/Web/API/Web_Audio_API/Basic_concepts_behind_Web_Audio_API#audio_channels\">Audio channels</a>). Not applicable if <code>destination</code> is an <code>AudioParam</code>."
       },
       "returns": "None (<a href=\"$MDN_URL$/Web/JavaScript/Reference/Global_Objects/undefined\"><code>undefined</code></a>).",
       "throws": {
@@ -4000,8 +4003,6 @@
       "compatibility": {
         "Chrome": "14",
         "Edge": "12",
-        "Firefox": "134",
-        "FirefoxAndroid": "134",
         "Opera": "15",
         "Safari": "6",
         "SafariIOS": "6"
@@ -4024,8 +4025,6 @@
       "compatibility": {
         "Chrome": "14",
         "Edge": "12",
-        "Firefox": "134",
-        "FirefoxAndroid": "134",
         "Opera": "15",
         "Safari": "6",
         "SafariIOS": "6"
@@ -4394,6 +4393,36 @@
         "InvalidStateNode DOMException": "Thrown if the node has not been started by calling <a href=\"$MDN_URL$/Web/API/AudioScheduledSourceNode/start\" ><code>start()</code></a>.",
         "RangeError": "Thrown if the value specified for <code>when</code> is negative."
       }
+    },
+    "audiosession": {
+      "url": "$MDN_URL$/web/api/audiosession",
+      "status": [
+        "Experimental",
+        "StandardTrack"
+      ],
+      "compatibility": {
+        "Safari": "16.4",
+        "SafariIOS": "16.4"
+      },
+      "baseline": {
+        "level": "NONE"
+      },
+      "doc": "<div class=\"notecard experimental\"><p><strong>Experimental:</strong> <strong>This is an <a href=\"$MDN_URL$/MDN/Writing_guidelines/Experimental_deprecated_obsolete#experimental\">experimental technology</a></strong><br>Check the <a href=\"#browser_compatibility\">Browser compatibility table</a> carefully before using this in production.</div>\n<p>The <strong><code>AudioSession</code></strong> interface of the <a href=\"$MDN_URL$/Web/API/Audio_Session_API\">Audio Session API</a> allows developers to specify how audio from a web application interacts with other audio playing on a device.\n<p>An audio session represents the aggregated audio output from a web page. It allows web pages to express the general nature of their audio output, such as playback, recording, or transient sounds like notifications. The platform can then use this information to determine how web-based audio should interact with other applications on the device, for example, whether web audio should pause other audio or play alongside it."
+    },
+    "audiosession.type": {
+      "url": "$MDN_URL$/web/api/audiosession/type",
+      "status": [
+        "Experimental",
+        "StandardTrack"
+      ],
+      "compatibility": {
+        "Safari": "16.4",
+        "SafariIOS": "16.4"
+      },
+      "baseline": {
+        "level": "NONE"
+      },
+      "doc": "<div class=\"notecard experimental\"><p><strong>Experimental:</strong> <strong>This is an <a href=\"$MDN_URL$/MDN/Writing_guidelines/Experimental_deprecated_obsolete#experimental\">experimental technology</a></strong><br>Check the <a href=\"#browser_compatibility\">Browser compatibility table</a> carefully before using this in production.</div>\n<p>The <strong><code>type</code></strong> property of the <a href=\"$MDN_URL$/Web/API/AudioSession\"><code>AudioSession</code></a> interface returns or sets the type of the audio session.\n<p>The audio session type describes the general nature of a web page's audio output, allowing the platform to determine how web-based audio should interact with other audio playing on the device."
     },
     "audiosinkinfo": {
       "url": "$MDN_URL$/web/api/audiosinkinfo",
@@ -6896,7 +6925,8 @@
         "Deno": "1.45"
       },
       "baseline": {
-        "level": "NONE"
+        "level": "LOW",
+        "lowDate": "2026-01-21"
       },
       "doc": "<div class=\"notecard note\"><p><strong>Note:</strong> This feature is available in <a href=\"$MDN_URL$/Web/API/Web_Workers_API\">Web Workers</a>.</div>\n<p>The <strong><code>bytes()</code></strong> method of the <a href=\"$MDN_URL$/Web/API/Blob\"><code>Blob</code></a> interface returns a <a href=\"$MDN_URL$/Web/JavaScript/Reference/Global_Objects/Promise\"><code>Promise</code></a> that resolves with a <a href=\"$MDN_URL$/Web/JavaScript/Reference/Global_Objects/Uint8Array\"><code>Uint8Array</code></a> containing the contents of the blob as an array of bytes.",
       "returns": "A <a href=\"$MDN_URL$/Web/JavaScript/Reference/Global_Objects/Promise\"><code>Promise</code></a> that fulfills with a <a href=\"$MDN_URL$/Web/JavaScript/Reference/Global_Objects/Uint8Array\"><code>Uint8Array</code></a> object containing the blob data."
@@ -12244,7 +12274,7 @@
       }
     },
     "clipboardchangeevent": {
-      "url": "$MDN_URL$/web/api/ClipboardChangeEvent",
+      "url": "$MDN_URL$/web/api/clipboardchangeevent",
       "status": [
         "Experimental",
         "StandardTrack"
@@ -12257,10 +12287,10 @@
       "baseline": {
         "level": "NONE"
       },
-      "doc": "The <strong><code>ClipboardChangeEvent</code></strong> interface of the <a href=\"$MDN_URL$/Web/API/Clipboard_API\">Clipboard API</a> represents events fired whenever the contents of the system clipboard are changed."
+      "doc": "<div class=\"notecard experimental\"><p><strong>Experimental:</strong> <strong>This is an <a href=\"$MDN_URL$/MDN/Writing_guidelines/Experimental_deprecated_obsolete#experimental\">experimental technology</a></strong><br>Check the <a href=\"#browser_compatibility\">Browser compatibility table</a> carefully before using this in production.</div>\n<p>The <strong><code>ClipboardChangeEvent</code></strong> interface of the <a href=\"$MDN_URL$/Web/API/Clipboard_API\">Clipboard API</a> represents events fired whenever the contents of the system clipboard are changed."
     },
     "clipboardchangeevent.changeid": {
-      "url": "$MDN_URL$/web/api/ClipboardChangeEvent/changeId",
+      "url": "$MDN_URL$/web/api/clipboardchangeevent/changeid",
       "status": [
         "Experimental",
         "StandardTrack"
@@ -12273,10 +12303,10 @@
       "baseline": {
         "level": "NONE"
       },
-      "doc": "<div class=\"notecard secure\"><p><strong>Secure context:</strong> This feature is available only in <a href=\"$MDN_URL$/Web/Security/Defenses/Secure_Contexts\">secure contexts</a> (HTTPS), in some or all <a href=\"#browser_compatibility\">supporting browsers</a>.</div>\n<p>The <strong><code>changeId</code></strong> read-only property of the <a href=\"$MDN_URL$/Web/API/ClipboardChangeEvent\"><code>ClipboardChangeEvent</code></a> interface returns an integer representing a unique identifier for this specific clipboard change operation.\n<p>The identifier is consistent across all windows and tabs with the same storage key for the same clipboard change, enabling applications to deduplicate events when multiple windows receive the same clipboard change notification."
+      "doc": "<div class=\"notecard secure\"><p><strong>Secure context:</strong> This feature is available only in <a href=\"$MDN_URL$/Web/Security/Defenses/Secure_Contexts\">secure contexts</a> (HTTPS), in some or all <a href=\"#browser_compatibility\">supporting browsers</a>.</div>\n<div class=\"notecard experimental\"><p><strong>Experimental:</strong> <strong>This is an <a href=\"$MDN_URL$/MDN/Writing_guidelines/Experimental_deprecated_obsolete#experimental\">experimental technology</a></strong><br>Check the <a href=\"#browser_compatibility\">Browser compatibility table</a> carefully before using this in production.</div>\n<p>The <strong><code>changeId</code></strong> read-only property of the <a href=\"$MDN_URL$/Web/API/ClipboardChangeEvent\"><code>ClipboardChangeEvent</code></a> interface returns an integer representing a unique identifier for this specific clipboard change operation.\n<p>The identifier is consistent across all windows and tabs with the same storage key for the same clipboard change, enabling applications to deduplicate events when multiple windows receive the same clipboard change notification."
     },
     "clipboardchangeevent.clipboardchangeevent": {
-      "url": "$MDN_URL$/web/api/ClipboardChangeEvent/ClipboardChangeEvent",
+      "url": "$MDN_URL$/web/api/clipboardchangeevent/clipboardchangeevent",
       "status": [
         "Experimental",
         "StandardTrack"
@@ -12289,7 +12319,7 @@
       "baseline": {
         "level": "NONE"
       },
-      "doc": "<div class=\"notecard secure\"><p><strong>Secure context:</strong> This feature is available only in <a href=\"$MDN_URL$/Web/Security/Defenses/Secure_Contexts\">secure contexts</a> (HTTPS), in some or all <a href=\"#browser_compatibility\">supporting browsers</a>.</div>\n<p>The <strong><code>ClipboardChangeEvent()</code></strong> constructor creates a new <a href=\"$MDN_URL$/Web/API/ClipboardChangeEvent\"><code>ClipboardChangeEvent</code></a> object instance when a <code>clipboardchange</code> event occurs. The <code>clipboardchange</code> event fires whenever the system clipboard contents are changed either by a web app or any other system application.\n<div class=\"notecard note\">\n<p><strong>Note:</strong>\nThis event constructor is generally not needed for production websites. Its primary use is for tests that require an instance of this event.\n</div>",
+      "doc": "<div class=\"notecard secure\"><p><strong>Secure context:</strong> This feature is available only in <a href=\"$MDN_URL$/Web/Security/Defenses/Secure_Contexts\">secure contexts</a> (HTTPS), in some or all <a href=\"#browser_compatibility\">supporting browsers</a>.</div>\n<div class=\"notecard experimental\"><p><strong>Experimental:</strong> <strong>This is an <a href=\"$MDN_URL$/MDN/Writing_guidelines/Experimental_deprecated_obsolete#experimental\">experimental technology</a></strong><br>Check the <a href=\"#browser_compatibility\">Browser compatibility table</a> carefully before using this in production.</div>\n<p>The <strong><code>ClipboardChangeEvent()</code></strong> constructor creates a new <a href=\"$MDN_URL$/Web/API/ClipboardChangeEvent\"><code>ClipboardChangeEvent</code></a> object instance when a <code>clipboardchange</code> event occurs. The <code>clipboardchange</code> event fires whenever the system clipboard contents are changed either by a web app or any other system application.\n<div class=\"notecard note\">\n<p><strong>Note:</strong>\nThis event constructor is generally not needed for production websites. Its primary use is for tests that require an instance of this event.\n</div>",
       "parameters": {
         "type": "A string with the name of the event. It should always be set to <code>clipboardchange</code>.",
         "options": "An object that, <em>in addition to the properties defined in <a href=\"$MDN_URL$/Web/API/Event/Event\" ><code>Event()</code></a></em>, can have the following properties:\n<dl>\n<dt id=\"types\"><a href=\"#types\"><code>types</code></a></dt>\n<dd>\n<p>An array of strings representing the data types available on the system clipboard.\n</dd>\n<dt id=\"changeid\"><a href=\"#changeid\"><code>changeId</code></a></dt>\n<dd>\n<p>An integer representing a unique identifier for the clipboard change operation.\n</dd>\n</dl>"
@@ -12297,7 +12327,7 @@
       "returns": "A new <a href=\"$MDN_URL$/Web/API/ClipboardChangeEvent\"><code>ClipboardChangeEvent</code></a> object."
     },
     "clipboardchangeevent.types": {
-      "url": "$MDN_URL$/web/api/ClipboardChangeEvent/types",
+      "url": "$MDN_URL$/web/api/clipboardchangeevent/types",
       "status": [
         "Experimental",
         "StandardTrack"
@@ -12310,7 +12340,7 @@
       "baseline": {
         "level": "NONE"
       },
-      "doc": "<div class=\"notecard secure\"><p><strong>Secure context:</strong> This feature is available only in <a href=\"$MDN_URL$/Web/Security/Defenses/Secure_Contexts\">secure contexts</a> (HTTPS), in some or all <a href=\"#browser_compatibility\">supporting browsers</a>.</div>\n<p>The <strong><code>types</code></strong> read-only property of the <a href=\"$MDN_URL$/Web/API/ClipboardChangeEvent\"><code>ClipboardChangeEvent</code></a> interface returns an array of strings representing the mandatory <a href=\"$MDN_URL$/Glossary/MIME_type\">MIME types</a> available on the system clipboard when the <code>ClipboardChangeEvent</code> event was fired. Optional types and custom formats are not included to limit <a href=\"$MDN_URL$/Glossary/Fingerprinting\">fingerprinting</a>."
+      "doc": "<div class=\"notecard secure\"><p><strong>Secure context:</strong> This feature is available only in <a href=\"$MDN_URL$/Web/Security/Defenses/Secure_Contexts\">secure contexts</a> (HTTPS), in some or all <a href=\"#browser_compatibility\">supporting browsers</a>.</div>\n<div class=\"notecard experimental\"><p><strong>Experimental:</strong> <strong>This is an <a href=\"$MDN_URL$/MDN/Writing_guidelines/Experimental_deprecated_obsolete#experimental\">experimental technology</a></strong><br>Check the <a href=\"#browser_compatibility\">Browser compatibility table</a> carefully before using this in production.</div>\n<p>The <strong><code>types</code></strong> read-only property of the <a href=\"$MDN_URL$/Web/API/ClipboardChangeEvent\"><code>ClipboardChangeEvent</code></a> interface returns an array of strings representing the mandatory <a href=\"$MDN_URL$/Glossary/MIME_type\">MIME types</a> available on the system clipboard when the <code>ClipboardChangeEvent</code> event was fired. Optional types and custom formats are not included to limit <a href=\"$MDN_URL$/Glossary/Fingerprinting\">fingerprinting</a>."
     },
     "clipboardevent": {
       "url": "$MDN_URL$/web/api/clipboardevent",
@@ -14874,7 +14904,7 @@
       "returns": "A <a href=\"$MDN_URL$/Web/JavaScript/Reference/Global_Objects/Promise\"><code>Promise</code></a> that resolves with one of the following:\n<ul>\n<li>A <a href=\"$MDN_URL$/Web/API/FederatedCredential\"><code>FederatedCredential</code></a>, if the credential type was <code>federated</code>.</li>\n<li>A <a href=\"$MDN_URL$/Web/API/PasswordCredential\"><code>PasswordCredential</code></a>, if the credential type was <code>password</code>.</li>\n<li>A <a href=\"$MDN_URL$/Web/API/PublicKeyCredential\"><code>PublicKeyCredential</code></a>, if the credential type was <code>publicKey</code>.</li>\n</ul>\n<p>If no credential object can be created, the promise resolves with <code>null</code>.",
       "throws": {
         "TypeError": "In the case of a <a href=\"$MDN_URL$/Web/API/PasswordCredential\"><code>PasswordCredential</code></a> creation request, <code>id</code>, <code>origin</code>, or <code>password</code> were not provided (empty).",
-        "NotAllowedError DOMException": "Possible causes include:\n<ul>\n<li>Usage was blocked by a <a href=\"$MDN_URL$/Web/HTTP/Reference/Headers/Permissions-Policy/publickey-credentials-create\"><code>publickey-credentials-create</code></a> <a href=\"$MDN_URL$/Web/HTTP/Guides/Permissions_Policy\">Permissions Policy</a>.</li>\n<li>The function is called cross-origin but the iframe's <a href=\"$MDN_URL$/Web/HTML/Reference/Elements/iframe#allow\"><code>allow</code></a> attribute does not set an appropriate <a href=\"$MDN_URL$/Web/HTTP/Reference/Headers/Permissions-Policy/publickey-credentials-create\"><code>publickey-credentials-create</code></a> policy.</li>\n<li>The function is called cross-origin and the <code>&lt;iframe&gt;</code> does not have <a href=\"$MDN_URL$/Glossary/Transient_activation\">transient activation</a>.</li>\n<li>An attempt is made to create a <a href=\"$MDN_URL$/Web/API/Web_Authentication_API#discoverable_credentials_and_conditional_mediation\">discoverable credential</a> (<a href=\"$MDN_URL$/Web/API/PublicKeyCredentialCreationOptions#residentkey\"><code>residentKey</code></a> is set to <code>required</code> in the <code>create()</code> call's <a href=\"$MDN_URL$/Web/API/PublicKeyCredentialCreationOptions\"><code>PublicKeyCredentialCreationOptions</code></a> option), but the user does not have a security key that supports discoverable credentials, and cancels the operation.</li>\n</ul>",
+        "NotAllowedError DOMException": "Possible causes include:\n<ul>\n<li>Usage was blocked by a <a href=\"$MDN_URL$/Web/HTTP/Reference/Headers/Permissions-Policy/publickey-credentials-create\"><code>publickey-credentials-create</code></a> <a href=\"$MDN_URL$/Web/HTTP/Guides/Permissions_Policy\">Permissions Policy</a>.</li>\n<li>The function is called cross-origin but the iframe's <a href=\"$MDN_URL$/Web/HTML/Reference/Elements/iframe#allow\"><code>allow</code></a> attribute does not set an appropriate <a href=\"$MDN_URL$/Web/HTTP/Reference/Headers/Permissions-Policy/publickey-credentials-create\"><code>publickey-credentials-create</code></a> policy.</li>\n<li>The function is called cross-origin and the <code>&lt;iframe&gt;</code> does not have <a href=\"$MDN_URL$/Glossary/Transient_activation\">transient activation</a>.</li>\n<li>The function tried to create a <a href=\"$MDN_URL$/Web/API/Web_Authentication_API#discoverable_and_non-discoverable_credentials\">discoverable credential</a> (<a href=\"$MDN_URL$/Web/API/PublicKeyCredentialCreationOptions#residentkey\"><code>residentKey</code></a> is set to <code>required</code> in the <code>create()</code> call's <a href=\"$MDN_URL$/Web/API/PublicKeyCredentialCreationOptions\"><code>PublicKeyCredentialCreationOptions</code></a> option), but the user does not have an authenticator that supports discoverable credentials.</li>\n</ul>",
         "AbortError DOMException": "The operation was aborted."
       }
     },
@@ -14900,7 +14930,7 @@
       },
       "doc": "<div class=\"notecard secure\"><p><strong>Secure context:</strong> This feature is available only in <a href=\"$MDN_URL$/Web/Security/Defenses/Secure_Contexts\">secure contexts</a> (HTTPS), in some or all <a href=\"#browser_compatibility\">supporting browsers</a>.</div>\n<p>The <strong><code>get()</code></strong> method of the <a href=\"$MDN_URL$/Web/API/CredentialsContainer\"><code>CredentialsContainer</code></a> interface returns a <a href=\"$MDN_URL$/Web/JavaScript/Reference/Global_Objects/Promise\"><code>Promise</code></a> that fulfills with a single <a href=\"$MDN_URL$/Glossary/Credential\">credential</a>, which can then be used to authenticate a user to a website.\n<p>The method accepts a single optional <code>options</code> argument, which may include:\n<ul>\n<li>A <code>mediation</code> property indicating how and whether the user should be asked to participate in the operation.\nThis controls, for example, whether the site can silently sign a user in using a stored credential.</li>\n<li>A <code>signal</code> property enabling the operation to be cancelled using an <a href=\"$MDN_URL$/Web/API/AbortController\"><code>AbortController</code></a>.</li>\n<li>One or more properties — <code>password</code>, <code>federated</code>, <code>identity</code>, <code>otp</code>, <code>publicKey</code> — which indicate the <a href=\"$MDN_URL$/Web/API/Credential_Management_API/Credential_types\">types of credential</a> being requested. If set, the values of these properties include any parameters that the browser needs in order to find an appropriate credential of the requested type.</li>\n</ul>\n<p>The API always fulfills with a single credential or <code>null</code>. If multiple credentials are available and user mediation is allowed, then the browser will ask the user to select a single credential.",
       "parameters": {
-        "options": "An object that contains options for the request. It can contain the following properties:\n<dl>\n<dt id=\"mediation\"><a href=\"#mediation\"><code>mediation</code> <span class=\"badge inline optional\">Optional</span></a></dt>\n<dd>\n<p>A string indicating whether the user will be required to login for every visit to a client app. The value can be one of the following:\n<dl>\n<dt id=\"conditional\"><a href=\"#conditional\"><code>\"conditional\"</code></a></dt>\n<dd>\n<p>Discovered credentials are presented to the user in a non-modal dialog box along with an indication of the origin requesting credentials. In practice, this means autofilling available credentials; see <a href=\"https://web.dev/articles/passkey-form-autofill\" class=\"external\" target=\"_blank\">Sign in with a passkey through form autofill</a> for more details of how this is used; <a href=\"$MDN_URL$/Web/API/PublicKeyCredential/isConditionalMediationAvailable_static\" ><code>PublicKeyCredential.isConditionalMediationAvailable()</code></a> also provides some useful information.\n</dd>\n<dt id=\"optional\"><a href=\"#optional\"><code>\"optional\"</code></a></dt>\n<dd>\n<p>If credentials can be handed over for a given operation without user mediation, they will be, enabling automatic reauthentication without user mediation. If user mediation is required, then the user agent will ask the user to authenticate. This value is intended for situations where you have reasonable confidence that a user won't be surprised or confused at seeing a login dialog box — for example on a site that doesn't automatically log users in, when a user has just clicked a \"Login/Signup\" button.\n</dd>\n<dt id=\"required\"><a href=\"#required\"><code>\"required\"</code></a></dt>\n<dd>\n<p>The user will always be asked to authenticate. This value is intended for situations where you want to force user authentication — for example if you want a user to reauthenticate when a sensitive operation is being performed (like confirming a credit card payment), or when switching users.\n</dd>\n<dt id=\"silent\"><a href=\"#silent\"><code>\"silent\"</code></a></dt>\n<dd>\n<p>The user will not be asked to authenticate. The user agent will automatically reauthenticate the user and log them in if possible. If consent is required, the promise will fulfill with <code>null</code>. This value is intended for situations where you would want to automatically sign a user in upon visiting a web app if possible, but if not, you don't want to present them with a confusing login dialog box. Instead, you'd want to wait for them to explicitly click a \"Login/Signup\" button.\n</dd>\n</dl>\n<p>The default value is <code>\"optional\"</code>.\n<div class=\"notecard note\">\n<p><strong>Note:</strong>\nIn the case of a <a href=\"$MDN_URL$/Web/API/FedCM_API\">federated authentication (FedCM API)</a> request, a <code>mediation</code> value of <code>optional</code> or <code>silent</code> may result in attempted <a href=\"$MDN_URL$/Web/API/FedCM_API/RP_sign-in#auto-reauthentication\">auto-reauthentication</a>. Whether this occurred is communicated to the identity provider (IdP) via the <a href=\"$MDN_URL$/Web/API/FedCM_API/IDP_integration#is_auto_selected\"><code>is_auto_selected</code></a> parameter sent to the IdP's <code>id_assertion_endpoint</code> during validation and the relying party (RP) via the <a href=\"$MDN_URL$/Web/API/IdentityCredential/isAutoSelected\"><code>IdentityCredential.isAutoSelected</code></a> property. This is useful for performance evaluation, security requirements (the IdP may wish to reject automatic reauthentication requests and always require user mediation), and general UX (an IdP or RP may wish to present different UX for auto and non-auto login experiences).\n</div>\n</dd>\n<dt id=\"signal\"><a href=\"#signal\"><code>signal</code> <span class=\"badge inline optional\">Optional</span></a></dt>\n<dd>\n<p>An <a href=\"$MDN_URL$/Web/API/AbortSignal\"><code>AbortSignal</code></a> object instance that allows an ongoing <code>get()</code> operation to be aborted. An aborted operation may complete normally (generally if the abort was received after the operation finished) or reject with the signal's reason (which is an <code>AbortError</code> <a href=\"$MDN_URL$/Web/API/DOMException\"><code>DOMException</code></a> by default, or a custom value if one was provided when calling <a href=\"$MDN_URL$/Web/API/AbortController/abort\" ><code>abort()</code></a>).\n</dd>\n<dt id=\"password\"><a href=\"#password\"><code>password</code> <span class=\"badge inline optional\">Optional</span></a></dt>\n<dd>\n<p>This option asks the browser to retrieve a stored <a href=\"$MDN_URL$/Web/API/Credential_Management_API/Credential_types#passwords\">password</a> as a <a href=\"$MDN_URL$/Web/API/PasswordCredential\"><code>PasswordCredential</code></a> object. It is a boolean value.\n</dd>\n<dt id=\"identity\"><a href=\"#identity\"><code>identity</code> <span class=\"badge inline optional\">Optional</span></a></dt>\n<dd>\n<p>This option asks the browser to retrieve a <a href=\"$MDN_URL$/Web/API/Credential_Management_API/Credential_types#federated_identity_credentials\">federated identity credential</a> as an <a href=\"$MDN_URL$/Web/API/IdentityCredential\"><code>IdentityCredential</code></a> object, using the <a href=\"$MDN_URL$/Web/API/FedCM_API\">Federated Credential Management API</a>.\n<p>This option's value is an <a href=\"$MDN_URL$/Web/API/IdentityCredentialRequestOptions\"><code>IdentityCredentialRequestOptions</code></a> object containing details of the specific identity providers that the website wants to use.\n</dd>\n<dt id=\"federated\"><a href=\"#federated\"><code>federated</code> <span class=\"badge inline optional\">Optional</span></a></dt>\n<dd>\n<p>This option asks the browser to retrieve a <a href=\"$MDN_URL$/Web/API/Credential_Management_API/Credential_types#federated_identity_credentials\">federated identity credential</a> as a <a href=\"$MDN_URL$/Web/API/FederatedCredential\"><code>FederatedCredential</code></a> object. This interface is now superseded, and developers should prefer to use the <code>identity</code> option, if it is available.\n<p>This option's value is an object with the following properties:\n<dl>\n<dt id=\"protocols\"><a href=\"#protocols\"><code>protocols</code></a></dt>\n<dd>\n<p>An array of strings representing the protocols of the requested credentials' federated identity providers (for example, <code>\"openidconnect\"</code>).\n</dd>\n<dt id=\"providers\"><a href=\"#providers\"><code>providers</code></a></dt>\n<dd>\n<p>An array of strings representing the credentials' federated identity providers (for example <code>\"https://www.facebook.com\"</code> or <code>\"https://accounts.google.com\"</code>).\n</dd>\n</dl>\n</dd>\n<dt id=\"otp\"><a href=\"#otp\"><code>otp</code> <span class=\"badge inline optional\">Optional</span></a></dt>\n<dd>\n<p>This option asks the browser to retrieve a <a href=\"$MDN_URL$/Web/API/Credential_Management_API/Credential_types#one-time_passwords\">one-time password (OTP)</a> as an <a href=\"$MDN_URL$/Web/API/OTPCredential\"><code>OTPCredential</code></a> object.\n<p>This option's value is an array of strings which may only contain the string value <code>\"sms\"</code>.\n</dd>\n<dt id=\"publickey\"><a href=\"#publickey\"><code>publicKey</code> <span class=\"badge inline optional\">Optional</span></a></dt>\n<dd>\n<p>This option asks the browser to retrieve an <a href=\"$MDN_URL$/Web/API/Credential_Management_API/Credential_types#web_authentication_assertions\">assertion signed using the Web Authentication API</a> as a <a href=\"$MDN_URL$/Web/API/PublicKeyCredential\"><code>PublicKeyCredential</code></a>.\n<p>This option's value is a <a href=\"$MDN_URL$/Web/API/PublicKeyCredentialRequestOptions\"><code>PublicKeyCredentialRequestOptions</code></a> object.\n</dd>\n</dl>"
+        "options": "An object that contains options for the request. It can contain the following properties:\n<dl>\n<dt id=\"mediation\"><a href=\"#mediation\"><code>mediation</code> <span class=\"badge inline optional\">Optional</span></a></dt>\n<dd>\n<p>A string indicating how the user is involved in retrieving the credential. The value can be one of the following:\n<dl>\n<dt id=\"conditional\"><a href=\"#conditional\"><code>\"conditional\"</code></a></dt>\n<dd>\n<p>Discovered credentials are presented to the user in a non-modal dialog box along with an indication of the origin requesting credentials. In practice, this means autofilling available credentials; see <a href=\"$MDN_URL$/Web/API/Web_Authentication_API#autofill_ui\">Autofill UI</a> for more details of how this is used.\n</dd>\n<dt id=\"optional\"><a href=\"#optional\"><code>\"optional\"</code></a></dt>\n<dd>\n<p>If credentials can be handed over for a given operation without user mediation, they will be, enabling automatic reauthentication without user mediation. If user mediation is required, then the user agent will ask the user to authenticate. This value is intended for situations where you have reasonable confidence that a user won't be surprised or confused at seeing a login dialog box — for example on a site that doesn't automatically log users in, when a user has just clicked a \"Login/Signup\" button.\n</dd>\n<dt id=\"required\"><a href=\"#required\"><code>\"required\"</code></a></dt>\n<dd>\n<p>The user will always be asked to authenticate. This value is intended for situations where you want to force user authentication — for example if you want a user to reauthenticate when a sensitive operation is being performed (like confirming a credit card payment), or when switching users.\n</dd>\n<dt id=\"silent\"><a href=\"#silent\"><code>\"silent\"</code></a></dt>\n<dd>\n<p>The user will not be asked to authenticate. The user agent will automatically reauthenticate the user and log them in if possible. If consent is required, the promise will fulfill with <code>null</code>. This value is intended for situations where you would want to automatically sign a user in upon visiting a web app if possible, but if not, you don't want to present them with a confusing login dialog box. Instead, you'd want to wait for them to explicitly click a \"Login/Signup\" button.\n</dd>\n</dl>\n<p>The default value is <code>\"optional\"</code>.\n<div class=\"notecard note\">\n<p><strong>Note:</strong>\nIn the case of a <a href=\"$MDN_URL$/Web/API/FedCM_API\">federated authentication (FedCM API)</a> request, a <code>mediation</code> value of <code>optional</code> or <code>silent</code> may result in attempted <a href=\"$MDN_URL$/Web/API/FedCM_API/RP_sign-in#auto-reauthentication\">auto-reauthentication</a>. Whether this occurred is communicated to the identity provider (IdP) via the <a href=\"$MDN_URL$/Web/API/FedCM_API/IDP_integration#is_auto_selected\"><code>is_auto_selected</code></a> parameter sent to the IdP's <code>id_assertion_endpoint</code> during validation and the relying party (RP) via the <a href=\"$MDN_URL$/Web/API/IdentityCredential/isAutoSelected\"><code>IdentityCredential.isAutoSelected</code></a> property. This is useful for performance evaluation, security requirements (the IdP may wish to reject automatic reauthentication requests and always require user mediation), and general UX (an IdP or RP may wish to present different UX for auto and non-auto login experiences).\n</div>\n</dd>\n<dt id=\"signal\"><a href=\"#signal\"><code>signal</code> <span class=\"badge inline optional\">Optional</span></a></dt>\n<dd>\n<p>An <a href=\"$MDN_URL$/Web/API/AbortSignal\"><code>AbortSignal</code></a> object instance that allows an ongoing <code>get()</code> operation to be aborted. An aborted operation may complete normally (generally if the abort was received after the operation finished) or reject with the signal's reason (which is an <code>AbortError</code> <a href=\"$MDN_URL$/Web/API/DOMException\"><code>DOMException</code></a> by default, or a custom value if one was provided when calling <a href=\"$MDN_URL$/Web/API/AbortController/abort\" ><code>abort()</code></a>).\n</dd>\n<dt id=\"password\"><a href=\"#password\"><code>password</code> <span class=\"badge inline optional\">Optional</span></a></dt>\n<dd>\n<p>This option asks the browser to retrieve a stored <a href=\"$MDN_URL$/Web/API/Credential_Management_API/Credential_types#passwords\">password</a> as a <a href=\"$MDN_URL$/Web/API/PasswordCredential\"><code>PasswordCredential</code></a> object. It is a boolean value.\n</dd>\n<dt id=\"identity\"><a href=\"#identity\"><code>identity</code> <span class=\"badge inline optional\">Optional</span></a></dt>\n<dd>\n<p>This option asks the browser to retrieve a <a href=\"$MDN_URL$/Web/API/Credential_Management_API/Credential_types#federated_identity_credentials\">federated identity credential</a> as an <a href=\"$MDN_URL$/Web/API/IdentityCredential\"><code>IdentityCredential</code></a> object, using the <a href=\"$MDN_URL$/Web/API/FedCM_API\">Federated Credential Management API</a>.\n<p>This option's value is an <a href=\"$MDN_URL$/Web/API/IdentityCredentialRequestOptions\"><code>IdentityCredentialRequestOptions</code></a> object containing details of the specific identity providers that the website wants to use.\n</dd>\n<dt id=\"federated\"><a href=\"#federated\"><code>federated</code> <span class=\"badge inline optional\">Optional</span></a></dt>\n<dd>\n<p>This option asks the browser to retrieve a <a href=\"$MDN_URL$/Web/API/Credential_Management_API/Credential_types#federated_identity_credentials\">federated identity credential</a> as a <a href=\"$MDN_URL$/Web/API/FederatedCredential\"><code>FederatedCredential</code></a> object. This interface is now superseded, and developers should prefer to use the <code>identity</code> option, if it is available.\n<p>This option's value is an object with the following properties:\n<dl>\n<dt id=\"protocols\"><a href=\"#protocols\"><code>protocols</code></a></dt>\n<dd>\n<p>An array of strings representing the protocols of the requested credentials' federated identity providers (for example, <code>\"openidconnect\"</code>).\n</dd>\n<dt id=\"providers\"><a href=\"#providers\"><code>providers</code></a></dt>\n<dd>\n<p>An array of strings representing the credentials' federated identity providers (for example <code>\"https://www.facebook.com\"</code> or <code>\"https://accounts.google.com\"</code>).\n</dd>\n</dl>\n</dd>\n<dt id=\"otp\"><a href=\"#otp\"><code>otp</code> <span class=\"badge inline optional\">Optional</span></a></dt>\n<dd>\n<p>This option asks the browser to retrieve a <a href=\"$MDN_URL$/Web/API/Credential_Management_API/Credential_types#one-time_passwords\">one-time password (OTP)</a> as an <a href=\"$MDN_URL$/Web/API/OTPCredential\"><code>OTPCredential</code></a> object.\n<p>This option's value is an array of strings which may only contain the string value <code>\"sms\"</code>.\n</dd>\n<dt id=\"publickey\"><a href=\"#publickey\"><code>publicKey</code> <span class=\"badge inline optional\">Optional</span></a></dt>\n<dd>\n<p>This option asks the browser to retrieve an <a href=\"$MDN_URL$/Web/API/Credential_Management_API/Credential_types#web_authentication_assertions\">assertion signed using the Web Authentication API</a> as a <a href=\"$MDN_URL$/Web/API/PublicKeyCredential\"><code>PublicKeyCredential</code></a>.\n<p>This option's value is a <a href=\"$MDN_URL$/Web/API/PublicKeyCredentialRequestOptions\"><code>PublicKeyCredentialRequestOptions</code></a> object.\n</dd>\n</dl>"
       },
       "returns": "A <a href=\"$MDN_URL$/Web/JavaScript/Reference/Global_Objects/Promise\"><code>Promise</code></a> that resolves with one of the following subclasses of <a href=\"$MDN_URL$/Web/API/Credential\"><code>Credential</code></a>:\n<ul>\n<li><a href=\"$MDN_URL$/Web/API/PasswordCredential\"><code>PasswordCredential</code></a></li>\n<li><a href=\"$MDN_URL$/Web/API/IdentityCredential\"><code>IdentityCredential</code></a></li>\n<li><a href=\"$MDN_URL$/Web/API/FederatedCredential\"><code>FederatedCredential</code></a></li>\n<li><a href=\"$MDN_URL$/Web/API/OTPCredential\"><code>OTPCredential</code></a></li>\n<li><a href=\"$MDN_URL$/Web/API/PublicKeyCredential\"><code>PublicKeyCredential</code></a></li>\n</ul>\n<p>If <a href=\"#mediation\">conditional mediation</a> was specified in the <code>get()</code> call, the browser UI dialog is shown and the promise remains pending until the user picks an account to sign-in with from available autofill suggestions:\n<ul>\n<li>If the user then makes a gesture outside of the browser UI dialog, it closes without resolving or rejecting the promise and without causing a user-visible error condition.</li>\n<li>If the user selects a credential, the relevant <a href=\"$MDN_URL$/Web/API/PublicKeyCredential\"><code>PublicKeyCredential</code></a> is returned to the caller.</li>\n</ul>\n<p>If a single credential cannot be unambiguously obtained, the promise resolves with <code>null</code>.",
       "throws": {
@@ -15574,7 +15604,7 @@
       },
       "doc": "The <strong><code>CSS.registerProperty()</code></strong> static method registers\n<a href=\"$MDN_URL$/Web/CSS/Reference/Properties/--*\">custom properties</a>, allowing for property type checking, default\nvalues, and properties that do or do not inherit their value.\n<p>Registering a custom property allows you to tell the browser how the custom property\nshould behave; what types are allowed, whether the custom property inherits its value,\nand what the default value of the custom property is.",
       "parameters": {
-        "propertyDefinition": "An object containing the following properties:\n<dl>\n<dt id=\"name\"><a href=\"#name\"><code>name</code></a></dt>\n<dd>\n<p>A string representing the\nname of the property being defined.\n</dd>\n<dt id=\"syntax_2\"><a href=\"#syntax_2\"><code>syntax</code> <span class=\"badge inline optional\">Optional</span></a></dt>\n<dd>\n<p>A string representing\nthe expected syntax of the defined property. Defaults to <code>\"*\"</code>.\n</dd>\n<dt id=\"inherits\"><a href=\"#inherits\"><code>inherits</code></a></dt>\n<dd>\n<p>A boolean value defining whether the defined property should be inherited\n(<code>true</code>), or not (<code>false</code>). Defaults to <code>false</code>.\n</dd>\n<dt id=\"initialvalue\"><a href=\"#initialvalue\"><code>initialValue</code> <span class=\"badge inline optional\">Optional</span></a></dt>\n<dd>\n<p>A string representing\nthe initial value of the defined property.\n</dd>\n</dl>"
+        "propertyDefinition": "An object containing the following properties:\n<dl>\n<dt id=\"name\"><a href=\"#name\"><code>name</code></a></dt>\n<dd>\n<p>A string representing the\n<a href=\"$MDN_URL$/Web/CSS/Reference/Values/dashed-ident\"><code>&lt;dashed-ident&gt;</code></a> name of the property being defined.\n</dd>\n<dt id=\"syntax_2\"><a href=\"#syntax_2\"><code>syntax</code> <span class=\"badge inline optional\">Optional</span></a></dt>\n<dd>\n<p>A string representing\nthe expected syntax of the defined property. Defaults to <code>\"*\"</code>.\nSee the <a href=\"$MDN_URL$/Web/CSS/Reference/At-rules/@property/syntax\"><code>syntax</code></a>.\n</dd>\n<dt id=\"inherits\"><a href=\"#inherits\"><code>inherits</code></a></dt>\n<dd>\n<p>A boolean value defining whether the defined property should be inherited\n(<code>true</code>), or not (<code>false</code>). Defaults to <code>false</code>.\n</dd>\n<dt id=\"initialvalue\"><a href=\"#initialvalue\"><code>initialValue</code> <span class=\"badge inline optional\">Optional</span></a></dt>\n<dd>\n<p>A string representing\nthe initial value of the defined property.\n</dd>\n</dl>"
       },
       "returns": "<code>undefined</code>.",
       "throws": {
@@ -16059,6 +16089,227 @@
       },
       "doc": "The read-only <strong><code>style</code></strong> property of the <a href=\"$MDN_URL$/Web/API/CSSFontFaceRule\"><code>CSSFontFaceRule</code></a> interface contains a <a href=\"$MDN_URL$/Web/API/CSSStyleDeclaration\"><code>CSSStyleDeclaration</code></a> object representing the descriptors available in the <a href=\"$MDN_URL$/Web/CSS/Reference/At-rules/@font-face\"><code>@font-face</code></a> rule's body."
     },
+    "cssfontfeaturevaluesmap": {
+      "url": "$MDN_URL$/web/api/cssfontfeaturevaluesmap",
+      "status": [
+        "Experimental",
+        "StandardTrack"
+      ],
+      "compatibility": {
+        "Chrome": "111",
+        "ChromeAndroid": "111",
+        "Edge": "111",
+        "Opera": "97"
+      },
+      "baseline": {
+        "level": "NONE"
+      },
+      "doc": "<div class=\"notecard experimental\"><p><strong>Experimental:</strong> <strong>This is an <a href=\"$MDN_URL$/MDN/Writing_guidelines/Experimental_deprecated_obsolete#experimental\">experimental technology</a></strong><br>Check the <a href=\"#browser_compatibility\">Browser compatibility table</a> carefully before using this in production.</div>\n<p>The <strong><code>CSSFontFeatureValuesMap</code></strong> interface of the <a href=\"$MDN_URL$/Web/API/CSS_Object_Model\">CSS Object Model (CSSOM)</a> represents an iterable and read-only set of the <a href=\"$MDN_URL$/Web/API/CSSFontFeatureValuesRule\">CSSFontFeatureValuesRule</a> properties, such as <a href=\"$MDN_URL$/Web/API/CSSFontFeatureValuesRule/swash\"><code>swash</code></a>, <a href=\"$MDN_URL$/Web/API/CSSFontFeatureValuesRule/annotation\"><code>annotation</code></a>, <a href=\"$MDN_URL$/Web/API/CSSFontFeatureValuesRule/ornaments\"><code>ornaments</code></a>, etc.\n<p>An <code>CSSFontFeatureValuesMap</code> instance is a read-only <a href=\"$MDN_URL$/Web/JavaScript/Reference/Global_Objects/Map#map-like_browser_apis\">Map-like object</a>, in which each key is the user-defined name used to reference a font feature, and the corresponding value is the index for the font feature within the font."
+    },
+    "cssfontfeaturevaluesmap.clear": {
+      "url": "$MDN_URL$/web/api/cssfontfeaturevaluesmap/clear",
+      "status": [
+        "Experimental",
+        "StandardTrack"
+      ],
+      "compatibility": {
+        "Chrome": "111",
+        "ChromeAndroid": "111",
+        "Edge": "111",
+        "Opera": "97"
+      },
+      "baseline": {
+        "level": "NONE"
+      },
+      "doc": "<div class=\"notecard experimental\"><p><strong>Experimental:</strong> <strong>This is an <a href=\"$MDN_URL$/MDN/Writing_guidelines/Experimental_deprecated_obsolete#experimental\">experimental technology</a></strong><br>Check the <a href=\"#browser_compatibility\">Browser compatibility table</a> carefully before using this in production.</div>\n<p>The <strong><code>clear()</code></strong> method of the <a href=\"$MDN_URL$/Web/API/CSSFontFeatureValuesMap\"><code>CSSFontFeatureValuesMap</code></a> interface removes all declarations in the <code>CSSFontFeatureValuesMap</code>.",
+      "returns": "None (<a href=\"$MDN_URL$/Web/JavaScript/Reference/Global_Objects/undefined\"><code>undefined</code></a>)."
+    },
+    "cssfontfeaturevaluesmap.delete": {
+      "url": "$MDN_URL$/web/api/cssfontfeaturevaluesmap/delete",
+      "status": [
+        "Experimental",
+        "StandardTrack"
+      ],
+      "compatibility": {
+        "Chrome": "111",
+        "ChromeAndroid": "111",
+        "Edge": "111",
+        "Opera": "97"
+      },
+      "baseline": {
+        "level": "NONE"
+      },
+      "doc": "<div class=\"notecard experimental\"><p><strong>Experimental:</strong> <strong>This is an <a href=\"$MDN_URL$/MDN/Writing_guidelines/Experimental_deprecated_obsolete#experimental\">experimental technology</a></strong><br>Check the <a href=\"#browser_compatibility\">Browser compatibility table</a> carefully before using this in production.</div>\n<p>The <strong><code>delete()</code></strong> method of the <a href=\"$MDN_URL$/Web/API/CSSFontFeatureValuesMap\"><code>CSSFontFeatureValuesMap</code></a> interface removes the CSS declaration with the given property in the <code>CSSFontFeatureValuesMap</code>.",
+      "parameters": {
+        "property": "An identifier indicating the declaration to remove."
+      },
+      "returns": "None (<a href=\"$MDN_URL$/Web/JavaScript/Reference/Global_Objects/undefined\"><code>undefined</code></a>)."
+    },
+    "cssfontfeaturevaluesmap.entries": {
+      "url": "$MDN_URL$/web/api/cssfontfeaturevaluesmap/entries",
+      "status": [
+        "Experimental",
+        "StandardTrack"
+      ],
+      "compatibility": {
+        "Chrome": "111",
+        "ChromeAndroid": "111",
+        "Edge": "111",
+        "Opera": "97"
+      },
+      "baseline": {
+        "level": "NONE"
+      },
+      "doc": "<div class=\"notecard experimental\"><p><strong>Experimental:</strong> <strong>This is an <a href=\"$MDN_URL$/MDN/Writing_guidelines/Experimental_deprecated_obsolete#experimental\">experimental technology</a></strong><br>Check the <a href=\"#browser_compatibility\">Browser compatibility table</a> carefully before using this in production.</div>\n<p>The <strong><code>entries()</code></strong> method of <a href=\"$MDN_URL$/Web/API/CSSFontFeatureValuesMap\"><code>CSSFontFeatureValuesMap</code></a> instances returns a new <a href=\"$MDN_URL$/Web/API/CSSFontFeatureValuesMap/Symbol.iterator\">map iterator</a> object that contains the <code>[key, value]</code> pairs for each declaration in this <code>CSSFontFeatureValuesMap</code> in insertion order.",
+      "returns": "A new iterable <a href=\"$MDN_URL$/Web/API/CSSFontFeatureValuesMap/Symbol.iterator\">iterator object</a>."
+    },
+    "cssfontfeaturevaluesmap.foreach": {
+      "url": "$MDN_URL$/web/api/cssfontfeaturevaluesmap/foreach",
+      "status": [
+        "Experimental",
+        "StandardTrack"
+      ],
+      "compatibility": {
+        "Chrome": "111",
+        "ChromeAndroid": "111",
+        "Edge": "111",
+        "Opera": "97"
+      },
+      "baseline": {
+        "level": "NONE"
+      },
+      "doc": "<div class=\"notecard experimental\"><p><strong>Experimental:</strong> <strong>This is an <a href=\"$MDN_URL$/MDN/Writing_guidelines/Experimental_deprecated_obsolete#experimental\">experimental technology</a></strong><br>Check the <a href=\"#browser_compatibility\">Browser compatibility table</a> carefully before using this in production.</div>\n<p>The <strong><code>forEach()</code></strong> method of <a href=\"$MDN_URL$/Web/API/CSSFontFeatureValuesMap\"><code>CSSFontFeatureValuesMap</code></a> instances executes a provided function once per each key/value pair in this map, in insertion order.",
+      "parameters": {
+        "callbackFn": "A function to execute for each entry in the map. The function is called with the following arguments:\n<dl>\n<dt id=\"value\"><a href=\"#value\"><code>value</code></a></dt>\n<dd>\n<p>Value of each iteration.\n</dd>\n<dt id=\"key\"><a href=\"#key\"><code>key</code></a></dt>\n<dd>\n<p>Key of each iteration.\n</dd>\n<dt id=\"map\"><a href=\"#map\"><code>map</code></a></dt>\n<dd>\n<p>The map being iterated.\n</dd>\n</dl>",
+        "thisArg": "A value to use as <code>this</code> when executing <code>callbackFn</code>."
+      },
+      "returns": "None (<a href=\"$MDN_URL$/Web/JavaScript/Reference/Global_Objects/undefined\"><code>undefined</code></a>)."
+    },
+    "cssfontfeaturevaluesmap.get": {
+      "url": "$MDN_URL$/web/api/cssfontfeaturevaluesmap/get",
+      "status": [
+        "Experimental",
+        "StandardTrack"
+      ],
+      "compatibility": {
+        "Chrome": "111",
+        "ChromeAndroid": "111",
+        "Edge": "111",
+        "Opera": "97"
+      },
+      "baseline": {
+        "level": "NONE"
+      },
+      "doc": "<div class=\"notecard experimental\"><p><strong>Experimental:</strong> <strong>This is an <a href=\"$MDN_URL$/MDN/Writing_guidelines/Experimental_deprecated_obsolete#experimental\">experimental technology</a></strong><br>Check the <a href=\"#browser_compatibility\">Browser compatibility table</a> carefully before using this in production.</div>\n<p>The <strong><code>get()</code></strong> method of the <a href=\"$MDN_URL$/Web/API/CSSFontFeatureValuesMap\"><code>CSSFontFeatureValuesMap</code></a> interface returns value corresponding to the key in this <code>CSSFontFeatureValuesMap</code>, or <code>undefined</code> if there is none.",
+      "parameters": {
+        "key": "The key of the value to return from the <code>CSSFontFeatureValuesMap</code> object."
+      },
+      "returns": "Returns <code>true</code> if an entry with the specified key exists in the <code>CSSFontFeatureValuesMap</code> object; otherwise <code>false</code>."
+    },
+    "cssfontfeaturevaluesmap.has": {
+      "url": "$MDN_URL$/web/api/cssfontfeaturevaluesmap/has",
+      "status": [
+        "Experimental",
+        "StandardTrack"
+      ],
+      "compatibility": {
+        "Chrome": "111",
+        "ChromeAndroid": "111",
+        "Edge": "111",
+        "Opera": "97"
+      },
+      "baseline": {
+        "level": "NONE"
+      },
+      "doc": "<div class=\"notecard experimental\"><p><strong>Experimental:</strong> <strong>This is an <a href=\"$MDN_URL$/MDN/Writing_guidelines/Experimental_deprecated_obsolete#experimental\">experimental technology</a></strong><br>Check the <a href=\"#browser_compatibility\">Browser compatibility table</a> carefully before using this in production.</div>\n<p>The <strong><code>has()</code></strong> method of the <a href=\"$MDN_URL$/Web/API/CSSFontFeatureValuesMap\"><code>CSSFontFeatureValuesMap</code></a> interface returns a boolean indicating whether an entry with the specified key exists in this <code>CSSFontFeatureValuesMap</code> or not.",
+      "parameters": {
+        "key": "The key of the value to return from the <code>CSSFontFeatureValuesMap</code> object."
+      },
+      "returns": "The value associated with the specified key in the <code>CSSFontFeatureValuesMap</code> object. If the key can't be found, <a href=\"$MDN_URL$/Web/JavaScript/Reference/Global_Objects/undefined\">undefined</a> is returned."
+    },
+    "cssfontfeaturevaluesmap.keys": {
+      "url": "$MDN_URL$/web/api/cssfontfeaturevaluesmap/keys",
+      "status": [
+        "Experimental",
+        "StandardTrack"
+      ],
+      "compatibility": {
+        "Chrome": "111",
+        "ChromeAndroid": "111",
+        "Edge": "111",
+        "Opera": "97"
+      },
+      "baseline": {
+        "level": "NONE"
+      },
+      "doc": "<div class=\"notecard experimental\"><p><strong>Experimental:</strong> <strong>This is an <a href=\"$MDN_URL$/MDN/Writing_guidelines/Experimental_deprecated_obsolete#experimental\">experimental technology</a></strong><br>Check the <a href=\"#browser_compatibility\">Browser compatibility table</a> carefully before using this in production.</div>\n<p>The <strong><code>keys()</code></strong> method of <a href=\"$MDN_URL$/Web/API/CSSFontFeatureValuesMap\"><code>CSSFontFeatureValuesMap</code></a> instances returns a new <a href=\"$MDN_URL$/Web/API/CSSFontFeatureValuesMap/Symbol.iterator\">map iterator</a> object that contains the <code>[key, value]</code> pairs for each declaration in this <code>CSSFontFeatureValuesMap</code> in insertion order.",
+      "returns": "A new iterable <a href=\"$MDN_URL$/Web/API/CSSFontFeatureValuesMap/Symbol.iterator\">iterator object</a>."
+    },
+    "cssfontfeaturevaluesmap.set": {
+      "url": "$MDN_URL$/web/api/cssfontfeaturevaluesmap/set",
+      "status": [
+        "Experimental",
+        "StandardTrack"
+      ],
+      "compatibility": {
+        "Chrome": "111",
+        "ChromeAndroid": "111",
+        "Edge": "111",
+        "Opera": "97"
+      },
+      "baseline": {
+        "level": "NONE"
+      },
+      "doc": "<div class=\"notecard experimental\"><p><strong>Experimental:</strong> <strong>This is an <a href=\"$MDN_URL$/MDN/Writing_guidelines/Experimental_deprecated_obsolete#experimental\">experimental technology</a></strong><br>Check the <a href=\"#browser_compatibility\">Browser compatibility table</a> carefully before using this in production.</div>\n<p>The <strong><code>set()</code></strong> method of <a href=\"$MDN_URL$/Web/API/CSSFontFeatureValuesMap\"><code>CSSFontFeatureValuesMap</code></a> instances adds a new entry with a specified key and value to this <code>CSSFontFeatureValuesMap</code>, or updates an existing entry if the key already exists.",
+      "parameters": {
+        "key": "The key of the entry to add to or modify within the <code>CSSFontFeatureValuesMap</code> object. Can be any value.",
+        "value": "The value of the entry to add to or modify within the <code>CSSFontFeatureValuesMap</code> object. Must be an integer that matches the <code>index</code> of the alternative font feature."
+      },
+      "returns": "The <code>CSSFontFeatureValuesMap</code> object."
+    },
+    "cssfontfeaturevaluesmap.size": {
+      "url": "$MDN_URL$/web/api/cssfontfeaturevaluesmap/size",
+      "status": [
+        "Experimental",
+        "StandardTrack"
+      ],
+      "compatibility": {
+        "Chrome": "111",
+        "ChromeAndroid": "111",
+        "Edge": "111",
+        "Opera": "97"
+      },
+      "baseline": {
+        "level": "NONE"
+      },
+      "doc": "<div class=\"notecard experimental\"><p><strong>Experimental:</strong> <strong>This is an <a href=\"$MDN_URL$/MDN/Writing_guidelines/Experimental_deprecated_obsolete#experimental\">experimental technology</a></strong><br>Check the <a href=\"#browser_compatibility\">Browser compatibility table</a> carefully before using this in production.</div>\n<p>The <strong><code>size</code></strong> read-only property of the <a href=\"$MDN_URL$/Web/API/CSSFontFeatureValuesMap\"><code>CSSFontFeatureValuesMap</code></a> interface returns a positive integer containing the size of the <code>CSSFontFeatureValuesMap</code> object."
+    },
+    "cssfontfeaturevaluesmap.symbol.iterator": {
+      "url": "$MDN_URL$/web/api/cssfontfeaturevaluesmap/symbol.iterator",
+      "baseline": {
+        "level": "NONE"
+      },
+      "doc": "<div class=\"notecard experimental\"><p><strong>Experimental:</strong> <strong>This is an <a href=\"$MDN_URL$/MDN/Writing_guidelines/Experimental_deprecated_obsolete#experimental\">experimental technology</a></strong><br>Check the <a href=\"#browser_compatibility\">Browser compatibility table</a> carefully before using this in production.</div>\n<p>The <strong><code>[Symbol.iterator]()</code></strong> method of <a href=\"$MDN_URL$/Web/API/CSSFontFeatureValuesMap\"><code>CSSFontFeatureValuesMap</code></a> interface implements the <a href=\"$MDN_URL$/Web/JavaScript/Reference/Iteration_protocols\">iterable protocol</a> and allows built-in iterators to be consumed by most syntaxes expecting iterables, such as the <a href=\"$MDN_URL$/Web/JavaScript/Reference/Operators/Spread_syntax\">spread syntax</a> and <a href=\"$MDN_URL$/Web/JavaScript/Reference/Statements/for...of\"><code>for...of</code></a> loops. It returns the value of <a href=\"$MDN_URL$/Web/JavaScript/Reference/Operators/this\"><code>this</code></a>, which is the iterator object itself.",
+      "returns": "The value of <a href=\"$MDN_URL$/Web/JavaScript/Reference/Operators/this\"><code>this</code></a>, which is the iterator object itself."
+    },
+    "cssfontfeaturevaluesmap.values": {
+      "url": "$MDN_URL$/web/api/cssfontfeaturevaluesmap/values",
+      "status": [
+        "Experimental",
+        "StandardTrack"
+      ],
+      "compatibility": {
+        "Chrome": "111",
+        "ChromeAndroid": "111",
+        "Edge": "111",
+        "Opera": "97"
+      },
+      "baseline": {
+        "level": "NONE"
+      },
+      "doc": "<div class=\"notecard experimental\"><p><strong>Experimental:</strong> <strong>This is an <a href=\"$MDN_URL$/MDN/Writing_guidelines/Experimental_deprecated_obsolete#experimental\">experimental technology</a></strong><br>Check the <a href=\"#browser_compatibility\">Browser compatibility table</a> carefully before using this in production.</div>\n<p>The <strong><code>values()</code></strong> method of <a href=\"$MDN_URL$/Web/API/CSSFontFeatureValuesMap\"><code>CSSFontFeatureValuesMap</code></a> instances returns a new <a href=\"$MDN_URL$/Web/API/CSSFontFeatureValuesMap/Symbol.iterator\">map iterator</a> object that contains the <code>[key, value]</code> pairs for each declaration in this <code>CSSFontFeatureValuesMap</code> in insertion order.",
+      "returns": "A new iterable <a href=\"$MDN_URL$/Web/API/CSSFontFeatureValuesMap/Symbol.iterator\">iterator object</a>."
+    },
     "cssfontfeaturevaluesrule": {
       "url": "$MDN_URL$/web/api/cssfontfeaturevaluesrule",
       "status": [
@@ -16078,7 +16329,41 @@
         "level": "LOW",
         "lowDate": "2025-03-06"
       },
-      "doc": "The <strong><code>CSSFontFeatureValuesRule</code></strong> interface represents an <a href=\"$MDN_URL$/Web/CSS/Reference/At-rules/@font-feature-values\"><code>@font-feature-values</code></a> <a href=\"$MDN_URL$/Web/CSS/Guides/Syntax/At-rules\">at-rule</a>, letting developers assign for each font face a common name to specify features indices to be used in <a href=\"$MDN_URL$/Web/CSS/Reference/Properties/font-variant-alternates\"><code>font-variant-alternates</code></a>."
+      "doc": "The <strong><code>CSSFontFeatureValuesRule</code></strong> interface represents an <a href=\"$MDN_URL$/Web/CSS/Reference/At-rules/@font-feature-values\"><code>@font-feature-values</code></a> <a href=\"$MDN_URL$/Web/CSS/Guides/Syntax/At-rules\">at-rule</a>. The values of its instance properties can be accessed with the <a href=\"$MDN_URL$/Web/API/CSSFontFeatureValuesMap\"><code>CSSFontFeatureValuesMap</code></a> interface.\n<p><code>@font-feature-values</code> allows developers to associate, for a given font face, a human-readable name with a numeric index that controls a particular <a href=\"$MDN_URL$/Web/CSS/Guides/Fonts/OpenType_fonts\">OpenType font feature</a>.\nFor features that select alternative glyphs (stylistic, styleset, character-variant, swash, ornament or annotation), the <a href=\"$MDN_URL$/Web/CSS/Reference/Properties/font-variant-alternates\"><code>font-variant-alternates</code></a> property can then reference the human-readable name in order to apply the associated feature.\nThis is convenient, because it allows the same name to be used of represent a set of alternative glyphs across a number of fonts."
+    },
+    "cssfontfeaturevaluesrule.annotation": {
+      "url": "$MDN_URL$/web/api/cssfontfeaturevaluesrule/annotation",
+      "status": [
+        "Experimental",
+        "StandardTrack"
+      ],
+      "compatibility": {
+        "Chrome": "134",
+        "ChromeAndroid": "134",
+        "Edge": "134",
+        "Opera": "97"
+      },
+      "baseline": {
+        "level": "NONE"
+      },
+      "doc": "<div class=\"notecard experimental\"><p><strong>Experimental:</strong> <strong>This is an <a href=\"$MDN_URL$/MDN/Writing_guidelines/Experimental_deprecated_obsolete#experimental\">experimental technology</a></strong><br>Check the <a href=\"#browser_compatibility\">Browser compatibility table</a> carefully before using this in production.</div>\n<p>The read-only <strong>annotation</strong> property of the <a href=\"$MDN_URL$/Web/API/CSSFontFeatureValuesRule\"><code>CSSFontFeatureValuesRule</code></a> interface contains a <a href=\"$MDN_URL$/Web/API/CSSFontFeatureValuesMap\"><code>CSSFontFeatureValuesMap</code></a> object representing the <a href=\"$MDN_URL$/Web/CSS/Reference/Values/custom-ident\">user-defined-ident</a> and <a href=\"$MDN_URL$/Web/CSS/Reference/Properties/font-feature-settings#optional_value\">feature index</a> for a variable font which supports <a href=\"$MDN_URL$/Web/CSS/Reference/Properties/font-variant-alternates#annotation\"><code>annotation()</code></a>."
+    },
+    "cssfontfeaturevaluesrule.charactervariant": {
+      "url": "$MDN_URL$/web/api/cssfontfeaturevaluesrule/charactervariant",
+      "status": [
+        "Experimental",
+        "StandardTrack"
+      ],
+      "compatibility": {
+        "Chrome": "134",
+        "ChromeAndroid": "134",
+        "Edge": "134",
+        "Opera": "97"
+      },
+      "baseline": {
+        "level": "NONE"
+      },
+      "doc": "<div class=\"notecard experimental\"><p><strong>Experimental:</strong> <strong>This is an <a href=\"$MDN_URL$/MDN/Writing_guidelines/Experimental_deprecated_obsolete#experimental\">experimental technology</a></strong><br>Check the <a href=\"#browser_compatibility\">Browser compatibility table</a> carefully before using this in production.</div>\n<p>The read-only <strong>characterVariant</strong> property of the <a href=\"$MDN_URL$/Web/API/CSSFontFeatureValuesRule\"><code>CSSFontFeatureValuesRule</code></a> interface contains a <a href=\"$MDN_URL$/Web/API/CSSFontFeatureValuesMap\"><code>CSSFontFeatureValuesMap</code></a> object representing the <a href=\"$MDN_URL$/Web/CSS/Reference/Values/custom-ident\">user-defined-ident</a> and <a href=\"$MDN_URL$/Web/CSS/Reference/Properties/font-feature-settings#optional_value\">feature index</a> for a variable font which supports <a href=\"$MDN_URL$/Web/CSS/Reference/Properties/font-variant-alternates#character-variant\"><code>character-variant()</code></a>."
     },
     "cssfontfeaturevaluesrule.fontfamily": {
       "url": "$MDN_URL$/web/api/cssfontfeaturevaluesrule/fontfamily",
@@ -16099,7 +16384,75 @@
         "level": "LOW",
         "lowDate": "2025-03-06"
       },
-      "doc": "The <strong><code>fontFamily</code></strong> property of the <a href=\"$MDN_URL$/Web/API/CSSConditionRule\"><code>CSSConditionRule</code></a> interface represents the name of the font family it applies to."
+      "doc": "The <strong><code>fontFamily</code></strong> property of the <a href=\"$MDN_URL$/Web/API/CSSFontFeatureValuesRule\"><code>CSSFontFeatureValuesRule</code></a> interface represents the name of the font family it applies to."
+    },
+    "cssfontfeaturevaluesrule.ornaments": {
+      "url": "$MDN_URL$/web/api/cssfontfeaturevaluesrule/ornaments",
+      "status": [
+        "Experimental",
+        "StandardTrack"
+      ],
+      "compatibility": {
+        "Chrome": "134",
+        "ChromeAndroid": "134",
+        "Edge": "134",
+        "Opera": "97"
+      },
+      "baseline": {
+        "level": "NONE"
+      },
+      "doc": "<div class=\"notecard experimental\"><p><strong>Experimental:</strong> <strong>This is an <a href=\"$MDN_URL$/MDN/Writing_guidelines/Experimental_deprecated_obsolete#experimental\">experimental technology</a></strong><br>Check the <a href=\"#browser_compatibility\">Browser compatibility table</a> carefully before using this in production.</div>\n<p>The read-only <strong>ornaments</strong> property of the <a href=\"$MDN_URL$/Web/API/CSSFontFeatureValuesRule\"><code>CSSFontFeatureValuesRule</code></a> interface contains a <a href=\"$MDN_URL$/Web/API/CSSFontFeatureValuesMap\"><code>CSSFontFeatureValuesMap</code></a> object representing the <a href=\"$MDN_URL$/Web/CSS/Reference/Values/custom-ident\">user-defined-ident</a> and <a href=\"$MDN_URL$/Web/CSS/Reference/Properties/font-feature-settings#optional_value\">feature index</a> for a variable font which supports <a href=\"$MDN_URL$/Web/CSS/Reference/Properties/font-variant-alternates#ornaments\"><code>ornaments()</code></a>."
+    },
+    "cssfontfeaturevaluesrule.styleset": {
+      "url": "$MDN_URL$/web/api/cssfontfeaturevaluesrule/styleset",
+      "status": [
+        "Experimental",
+        "StandardTrack"
+      ],
+      "compatibility": {
+        "Chrome": "134",
+        "ChromeAndroid": "134",
+        "Edge": "134",
+        "Opera": "97"
+      },
+      "baseline": {
+        "level": "NONE"
+      },
+      "doc": "<div class=\"notecard experimental\"><p><strong>Experimental:</strong> <strong>This is an <a href=\"$MDN_URL$/MDN/Writing_guidelines/Experimental_deprecated_obsolete#experimental\">experimental technology</a></strong><br>Check the <a href=\"#browser_compatibility\">Browser compatibility table</a> carefully before using this in production.</div>\n<p>The read-only <strong>styleset</strong> property of the <a href=\"$MDN_URL$/Web/API/CSSFontFeatureValuesRule\"><code>CSSFontFeatureValuesRule</code></a> interface contains a <a href=\"$MDN_URL$/Web/API/CSSFontFeatureValuesMap\"><code>CSSFontFeatureValuesMap</code></a> object representing the <a href=\"$MDN_URL$/Web/CSS/Reference/Values/custom-ident\">user-defined-ident</a> and <a href=\"$MDN_URL$/Web/CSS/Reference/Properties/font-feature-settings#optional_value\">feature index</a> for a variable font which supports <a href=\"$MDN_URL$/Web/CSS/Reference/Properties/font-variant-alternates#styleset\"><code>styleset()</code></a>."
+    },
+    "cssfontfeaturevaluesrule.stylistic": {
+      "url": "$MDN_URL$/web/api/cssfontfeaturevaluesrule/stylistic",
+      "status": [
+        "Experimental",
+        "StandardTrack"
+      ],
+      "compatibility": {
+        "Chrome": "134",
+        "ChromeAndroid": "134",
+        "Edge": "134",
+        "Opera": "97"
+      },
+      "baseline": {
+        "level": "NONE"
+      },
+      "doc": "<div class=\"notecard experimental\"><p><strong>Experimental:</strong> <strong>This is an <a href=\"$MDN_URL$/MDN/Writing_guidelines/Experimental_deprecated_obsolete#experimental\">experimental technology</a></strong><br>Check the <a href=\"#browser_compatibility\">Browser compatibility table</a> carefully before using this in production.</div>\n<p>The read-only <strong>stylistic</strong> property of the <a href=\"$MDN_URL$/Web/API/CSSFontFeatureValuesRule\"><code>CSSFontFeatureValuesRule</code></a> interface contains a <a href=\"$MDN_URL$/Web/API/CSSFontFeatureValuesMap\"><code>CSSFontFeatureValuesMap</code></a> object representing the <a href=\"$MDN_URL$/Web/CSS/Reference/Values/custom-ident\">user-defined-ident</a> and <a href=\"$MDN_URL$/Web/CSS/Reference/Properties/font-feature-settings#optional_value\">feature index</a> for a variable font which supports <a href=\"$MDN_URL$/Web/CSS/Reference/Properties/font-variant-alternates#stylistic\"><code>stylistic()</code></a>."
+    },
+    "cssfontfeaturevaluesrule.swash": {
+      "url": "$MDN_URL$/web/api/cssfontfeaturevaluesrule/swash",
+      "status": [
+        "Experimental",
+        "StandardTrack"
+      ],
+      "compatibility": {
+        "Chrome": "134",
+        "ChromeAndroid": "134",
+        "Edge": "134",
+        "Opera": "97"
+      },
+      "baseline": {
+        "level": "NONE"
+      },
+      "doc": "<div class=\"notecard experimental\"><p><strong>Experimental:</strong> <strong>This is an <a href=\"$MDN_URL$/MDN/Writing_guidelines/Experimental_deprecated_obsolete#experimental\">experimental technology</a></strong><br>Check the <a href=\"#browser_compatibility\">Browser compatibility table</a> carefully before using this in production.</div>\n<p>The read-only <strong>swash</strong> property of the <a href=\"$MDN_URL$/Web/API/CSSFontFeatureValuesRule\"><code>CSSFontFeatureValuesRule</code></a> interface contains a <a href=\"$MDN_URL$/Web/API/CSSFontFeatureValuesMap\"><code>CSSFontFeatureValuesMap</code></a> object representing the <a href=\"$MDN_URL$/Web/CSS/Reference/Values/custom-ident\">developer-provided name</a> and <a href=\"$MDN_URL$/Web/CSS/Reference/Properties/font-feature-settings#optional_value\">feature index</a> for a variable font which supports <a href=\"$MDN_URL$/Web/CSS/Reference/Properties/font-variant-alternates#swash\"><code>swash()</code></a>."
     },
     "cssfontpalettevaluesrule": {
       "url": "$MDN_URL$/web/api/cssfontpalettevaluesrule",
@@ -20788,7 +21141,25 @@
         "lowDate": "2020-01-15",
         "highDate": "2022-07-15"
       },
-      "doc": "The <strong><code>CustomElementRegistry</code></strong> interface provides methods for registering custom elements and querying registered elements. To get an instance of it, use the <a href=\"$MDN_URL$/Web/API/Window/customElements\"><code>window.customElements</code></a> property."
+      "doc": "The <strong><code>CustomElementRegistry</code></strong> interface provides methods for registering custom elements and querying registered elements. To get an instance of it, use the <a href=\"$MDN_URL$/Web/API/Window/customElements\"><code>window.customElements</code></a> property. To create a scoped registry, use the <a href=\"$MDN_URL$/Web/API/CustomElementRegistry/CustomElementRegistry\" ><code>CustomElementRegistry()</code></a> constructor."
+    },
+    "customelementregistry.customelementregistry": {
+      "url": "$MDN_URL$/web/api/customelementregistry/CustomElementRegistry",
+      "status": [
+        "StandardTrack"
+      ],
+      "compatibility": {
+        "Chrome": "146",
+        "ChromeAndroid": "146",
+        "Edge": "146",
+        "Safari": "26",
+        "SafariIOS": "26"
+      },
+      "baseline": {
+        "level": "NONE"
+      },
+      "doc": "The <strong><code>CustomElementRegistry()</code></strong> constructor creates a new <a href=\"$MDN_URL$/Web/API/CustomElementRegistry\"><code>CustomElementRegistry</code></a> object for scoped usage.\n<p>The constructor is specifically used for creating scoped registries that limit <a href=\"$MDN_URL$/Web/API/Web_components/Using_custom_elements\">custom element</a> definitions to a particular scope, such as an element or <a href=\"$MDN_URL$/Web/API/ShadowRoot\"><code>ShadowRoot</code></a>.\n<div class=\"notecard note\">\n<p><strong>Note:</strong>\nThe global <code>CustomElementRegistry</code> object associated with a <a href=\"$MDN_URL$/Web/API/Window\"><code>Window</code></a> is not created using this constructor; it is automatically created when the window is set up, and is accessible via the <a href=\"$MDN_URL$/Web/API/Window/customElements\"><code>window.customElements</code></a> property.\n</div>",
+      "returns": "A new <a href=\"$MDN_URL$/Web/API/CustomElementRegistry\"><code>CustomElementRegistry</code></a> object."
     },
     "customelementregistry.define": {
       "url": "$MDN_URL$/web/api/customelementregistry/define",
@@ -20866,6 +21237,30 @@
         "constructor": "Constructor for the custom element."
       },
       "returns": "The name for the previously defined custom element, or <code>null</code> if there is no custom element defined with the constructor."
+    },
+    "customelementregistry.initialize": {
+      "url": "$MDN_URL$/web/api/customelementregistry/initialize",
+      "status": [
+        "StandardTrack"
+      ],
+      "compatibility": {
+        "Chrome": "146",
+        "ChromeAndroid": "146",
+        "Edge": "146",
+        "Safari": "26",
+        "SafariIOS": "26"
+      },
+      "baseline": {
+        "level": "NONE"
+      },
+      "doc": "The <strong><code>initialize()</code></strong> method of the <a href=\"$MDN_URL$/Web/API/CustomElementRegistry\"><code>CustomElementRegistry</code></a> interface associates this registry with a DOM subtree, setting the <a href=\"$MDN_URL$/Web/API/Element/customElementRegistry\" ><code>customElementRegistry</code></a> of each inclusive descendant that doesn't already have one, and attempting to upgrade any <a href=\"$MDN_URL$/Web/API/Web_components/Using_custom_elements\">custom elements</a> found.",
+      "parameters": {
+        "root": "A <a href=\"$MDN_URL$/Web/API/Node\"><code>Node</code></a> object (typically a <a href=\"$MDN_URL$/Web/API/Document\"><code>Document</code></a>, <a href=\"$MDN_URL$/Web/API/ShadowRoot\"><code>ShadowRoot</code></a>, or <a href=\"$MDN_URL$/Web/API/Element\"><code>Element</code></a>) whose inclusive descendants will be associated with this registry."
+      },
+      "returns": "None (<a href=\"$MDN_URL$/Web/JavaScript/Reference/Global_Objects/undefined\"><code>undefined</code></a>).",
+      "throws": {
+        "NotSupportedError DOMException": "Thrown if this <code>CustomElementRegistry</code> is not scoped (i.e., not created with <code>new CustomElementRegistry()</code>) and either <code>root</code> is a <a href=\"$MDN_URL$/Web/API/Document\"><code>Document</code></a> node or <code>root</code>'s node document's <a href=\"$MDN_URL$/Web/API/Document/customElementRegistry\" ><code>customElementRegistry</code></a> is not this <code>CustomElementRegistry</code>."
+      }
     },
     "customelementregistry.upgrade": {
       "url": "$MDN_URL$/web/api/customelementregistry/upgrade",
@@ -21251,6 +21646,61 @@
       },
       "doc": "The <strong><code>values()</code></strong> method of the <a href=\"$MDN_URL$/Web/API/CustomStateSet\"><code>CustomStateSet</code></a> interface returns a new iterator object that yields the values for each element in the <code>CustomStateSet</code> object in insertion order.",
       "returns": "A new iterator object containing the values for each element in the given <code>CustomStateSet</code>, in insertion order."
+    },
+    "datacue": {
+      "url": "$MDN_URL$/web/api/datacue",
+      "status": [
+        "Experimental",
+        "StandardTrack"
+      ],
+      "compatibility": {
+        "Safari": "11",
+        "SafariIOS": "11"
+      },
+      "doc": "<div class=\"notecard experimental\"><p><strong>Experimental:</strong> <strong>This is an <a href=\"$MDN_URL$/MDN/Writing_guidelines/Experimental_deprecated_obsolete#experimental\">experimental technology</a></strong><br>Check the <a href=\"#browser_compatibility\">Browser compatibility table</a> carefully before using this in production.</div>\n<p>The <strong><code>DataCue</code></strong> interface represents a cue that associates arbitrary timed data with an audio or video media resource, or exposes timed data from a media resource to web pages. It extends the <a href=\"$MDN_URL$/Web/API/TextTrackCue\"><code>TextTrackCue</code></a> interface with a <a href=\"$MDN_URL$/Web/API/DataCue/value\" ><code>value</code></a> property that can hold any data type, and a <a href=\"$MDN_URL$/Web/API/DataCue/type\" ><code>type</code></a> property that identifies the kind of data.\n<p>Unlike <a href=\"$MDN_URL$/Web/API/VTTCue\"><code>VTTCue</code></a>, which is designed for displaying subtitle and caption text, <code>DataCue</code> is intended for non-rendered timed metadata. Use cases include dynamic content replacement, ad insertion, presentation of supplemental content alongside audio or video, or more generally, triggering application logic at specific points on the media timeline.\n<p>Some user agents may also automatically generate <code>DataCue</code> objects for in-band timed metadata carried within media streams, such as ID3 tags in <a href=\"$MDN_URL$/Web/Media/Guides/Audio_and_video_delivery/Setting_up_adaptive_streaming_media_sources#hls_encoding\">HTTP Live Streaming (HLS)</a>."
+    },
+    "datacue.datacue": {
+      "url": "$MDN_URL$/web/api/datacue/datacue",
+      "status": [
+        "Experimental",
+        "StandardTrack"
+      ],
+      "compatibility": {
+        "Safari": "11",
+        "SafariIOS": "11"
+      },
+      "doc": "<div class=\"notecard experimental\"><p><strong>Experimental:</strong> <strong>This is an <a href=\"$MDN_URL$/MDN/Writing_guidelines/Experimental_deprecated_obsolete#experimental\">experimental technology</a></strong><br>Check the <a href=\"#browser_compatibility\">Browser compatibility table</a> carefully before using this in production.</div>\n<p>The <strong><code>DataCue()</code></strong> constructor creates and returns a new <a href=\"$MDN_URL$/Web/API/DataCue\"><code>DataCue</code></a> object that represents a timed metadata cue over a given time range. The resulting cue can be added to a metadata <a href=\"$MDN_URL$/Web/API/TextTrack\"><code>TextTrack</code></a> using <a href=\"$MDN_URL$/Web/API/TextTrack/addCue\"><code>TextTrack.addCue()</code></a>, allowing arbitrary data to be synchronized with audio or video playback.",
+      "parameters": {
+        "startTime": "A number representing the start time, in seconds, for the cue's time range. This corresponds to the point on the media timeline at which the cue becomes active and its <a href=\"$MDN_URL$/Web/API/TextTrackCue/enter_event\" ><code>enter</code></a> event fires.",
+        "endTime": "A number representing the end time, in seconds, for the cue's time range. When the media playback reaches this time, the cue's <a href=\"$MDN_URL$/Web/API/TextTrackCue/exit_event\" ><code>exit</code></a> event fires. Use <code>Infinity</code> for a cue that remains active until the end of the media.",
+        "value": "The data payload associated with the cue. This can be any type, such as a string, a JavaScript object, or an <a href=\"$MDN_URL$/Web/JavaScript/Reference/Global_Objects/ArrayBuffer\"><code>ArrayBuffer</code></a>. The value is stored in the cue's <a href=\"$MDN_URL$/Web/API/DataCue/value\" ><code>value</code></a> property.",
+        "type": "A string identifying the type or schema of the data in <code>value</code>. This is typically a reverse-domain notation string (e.g., <code>\"org.id3\"</code>, <code>\"org.mp4ra\"</code>). The value is stored in the cue's <a href=\"$MDN_URL$/Web/API/DataCue/type\" ><code>type</code></a> property and defaults to an empty string if not provided."
+      },
+      "returns": "A new <a href=\"$MDN_URL$/Web/API/DataCue\"><code>DataCue</code></a> object."
+    },
+    "datacue.type": {
+      "url": "$MDN_URL$/web/api/datacue/type",
+      "status": [
+        "Experimental",
+        "StandardTrack"
+      ],
+      "compatibility": {
+        "Safari": "11",
+        "SafariIOS": "11"
+      },
+      "doc": "<div class=\"notecard experimental\"><p><strong>Experimental:</strong> <strong>This is an <a href=\"$MDN_URL$/MDN/Writing_guidelines/Experimental_deprecated_obsolete#experimental\">experimental technology</a></strong><br>Check the <a href=\"#browser_compatibility\">Browser compatibility table</a> carefully before using this in production.</div>\n<p>The <strong><code>type</code></strong> read-only property of the <a href=\"$MDN_URL$/Web/API/DataCue\"><code>DataCue</code></a> interface returns a string identifying the type or schema of the data stored in the cue's <a href=\"$MDN_URL$/Web/API/DataCue/value\" ><code>value</code></a> property. This is typically a reverse-domain notation string (e.g., <code>\"org.id3\"</code>, <code>\"com.apple.itunes\"</code>) that allows applications to interpret the cue's data payload correctly.\n<p>When a user agent automatically generates <code>DataCue</code> objects for in-band timed metadata (for example, from an HTTP Live Streaming source), it sets this property to indicate the metadata format. When application code creates a <code>DataCue</code> using the <a href=\"$MDN_URL$/Web/API/DataCue/DataCue\" ><code>DataCue()</code></a> constructor, the <code>type</code> is set from the optional fourth argument and defaults to an empty string if omitted."
+    },
+    "datacue.value": {
+      "url": "$MDN_URL$/web/api/datacue/value",
+      "status": [
+        "Experimental",
+        "StandardTrack"
+      ],
+      "compatibility": {
+        "Safari": "11",
+        "SafariIOS": "11"
+      },
+      "doc": "<div class=\"notecard experimental\"><p><strong>Experimental:</strong> <strong>This is an <a href=\"$MDN_URL$/MDN/Writing_guidelines/Experimental_deprecated_obsolete#experimental\">experimental technology</a></strong><br>Check the <a href=\"#browser_compatibility\">Browser compatibility table</a> carefully before using this in production.</div>\n<p>The <strong><code>value</code></strong> property of the <a href=\"$MDN_URL$/Web/API/DataCue\"><code>DataCue</code></a> interface represents the data payload of the cue. Unlike <a href=\"$MDN_URL$/Web/API/VTTCue\"><code>VTTCue</code></a>, which carries text content, <code>DataCue</code> can hold any data type — such as a JavaScript object, a string, or an <a href=\"$MDN_URL$/Web/JavaScript/Reference/Global_Objects/ArrayBuffer\"><code>ArrayBuffer</code></a> — making it suitable for timed metadata use cases where structured data needs to be synchronized with media playback.\n<p>The property is read-write for application-created cues, allowing the data to be updated after construction. For cues generated automatically by the user agent from in-band timed metadata (e.g., ID3 tags in an HTTP Live Streaming source), the value is set by the user agent and reflects the metadata payload.\n<p>The <a href=\"$MDN_URL$/Web/API/DataCue/type\" ><code>type</code></a> property can be used alongside <code>value</code> to identify the format or schema of the data."
     },
     "datatransfer": {
       "url": "$MDN_URL$/web/api/datatransfer",
@@ -22456,6 +22906,24 @@
       },
       "doc": "<div class=\"notecard secure\"><p><strong>Secure context:</strong> This feature is available only in <a href=\"$MDN_URL$/Web/Security/Defenses/Secure_Contexts\">secure contexts</a> (HTTPS), in some or all <a href=\"#browser_compatibility\">supporting browsers</a>.</div>\n<p>The <strong><code>interval</code></strong> read-only property of the <a href=\"$MDN_URL$/Web/API/DeviceMotionEvent\"><code>DeviceMotionEvent</code></a> interface returns the interval, in milliseconds, at which data is obtained from the underlying\nhardware. You can use this to determine the granularity of motion events."
     },
+    "devicemotionevent.requestpermission": {
+      "url": "$MDN_URL$/web/api/devicemotionevent/requestpermission_static",
+      "status": [
+        "Experimental",
+        "StandardTrack"
+      ],
+      "compatibility": {
+        "SafariIOS": "14.5"
+      },
+      "baseline": {
+        "level": "NONE"
+      },
+      "doc": "<div class=\"notecard experimental\"><p><strong>Experimental:</strong> <strong>This is an <a href=\"$MDN_URL$/MDN/Writing_guidelines/Experimental_deprecated_obsolete#experimental\">experimental technology</a></strong><br>Check the <a href=\"#browser_compatibility\">Browser compatibility table</a> carefully before using this in production.</div>\n<div class=\"notecard secure\"><p><strong>Secure context:</strong> This feature is available only in <a href=\"$MDN_URL$/Web/Security/Defenses/Secure_Contexts\">secure contexts</a> (HTTPS), in some or all <a href=\"#browser_compatibility\">supporting browsers</a>.</div>\n<p>The <strong><code>requestPermission()</code></strong> static method of the <a href=\"$MDN_URL$/Web/API/DeviceMotionEvent\"><code>DeviceMotionEvent</code></a> interface requests the user's permission to access device motion data from the accelerometer and gyroscope sensors. This method requires <a href=\"$MDN_URL$/Glossary/Transient_activation\">transient activation</a>, meaning that it must be triggered by a UI event such as a button click.",
+      "returns": "A <a href=\"$MDN_URL$/Web/JavaScript/Reference/Global_Objects/Promise\"><code>Promise</code></a> that resolves with a string which is either <code>\"granted\"</code> or <code>\"denied\"</code>.",
+      "throws": {
+        "NotAllowedError DOMException": "The permission state is <code>\"prompt\"</code> and the calling function does not have <a href=\"$MDN_URL$/Glossary/Transient_activation\">transient activation</a>."
+      }
+    },
     "devicemotionevent.rotationrate": {
       "url": "$MDN_URL$/web/api/devicemotionevent/rotationrate",
       "status": [
@@ -22754,6 +23222,27 @@
         "lowDate": "2023-09-18"
       },
       "doc": "<div class=\"notecard secure\"><p><strong>Secure context:</strong> This feature is available only in <a href=\"$MDN_URL$/Web/Security/Defenses/Secure_Contexts\">secure contexts</a> (HTTPS), in some or all <a href=\"#browser_compatibility\">supporting browsers</a>.</div>\n<p>The <strong><code>gamma</code></strong> read-only property of the <a href=\"$MDN_URL$/Web/API/DeviceOrientationEvent\"><code>DeviceOrientationEvent</code></a> interface returns the rotation of the device around the Y axis; that is, the number of degrees,\nranged between <code>-90</code> and <code>90</code>, by which the device is tilted left\nor right.\nSee <a href=\"$MDN_URL$/Web/API/Device_orientation_events/Orientation_and_motion_data_explained\">Orientation and motion data explained</a> for details."
+    },
+    "deviceorientationevent.requestpermission": {
+      "url": "$MDN_URL$/web/api/deviceorientationevent/requestpermission_static",
+      "status": [
+        "Experimental",
+        "StandardTrack"
+      ],
+      "compatibility": {
+        "SafariIOS": "14.5"
+      },
+      "baseline": {
+        "level": "NONE"
+      },
+      "doc": "<div class=\"notecard experimental\"><p><strong>Experimental:</strong> <strong>This is an <a href=\"$MDN_URL$/MDN/Writing_guidelines/Experimental_deprecated_obsolete#experimental\">experimental technology</a></strong><br>Check the <a href=\"#browser_compatibility\">Browser compatibility table</a> carefully before using this in production.</div>\n<div class=\"notecard secure\"><p><strong>Secure context:</strong> This feature is available only in <a href=\"$MDN_URL$/Web/Security/Defenses/Secure_Contexts\">secure contexts</a> (HTTPS), in some or all <a href=\"#browser_compatibility\">supporting browsers</a>.</div>\n<p>The <strong><code>requestPermission()</code></strong> static method of the <a href=\"$MDN_URL$/Web/API/DeviceOrientationEvent\"><code>DeviceOrientationEvent</code></a> interface requests the user's permission to access device orientation data from the accelerometer and gyroscope sensors. It can also request permission to access magnetometer data when absolute orientation is needed. This method requires <a href=\"$MDN_URL$/Glossary/Transient_activation\">transient activation</a>, meaning that it must be triggered by a UI event such as a button click.",
+      "parameters": {
+        "absolute": "A boolean indicating whether absolute orientation data is needed. When <code>true</code>, the permission request also includes the magnetometer sensor. Defaults to <code>false</code>."
+      },
+      "returns": "A <a href=\"$MDN_URL$/Web/JavaScript/Reference/Global_Objects/Promise\"><code>Promise</code></a> that resolves with a string which is either <code>\"granted\"</code> or <code>\"denied\"</code>.",
+      "throws": {
+        "NotAllowedError DOMException": "The permission state is <code>\"prompt\"</code> and the calling function does not have <a href=\"$MDN_URL$/Glossary/Transient_activation\">transient activation</a>."
+      }
     },
     "deviceposture": {
       "url": "$MDN_URL$/web/api/deviceposture",
@@ -23771,6 +24260,23 @@
       },
       "doc": "The <strong><code>Document.currentScript</code></strong> property returns the <a href=\"$MDN_URL$/Web/HTML/Reference/Elements/script\"><code>&lt;script&gt;</code></a> element whose script is currently being processed and <a href=\"https://github.com/whatwg/html/issues/997\" class=\"external\" target=\"_blank\">isn't a JavaScript module</a>. (For modules use <a href=\"$MDN_URL$/Web/JavaScript/Reference/Operators/import.meta\"><code>import.meta</code></a> instead.)\n<p>It's important to note that this will not reference the <a href=\"$MDN_URL$/Web/HTML/Reference/Elements/script\"><code>&lt;script&gt;</code></a>\nelement if the code in the script is being called as a callback or event handler; it\nwill only reference the element while it's initially being processed."
     },
+    "document.customelementregistry": {
+      "url": "$MDN_URL$/web/api/document/customElementRegistry",
+      "status": [
+        "StandardTrack"
+      ],
+      "compatibility": {
+        "Chrome": "146",
+        "ChromeAndroid": "146",
+        "Edge": "146",
+        "Safari": "26",
+        "SafariIOS": "26"
+      },
+      "baseline": {
+        "level": "NONE"
+      },
+      "doc": "The <strong><code>customElementRegistry</code></strong> read-only property of the <a href=\"$MDN_URL$/Web/API/Document\"><code>Document</code></a> interface returns the <a href=\"$MDN_URL$/Web/API/CustomElementRegistry\"><code>CustomElementRegistry</code></a> object associated with this document, or <code>null</code> if one has not been set.\n<p>For documents associated with a <a href=\"$MDN_URL$/Web/API/Window\"><code>Window</code></a> (such as the main document of a page), this is the global <code>CustomElementRegistry</code> that is also accessible through the <a href=\"$MDN_URL$/Web/API/Window/customElements\"><code>window.customElements</code></a> property. Documents created programmatically (for example, via <a href=\"$MDN_URL$/Web/API/DOMImplementation/createHTMLDocument\"><code>DOMImplementation.createHTMLDocument()</code></a>) have a <code>null</code> custom element registry by default.\n<p>This property is also available on <a href=\"$MDN_URL$/Web/API/ShadowRoot\"><code>ShadowRoot</code></a> objects via the same <a href=\"$MDN_URL$/Web/API/ShadowRoot/customElementRegistry\" ><code>customElementRegistry</code></a> property name."
+    },
     "document.defaultview": {
       "url": "$MDN_URL$/web/api/document/defaultview",
       "status": [
@@ -24080,7 +24586,7 @@
       },
       "doc": "<div class=\"notecard deprecated\"><p><strong>Deprecated:</strong> This feature is no longer recommended. Though some browsers might still support it, it may have already been removed from the relevant web standards, may be in the process of being dropped, or may only be kept for compatibility purposes. Avoid using it, and update existing code if possible; see the <a href=\"#browser_compatibility\">compatibility table</a> at the bottom of this page to guide your decision. Be aware that this feature may cease to work at any time.</div>\n<div class=\"notecard note\">\n<p><strong>Note:</strong>\nAlthough the <code>execCommand()</code> method is deprecated, there are still some valid use cases that do not yet have viable alternatives. For example, unlike direct DOM manipulation, modifications performed by <code>execCommand()</code> preserve the undo buffer (edit history). For these use cases, you can still use this method, but test to ensure cross-browser compatibility, such as by using <a href=\"$MDN_URL$/Web/API/Document/queryCommandSupported\"><code>document.queryCommandSupported()</code></a>.\n</div>\n<p>The <strong><code>execCommand</code></strong> method implements multiple different commands. Some of them provide access to the clipboard, while others are for editing <a href=\"$MDN_URL$/Web/HTML/Reference/Elements/input\">form inputs</a>, <a href=\"$MDN_URL$/Web/HTML/Reference/Global_attributes/contenteditable\"><code>contenteditable</code></a> elements or entire documents (when switched to <a href=\"$MDN_URL$/Web/API/Document/designMode\">design mode</a>).\n<p>To access the clipboard, the newer <a href=\"$MDN_URL$/Web/API/Clipboard_API\">Clipboard API</a> is recommended over <code>execCommand()</code>.\n<p>Most commands affect the document's <a href=\"$MDN_URL$/Web/API/Selection\">selection</a>. For example, some commands (bold, italics, etc.) format the currently selected text, while others delete the selection, insert new elements (replacing the selection) or affect an entire line (indenting). Only the currently active editable element can be modified, but some commands (e.g., <code>copy</code>) can work without an editable element.\n<div class=\"notecard note\">\n<p><strong>Note:</strong>\nModifications performed by <code>execCommand()</code> may or may not trigger <a href=\"$MDN_URL$/Web/API/Element/beforeinput_event\" ><code>beforeinput</code></a> and <a href=\"$MDN_URL$/Web/API/Element/input_event\" ><code>input</code></a> events, depending on the browser and configuration. If triggered, the handlers for the events will run before <code>execCommand()</code> returns. Authors need to be careful about such recursive calls, especially if they call <code>execCommand()</code> in response to these events. From Firefox 82, nested <code>execCommand()</code> calls will always fail, see <a href=\"https://bugzil.la/1634262\" class=\"external\" target=\"_blank\">bug 1634262</a>.\n</div>",
       "parameters": {
-        "commandName": "A string specifying the name of the command to execute. The following commands are specified:\n<dl>\n<dt id=\"backcolor\"><a href=\"#backcolor\"><code>backColor</code></a></dt>\n<dd>\n<p>Changes the document background color. In <code>styleWithCss</code> mode, it affects the background color of the containing block instead. This requires a <a href=\"$MDN_URL$/Web/CSS/Reference/Values/color_value\"><code>&lt;color&gt;</code></a> value string to be passed in as a value argument.\n</dd>\n<dt id=\"bold\"><a href=\"#bold\"><code>bold</code></a></dt>\n<dd>\n<p>Toggles bold on/off for the selection or at the insertion point.\n</dd>\n<dt id=\"contentreadonly\"><a href=\"#contentreadonly\"><code>contentReadOnly</code></a></dt>\n<dd>\n<p>Makes the content document either read-only or editable. This requires a boolean true/false as the value argument.\n</dd>\n<dt id=\"copy\"><a href=\"#copy\"><code>copy</code></a></dt>\n<dd>\n<p>Copies the current selection to the clipboard. Conditions of having this behavior enabled vary from one browser to another, and have evolved over time. Check the compatibility table to determine if you can use it in your case.\n</dd>\n<dt id=\"createlink\"><a href=\"#createlink\"><code>createLink</code></a></dt>\n<dd>\n<p>Creates a hyperlink from the selection, but only if there is a selection. Requires a <a href=\"$MDN_URL$/Glossary/URI\">URI</a> string as a value argument for the hyperlink's <code>href</code>. The URI must contain at least a single character, which may be whitespace.\n</dd>\n<dt id=\"cut\"><a href=\"#cut\"><code>cut</code></a></dt>\n<dd>\n<p>Removes the current selection and copies it to the clipboard. When this behavior is enabled varies between browsers, and its conditions have evolved over time. Check <a href=\"#browser_compatibility\">the compatibility table</a> for usage details.\n</dd>\n<dt id=\"decreasefontsize\"><a href=\"#decreasefontsize\"><code>decreaseFontSize</code></a></dt>\n<dd>\n<p>Adds a <a href=\"$MDN_URL$/Web/HTML/Reference/Elements/small\"><code>&lt;small&gt;</code></a> tag around the selection or at the insertion point.\n</dd>\n<dt id=\"defaultparagraphseparator\"><a href=\"#defaultparagraphseparator\"><code>defaultParagraphSeparator</code></a></dt>\n<dd>\n<p>Changes the paragraph separator used when new paragraphs are created in editable text regions.\n</dd>\n<dt id=\"delete\"><a href=\"#delete\"><code>delete</code></a></dt>\n<dd>\n<p>Deletes the current selection.\n</dd>\n<dt id=\"enableabsolutepositioneditor\"><a href=\"#enableabsolutepositioneditor\"><code>enableAbsolutePositionEditor</code></a></dt>\n<dd>\n<p>Enables or disables the grabber that allows absolutely-positioned elements to be moved around. The grabber is disabled by default since Firefox 64 (<a href=\"https://bugzil.la/1490641\" class=\"external\" target=\"_blank\">Firefox bug 1490641</a>).\n</dd>\n<dt id=\"enableinlinetableediting\"><a href=\"#enableinlinetableediting\"><code>enableInlineTableEditing</code></a></dt>\n<dd>\n<p>Enables or disables the table row/column insertion and deletion controls. The controls are disabled by default since Firefox 64 (<a href=\"https://bugzil.la/1490641\" class=\"external\" target=\"_blank\">Firefox bug 1490641</a>).\n</dd>\n<dt id=\"enableobjectresizing\"><a href=\"#enableobjectresizing\"><code>enableObjectResizing</code></a></dt>\n<dd>\n<p>Enables or disables the resize handles on images, tables, and absolutely-positioned elements and other resizable objects. The handles are disabled by default since Firefox 64 (<a href=\"https://bugzil.la/1490641\" class=\"external\" target=\"_blank\">Firefox bug 1490641</a>).\n</dd>\n<dt id=\"fontname\"><a href=\"#fontname\"><code>fontName</code></a></dt>\n<dd>\n<p>Changes the font name for the selection or at the insertion point. This requires a font name string (like <code>\"Arial\"</code>) as a value argument.\n</dd>\n<dt id=\"fontsize\"><a href=\"#fontsize\"><code>fontSize</code></a></dt>\n<dd>\n<p>Changes the font size for the selection or at the insertion point. This requires an integer from <code>1</code> - <code>7</code> as a value argument.\n</dd>\n<dt id=\"forecolor\"><a href=\"#forecolor\"><code>foreColor</code></a></dt>\n<dd>\n<p>Changes a font color for the selection or at the insertion point. This requires a hexadecimal color value string as a value argument.\n</dd>\n<dt id=\"formatblock\"><a href=\"#formatblock\"><code>formatBlock</code></a></dt>\n<dd>\n<p>Adds an HTML block-level element around the line containing the current selection, replacing the block element containing the line if one exists (in Firefox, <a href=\"$MDN_URL$/Web/HTML/Reference/Elements/blockquote\"><code>&lt;blockquote&gt;</code></a> is the exception — it will wrap any containing block element). Requires a tag-name string as a value argument. Virtually all block-level elements can be used. (Legacy Edge only supports heading tags <code>H1</code> – <code>H6</code>, <code>ADDRESS</code>, and <code>PRE</code>, which must be wrapped in angle brackets, such as <code>\"&lt;H1&gt;\"</code>.)\n</dd>\n<dt id=\"forwarddelete\"><a href=\"#forwarddelete\"><code>forwardDelete</code></a></dt>\n<dd>\n<p>Deletes the character ahead of the <a href=\"https://en.wikipedia.org/wiki/Cursor_%28computers%29\" class=\"external\" target=\"_blank\">cursor</a>'s position, identical to hitting the Delete key on a Windows keyboard.\n</dd>\n<dt id=\"heading\"><a href=\"#heading\"><code>heading</code></a></dt>\n<dd>\n<p>Adds a heading element around a selection or insertion point line. Requires the tag-name string as a value argument (i.e., <code>\"H1\"</code>, <code>\"H6\"</code>). (Not supported by Safari.)\n</dd>\n<dt id=\"highlightcolor\"><a href=\"#highlightcolor\"><code>highlightColor</code></a></dt>\n<dd>\n<p>Changes the background color for the selection or at the insertion point. Requires a color value string as a value argument. <code>useCSS</code> must be <code>true</code> for this to function.\n</dd>\n<dt id=\"increasefontsize\"><a href=\"#increasefontsize\"><code>increaseFontSize</code></a></dt>\n<dd>\n<p>Adds a <a href=\"$MDN_URL$/Web/HTML/Reference/Elements/big\"><code>&lt;big&gt;</code></a> tag around the selection or at the insertion point.\n</dd>\n<dt id=\"indent\"><a href=\"#indent\"><code>indent</code></a></dt>\n<dd>\n<p>Indents the line containing the selection or insertion point. In Firefox, if the selection spans multiple lines at different levels of indentation, only the least indented lines in the selection will be indented.\n</dd>\n<dt id=\"insertbronreturn\"><a href=\"#insertbronreturn\"><code>insertBrOnReturn</code></a></dt>\n<dd>\n<p>Controls whether the Enter key inserts a <a href=\"$MDN_URL$/Web/HTML/Reference/Elements/br\"><code>&lt;br&gt;</code></a> element, or splits the current block element into two.\n</dd>\n<dt id=\"inserthorizontalrule\"><a href=\"#inserthorizontalrule\"><code>insertHorizontalRule</code></a></dt>\n<dd>\n<p>Inserts a <a href=\"$MDN_URL$/Web/HTML/Reference/Elements/hr\"><code>&lt;hr&gt;</code></a> element at the insertion point, or replaces the selection with it.\n</dd>\n<dt id=\"inserthtml\"><a href=\"#inserthtml\"><code>insertHTML</code></a></dt>\n<dd>\n<p>Inserts an <a href=\"$MDN_URL$/Web/API/TrustedHTML\"><code>TrustedHTML</code></a> instance or string of HTML markup at the insertion point (deletes selection).\nThis requires valid HTML markup.\n<div class=\"notecard warning\">\n<p><strong>Warning:</strong>\nThe input is parsed as HTML and written into the DOM.\nAPIs like this are known as <a href=\"$MDN_URL$/Web/API/Trusted_Types_API#concepts_and_usage\">injection sinks</a>, and are potentially a vector for <a href=\"$MDN_URL$/Web/Security/Attacks/XSS\">cross-site scripting (XSS)</a> attacks, if the input originally came from an attacker.\n<p>You can mitigate this risk by always assigning <a href=\"$MDN_URL$/Web/API/TrustedHTML\"><code>TrustedHTML</code></a> objects instead of strings and <a href=\"$MDN_URL$/Web/API/Trusted_Types_API#using_a_csp_to_enforce_trusted_types\">enforcing trusted types</a>.\nSee the <a href=\"$MDN_URL$/Web/API/Trusted_Types_API\">Trusted Types API</a> for more information.\n</div>\n</dd>\n<dt id=\"insertimage\"><a href=\"#insertimage\"><code>insertImage</code></a></dt>\n<dd>\n<p>Inserts an image at the insertion point (deletes selection). Requires a URL string for the image's <code>src</code> as a value argument. The requirements for this string are the same as <code>createLink</code>.\n</dd>\n<dt id=\"insertorderedlist\"><a href=\"#insertorderedlist\"><code>insertOrderedList</code></a></dt>\n<dd>\n<p>Creates a <a href=\"$MDN_URL$/Web/HTML/Reference/Elements/ol\">numbered ordered list</a> for the selection or at the insertion point.\n</dd>\n<dt id=\"insertunorderedlist\"><a href=\"#insertunorderedlist\"><code>insertUnorderedList</code></a></dt>\n<dd>\n<p>Creates a <a href=\"$MDN_URL$/Web/HTML/Reference/Elements/ul\">bulleted unordered list</a> for the selection or at the insertion point.\n</dd>\n<dt id=\"insertparagraph\"><a href=\"#insertparagraph\"><code>insertParagraph</code></a></dt>\n<dd>\n<p>Inserts a <a href=\"$MDN_URL$/Web/HTML/Reference/Elements/p\">paragraph</a> around the selection or the current line.\n</dd>\n<dt id=\"inserttext\"><a href=\"#inserttext\"><code>insertText</code></a></dt>\n<dd>\n<p>Inserts the given plain text at the insertion point (deletes selection).\n</dd>\n<dt id=\"italic\"><a href=\"#italic\"><code>italic</code></a></dt>\n<dd>\n<p>Toggles italics on/off for the selection or at the insertion point.\n</dd>\n<dt id=\"justifycenter\"><a href=\"#justifycenter\"><code>justifyCenter</code></a></dt>\n<dd>\n<p>Centers the selection or insertion point.\n</dd>\n<dt id=\"justifyfull\"><a href=\"#justifyfull\"><code>justifyFull</code></a></dt>\n<dd>\n<p>Justifies the selection or insertion point.\n</dd>\n<dt id=\"justifyleft\"><a href=\"#justifyleft\"><code>justifyLeft</code></a></dt>\n<dd>\n<p>Justifies the selection or insertion point to the left.\n</dd>\n<dt id=\"justifyright\"><a href=\"#justifyright\"><code>justifyRight</code></a></dt>\n<dd>\n<p>Right-justifies the selection or the insertion point.\n</dd>\n<dt id=\"outdent\"><a href=\"#outdent\"><code>outdent</code></a></dt>\n<dd>\n<p>Outdents the line containing the selection or insertion point.\n</dd>\n<dt id=\"paste\"><a href=\"#paste\"><code>paste</code></a></dt>\n<dd>\n<p>Pastes the clipboard contents at the insertion point (replaces current selection). Disabled for web content.\n</dd>\n<dt id=\"redo\"><a href=\"#redo\"><code>redo</code></a></dt>\n<dd>\n<p>Redoes the previous undo command.\n</dd>\n<dt id=\"removeformat\"><a href=\"#removeformat\"><code>removeFormat</code></a></dt>\n<dd>\n<p>Removes all formatting from the current selection.\n</dd>\n<dt id=\"selectall\"><a href=\"#selectall\"><code>selectAll</code></a></dt>\n<dd>\n<p>Selects all of the content of the editable region.\n</dd>\n<dt id=\"strikethrough\"><a href=\"#strikethrough\"><code>strikeThrough</code></a></dt>\n<dd>\n<p>Toggles strikethrough on/off for the selection or at the insertion point.\n</dd>\n<dt id=\"subscript\"><a href=\"#subscript\"><code>subscript</code></a></dt>\n<dd>\n<p>Toggles <a href=\"$MDN_URL$/Web/HTML/Reference/Elements/sub\">subscript</a> on/off for the selection or at the insertion point.\n</dd>\n<dt id=\"superscript\"><a href=\"#superscript\"><code>superscript</code></a></dt>\n<dd>\n<p>Toggles <a href=\"$MDN_URL$/Web/HTML/Reference/Elements/sup\">superscript</a> on/off for the selection or at the insertion point.\n</dd>\n<dt id=\"underline\"><a href=\"#underline\"><code>underline</code></a></dt>\n<dd>\n<p>Toggles <a href=\"$MDN_URL$/Web/HTML/Reference/Elements/u\">underline</a> on/off for the selection or at the insertion point.\n</dd>\n<dt id=\"undo\"><a href=\"#undo\"><code>undo</code></a></dt>\n<dd>\n<p>Undoes the last executed command.\n</dd>\n<dt id=\"unlink\"><a href=\"#unlink\"><code>unlink</code></a></dt>\n<dd>\n<p>Removes the <a href=\"$MDN_URL$/Web/HTML/Reference/Elements/a\">anchor element</a> from a selected hyperlink.\n</dd>\n<dt id=\"usecss\"><a href=\"#usecss\"><code>useCSS</code> </a></dt>\n<dd>\n<p>Toggles the use of HTML tags or CSS for the generated markup. Requires a boolean true/false as a value argument.\n<div class=\"notecard note\">\n<p><strong>Note:</strong>\nThis argument is logically backwards (i.e., use <code>false</code> to use CSS,\n<code>true</code> to use HTML). This has been deprecated in favor of <code>styleWithCSS</code>.\n</div>\n</dd>\n<dt id=\"stylewithcss\"><a href=\"#stylewithcss\"><code>styleWithCSS</code></a></dt>\n<dd>\n<p>Replaces the <code>useCSS</code> command. <code>true</code> modifies/generates <code>style</code> attributes in markup, false generates presentational elements.\n</dd>\n<dt id=\"autourldetect\"><a href=\"#autourldetect\"><code>AutoUrlDetect</code></a></dt>\n<dd>\n<p>Changes the browser auto-link behavior.\n</dd>\n</dl>",
+        "commandName": "A string specifying the name of the command to execute. The following commands are specified:\n<dl>\n<dt id=\"backcolor\"><a href=\"#backcolor\"><code>backColor</code></a></dt>\n<dd>\n<p>Changes the document background color. In <code>styleWithCss</code> mode, it affects the background color of the containing block instead. This requires a <a href=\"$MDN_URL$/Web/CSS/Reference/Values/color_value\"><code>&lt;color&gt;</code></a> value string to be passed in as a value argument.\n</dd>\n<dt id=\"bold\"><a href=\"#bold\"><code>bold</code></a></dt>\n<dd>\n<p>Toggles bold on/off for the selection or at the insertion point.\n</dd>\n<dt id=\"contentreadonly\"><a href=\"#contentreadonly\"><code>contentReadOnly</code></a></dt>\n<dd>\n<p>Makes the content document either read-only or editable. This requires a boolean true/false as the value argument.\n</dd>\n<dt id=\"copy\"><a href=\"#copy\"><code>copy</code></a></dt>\n<dd>\n<p>Copies the current selection to the clipboard. Conditions of having this behavior enabled vary from one browser to another, and have evolved over time. Check the compatibility table to determine if you can use it in your case.\n</dd>\n<dt id=\"createlink\"><a href=\"#createlink\"><code>createLink</code></a></dt>\n<dd>\n<p>Creates a hyperlink from the selection, but only if there is a selection. Requires a <a href=\"$MDN_URL$/Glossary/URI\">URI</a> string as a value argument for the hyperlink's <code>href</code>. The URI must contain at least a single character, which may be whitespace.\n</dd>\n<dt id=\"cut\"><a href=\"#cut\"><code>cut</code></a></dt>\n<dd>\n<p>Removes the current selection and copies it to the clipboard. When this behavior is enabled varies between browsers, and its conditions have evolved over time. Check <a href=\"#browser_compatibility\">the compatibility table</a> for usage details.\n</dd>\n<dt id=\"decreasefontsize\"><a href=\"#decreasefontsize\"><code>decreaseFontSize</code></a></dt>\n<dd>\n<p>Adds a <a href=\"$MDN_URL$/Web/HTML/Reference/Elements/small\"><code>&lt;small&gt;</code></a> tag around the selection or at the insertion point.\n</dd>\n<dt id=\"defaultparagraphseparator\"><a href=\"#defaultparagraphseparator\"><code>defaultParagraphSeparator</code></a></dt>\n<dd>\n<p>Changes the paragraph separator used when new paragraphs are created in editable text regions.\n</dd>\n<dt id=\"delete\"><a href=\"#delete\"><code>delete</code></a></dt>\n<dd>\n<p>Deletes the current selection.\n</dd>\n<dt id=\"enableabsolutepositioneditor\"><a href=\"#enableabsolutepositioneditor\"><code>enableAbsolutePositionEditor</code></a></dt>\n<dd>\n<p>Enables or disables the grabber that allows absolutely-positioned elements to be moved around. The grabber is disabled by default since Firefox 64 (<a href=\"https://bugzil.la/1490641\" class=\"external\" target=\"_blank\">Firefox bug 1490641</a>).\n</dd>\n<dt id=\"enableinlinetableediting\"><a href=\"#enableinlinetableediting\"><code>enableInlineTableEditing</code></a></dt>\n<dd>\n<p>Enables or disables the table row/column insertion and deletion controls. The controls are disabled by default since Firefox 64 (<a href=\"https://bugzil.la/1490641\" class=\"external\" target=\"_blank\">Firefox bug 1490641</a>).\n</dd>\n<dt id=\"enableobjectresizing\"><a href=\"#enableobjectresizing\"><code>enableObjectResizing</code></a></dt>\n<dd>\n<p>Enables or disables the resize handles on images, tables, and absolutely-positioned elements and other resizable objects. The handles are disabled by default since Firefox 64 (<a href=\"https://bugzil.la/1490641\" class=\"external\" target=\"_blank\">Firefox bug 1490641</a>).\n</dd>\n<dt id=\"fontname\"><a href=\"#fontname\"><code>fontName</code></a></dt>\n<dd>\n<p>Changes the font name for the selection or at the insertion point. This requires a font name string (like <code>\"Arial\"</code>) as a value argument.\n</dd>\n<dt id=\"fontsize\"><a href=\"#fontsize\"><code>fontSize</code></a></dt>\n<dd>\n<p>Changes the font size for the selection or at the insertion point. This requires an integer from <code>1</code> - <code>7</code> as a value argument.\n</dd>\n<dt id=\"forecolor\"><a href=\"#forecolor\"><code>foreColor</code></a></dt>\n<dd>\n<p>Changes a font color for the selection or at the insertion point. This requires a hexadecimal color value string as a value argument.\n</dd>\n<dt id=\"formatblock\"><a href=\"#formatblock\"><code>formatBlock</code></a></dt>\n<dd>\n<p>Adds an HTML block-level element around the line containing the current selection, replacing the block element containing the line if one exists (in Firefox, <a href=\"$MDN_URL$/Web/HTML/Reference/Elements/blockquote\"><code>&lt;blockquote&gt;</code></a> is the exception — it will wrap any containing block element). Requires a tag-name string as a value argument. Virtually all block-level elements can be used. (Legacy Edge only supports heading tags <code>H1</code> – <code>H6</code>, <code>ADDRESS</code>, and <code>PRE</code>, which must be wrapped in angle brackets, such as <code>\"&lt;H1&gt;\"</code>.)\n</dd>\n<dt id=\"forwarddelete\"><a href=\"#forwarddelete\"><code>forwardDelete</code></a></dt>\n<dd>\n<p>Deletes the character ahead of the <a href=\"https://en.wikipedia.org/wiki/Cursor_%28computers%29\" class=\"external\" target=\"_blank\">cursor</a>'s position, identical to hitting the Delete key on a Windows keyboard.\n</dd>\n<dt id=\"heading\"><a href=\"#heading\"><code>heading</code></a></dt>\n<dd>\n<p>Adds a heading element around a selection or insertion point line. Requires the tag-name string as a value argument (i.e., <code>\"H1\"</code>, <code>\"H6\"</code>). (Not supported by Safari.)\n</dd>\n<dt id=\"highlightcolor\"><a href=\"#highlightcolor\"><code>highlightColor</code></a></dt>\n<dd>\n<p>Changes the background color for the selection or at the insertion point. Requires a color value string as a value argument. <code>useCSS</code> must be <code>true</code> for this to function.\n</dd>\n<dt id=\"increasefontsize\"><a href=\"#increasefontsize\"><code>increaseFontSize</code></a></dt>\n<dd>\n<p>Adds a <a href=\"$MDN_URL$/Web/HTML/Reference/Elements/big\"><code>&lt;big&gt;</code></a> tag around the selection or at the insertion point.\n</dd>\n<dt id=\"indent\"><a href=\"#indent\"><code>indent</code></a></dt>\n<dd>\n<p>Indents the line containing the selection or insertion point. In Firefox, if the selection spans multiple lines at different levels of indentation, only the least indented lines in the selection will be indented.\n</dd>\n<dt id=\"insertbronreturn\"><a href=\"#insertbronreturn\"><code>insertBrOnReturn</code></a></dt>\n<dd>\n<p>Controls whether the Enter key inserts a <a href=\"$MDN_URL$/Web/HTML/Reference/Elements/br\"><code>&lt;br&gt;</code></a> element, or splits the current block element into two.\n</dd>\n<dt id=\"inserthorizontalrule\"><a href=\"#inserthorizontalrule\"><code>insertHorizontalRule</code></a></dt>\n<dd>\n<p>Inserts a <a href=\"$MDN_URL$/Web/HTML/Reference/Elements/hr\"><code>&lt;hr&gt;</code></a> element at the insertion point, or replaces the selection with it.\n</dd>\n<dt id=\"inserthtml\"><a href=\"#inserthtml\"><code>insertHTML</code></a></dt>\n<dd>\n<p>Inserts an <a href=\"$MDN_URL$/Web/API/TrustedHTML\"><code>TrustedHTML</code></a> instance or string of HTML markup at the insertion point (deletes selection).\nThis requires valid HTML markup.\n<div class=\"notecard warning\">\n<p><strong>Warning:</strong>\nThe input is parsed as HTML and written into the DOM.\nAPIs like this are known as <a href=\"$MDN_URL$/Web/API/Trusted_Types_API#concepts_and_usage\">injection sinks</a>, and are potentially a vector for <a href=\"$MDN_URL$/Web/Security/Attacks/XSS\">cross-site scripting (XSS)</a> attacks, if the input originally came from an attacker.\n<p>You can mitigate this risk by always assigning <a href=\"$MDN_URL$/Web/API/TrustedHTML\"><code>TrustedHTML</code></a> objects instead of strings and <a href=\"$MDN_URL$/Web/API/Trusted_Types_API#using_a_csp_to_enforce_trusted_types\">enforcing trusted types</a>.\nSee the <a href=\"$MDN_URL$/Web/API/Trusted_Types_API\">Trusted Types API</a> for more information.\n</div>\n</dd>\n<dt id=\"insertimage\"><a href=\"#insertimage\"><code>insertImage</code></a></dt>\n<dd>\n<p>Inserts an image at the insertion point (deletes selection). Requires a URL string for the image's <code>src</code> as a value argument. The requirements for this string are the same as <code>createLink</code>.\n</dd>\n<dt id=\"insertorderedlist\"><a href=\"#insertorderedlist\"><code>insertOrderedList</code></a></dt>\n<dd>\n<p>Creates a <a href=\"$MDN_URL$/Web/HTML/Reference/Elements/ol\">numbered ordered list</a> for the selection or at the insertion point.\n</dd>\n<dt id=\"insertunorderedlist\"><a href=\"#insertunorderedlist\"><code>insertUnorderedList</code></a></dt>\n<dd>\n<p>Creates a <a href=\"$MDN_URL$/Web/HTML/Reference/Elements/ul\">bulleted unordered list</a> for the selection or at the insertion point.\n</dd>\n<dt id=\"insertparagraph\"><a href=\"#insertparagraph\"><code>insertParagraph</code></a></dt>\n<dd>\n<p>Inserts a <a href=\"$MDN_URL$/Web/HTML/Reference/Elements/p\">paragraph</a> around the selection or the current line.\n</dd>\n<dt id=\"inserttext\"><a href=\"#inserttext\"><code>insertText</code></a></dt>\n<dd>\n<p>Inserts the given plain text at the insertion point (deletes selection).\n</dd>\n<dt id=\"italic\"><a href=\"#italic\"><code>italic</code></a></dt>\n<dd>\n<p>Toggles italics on/off for the selection or at the insertion point.\n</dd>\n<dt id=\"justifycenter\"><a href=\"#justifycenter\"><code>justifyCenter</code></a></dt>\n<dd>\n<p>Centers the selection or insertion point.\n</dd>\n<dt id=\"justifyfull\"><a href=\"#justifyfull\"><code>justifyFull</code></a></dt>\n<dd>\n<p>Justifies the selection or insertion point.\n</dd>\n<dt id=\"justifyleft\"><a href=\"#justifyleft\"><code>justifyLeft</code></a></dt>\n<dd>\n<p>Justifies the selection or insertion point to the left.\n</dd>\n<dt id=\"justifyright\"><a href=\"#justifyright\"><code>justifyRight</code></a></dt>\n<dd>\n<p>Right-justifies the selection or the insertion point.\n</dd>\n<dt id=\"outdent\"><a href=\"#outdent\"><code>outdent</code></a></dt>\n<dd>\n<p>Outdents the line containing the selection or insertion point.\n</dd>\n<dt id=\"paste\"><a href=\"#paste\"><code>paste</code></a></dt>\n<dd>\n<p>Pastes the clipboard contents at the insertion point (replaces current selection).\n<p>This feature is specified as disabled for <em>web content</em>, but has been implemented via the <a href=\"$MDN_URL$/Web/API/Clipboard_API#security_considerations\">Clipboard API</a> on some browsers.\nOn these browsers the feature requires <a href=\"$MDN_URL$/Glossary/Transient_activation\">transient activation</a>, and acknowledgement of a popup UI when pasting cross-origin content.\nSee the <a href=\"#browser_compatibility\">Browser compatibility table</a> for more information.\n</dd>\n<dt id=\"redo\"><a href=\"#redo\"><code>redo</code></a></dt>\n<dd>\n<p>Redoes the previous undo command.\n</dd>\n<dt id=\"removeformat\"><a href=\"#removeformat\"><code>removeFormat</code></a></dt>\n<dd>\n<p>Removes all formatting from the current selection.\n</dd>\n<dt id=\"selectall\"><a href=\"#selectall\"><code>selectAll</code></a></dt>\n<dd>\n<p>Selects all of the content of the editable region.\n</dd>\n<dt id=\"strikethrough\"><a href=\"#strikethrough\"><code>strikeThrough</code></a></dt>\n<dd>\n<p>Toggles strikethrough on/off for the selection or at the insertion point.\n</dd>\n<dt id=\"subscript\"><a href=\"#subscript\"><code>subscript</code></a></dt>\n<dd>\n<p>Toggles <a href=\"$MDN_URL$/Web/HTML/Reference/Elements/sub\">subscript</a> on/off for the selection or at the insertion point.\n</dd>\n<dt id=\"superscript\"><a href=\"#superscript\"><code>superscript</code></a></dt>\n<dd>\n<p>Toggles <a href=\"$MDN_URL$/Web/HTML/Reference/Elements/sup\">superscript</a> on/off for the selection or at the insertion point.\n</dd>\n<dt id=\"underline\"><a href=\"#underline\"><code>underline</code></a></dt>\n<dd>\n<p>Toggles <a href=\"$MDN_URL$/Web/HTML/Reference/Elements/u\">underline</a> on/off for the selection or at the insertion point.\n</dd>\n<dt id=\"undo\"><a href=\"#undo\"><code>undo</code></a></dt>\n<dd>\n<p>Undoes the last executed command.\n</dd>\n<dt id=\"unlink\"><a href=\"#unlink\"><code>unlink</code></a></dt>\n<dd>\n<p>Removes the <a href=\"$MDN_URL$/Web/HTML/Reference/Elements/a\">anchor element</a> from a selected hyperlink.\n</dd>\n<dt id=\"usecss\"><a href=\"#usecss\"><code>useCSS</code> </a></dt>\n<dd>\n<p>Toggles the use of HTML tags or CSS for the generated markup. Requires a boolean true/false as a value argument.\n<div class=\"notecard note\">\n<p><strong>Note:</strong>\nThis argument is logically backwards (i.e., use <code>false</code> to use CSS,\n<code>true</code> to use HTML). This has been deprecated in favor of <code>styleWithCSS</code>.\n</div>\n</dd>\n<dt id=\"stylewithcss\"><a href=\"#stylewithcss\"><code>styleWithCSS</code></a></dt>\n<dd>\n<p>Replaces the <code>useCSS</code> command. <code>true</code> modifies/generates <code>style</code> attributes in markup, false generates presentational elements.\n</dd>\n<dt id=\"autourldetect\"><a href=\"#autourldetect\"><code>AutoUrlDetect</code></a></dt>\n<dd>\n<p>Changes the browser auto-link behavior.\n</dd>\n</dl>",
         "showDefaultUI": "A boolean value indicating whether the default user interface should be shown. This is not implemented in Mozilla.",
         "valueArgument": "For commands which require an input argument, is a string providing that information. For example, <code>insertImage</code> requires the URL of the image to insert. Specify <code>null</code> if no argument is needed."
       },
@@ -26749,7 +27255,7 @@
       },
       "doc": "<div class=\"notecard note\"><p><strong>Note:</strong> This feature is available in <a href=\"$MDN_URL$/Web/API/Web_Workers_API\">Web Workers</a>.</div>\n<p>The <strong><code>fromMatrix()</code></strong> static method of the <a href=\"$MDN_URL$/Web/API/DOMMatrix\"><code>DOMMatrix</code></a> interface creates a new <a href=\"$MDN_URL$/Web/API/DOMMatrix\"><code>DOMMatrix</code></a> object given an existing matrix or an object which provides the values for its properties.",
       "parameters": {
-        "other": "A <a href=\"$MDN_URL$/Web/API/DOMMatrix\"><code>DOMMatrix</code></a>, <a href=\"$MDN_URL$/Web/API/DOMMatrix\"><code>DOMMatrix</code></a>, or an object with the same properties. All properties default to <code>0</code>. The properties are:\n<dl>\n<dt id=\"is2d\"><a href=\"#is2d\"><code>is2D</code></a></dt>\n<dd>\n<p>A boolean. <code>true</code> if the matrix should be created as a 2D matrix. Defaults to <code>false</code> if at least one of <code>m13</code>, <code>m14</code>, <code>m23</code>, <code>m24</code>, <code>m31</code>, <code>m32</code>, <code>m34</code>, or <code>m43</code> is non-zero, or at least one of <code>m33</code> or <code>m44</code> is not 1; otherwise, defaults to <code>true</code>.\n</dd>\n<dt id=\"m11\"><a href=\"#m11\"><code>m11</code>, <code>m12</code>, <code>m13</code>, <code>m14</code>, <code>m21</code>, <code>m22</code>, <code>m23</code>, <code>m24</code>, <code>m31</code>, <code>m32</code>, <code>m33</code>, <code>m34</code>, <code>m41</code>, <code>m42</code>, <code>m43</code>, <code>m44</code></a></dt>\n<dd>\n<p>Numbers representing each component of a 4×4 matrix, where <code>m11</code> through <code>m14</code> are the first column, <code>m21</code> through <code>m24</code> are the second column, and so forth. <code>m11</code>, <code>m22</code>, <code>m33</code>, and <code>m44</code> default to <code>1</code>, and all other components default to <code>0</code>.\n<p>If <code>is2D</code> is explicitly set to <code>true</code>, <code>m13</code>, <code>m14</code>, <code>m23</code>, <code>m24</code>, <code>m31</code>, <code>m32</code>, <code>m34</code>, or <code>m43</code> must either be omitted or set to <code>0</code>, and <code>m33</code> and <code>m44</code> must either be omitted or set to <code>1</code>.\n</dd>\n<dt id=\"a\"><a href=\"#a\"><code>a</code>, <code>b</code>, <code>c</code>, <code>d</code>, <code>e</code>, <code>f</code></a></dt>\n<dd>\n<p>Aliases for <code>m11</code>, <code>m12</code>, <code>m21</code>, <code>m22</code>, <code>m41</code>, and <code>m42</code>, respectively, for convenience when initializing 2D matrices. If these aliases are provided with the <code>m</code> counterparts, their values must be equal.\n</dd>\n</dl>"
+        "other": "A <a href=\"$MDN_URL$/Web/API/DOMMatrix\"><code>DOMMatrix</code></a>, <a href=\"$MDN_URL$/Web/API/DOMMatrixReadOnly\"><code>DOMMatrixReadOnly</code></a>, or an object with the same properties. All properties default to <code>0</code>. The properties are:\n<dl>\n<dt id=\"is2d\"><a href=\"#is2d\"><code>is2D</code></a></dt>\n<dd>\n<p>A boolean. <code>true</code> if the matrix should be created as a 2D matrix. Defaults to <code>false</code> if at least one of <code>m13</code>, <code>m14</code>, <code>m23</code>, <code>m24</code>, <code>m31</code>, <code>m32</code>, <code>m34</code>, or <code>m43</code> is non-zero, or at least one of <code>m33</code> or <code>m44</code> is not 1; otherwise, defaults to <code>true</code>.\n</dd>\n<dt id=\"m11\"><a href=\"#m11\"><code>m11</code>, <code>m12</code>, <code>m13</code>, <code>m14</code>, <code>m21</code>, <code>m22</code>, <code>m23</code>, <code>m24</code>, <code>m31</code>, <code>m32</code>, <code>m33</code>, <code>m34</code>, <code>m41</code>, <code>m42</code>, <code>m43</code>, <code>m44</code></a></dt>\n<dd>\n<p>Numbers representing each component of a 4×4 matrix, where <code>m11</code> through <code>m14</code> are the first column, <code>m21</code> through <code>m24</code> are the second column, and so forth. <code>m11</code>, <code>m22</code>, <code>m33</code>, and <code>m44</code> default to <code>1</code>, and all other components default to <code>0</code>.\n<p>If <code>is2D</code> is explicitly set to <code>true</code>, <code>m13</code>, <code>m14</code>, <code>m23</code>, <code>m24</code>, <code>m31</code>, <code>m32</code>, <code>m34</code>, or <code>m43</code> must either be omitted or set to <code>0</code>, and <code>m33</code> and <code>m44</code> must either be omitted or set to <code>1</code>.\n</dd>\n<dt id=\"a\"><a href=\"#a\"><code>a</code>, <code>b</code>, <code>c</code>, <code>d</code>, <code>e</code>, <code>f</code></a></dt>\n<dd>\n<p>Aliases for <code>m11</code>, <code>m12</code>, <code>m21</code>, <code>m22</code>, <code>m41</code>, and <code>m42</code>, respectively, for convenience when initializing 2D matrices. If these aliases are provided with the <code>m</code> counterparts, their values must be equal.\n</dd>\n</dl>"
       },
       "returns": "A <a href=\"$MDN_URL$/Web/API/DOMMatrix\"><code>DOMMatrix</code></a> object.",
       "throws": {

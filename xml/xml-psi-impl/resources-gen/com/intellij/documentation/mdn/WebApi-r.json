@@ -312,17 +312,14 @@
         "Deprecated"
       ],
       "compatibility": {
-        "Chrome": "1",
-        "ChromeAndroid": "18",
-        "Edge": "12",
+        "Chrome": "",
+        "ChromeAndroid": "",
+        "Edge": "",
         "Firefox": "",
         "FirefoxAndroid": "4",
         "Opera": "9",
-        "Safari": "1",
-        "SafariIOS": "1"
-      },
-      "baseline": {
-        "level": "NONE"
+        "Safari": "",
+        "SafariIOS": ""
       },
       "doc": "<div class=\"notecard deprecated\"><p><strong>Deprecated:</strong> This feature is no longer recommended. Though some browsers might still support it, it may have already been removed from the relevant web standards, may be in the process of being dropped, or may only be kept for compatibility purposes. Avoid using it, and update existing code if possible; see the <a href=\"#browser_compatibility\">compatibility table</a> at the bottom of this page to guide your decision. Be aware that this feature may cease to work at any time.</div>\n<p>The <strong><code>Range.detach()</code></strong> method does nothing. It used to\ndisable the <a href=\"$MDN_URL$/Web/API/Range\"><code>Range</code></a> object and enable the browser to release associated\nresources. The method has been kept for compatibility.",
       "returns": "None (<a href=\"$MDN_URL$/Web/JavaScript/Reference/Global_Objects/undefined\"><code>undefined</code></a>)."
@@ -860,6 +857,8 @@
         "Firefox": "102",
         "FirefoxAndroid": "102",
         "Opera": "75",
+        "Safari": "26.4",
+        "SafariIOS": "26.4",
         "Nodejs": "18.0.0",
         "Deno": "1.11"
       },
@@ -880,6 +879,8 @@
         "Firefox": "102",
         "FirefoxAndroid": "102",
         "Opera": "75",
+        "Safari": "26.4",
+        "SafariIOS": "26.4",
         "Nodejs": "16.5.0",
         "Deno": ""
       },
@@ -900,6 +901,8 @@
         "Firefox": "102",
         "FirefoxAndroid": "102",
         "Opera": "75",
+        "Safari": "26.4",
+        "SafariIOS": "26.4",
         "Nodejs": "16.5.0",
         "Deno": ""
       },
@@ -924,6 +927,8 @@
         "Firefox": "102",
         "FirefoxAndroid": "102",
         "Opera": "75",
+        "Safari": "26.4",
+        "SafariIOS": "26.4",
         "Nodejs": "16.5.0",
         "Deno": ""
       },
@@ -944,6 +949,8 @@
         "Firefox": "102",
         "FirefoxAndroid": "102",
         "Opera": "75",
+        "Safari": "26.4",
+        "SafariIOS": "26.4",
         "Nodejs": "16.5.0",
         "Deno": ""
       },
@@ -971,6 +978,8 @@
         "Firefox": "102",
         "FirefoxAndroid": "102",
         "Opera": "75",
+        "Safari": "26.4",
+        "SafariIOS": "26.4",
         "Nodejs": "16.5.0",
         "Deno": ""
       },
@@ -1297,6 +1306,8 @@
         "Firefox": "102",
         "FirefoxAndroid": "102",
         "Opera": "75",
+        "Safari": "26.4",
+        "SafariIOS": "26.4",
         "Nodejs": "18.0.0",
         "Deno": "1.16"
       },
@@ -1317,6 +1328,8 @@
         "Firefox": "102",
         "FirefoxAndroid": "102",
         "Opera": "75",
+        "Safari": "26.4",
+        "SafariIOS": "26.4",
         "Nodejs": "16.5.0",
         "Deno": "1.16"
       },
@@ -1344,6 +1357,8 @@
         "Firefox": "102",
         "FirefoxAndroid": "102",
         "Opera": "75",
+        "Safari": "26.4",
+        "SafariIOS": "26.4",
         "Nodejs": "16.5.0",
         "Deno": "1.16"
       },
@@ -1364,6 +1379,8 @@
         "Firefox": "102",
         "FirefoxAndroid": "102",
         "Opera": "75",
+        "Safari": "26.4",
+        "SafariIOS": "26.4",
         "Nodejs": "16.5.0",
         "Deno": "1.16"
       },
@@ -1393,6 +1410,8 @@
         "Firefox": "102",
         "FirefoxAndroid": "102",
         "Opera": "75",
+        "Safari": "26.4",
+        "SafariIOS": "26.4",
         "Nodejs": "16.5.0",
         "Deno": "1.16"
       },
@@ -1420,6 +1439,8 @@
         "Firefox": "102",
         "FirefoxAndroid": "102",
         "Opera": "75",
+        "Safari": "26.4",
+        "SafariIOS": "26.4",
         "Nodejs": "16.5.0",
         "Deno": "1.16"
       },
@@ -1444,6 +1465,8 @@
         "Firefox": "102",
         "FirefoxAndroid": "102",
         "Opera": "75",
+        "Safari": "26.4",
+        "SafariIOS": "26.4",
         "Nodejs": "18.0.0",
         "Deno": "1.16"
       },
@@ -1464,6 +1487,8 @@
         "Firefox": "102",
         "FirefoxAndroid": "102",
         "Opera": "75",
+        "Safari": "26.4",
+        "SafariIOS": "26.4",
         "Nodejs": "16.5.0",
         "Deno": "1.16"
       },
@@ -1491,6 +1516,8 @@
         "Firefox": "102",
         "FirefoxAndroid": "102",
         "Opera": "75",
+        "Safari": "26.4",
+        "SafariIOS": "26.4",
         "Nodejs": "16.5.0",
         "Deno": "1.16"
       },
@@ -1519,6 +1546,8 @@
         "Firefox": "102",
         "FirefoxAndroid": "102",
         "Opera": "75",
+        "Safari": "26.4",
+        "SafariIOS": "26.4",
         "Nodejs": "16.5.0",
         "Deno": "1.16"
       },
@@ -4253,6 +4282,18 @@
         "highDate": "2022-07-15"
       },
       "doc": "The read-only <code>RTCDataChannel</code> property <strong><code>ordered</code></strong> indicates\nwhether or not the data channel guarantees in-order delivery of messages;\nthe default is <code>true</code>,\nwhich indicates that the data channel is indeed ordered.\nThis is set when the <a href=\"$MDN_URL$/Web/API/RTCDataChannel\"><code>RTCDataChannel</code></a> is created,\nby setting the <code>ordered</code> property\non the object passed as <a href=\"$MDN_URL$/Web/API/RTCPeerConnection/createDataChannel\"><code>RTCPeerConnection.createDataChannel()</code></a>'s <code>options</code> parameter."
+    },
+    "rtcdatachannel.priority": {
+      "url": "$MDN_URL$/web/api/rtcdatachannel/priority",
+      "status": [
+        "Experimental",
+        "StandardTrack"
+      ],
+      "compatibility": {
+        "Safari": "15",
+        "SafariIOS": "15"
+      },
+      "doc": "<div class=\"notecard experimental\"><p><strong>Experimental:</strong> <strong>This is an <a href=\"$MDN_URL$/MDN/Writing_guidelines/Experimental_deprecated_obsolete#experimental\">experimental technology</a></strong><br>Check the <a href=\"#browser_compatibility\">Browser compatibility table</a> carefully before using this in production.</div>\n<p>The read-only <strong><code>priority</code></strong> property of the <a href=\"$MDN_URL$/Web/API/RTCDataChannel\"><code>RTCDataChannel</code></a> interface returns a string indicating the priority of the data channel. The priority is assigned by the user agent at channel creation time based on the <code>priority</code> option in the <code>dataChannelDict</code> parameter passed to <a href=\"$MDN_URL$/Web/API/RTCPeerConnection/createDataChannel\"><code>RTCPeerConnection.createDataChannel()</code></a>, or from the remote peer for incoming data channels."
     },
     "rtcdatachannel.protocol": {
       "url": "$MDN_URL$/web/api/rtcdatachannel/protocol",
@@ -7738,6 +7779,18 @@
       },
       "returns": "A new <a href=\"$MDN_URL$/Web/API/RTCPeerConnectionIceEvent\"><code>RTCPeerConnectionIceEvent</code></a> object, configured as specified in the provided options."
     },
+    "rtcpeerconnectioniceevent.url": {
+      "url": "$MDN_URL$/web/api/rtcpeerconnectioniceevent/url",
+      "status": [
+        "StandardTrack",
+        "Deprecated"
+      ],
+      "compatibility": {
+        "Safari": "12",
+        "SafariIOS": "12"
+      },
+      "doc": "<div class=\"notecard deprecated\"><p><strong>Deprecated:</strong> This feature is no longer recommended. Though some browsers might still support it, it may have already been removed from the relevant web standards, may be in the process of being dropped, or may only be kept for compatibility purposes. Avoid using it, and update existing code if possible; see the <a href=\"#browser_compatibility\">compatibility table</a> at the bottom of this page to guide your decision. Be aware that this feature may cease to work at any time.</div>\n<p>The read-only <strong><code>url</code></strong> property of the <a href=\"$MDN_URL$/Web/API/RTCPeerConnectionIceEvent\"><code>RTCPeerConnectionIceEvent</code></a> interface returns the URL of the <a href=\"$MDN_URL$/Glossary/STUN\">STUN</a> or <a href=\"$MDN_URL$/Glossary/TURN\">TURN</a> server used to gather the ICE candidate that caused the event. If the candidate was not gathered from a <a href=\"$MDN_URL$/Glossary/STUN\">STUN</a> or <a href=\"$MDN_URL$/Glossary/TURN\">TURN</a> server, the value is <code>null</code>.\n<div class=\"notecard note\">\n<p><strong>Note:</strong>\nThis property is considered deprecated by the specification in favor of the <code>url</code> property on the <a href=\"$MDN_URL$/Web/API/RTCIceCandidate\"><code>RTCIceCandidate</code></a> interface itself.\n</div>"
+    },
     "rtcpeerconnectionstats": {
       "url": "$MDN_URL$/web/api/rtcpeerconnectionstats",
       "baseline": {
@@ -8514,7 +8567,7 @@
         "highDate": "2022-07-15"
       },
       "doc": "The <strong><code>getParameters()</code></strong> method of the <a href=\"$MDN_URL$/Web/API/RTCRtpSender\"><code>RTCRtpSender</code></a> interface returns an object describing the current configuration for how the sender's <a href=\"$MDN_URL$/Web/API/RTCRtpSender/track\" ><code>track</code></a> will be encoded and transmitted to a remote <a href=\"$MDN_URL$/Web/API/RTCRtpReceiver\"><code>RTCRtpReceiver</code></a>.",
-      "returns": "An object indicating the current configuration of the sender. <!-- RTCRtpSendParameters, derived from RTCRtpParameters -->\n<!--  spec defines following in RTCRtpSendParameters  -->\n<dl>\n<dt id=\"encodings\"><a href=\"#encodings\"><code>encodings</code></a></dt>\n<dd>\n<p>An array of objects, each specifying the parameters and settings for a single codec that could be used to encode the track's media.\nThe properties of the objects include:\n<dl>\n<dt id=\"active\"><a href=\"#active\"><code>active</code></a></dt>\n<dd>\n<p><code>true</code> (the default) if the encoding is being sent, <code>false</code> if it is not being sent or used.\n</dd>\n<dt id=\"codec\"><a href=\"#codec\"><code>codec</code> <span class=\"badge inline optional\">Optional</span></a></dt>\n<dd>\n<p>Selects the <a href=\"$MDN_URL$/Web/Media/Guides/Formats/WebRTC_codecs\">media codec</a> that is used for this encoding's RTP stream.\nIf not set, the user agent may select any codec negotiated for sending.\n<!-- RTCRtpCodec -->\n<dl>\n<dt id=\"channels\"><a href=\"#channels\"><code>channels</code> <span class=\"badge inline optional\">Optional</span></a></dt>\n<dd>\n<p>A positive integer indicating the number of channels supported by the codec.\nFor example, for audio codecs a value of 1 specifies monaural sound, while 2 indicates stereo.\n</dd>\n<dt id=\"clockrate\"><a href=\"#clockrate\"><code>clockRate</code></a></dt>\n<dd>\n<p>A positive integer specifying the codec's clock rate in Hertz (Hz).\nThe clock rate is the rate at which the codec's RTP timestamp advances.\nMost codecs have specific values or ranges of values they permit.\nThe IANA maintains a <a href=\"https://www.iana.org/assignments/rtp-parameters/rtp-parameters.xhtml#rtp-parameters-1\" class=\"external\" target=\"_blank\">list of codecs and their parameters</a>, including their clock rates.\n</dd>\n<dt id=\"mimetype\"><a href=\"#mimetype\"><code>mimeType</code></a></dt>\n<dd>\n<p>A string indicating the codec's MIME media type and subtype, specified as a string of the form <code>\"type/subtype\"</code>.\nThe MIME type strings used by RTP differ from those used elsewhere.\nIANA maintains a <a href=\"https://www.iana.org/assignments/rtp-parameters/rtp-parameters.xhtml#rtp-parameters-2\" class=\"external\" target=\"_blank\">registry of valid MIME types</a>.\nAlso see <a href=\"$MDN_URL$/Web/Media/Guides/Formats/WebRTC_codecs\">Codecs used by WebRTC</a> for details about potential codecs that might be referenced here.\n</dd>\n<dt id=\"sdpfmtpline\"><a href=\"#sdpfmtpline\"><code>sdpFmtpLine</code> <span class=\"badge inline optional\">Optional</span></a></dt>\n<dd>\n<p>A string giving the format specific parameters provided by the local description.\n</dd>\n</dl>\n</dd>\n<dt id=\"dtx\"><a href=\"#dtx\"><code>dtx</code> <abbr class=\"icon icon-deprecated\" title=\"Deprecated. Not for use in new websites.\">\n<span class=\"visually-hidden\">Deprecated</span>\n</abbr> <abbr class=\"icon icon-nonstandard\" title=\"Non-standard. Check cross-browser support before using.\">\n<span class=\"visually-hidden\">Non-standard</span>\n</abbr></a></dt>\n<dd>\n<p>Only used for an <a href=\"$MDN_URL$/Web/API/RTCRtpSender\"><code>RTCRtpSender</code></a> whose <a href=\"$MDN_URL$/Web/API/MediaStreamTrack/kind\" title=\"kind\"><code>kind</code></a> is <code>audio</code>, this property indicates whether or not discontinuous transmission is being used (a feature by which a phone is turned off or the microphone muted automatically in the absence of voice activity).\nThe value is taken either <code>enabled</code> or <code>disabled</code>.\n</dd>\n<dt id=\"maxbitrate\"><a href=\"#maxbitrate\"><code>maxBitrate</code></a></dt>\n<dd>\n<p>A positive integer indicating the maximum number of bits per second that the user agent is allowed to grant to tracks encoded with this encoding.\nOther parameters may further constrain the bit rate, such as the value of <code>maxFramerate</code>, or the bandwidth available for the transport or physical network.\n<p>The value is computed using the standard Transport Independent Application Specific Maximum (TIAS) bandwidth as defined by <a href=\"https://datatracker.ietf.org/doc/html/rfc3890#section-6.2.2\" class=\"external\" target=\"_blank\">RFC 3890, section 6.2.2</a>; this is the maximum bandwidth needed without considering protocol overheads from IP, TCP or UDP, and so forth.\n<p>Note that the bitrate can be achieved in a number of ways, depending on the media and encoding.\nFor example, for video a low bit rate might be achieved by dropping frames (a bitrate of zero might allow just one frame to be sent), while for audio the track might have to stop playing if the bitrate is too low for it to be sent.\n</dd>\n<dt id=\"maxframerate\"><a href=\"#maxframerate\"><code>maxFramerate</code></a></dt>\n<dd>\n<p>A value specifying the maximum number of frames per second to allow for this encoding.\n</dd>\n<dt id=\"priority\"><a href=\"#priority\"><code>priority</code></a></dt>\n<dd>\n<p>A string indicating the priority of the <a href=\"$MDN_URL$/Web/API/RTCRtpSender\"><code>RTCRtpSender</code></a>, which may determine how the user agent allocates bandwidth between senders.\nAllowed values are <code>very-low</code>, <code>low</code> (default), <code>medium</code>, <code>high</code>.\n</dd>\n<dt id=\"rid\"><a href=\"#rid\"><code>rid</code></a></dt>\n<dd>\n<p>A string which, if set, specifies an <em>RTP stream ID</em> (<em>RID</em>) to be sent using the RID header extension.\nThis parameter cannot be modified using <a href=\"$MDN_URL$/Web/API/RTCRtpSender/setParameters\" title=\"setParameters()\"><code>setParameters()</code></a>.\nIts value can only be set when the transceiver is first created.\n</dd>\n<dt id=\"scaleresolutiondownby\"><a href=\"#scaleresolutiondownby\"><code>scaleResolutionDownBy</code></a></dt>\n<dd>\n<p>Only used for senders whose track's <a href=\"$MDN_URL$/Web/API/MediaStreamTrack/kind\" title=\"kind\"><code>kind</code></a> is <code>video</code>, this is a floating-point value specifying a factor by which to scale down the video during encoding.\nThe default value, 1.0, means that the video will be encoded at its original size.\nA value of 2.0 scales the video frames down by a factor of 2 in each dimension, resulting in a video 1/4 the size of the original.\nThe value must not be less than 1.0 (attempting to scale the video to a larger size will throw a <a href=\"$MDN_URL$/Web/JavaScript/Reference/Global_Objects/RangeError\"><code>RangeError</code></a>).\n</dd>\n</dl>\n</dd>\n<dt id=\"transactionid\"><a href=\"#transactionid\"><code>transactionId</code></a></dt>\n<dd>\n<p>A string containing a unique ID.\nThis value is used to ensure that <a href=\"$MDN_URL$/Web/API/RTCRtpSender/setParameters\" title=\"setParameters()\"><code>setParameters()</code></a> can only be called to modify the parameters returned by a specific previous call to <code>getParameters()</code>.\nThis parameter cannot be changed by the caller.\n<!-- spec defines following in RTCRtpParameters -->\n</dd>\n<dt id=\"codecs\"><a href=\"#codecs\"><code>codecs</code></a></dt>\n<dd>\n<p>An array of objects describing the <a href=\"$MDN_URL$/Web/Media/Guides/Formats/WebRTC_codecs\">media codecs</a> that the sender has set as enabled, and is prepared to use.\nThis parameter cannot be changed once initially set.\n<p>Each codec object in the array may have the following properties: <!-- RTCRtpCodecParameters -->\n<dl>\n<dt id=\"channels_2\"><a href=\"#channels_2\"><code>channels</code> <span class=\"badge inline optional\">Optional</span></a></dt>\n<dd>\n<p>A positive integer indicating the number of channels supported by the codec.\nFor example, for audio codecs a value of 1 specifies monaural sound, while 2 indicates stereo.\n</dd>\n<dt id=\"clockrate_2\"><a href=\"#clockrate_2\"><code>clockRate</code></a></dt>\n<dd>\n<p>A positive integer specifying the codec's clock rate in Hertz (Hz).\nThe clock rate is the rate at which the codec's RTP timestamp advances.\nMost codecs have specific values or ranges of values they permit.\nThe IANA maintains a <a href=\"https://www.iana.org/assignments/rtp-parameters/rtp-parameters.xhtml#rtp-parameters-1\" class=\"external\" target=\"_blank\">list of codecs and their parameters</a>, including their clock rates.\n</dd>\n<dt id=\"mimetype_2\"><a href=\"#mimetype_2\"><code>mimeType</code></a></dt>\n<dd>\n<p>A string indicating the codec's MIME media type and subtype, specified as a string of the form <code>\"type/subtype\"</code>.\nThe MIME type strings used by RTP differ from those used elsewhere.\nIANA maintains a <a href=\"https://www.iana.org/assignments/rtp-parameters/rtp-parameters.xhtml#rtp-parameters-2\" class=\"external\" target=\"_blank\">registry of valid MIME types</a>.\nAlso see <a href=\"$MDN_URL$/Web/Media/Guides/Formats/WebRTC_codecs\">Codecs used by WebRTC</a> for details about potential codecs that might be referenced here.\n</dd>\n<dt id=\"payloadtype\"><a href=\"#payloadtype\"><code>payloadType</code></a></dt>\n<dd>\n<p>The <a href=\"https://www.iana.org/assignments/rtp-parameters/rtp-parameters.xhtml#rtp-parameters-1\" class=\"external\" target=\"_blank\">RTP payload type</a> used to identify this codec.\n</dd>\n<dt id=\"sdpfmtpline_2\"><a href=\"#sdpfmtpline_2\"><code>sdpFmtpLine</code> <span class=\"badge inline optional\">Optional</span></a></dt>\n<dd>\n<p>A string giving the format specific parameters provided by the local description.\n</dd>\n</dl>\n</dd>\n<dt id=\"headerextensions\"><a href=\"#headerextensions\"><code>headerExtensions</code></a></dt>\n<dd>\n<p>An array of zero or more RTP header extensions, each identifying an extension supported by the sender or receiver. Header extensions are described in <a href=\"https://datatracker.ietf.org/doc/html/rfc3550#section-5.3.1\" class=\"external\" target=\"_blank\">RFC 3550, section 5.3.1</a>.\nThis parameter cannot be changed once initially set.\n</dd>\n<dt id=\"rtcp\"><a href=\"#rtcp\"><code>rtcp</code></a></dt>\n<dd>\n<p>An object providing the configuration parameters used for <a href=\"$MDN_URL$/Glossary/RTCP\">RTCP</a> on the sender.\nThis parameter cannot be changed.\n<p>The object may have the following properties: <!-- RTCRtcpParameters -->\n<dl>\n<dt id=\"cname\"><a href=\"#cname\"><code>cname</code></a></dt>\n<dd>\n<p>A read-only string giving the canonical name (CNAME) used by RTCP (e.g., in SDES messages).\n</dd>\n<dt id=\"reducedsize\"><a href=\"#reducedsize\"><code>reducedSize</code></a></dt>\n<dd>\n<p>A read-only boolean that is <code>True</code> if reduced size RTCP is configured (<a href=\"https://datatracker.ietf.org/doc/html/rfc5506\" class=\"external\" target=\"_blank\">RFC 5506</a>), and <code>False</code> if compound RTCP is specified (<a href=\"https://datatracker.ietf.org/doc/html/rfc3550\" class=\"external\" target=\"_blank\">RFC 3550</a>).\n</dd>\n</dl>\n</dd>\n<dt id=\"degradationpreference\"><a href=\"#degradationpreference\"><code>degradationPreference</code> <abbr class=\"icon icon-deprecated\" title=\"Deprecated. Not for use in new websites.\">\n<span class=\"visually-hidden\">Deprecated</span>\n</abbr> <span class=\"badge inline optional\">Optional</span> <!-- removed from spec. May have been or be in chrome --></a></dt>\n<dd>\n<p>Specifies the preferred way the WebRTC layer should handle optimizing bandwidth against quality in constrained-bandwidth situations.\nThe possible values are <code>maintain-framerate</code>, <code>maintain-resolution</code>, or <code>balanced</code>.\nThe default value is <code>balanced</code>.\n</dd>\n</dl>"
+      "returns": "An object indicating the current configuration of the sender. <!-- RTCRtpSendParameters, derived from RTCRtpParameters -->\n<!--  spec defines following in RTCRtpSendParameters  -->\n<dl>\n<dt id=\"encodings\"><a href=\"#encodings\"><code>encodings</code></a></dt>\n<dd>\n<p>An array of objects, each specifying the parameters and settings for a single codec that could be used to encode the track's media.\nThe properties of the objects include:\n<dl>\n<dt id=\"active\"><a href=\"#active\"><code>active</code></a></dt>\n<dd>\n<p><code>true</code> (the default) if the encoding is being sent, <code>false</code> if it is not being sent or used.\n</dd>\n<dt id=\"codec\"><a href=\"#codec\"><code>codec</code> <span class=\"badge inline optional\">Optional</span></a></dt>\n<dd>\n<p>Selects the <a href=\"$MDN_URL$/Web/Media/Guides/Formats/WebRTC_codecs\">media codec</a> that is used for this encoding's RTP stream.\nIf not set, the user agent may select any codec negotiated for sending.\n<!-- RTCRtpCodec -->\n<dl>\n<dt id=\"channels\"><a href=\"#channels\"><code>channels</code> <span class=\"badge inline optional\">Optional</span></a></dt>\n<dd>\n<p>A positive integer indicating the number of channels supported by the codec.\nFor example, for audio codecs a value of 1 specifies monaural sound, while 2 indicates stereo.\n</dd>\n<dt id=\"clockrate\"><a href=\"#clockrate\"><code>clockRate</code></a></dt>\n<dd>\n<p>A positive integer specifying the codec's clock rate in Hertz (Hz).\nThe clock rate is the rate at which the codec's RTP timestamp advances.\nMost codecs have specific values or ranges of values they permit.\nThe IANA maintains a <a href=\"https://www.iana.org/assignments/rtp-parameters/rtp-parameters.xhtml#rtp-parameters-1\" class=\"external\" target=\"_blank\">list of codecs and their parameters</a>, including their clock rates.\n</dd>\n<dt id=\"mimetype\"><a href=\"#mimetype\"><code>mimeType</code></a></dt>\n<dd>\n<p>A string indicating the codec's MIME media type and subtype, specified as a string of the form <code>\"type/subtype\"</code>.\nThe MIME type strings used by RTP differ from those used elsewhere.\nIANA maintains a <a href=\"https://www.iana.org/assignments/rtp-parameters/rtp-parameters.xhtml#rtp-parameters-2\" class=\"external\" target=\"_blank\">registry of valid MIME types</a>.\nAlso see <a href=\"$MDN_URL$/Web/Media/Guides/Formats/WebRTC_codecs\">Codecs used by WebRTC</a> for details about potential codecs that might be referenced here.\n</dd>\n<dt id=\"sdpfmtpline\"><a href=\"#sdpfmtpline\"><code>sdpFmtpLine</code> <span class=\"badge inline optional\">Optional</span></a></dt>\n<dd>\n<p>A string giving the format specific parameters provided by the local description.\n</dd>\n</dl>\n</dd>\n<dt id=\"dtx\"><a href=\"#dtx\"><code>dtx</code> <abbr class=\"icon icon-deprecated\" title=\"Deprecated. Not for use in new websites.\">\n<span class=\"visually-hidden\">Deprecated</span>\n</abbr> <abbr class=\"icon icon-nonstandard\" title=\"Non-standard. Check cross-browser support before using.\">\n<span class=\"visually-hidden\">Non-standard</span>\n</abbr></a></dt>\n<dd>\n<p>Only used for an <a href=\"$MDN_URL$/Web/API/RTCRtpSender\"><code>RTCRtpSender</code></a> whose <a href=\"$MDN_URL$/Web/API/MediaStreamTrack/kind\" title=\"kind\"><code>kind</code></a> is <code>audio</code>, this property indicates whether or not discontinuous transmission is being used (a feature by which a phone is turned off or the microphone muted automatically in the absence of voice activity).\nThe value is taken either <code>enabled</code> or <code>disabled</code>.\n</dd>\n<dt id=\"maxbitrate\"><a href=\"#maxbitrate\"><code>maxBitrate</code></a></dt>\n<dd>\n<p>A positive integer indicating the maximum number of bits per second that the user agent is allowed to grant to tracks encoded with this encoding.\nOther parameters may further constrain the bit rate, such as the value of <code>maxFramerate</code>, or the bandwidth available for the transport or physical network.\n<p>The value is computed using the standard Transport Independent Application Specific Maximum (TIAS) bandwidth as defined by <a href=\"https://datatracker.ietf.org/doc/html/rfc3890#section-6.2.2\" class=\"external\" target=\"_blank\">RFC 3890, section 6.2.2</a>; this is the maximum bandwidth needed without considering protocol overheads from IP, TCP or UDP, and so forth.\n<p>Note that the bitrate can be achieved in a number of ways, depending on the media and encoding.\nFor example, for video a low bit rate might be achieved by dropping frames (a bitrate of zero might allow just one frame to be sent), while for audio the track might have to stop playing if the bitrate is too low for it to be sent.\n</dd>\n<dt id=\"maxframerate\"><a href=\"#maxframerate\"><code>maxFramerate</code></a></dt>\n<dd>\n<p>A value specifying the maximum number of frames per second to allow for this encoding.\n</dd>\n<dt id=\"priority\"><a href=\"#priority\"><code>priority</code></a></dt>\n<dd>\n<p>A string indicating the priority of the <a href=\"$MDN_URL$/Web/API/RTCRtpSender\"><code>RTCRtpSender</code></a>, which may determine how the user agent allocates bandwidth between senders.\nAllowed values are <code>very-low</code>, <code>low</code> (default), <code>medium</code>, <code>high</code>.\n</dd>\n<dt id=\"rid\"><a href=\"#rid\"><code>rid</code></a></dt>\n<dd>\n<p>A string which, if set, specifies an <em>RTP stream ID</em> (<em>RID</em>) to be sent using the RID header extension.\nThis parameter cannot be modified using <a href=\"$MDN_URL$/Web/API/RTCRtpSender/setParameters\" title=\"setParameters()\"><code>setParameters()</code></a>.\nIts value can only be set when the transceiver is first created.\n</dd>\n<dt id=\"scaleresolutiondownby\"><a href=\"#scaleresolutiondownby\"><code>scaleResolutionDownBy</code></a></dt>\n<dd>\n<p>Only used for senders whose track's <a href=\"$MDN_URL$/Web/API/MediaStreamTrack/kind\" title=\"kind\"><code>kind</code></a> is <code>video</code>, this is a floating-point value specifying a factor by which to scale down the video during encoding.\nThe default value, 1.0, means that the video will be encoded at its original size.\nA value of 2.0 scales the video frames down by a factor of 2 in each dimension, resulting in a video 1/4 the size of the original.\nThe value must not be less than 1.0 (attempting to scale the video to a larger size will throw a <a href=\"$MDN_URL$/Web/JavaScript/Reference/Global_Objects/RangeError\"><code>RangeError</code></a>).\n</dd>\n</dl>\n</dd>\n<dt id=\"transactionid\"><a href=\"#transactionid\"><code>transactionId</code></a></dt>\n<dd>\n<p>A string containing a unique ID.\nThis value is used to ensure that <a href=\"$MDN_URL$/Web/API/RTCRtpSender/setParameters\" title=\"setParameters()\"><code>setParameters()</code></a> can only be called to modify the parameters returned by a specific previous call to <code>getParameters()</code>.\nThis parameter cannot be changed by the caller.\n<!-- spec defines following in RTCRtpParameters -->\n</dd>\n<dt id=\"codecs\"><a href=\"#codecs\"><code>codecs</code></a></dt>\n<dd>\n<p>An array of objects describing the <a href=\"$MDN_URL$/Web/Media/Guides/Formats/WebRTC_codecs\">media codecs</a> that the sender has set as enabled, and is prepared to use.\nThis parameter cannot be changed once initially set.\n<p>Each codec object in the array may have the following properties: <!-- RTCRtpCodecParameters -->\n<dl>\n<dt id=\"channels_2\"><a href=\"#channels_2\"><code>channels</code> <span class=\"badge inline optional\">Optional</span></a></dt>\n<dd>\n<p>A positive integer indicating the number of channels supported by the codec.\nFor example, for audio codecs a value of 1 specifies monaural sound, while 2 indicates stereo.\n</dd>\n<dt id=\"clockrate_2\"><a href=\"#clockrate_2\"><code>clockRate</code></a></dt>\n<dd>\n<p>A positive integer specifying the codec's clock rate in Hertz (Hz).\nThe clock rate is the rate at which the codec's RTP timestamp advances.\nMost codecs have specific values or ranges of values they permit.\nThe IANA maintains a <a href=\"https://www.iana.org/assignments/rtp-parameters/rtp-parameters.xhtml#rtp-parameters-1\" class=\"external\" target=\"_blank\">list of codecs and their parameters</a>, including their clock rates.\n</dd>\n<dt id=\"mimetype_2\"><a href=\"#mimetype_2\"><code>mimeType</code></a></dt>\n<dd>\n<p>A string indicating the codec's MIME media type and subtype, specified as a string of the form <code>\"type/subtype\"</code>.\nThe MIME type strings used by RTP differ from those used elsewhere.\nIANA maintains a <a href=\"https://www.iana.org/assignments/rtp-parameters/rtp-parameters.xhtml#rtp-parameters-2\" class=\"external\" target=\"_blank\">registry of valid MIME types</a>.\nAlso see <a href=\"$MDN_URL$/Web/Media/Guides/Formats/WebRTC_codecs\">Codecs used by WebRTC</a> for details about potential codecs that might be referenced here.\n</dd>\n<dt id=\"payloadtype\"><a href=\"#payloadtype\"><code>payloadType</code></a></dt>\n<dd>\n<p>The <a href=\"https://www.iana.org/assignments/rtp-parameters/rtp-parameters.xhtml#rtp-parameters-1\" class=\"external\" target=\"_blank\">RTP payload type</a> used to identify this codec.\n</dd>\n<dt id=\"sdpfmtpline_2\"><a href=\"#sdpfmtpline_2\"><code>sdpFmtpLine</code> <span class=\"badge inline optional\">Optional</span></a></dt>\n<dd>\n<p>A string giving the format specific parameters provided by the local description.\n</dd>\n</dl>\n</dd>\n<dt id=\"headerextensions\"><a href=\"#headerextensions\"><code>headerExtensions</code></a></dt>\n<dd>\n<p>An array of zero or more RTP header extensions, each identifying an extension supported by the sender or receiver. Header extensions are described in <a href=\"https://datatracker.ietf.org/doc/html/rfc3550#section-5.3.1\" class=\"external\" target=\"_blank\">RFC 3550, section 5.3.1</a>.\nThis parameter cannot be changed once initially set.\n</dd>\n<dt id=\"rtcp\"><a href=\"#rtcp\"><code>rtcp</code></a></dt>\n<dd>\n<p>An object providing the configuration parameters used for <a href=\"$MDN_URL$/Glossary/RTCP\">RTCP</a> on the sender.\nThis parameter cannot be changed.\n<p>The object may have the following properties: <!-- RTCRtcpParameters -->\n<dl>\n<dt id=\"cname\"><a href=\"#cname\"><code>cname</code></a></dt>\n<dd>\n<p>A read-only string giving the canonical name (CNAME) used by RTCP (e.g., in SDES messages).\n</dd>\n<dt id=\"reducedsize\"><a href=\"#reducedsize\"><code>reducedSize</code></a></dt>\n<dd>\n<p>A read-only boolean that is <code>True</code> if reduced size RTCP is configured (<a href=\"https://datatracker.ietf.org/doc/html/rfc5506\" class=\"external\" target=\"_blank\">RFC 5506</a>), and <code>False</code> if compound RTCP is specified (<a href=\"https://datatracker.ietf.org/doc/html/rfc3550\" class=\"external\" target=\"_blank\">RFC 3550</a>).\n</dd>\n</dl>\n</dd>\n<dt id=\"degradationpreference\"><a href=\"#degradationpreference\"><code>degradationPreference</code></a></dt>\n<dd>\n<p>Specifies the preferred way in which the WebRTC layer should handle optimizing performance in constrained-bandwidth situations. The possible values are:\n<dl>\n<dt id=\"balanced\"><a href=\"#balanced\"><code>balanced</code></a></dt>\n<dd>\n<p>The default value. The browser will balance degradation of framerate and resolution.\n</dd>\n<dt id=\"maintain-framerate\"><a href=\"#maintain-framerate\"><code>maintain-framerate</code></a></dt>\n<dd>\n<p>The browser will degrade resolution to maintain framerate.\n</dd>\n<dt id=\"maintain-resolution\"><a href=\"#maintain-resolution\"><code>maintain-resolution</code></a></dt>\n<dd>\n<p>The browser will degrade framerate to maintain resolution.\n</dd>\n<dt id=\"maintain-framerate-and-resolution\"><a href=\"#maintain-framerate-and-resolution\"><code>maintain-framerate-and-resolution</code></a></dt>\n<dd>\n<p>The browser will maintain framerate and resolution regardless of video quality, which may cause frames to be dropped before encoding if necessary so as not to overuse network and encoder resources. This setting is useful for applications that implement their own video encoding quality and performance optimization mechanism, and don't want the browser's own internal mechanism to interfere with it.\n</dd>\n</dl>\n</dd>\n</dl>"
     },
     "rtcrtpsender.getstats": {
       "url": "$MDN_URL$/web/api/rtcrtpsender/getstats",
@@ -8592,7 +8645,7 @@
       },
       "doc": "The <strong><code>setParameters()</code></strong> method of the <a href=\"$MDN_URL$/Web/API/RTCRtpSender\"><code>RTCRtpSender</code></a> interface applies changes the configuration of sender's <a href=\"$MDN_URL$/Web/API/RTCRtpSender/track\" ><code>track</code></a>, which is the <a href=\"$MDN_URL$/Web/API/MediaStreamTrack\"><code>MediaStreamTrack</code></a> for which the <code>RTCRtpSender</code> is responsible.\n<p>In other words, <code>setParameters()</code> updates the configuration of the <a href=\"$MDN_URL$/Glossary/RTP\">RTP</a> transmission as well as the encoding configuration for a specific outgoing media track on the <a href=\"$MDN_URL$/Web/API/WebRTC_API\">WebRTC</a> connection.",
       "parameters": {
-        "parameters": "A parameters object previously obtained by calling the same sender's <a href=\"$MDN_URL$/Web/API/RTCRtpSender/getParameters\" ><code>getParameters()</code></a> method, with the desired changes to the sender's configuration parameters.\nThese parameters include potential codecs that could be use for encoding the sender's <a href=\"$MDN_URL$/Web/API/RTCRtpSender/track\" ><code>track</code></a>.\nThe available parameters are:\n<dl>\n<dt id=\"encodings\"><a href=\"#encodings\"><code>encodings</code></a></dt>\n<dd>\n<p>An array of objects, each specifying the parameters for a single codec that could be used to encode the track's media.\nThe properties of the objects include:\n<dl>\n<dt id=\"active\"><a href=\"#active\"><code>active</code></a></dt>\n<dd>\n<p>Setting this value <code>true</code> (the default) causes this encoding to be sent, while <code>false</code> stops it from being sent and used (but does not cause the SSRC to be removed).\n</dd>\n<dt id=\"codec\"><a href=\"#codec\"><code>codec</code> <span class=\"badge inline optional\">Optional</span></a></dt>\n<dd>\n<p>Selects the <a href=\"$MDN_URL$/Web/Media/Guides/Formats/WebRTC_codecs\">media codec</a> that is used for this encoding's RTP stream.\nIf not set, the user agent may select any codec negotiated for sending.\n<dl>\n<dt id=\"channels\"><a href=\"#channels\"><code>channels</code> <span class=\"badge inline optional\">Optional</span></a></dt>\n<dd>\n<p>A positive integer indicating the number of channels supported by the codec.\nFor example, for audio codecs a value of 1 specifies monaural sound, while 2 indicates stereo.\n</dd>\n<dt id=\"clockrate\"><a href=\"#clockrate\"><code>clockRate</code></a></dt>\n<dd>\n<p>A positive integer specifying the codec's clock rate in Hertz (Hz).\nThe clock rate is the rate at which the codec's RTP timestamp advances.\nMost codecs have specific values or ranges of values they permit.\nThe IANA maintains a <a href=\"https://www.iana.org/assignments/rtp-parameters/rtp-parameters.xhtml#rtp-parameters-1\" class=\"external\" target=\"_blank\">list of codecs and their parameters</a>, including their clock rates.\n</dd>\n<dt id=\"mimetype\"><a href=\"#mimetype\"><code>mimeType</code></a></dt>\n<dd>\n<p>A string indicating the codec's MIME media type and subtype, specified as a string of the form <code>\"type/subtype\"</code>.\nThe MIME type strings used by RTP differ from those used elsewhere.\nIANA maintains a <a href=\"https://www.iana.org/assignments/rtp-parameters/rtp-parameters.xhtml#rtp-parameters-2\" class=\"external\" target=\"_blank\">registry of valid MIME types</a>.\nAlso see <a href=\"$MDN_URL$/Web/Media/Guides/Formats/WebRTC_codecs\">Codecs used by WebRTC</a> for details about potential codecs that might be referenced here.\n</dd>\n<dt id=\"sdpfmtpline\"><a href=\"#sdpfmtpline\"><code>sdpFmtpLine</code> <span class=\"badge inline optional\">Optional</span></a></dt>\n<dd>\n<p>A string giving the format specific parameters provided by the local description.\n</dd>\n</dl>\n</dd>\n<dt id=\"dtx\"><a href=\"#dtx\"><code>dtx</code>  </a></dt>\n<dd>\n<p>Only used for an <a href=\"$MDN_URL$/Web/API/RTCRtpSender\"><code>RTCRtpSender</code></a> whose <a href=\"$MDN_URL$/Web/API/MediaStreamTrack/kind\" ><code>kind</code></a> is <code>audio</code>, this property indicates whether or not to use discontinuous transmission (a feature by which a phone is turned off or the microphone muted automatically in the absence of voice activity).\nThe value is taken either <code>enabled</code> or <code>disabled</code>.\n</dd>\n<dt id=\"maxbitrate\"><a href=\"#maxbitrate\"><code>maxBitrate</code></a></dt>\n<dd>\n<p>A positive integer indicating the maximum number of bits per second that the user agent is allowed to grant to tracks encoded with this encoding.\nOther parameters may further constrain the bit rate, such as the value of <code>maxFramerate</code>, or the bandwidth available for the transport or physical network.\n<p>The value is computed using the standard Transport Independent Application Specific Maximum (TIAS) bandwidth as defined by <a href=\"https://datatracker.ietf.org/doc/html/rfc3890#section-6.2.2\" class=\"external\" target=\"_blank\">RFC 3890, section 6.2.2</a>; this is the maximum bandwidth needed without considering protocol overheads from IP, TCP or UDP, and so forth.\n<p>Note that the bitrate can be achieved in a number of ways, depending on the media and encoding.\nFor example, for video a low bit rate might be achieved by dropping frames (a bitrate of zero might allow just one frame to be sent), while for audio the track might have to stop playing if the bitrate is too low for it to be sent.\n</dd>\n<dt id=\"maxframerate\"><a href=\"#maxframerate\"><code>maxFramerate</code></a></dt>\n<dd>\n<p>A value specifying the maximum number of frames per second to allow for this encoding.\n</dd>\n<dt id=\"priority\"><a href=\"#priority\"><code>priority</code></a></dt>\n<dd>\n<p>A string indicating the priority of the <a href=\"$MDN_URL$/Web/API/RTCRtpSender\"><code>RTCRtpSender</code></a>, which may determine how the user agent allocates bandwidth between senders.\nAllowed values are <code>very-low</code>, <code>low</code> (default), <code>medium</code>, <code>high</code>.\n</dd>\n<dt id=\"rid\"><a href=\"#rid\"><code>rid</code></a></dt>\n<dd>\n<p>A string which, if set, specifies an <em>RTP stream ID</em> (<em>RID</em>) to be sent using the RID header extension.\nThis parameter cannot be modified using <code>setParameters()</code>.\nIts value can only be set when the transceiver is first created.\n</dd>\n<dt id=\"scaleresolutiondownby\"><a href=\"#scaleresolutiondownby\"><code>scaleResolutionDownBy</code></a></dt>\n<dd>\n<p>Only used for senders whose track's <a href=\"$MDN_URL$/Web/API/MediaStreamTrack/kind\" ><code>kind</code></a> is <code>video</code>, this is a floating-point value specifying a factor by which to scale down the video during encoding.\nThe default value, 1.0, means that the video will be encoded at its original size.\nA value of 2.0 scales the video frames down by a factor of 2 in each dimension, resulting in a video 1/4 the size of the original.\nThe value must not be less than 1.0 (attempting to scale the video to a larger size will throw a <a href=\"$MDN_URL$/Web/JavaScript/Reference/Global_Objects/RangeError\"><code>RangeError</code></a>).\n</dd>\n</dl>\n</dd>\n<dt id=\"transactionid\"><a href=\"#transactionid\"><code>transactionId</code></a></dt>\n<dd>\n<p>A string containing a unique ID.\nThis ID is set in the previous <a href=\"$MDN_URL$/Web/API/RTCRtpSender/getParameters\" ><code>getParameters()</code></a> call, and ensures that the parameters originated from a previous call to <a href=\"$MDN_URL$/Web/API/RTCRtpSender/getParameters\" ><code>getParameters()</code></a>.\n</dd>\n<dt id=\"codecs\"><a href=\"#codecs\"><code>codecs</code></a></dt>\n<dd>\n<p>An array of objects describing the <a href=\"$MDN_URL$/Web/Media/Guides/Formats/WebRTC_codecs\">media codecs</a> from which the sender will choose.\nThis parameter cannot be changed once initially set.\n<p>Each codec object in the array may have the following properties:\n<dl>\n<dt id=\"channels_2\"><a href=\"#channels_2\"><code>channels</code> <span class=\"badge inline optional\">Optional</span></a></dt>\n<dd>\n<p>A positive integer indicating the number of channels supported by the codec.\nFor example, for audio codecs a value of 1 specifies monaural sound, while 2 indicates stereo.\n</dd>\n<dt id=\"clockrate_2\"><a href=\"#clockrate_2\"><code>clockRate</code></a></dt>\n<dd>\n<p>A positive integer specifying the codec's clock rate in Hertz (Hz).\nThe clock rate is the rate at which the codec's RTP timestamp advances.\nMost codecs have specific values or ranges of values they permit.\nThe IANA maintains a <a href=\"https://www.iana.org/assignments/rtp-parameters/rtp-parameters.xhtml#rtp-parameters-1\" class=\"external\" target=\"_blank\">list of codecs and their parameters</a>, including their clock rates.\n</dd>\n<dt id=\"mimetype_2\"><a href=\"#mimetype_2\"><code>mimeType</code></a></dt>\n<dd>\n<p>A string indicating the codec's MIME media type and subtype, specified as a string of the form <code>\"type/subtype\"</code>.\nThe MIME type strings used by RTP differ from those used elsewhere.\nIANA maintains a <a href=\"https://www.iana.org/assignments/rtp-parameters/rtp-parameters.xhtml#rtp-parameters-2\" class=\"external\" target=\"_blank\">registry of valid MIME types</a>.\nAlso see <a href=\"$MDN_URL$/Web/Media/Guides/Formats/WebRTC_codecs\">Codecs used by WebRTC</a> for details about potential codecs that might be referenced here.\n</dd>\n<dt id=\"payloadtype\"><a href=\"#payloadtype\"><code>payloadType</code></a></dt>\n<dd>\n<p>The <a href=\"https://www.iana.org/assignments/rtp-parameters/rtp-parameters.xhtml#rtp-parameters-1\" class=\"external\" target=\"_blank\">RTP payload type</a> used to identify this codec.\n</dd>\n<dt id=\"sdpfmtpline_2\"><a href=\"#sdpfmtpline_2\"><code>sdpFmtpLine</code> <span class=\"badge inline optional\">Optional</span></a></dt>\n<dd>\n<p>A string giving the format specific parameters provided by the local description.\n</dd>\n</dl>\n</dd>\n<dt id=\"headerextensions\"><a href=\"#headerextensions\"><code>headerExtensions</code></a></dt>\n<dd>\n<p>An array of zero or more RTP header extensions, each identifying an extension supported by the sender.\nHeader extensions are described in <a href=\"https://datatracker.ietf.org/doc/html/rfc3550#section-5.3.1\" class=\"external\" target=\"_blank\">RFC 3550, section 5.3.1</a>.\nThis parameter cannot be changed.\n</dd>\n<dt id=\"rtcp\"><a href=\"#rtcp\"><code>rtcp</code></a></dt>\n<dd>\n<p>An object providing the configuration parameters used for <a href=\"$MDN_URL$/Glossary/RTCP\">RTCP</a> on the sender.\nThis parameter cannot be changed.\n<p>The object may have the following properties:\n<dl>\n<dt id=\"cname\"><a href=\"#cname\"><code>cname</code></a></dt>\n<dd>\n<p>A read-only string giving the canonical name (CNAME) used by RTCP (e.g., in SDES messages).\n</dd>\n<dt id=\"reducedsize\"><a href=\"#reducedsize\"><code>reducedSize</code></a></dt>\n<dd>\n<p>A read-only boolean that is <code>True</code> if reduced size RTCP is configured (<a href=\"https://datatracker.ietf.org/doc/html/rfc5506\" class=\"external\" target=\"_blank\">RFC 5506</a>), and <code>False</code> if compound RTCP is specified (<a href=\"https://datatracker.ietf.org/doc/html/rfc3550\" class=\"external\" target=\"_blank\">RFC 3550</a>).\n</dd>\n</dl>\n</dd>\n<dt id=\"degradationpreference\"><a href=\"#degradationpreference\"><code>degradationPreference</code> </a></dt>\n<dd>\n<p>Specifies the preferred way the WebRTC layer should handle optimizing bandwidth against quality in constrained-bandwidth situations.\nThe possible values are <code>maintain-framerate</code>, <code>maintain-resolution</code>, or <code>balanced</code>.\nThe default value is <code>balanced</code>.\n</dd>\n</dl>"
+        "parameters": "A parameters object previously obtained by calling the same sender's <a href=\"$MDN_URL$/Web/API/RTCRtpSender/getParameters\" ><code>getParameters()</code></a> method, with the desired changes to the sender's configuration parameters.\nThese parameters include potential codecs that could be use for encoding the sender's <a href=\"$MDN_URL$/Web/API/RTCRtpSender/track\" ><code>track</code></a>.\nThe available parameters are:\n<dl>\n<dt id=\"encodings\"><a href=\"#encodings\"><code>encodings</code></a></dt>\n<dd>\n<p>An array of objects, each specifying the parameters for a single codec that could be used to encode the track's media.\nThe properties of the objects include:\n<dl>\n<dt id=\"active\"><a href=\"#active\"><code>active</code></a></dt>\n<dd>\n<p>Setting this value <code>true</code> (the default) causes this encoding to be sent, while <code>false</code> stops it from being sent and used (but does not cause the SSRC to be removed).\n</dd>\n<dt id=\"codec\"><a href=\"#codec\"><code>codec</code> <span class=\"badge inline optional\">Optional</span></a></dt>\n<dd>\n<p>Selects the <a href=\"$MDN_URL$/Web/Media/Guides/Formats/WebRTC_codecs\">media codec</a> that is used for this encoding's RTP stream.\nIf not set, the user agent may select any codec negotiated for sending.\n<dl>\n<dt id=\"channels\"><a href=\"#channels\"><code>channels</code> <span class=\"badge inline optional\">Optional</span></a></dt>\n<dd>\n<p>A positive integer indicating the number of channels supported by the codec.\nFor example, for audio codecs a value of 1 specifies monaural sound, while 2 indicates stereo.\n</dd>\n<dt id=\"clockrate\"><a href=\"#clockrate\"><code>clockRate</code></a></dt>\n<dd>\n<p>A positive integer specifying the codec's clock rate in Hertz (Hz).\nThe clock rate is the rate at which the codec's RTP timestamp advances.\nMost codecs have specific values or ranges of values they permit.\nThe IANA maintains a <a href=\"https://www.iana.org/assignments/rtp-parameters/rtp-parameters.xhtml#rtp-parameters-1\" class=\"external\" target=\"_blank\">list of codecs and their parameters</a>, including their clock rates.\n</dd>\n<dt id=\"mimetype\"><a href=\"#mimetype\"><code>mimeType</code></a></dt>\n<dd>\n<p>A string indicating the codec's MIME media type and subtype, specified as a string of the form <code>\"type/subtype\"</code>.\nThe MIME type strings used by RTP differ from those used elsewhere.\nIANA maintains a <a href=\"https://www.iana.org/assignments/rtp-parameters/rtp-parameters.xhtml#rtp-parameters-2\" class=\"external\" target=\"_blank\">registry of valid MIME types</a>.\nAlso see <a href=\"$MDN_URL$/Web/Media/Guides/Formats/WebRTC_codecs\">Codecs used by WebRTC</a> for details about potential codecs that might be referenced here.\n</dd>\n<dt id=\"sdpfmtpline\"><a href=\"#sdpfmtpline\"><code>sdpFmtpLine</code> <span class=\"badge inline optional\">Optional</span></a></dt>\n<dd>\n<p>A string giving the format specific parameters provided by the local description.\n</dd>\n</dl>\n</dd>\n<dt id=\"dtx\"><a href=\"#dtx\"><code>dtx</code>  </a></dt>\n<dd>\n<p>Only used for an <a href=\"$MDN_URL$/Web/API/RTCRtpSender\"><code>RTCRtpSender</code></a> whose <a href=\"$MDN_URL$/Web/API/MediaStreamTrack/kind\" ><code>kind</code></a> is <code>audio</code>, this property indicates whether or not to use discontinuous transmission (a feature by which a phone is turned off or the microphone muted automatically in the absence of voice activity).\nThe value is taken either <code>enabled</code> or <code>disabled</code>.\n</dd>\n<dt id=\"maxbitrate\"><a href=\"#maxbitrate\"><code>maxBitrate</code></a></dt>\n<dd>\n<p>A positive integer indicating the maximum number of bits per second that the user agent is allowed to grant to tracks encoded with this encoding.\nOther parameters may further constrain the bit rate, such as the value of <code>maxFramerate</code>, or the bandwidth available for the transport or physical network.\n<p>The value is computed using the standard Transport Independent Application Specific Maximum (TIAS) bandwidth as defined by <a href=\"https://datatracker.ietf.org/doc/html/rfc3890#section-6.2.2\" class=\"external\" target=\"_blank\">RFC 3890, section 6.2.2</a>; this is the maximum bandwidth needed without considering protocol overheads from IP, TCP or UDP, and so forth.\n<p>Note that the bitrate can be achieved in a number of ways, depending on the media and encoding.\nFor example, for video a low bit rate might be achieved by dropping frames (a bitrate of zero might allow just one frame to be sent), while for audio the track might have to stop playing if the bitrate is too low for it to be sent.\n</dd>\n<dt id=\"maxframerate\"><a href=\"#maxframerate\"><code>maxFramerate</code></a></dt>\n<dd>\n<p>A value specifying the maximum number of frames per second to allow for this encoding.\n</dd>\n<dt id=\"priority\"><a href=\"#priority\"><code>priority</code></a></dt>\n<dd>\n<p>A string indicating the priority of the <a href=\"$MDN_URL$/Web/API/RTCRtpSender\"><code>RTCRtpSender</code></a>, which may determine how the user agent allocates bandwidth between senders.\nAllowed values are <code>very-low</code>, <code>low</code> (default), <code>medium</code>, <code>high</code>.\n</dd>\n<dt id=\"rid\"><a href=\"#rid\"><code>rid</code></a></dt>\n<dd>\n<p>A string which, if set, specifies an <em>RTP stream ID</em> (<em>RID</em>) to be sent using the RID header extension.\nThis parameter cannot be modified using <code>setParameters()</code>.\nIts value can only be set when the transceiver is first created.\n</dd>\n<dt id=\"scaleresolutiondownby\"><a href=\"#scaleresolutiondownby\"><code>scaleResolutionDownBy</code></a></dt>\n<dd>\n<p>Only used for senders whose track's <a href=\"$MDN_URL$/Web/API/MediaStreamTrack/kind\" ><code>kind</code></a> is <code>video</code>, this is a floating-point value specifying a factor by which to scale down the video during encoding.\nThe default value, 1.0, means that the video will be encoded at its original size.\nA value of 2.0 scales the video frames down by a factor of 2 in each dimension, resulting in a video 1/4 the size of the original.\nThe value must not be less than 1.0 (attempting to scale the video to a larger size will throw a <a href=\"$MDN_URL$/Web/JavaScript/Reference/Global_Objects/RangeError\"><code>RangeError</code></a>).\n</dd>\n</dl>\n</dd>\n<dt id=\"transactionid\"><a href=\"#transactionid\"><code>transactionId</code></a></dt>\n<dd>\n<p>A string containing a unique ID.\nThis ID is set in the previous <a href=\"$MDN_URL$/Web/API/RTCRtpSender/getParameters\" ><code>getParameters()</code></a> call, and ensures that the parameters originated from a previous call to <a href=\"$MDN_URL$/Web/API/RTCRtpSender/getParameters\" ><code>getParameters()</code></a>.\n</dd>\n<dt id=\"codecs\"><a href=\"#codecs\"><code>codecs</code></a></dt>\n<dd>\n<p>An array of objects describing the <a href=\"$MDN_URL$/Web/Media/Guides/Formats/WebRTC_codecs\">media codecs</a> from which the sender will choose.\nThis parameter cannot be changed once initially set.\n<p>Each codec object in the array may have the following properties:\n<dl>\n<dt id=\"channels_2\"><a href=\"#channels_2\"><code>channels</code> <span class=\"badge inline optional\">Optional</span></a></dt>\n<dd>\n<p>A positive integer indicating the number of channels supported by the codec.\nFor example, for audio codecs a value of 1 specifies monaural sound, while 2 indicates stereo.\n</dd>\n<dt id=\"clockrate_2\"><a href=\"#clockrate_2\"><code>clockRate</code></a></dt>\n<dd>\n<p>A positive integer specifying the codec's clock rate in Hertz (Hz).\nThe clock rate is the rate at which the codec's RTP timestamp advances.\nMost codecs have specific values or ranges of values they permit.\nThe IANA maintains a <a href=\"https://www.iana.org/assignments/rtp-parameters/rtp-parameters.xhtml#rtp-parameters-1\" class=\"external\" target=\"_blank\">list of codecs and their parameters</a>, including their clock rates.\n</dd>\n<dt id=\"mimetype_2\"><a href=\"#mimetype_2\"><code>mimeType</code></a></dt>\n<dd>\n<p>A string indicating the codec's MIME media type and subtype, specified as a string of the form <code>\"type/subtype\"</code>.\nThe MIME type strings used by RTP differ from those used elsewhere.\nIANA maintains a <a href=\"https://www.iana.org/assignments/rtp-parameters/rtp-parameters.xhtml#rtp-parameters-2\" class=\"external\" target=\"_blank\">registry of valid MIME types</a>.\nAlso see <a href=\"$MDN_URL$/Web/Media/Guides/Formats/WebRTC_codecs\">Codecs used by WebRTC</a> for details about potential codecs that might be referenced here.\n</dd>\n<dt id=\"payloadtype\"><a href=\"#payloadtype\"><code>payloadType</code></a></dt>\n<dd>\n<p>The <a href=\"https://www.iana.org/assignments/rtp-parameters/rtp-parameters.xhtml#rtp-parameters-1\" class=\"external\" target=\"_blank\">RTP payload type</a> used to identify this codec.\n</dd>\n<dt id=\"sdpfmtpline_2\"><a href=\"#sdpfmtpline_2\"><code>sdpFmtpLine</code> <span class=\"badge inline optional\">Optional</span></a></dt>\n<dd>\n<p>A string giving the format specific parameters provided by the local description.\n</dd>\n</dl>\n</dd>\n<dt id=\"headerextensions\"><a href=\"#headerextensions\"><code>headerExtensions</code></a></dt>\n<dd>\n<p>An array of zero or more RTP header extensions, each identifying an extension supported by the sender.\nHeader extensions are described in <a href=\"https://datatracker.ietf.org/doc/html/rfc3550#section-5.3.1\" class=\"external\" target=\"_blank\">RFC 3550, section 5.3.1</a>.\nThis parameter cannot be changed.\n</dd>\n<dt id=\"rtcp\"><a href=\"#rtcp\"><code>rtcp</code></a></dt>\n<dd>\n<p>An object providing the configuration parameters used for <a href=\"$MDN_URL$/Glossary/RTCP\">RTCP</a> on the sender.\nThis parameter cannot be changed.\n<p>The object may have the following properties:\n<dl>\n<dt id=\"cname\"><a href=\"#cname\"><code>cname</code></a></dt>\n<dd>\n<p>A read-only string giving the canonical name (CNAME) used by RTCP (e.g., in SDES messages).\n</dd>\n<dt id=\"reducedsize\"><a href=\"#reducedsize\"><code>reducedSize</code></a></dt>\n<dd>\n<p>A read-only boolean that is <code>True</code> if reduced size RTCP is configured (<a href=\"https://datatracker.ietf.org/doc/html/rfc5506\" class=\"external\" target=\"_blank\">RFC 5506</a>), and <code>False</code> if compound RTCP is specified (<a href=\"https://datatracker.ietf.org/doc/html/rfc3550\" class=\"external\" target=\"_blank\">RFC 3550</a>).\n</dd>\n</dl>\n</dd>\n<dt id=\"degradationpreference\"><a href=\"#degradationpreference\"><code>degradationPreference</code> <span class=\"badge inline optional\">Optional</span></a></dt>\n<dd>\n<p>Specifies the preferred way in which the WebRTC layer should handle optimizing performance in constrained-bandwidth situations. The possible values are:\n<dl>\n<dt id=\"balanced\"><a href=\"#balanced\"><code>balanced</code></a></dt>\n<dd>\n<p>The default value. The browser will balance degradation of framerate and resolution.\n</dd>\n<dt id=\"maintain-framerate\"><a href=\"#maintain-framerate\"><code>maintain-framerate</code></a></dt>\n<dd>\n<p>The browser will degrade resolution to maintain framerate.\n</dd>\n<dt id=\"maintain-resolution\"><a href=\"#maintain-resolution\"><code>maintain-resolution</code></a></dt>\n<dd>\n<p>The browser will degrade framerate to maintain resolution.\n</dd>\n<dt id=\"maintain-framerate-and-resolution\"><a href=\"#maintain-framerate-and-resolution\"><code>maintain-framerate-and-resolution</code></a></dt>\n<dd>\n<p>The browser will maintain framerate and resolution regardless of video quality, which may cause frames to be dropped before encoding if necessary so as not to overuse network and encoder resources. This setting is useful for applications that implement their own video encoding quality and performance optimization mechanism, and don't want the browser's own internal mechanism to interfere with it.\n</dd>\n</dl>\n</dd>\n</dl>"
       },
       "returns": "A <a href=\"$MDN_URL$/Web/JavaScript/Reference/Global_Objects/Promise\"><code>Promise</code></a> that resolves when the <a href=\"$MDN_URL$/Web/API/RTCRtpSender/track\"><code>RTCRtpSender.track</code></a> property is updated with the given parameters.",
       "throws": {
@@ -9744,9 +9797,9 @@
         "StandardTrack"
       ],
       "compatibility": {
-        "Chrome": "145",
-        "ChromeAndroid": "145",
-        "Edge": "145",
+        "Chrome": "146",
+        "ChromeAndroid": "146",
+        "Edge": "146",
         "Firefox": "148",
         "FirefoxAndroid": "148"
       },
@@ -9761,9 +9814,9 @@
         "StandardTrack"
       ],
       "compatibility": {
-        "Chrome": "145",
-        "ChromeAndroid": "145",
-        "Edge": "145",
+        "Chrome": "146",
+        "ChromeAndroid": "146",
+        "Edge": "146",
         "Firefox": "148",
         "FirefoxAndroid": "148"
       },
@@ -9782,9 +9835,9 @@
         "StandardTrack"
       ],
       "compatibility": {
-        "Chrome": "145",
-        "ChromeAndroid": "145",
-        "Edge": "145",
+        "Chrome": "146",
+        "ChromeAndroid": "146",
+        "Edge": "146",
         "Firefox": "148",
         "FirefoxAndroid": "148"
       },
@@ -9803,9 +9856,9 @@
         "StandardTrack"
       ],
       "compatibility": {
-        "Chrome": "145",
-        "ChromeAndroid": "145",
-        "Edge": "145",
+        "Chrome": "146",
+        "ChromeAndroid": "146",
+        "Edge": "146",
         "Firefox": "148",
         "FirefoxAndroid": "148"
       },
@@ -9821,9 +9874,9 @@
         "StandardTrack"
       ],
       "compatibility": {
-        "Chrome": "145",
-        "ChromeAndroid": "145",
-        "Edge": "145",
+        "Chrome": "146",
+        "ChromeAndroid": "146",
+        "Edge": "146",
         "Firefox": "148",
         "FirefoxAndroid": "148"
       },
@@ -9842,9 +9895,9 @@
         "StandardTrack"
       ],
       "compatibility": {
-        "Chrome": "145",
-        "ChromeAndroid": "145",
-        "Edge": "145",
+        "Chrome": "146",
+        "ChromeAndroid": "146",
+        "Edge": "146",
         "Firefox": "148",
         "FirefoxAndroid": "148"
       },
@@ -9863,9 +9916,9 @@
         "StandardTrack"
       ],
       "compatibility": {
-        "Chrome": "145",
-        "ChromeAndroid": "145",
-        "Edge": "145",
+        "Chrome": "146",
+        "ChromeAndroid": "146",
+        "Edge": "146",
         "Firefox": "148",
         "FirefoxAndroid": "148"
       },
@@ -9881,9 +9934,9 @@
         "StandardTrack"
       ],
       "compatibility": {
-        "Chrome": "145",
-        "ChromeAndroid": "145",
-        "Edge": "145",
+        "Chrome": "146",
+        "ChromeAndroid": "146",
+        "Edge": "146",
         "Firefox": "148",
         "FirefoxAndroid": "148"
       },
@@ -9902,9 +9955,9 @@
         "StandardTrack"
       ],
       "compatibility": {
-        "Chrome": "145",
-        "ChromeAndroid": "145",
-        "Edge": "145",
+        "Chrome": "146",
+        "ChromeAndroid": "146",
+        "Edge": "146",
         "Firefox": "148",
         "FirefoxAndroid": "148"
       },
@@ -9925,9 +9978,9 @@
         "StandardTrack"
       ],
       "compatibility": {
-        "Chrome": "145",
-        "ChromeAndroid": "145",
-        "Edge": "145",
+        "Chrome": "146",
+        "ChromeAndroid": "146",
+        "Edge": "146",
         "Firefox": "148",
         "FirefoxAndroid": "148"
       },
@@ -9946,9 +9999,9 @@
         "StandardTrack"
       ],
       "compatibility": {
-        "Chrome": "145",
-        "ChromeAndroid": "145",
-        "Edge": "145",
+        "Chrome": "146",
+        "ChromeAndroid": "146",
+        "Edge": "146",
         "Firefox": "148",
         "FirefoxAndroid": "148"
       },
@@ -12928,7 +12981,7 @@
       "parameters": {
         "func": "A <a href=\"$MDN_URL$/Web/JavaScript/Reference/Global_Objects/Function\"><code>function</code></a> to be executed after the timer expires.",
         "code": "A <a href=\"$MDN_URL$/Web/API/TrustedScript\"><code>TrustedScript</code></a> or a string of arbitrary code that is compiled and executed every <code>delay</code> milliseconds.\nThis can be used instead of passing a function, but is <em>strongly discouraged</em> for the same reasons that make using <a href=\"$MDN_URL$/Web/JavaScript/Reference/Global_Objects/eval\"><code>eval()</code></a> a security risk.",
-        "delay": "The time that the timer should wait before the specified function or code is executed, in milliseconds.\nDefaults to 0 if not specified.\n<p>Note:\n<ul>\n<li>The delay has a maximum value of 2147483647 ms — specifying larger values may result in overflow or a 0 value being used.\nSee <a href=\"#maximum_delay_value\">maximum delay value</a> below for more information.</li>\n<li>The actual delay may be longer than set.\nFor example, setting <code>delay</code> to 0 will execute in the next event cycle rather than \"immediately\".\nSee <a href=\"#reasons_for_longer_delays_than_specified\">Reasons for longer delays than specified</a> for more information.</li>\n<li>If the value isn't a number, implicit <a href=\"$MDN_URL$/Glossary/Type_coercion\">type coercion</a> is silently done on the value to convert it to a number.\nThis can lead to unexpected and surprising results — see <a href=\"#non-number_delay_values_are_silently_coerced_into_numbers\">Non-number delay values are silently coerced into numbers</a> for an example.</li>\n</ul>",
+        "delay": "A non-negative integer indicating how long the timer should wait before the specified function or code is executed, in milliseconds.\nDefaults to 0 if not specified.\n<p>Note:\n<ul>\n<li>The delay has a maximum value of 2147483647 ms — specifying larger values may result in overflow or a 0 value being used.\nSee <a href=\"#maximum_delay_value\">maximum delay value</a> below for more information.</li>\n<li>The actual delay may be longer than set.\nFor example, setting <code>delay</code> to 0 will execute in the next event cycle rather than \"immediately\".\nSee <a href=\"#reasons_for_longer_delays_than_specified\">Reasons for longer delays than specified</a> for more information.</li>\n<li>If the value isn't a number, implicit <a href=\"$MDN_URL$/Glossary/Type_coercion\">type coercion</a> is silently done on the value to convert it to a number.\nThis can lead to unexpected and surprising results — see <a href=\"#non-number_delay_values_are_silently_coerced_into_numbers\">Non-number delay values are silently coerced into numbers</a> for an example.</li>\n<li>Negative values behave the same as 0.</li>\n</ul>",
         "param1, …, paramN": "Additional arguments which are passed through to the function specified by <code>func</code>."
       },
       "returns": "A positive integer (typically within the range of 1 to 2,147,483,647) that uniquely identifies the timer created by the call.\nThis identifier, often referred to as a \"timeout ID\", can be passed to <a href=\"$MDN_URL$/Web/API/Window/clearTimeout\" title=\"clearTimeout()\"><code>clearTimeout()</code></a> to cancel the timer.\n<p>Within the same global environment (e.g., a specific window or worker) the timeout ID is guaranteed not to be reused for any new timer as long as the original timer remains active.\nHowever, separate global environments maintain their own independent pools of timer IDs.",
@@ -13018,6 +13071,23 @@
         "lowDate": "2024-04-18"
       },
       "doc": "The <strong><code>clonable</code></strong> read-only property of the <a href=\"$MDN_URL$/Web/API/ShadowRoot\"><code>ShadowRoot</code></a> interface returns <code>true</code> if the shadow root is clonable, and <code>false</code> otherwise.\n<p>When the value is <code>true</code>, a shadow host cloned with <a href=\"$MDN_URL$/Web/API/Node/cloneNode\"><code>Node.cloneNode()</code></a> or <a href=\"$MDN_URL$/Web/API/Document/importNode\"><code>Document.importNode()</code></a> will include a copy of the shadow root.\n<p>By default the value is <code>false</code>.\nIt can be set to <code>true</code> using the <code>clonable</code> option of the <a href=\"$MDN_URL$/Web/API/Element/attachShadow\"><code>Element.attachShadow()</code></a> method or by setting the <a href=\"$MDN_URL$/Web/HTML/Reference/Elements/template#shadowrootclonable\"><code>shadowrootclonable</code></a> attribute of the <code>&lt;template&gt;</code> element that is being used to declaratively attach a shadow root."
+    },
+    "shadowroot.customelementregistry": {
+      "url": "$MDN_URL$/web/api/shadowroot/customElementRegistry",
+      "status": [
+        "StandardTrack"
+      ],
+      "compatibility": {
+        "Chrome": "146",
+        "ChromeAndroid": "146",
+        "Edge": "146",
+        "Safari": "26",
+        "SafariIOS": "26"
+      },
+      "baseline": {
+        "level": "NONE"
+      },
+      "doc": "The <strong><code>customElementRegistry</code></strong> read-only property of the <a href=\"$MDN_URL$/Web/API/ShadowRoot\"><code>ShadowRoot</code></a> interface returns the <a href=\"$MDN_URL$/Web/API/CustomElementRegistry\"><code>CustomElementRegistry</code></a> object associated with this shadow root, or <code>null</code> if one has not been set.\n<p>A shadow root's <code>customElementRegistry</code> determines which <a href=\"$MDN_URL$/Web/API/Web_components/Using_custom_elements\">custom element</a> definitions are used for upgrading elements within that shadow tree. It can be set when the shadow root is created via the <code>customElementRegistry</code> option of <a href=\"$MDN_URL$/Web/API/Element/attachShadow\"><code>Element.attachShadow()</code></a>, or later using <a href=\"$MDN_URL$/Web/API/CustomElementRegistry/initialize\"><code>CustomElementRegistry.initialize()</code></a>. Once set to a <code>CustomElementRegistry</code> object, it cannot be changed.\n<p>This property is also available on <a href=\"$MDN_URL$/Web/API/Document\"><code>Document</code></a> objects via the same <a href=\"$MDN_URL$/Web/API/Document/customElementRegistry\" ><code>customElementRegistry</code></a> property name."
     },
     "shadowroot.delegatesfocus": {
       "url": "$MDN_URL$/web/api/shadowroot/delegatesfocus",
@@ -13556,7 +13626,7 @@
       "baseline": {
         "level": "NONE"
       },
-      "doc": "The <strong><code>SharedWorker</code></strong> interface represents a specific kind of worker that can be <em>accessed</em> from several browsing contexts, such as several windows, iframes or even workers. They implement an interface different than dedicated workers and have a different global scope, <a href=\"$MDN_URL$/Web/API/SharedWorkerGlobalScope\"><code>SharedWorkerGlobalScope</code></a>.\n<div class=\"notecard note\">\n<p><strong>Note:</strong>\nIf SharedWorker can be accessed from several browsing contexts, all those browsing contexts must share the exact same origin (same protocol, host and port).\n</div>"
+      "doc": "The <strong><code>SharedWorker</code></strong> interface represents a specific kind of worker that can be <em>accessed</em> from several browsing contexts, such as multiple windows or iframes. Shared workers implement a different interface than dedicated workers, have a different global scope (<a href=\"$MDN_URL$/Web/API/SharedWorkerGlobalScope\"><code>SharedWorkerGlobalScope</code></a>), and their constructor is not exposed in <a href=\"$MDN_URL$/Web/API/DedicatedWorkerGlobalScope\"><code>DedicatedWorkerGlobalScope</code></a>, so they cannot be instantiated from dedicated workers.\n<div class=\"notecard note\">\n<p><strong>Note:</strong>\nIf SharedWorker can be accessed from several browsing contexts, all those browsing contexts must share the exact same origin (same protocol, host and port).\n</div>"
     },
     "sharedworker.port": {
       "url": "$MDN_URL$/web/api/sharedworker/port",
@@ -17274,79 +17344,7 @@
         "NotSupported DOMException": "Raised when trying to use an algorithm that is either unknown or isn't suitable for\nderivation."
       }
     },
-    "subtlecrypto.derivebits.derivebits": {
-      "url": "$MDN_URL$/web/api/subtlecrypto/derivebits",
-      "status": [
-        "StandardTrack"
-      ],
-      "compatibility": {
-        "Chrome": "41",
-        "ChromeAndroid": "41",
-        "Edge": "79",
-        "Firefox": "34",
-        "FirefoxAndroid": "34",
-        "Opera": "28",
-        "Safari": "11",
-        "SafariIOS": "11",
-        "Nodejs": "15.0.0",
-        "Deno": "1.15"
-      },
-      "baseline": {
-        "level": "HIGH",
-        "lowDate": "2020-01-15",
-        "highDate": "2022-07-15"
-      },
-      "doc": "<div class=\"notecard secure\"><p><strong>Secure context:</strong> This feature is available only in <a href=\"$MDN_URL$/Web/Security/Defenses/Secure_Contexts\">secure contexts</a> (HTTPS), in some or all <a href=\"#browser_compatibility\">supporting browsers</a>.</div>\n<div class=\"notecard note\"><p><strong>Note:</strong> This feature is available in <a href=\"$MDN_URL$/Web/API/Web_Workers_API\">Web Workers</a>.</div>\n<p>The <strong><code>deriveBits()</code></strong> method of the\n<a href=\"$MDN_URL$/Web/API/SubtleCrypto\"><code>SubtleCrypto</code></a> interface can be used to derive an array of bits from a base\nkey.\n<p>It takes as its arguments the base key, the derivation algorithm to use, and the length\nof the bits to derive. It returns a <a href=\"$MDN_URL$/Web/JavaScript/Reference/Global_Objects/Promise\"><code>Promise</code></a>\nwhich will be fulfilled with an\n<a href=\"$MDN_URL$/Web/JavaScript/Reference/Global_Objects/ArrayBuffer\"><code>ArrayBuffer</code></a>\ncontaining the derived bits.\n<p>This method is very similar to\n<a href=\"$MDN_URL$/Web/API/SubtleCrypto/deriveKey\"><code>SubtleCrypto.deriveKey()</code></a>,\nexcept that <code>deriveKey()</code> returns a\n<a href=\"$MDN_URL$/Web/API/CryptoKey\"><code>CryptoKey</code></a> object rather than an\n<code>ArrayBuffer</code>. Essentially <code>deriveKey()</code> is composed of\n<code>deriveBits()</code> followed by\n<a href=\"$MDN_URL$/Web/API/SubtleCrypto/importKey\"><code>importKey()</code></a>.\n<p>This function supports the same derivation algorithms as <code>deriveKey()</code>: ECDH, HKDF, PBKDF2, and X25519.\nSee <a href=\"$MDN_URL$/Web/API/SubtleCrypto/deriveKey#supported_algorithms\">Supported algorithms</a> for some more detail on these algorithms.",
-      "parameters": {
-        "algorithm": "An object defining the <a href=\"$MDN_URL$/Web/API/SubtleCrypto/deriveKey#supported_algorithms\">derivation algorithm</a> to use.\n<ul>\n<li>To use <a href=\"$MDN_URL$/Web/API/SubtleCrypto/deriveKey#ecdh\">ECDH</a>, pass an <a href=\"$MDN_URL$/Web/API/EcdhKeyDeriveParams\"><code>EcdhKeyDeriveParams</code></a> object, specifying the string <code>ECDH</code> as the <code>name</code> property.</li>\n<li>To use <a href=\"$MDN_URL$/Web/API/SubtleCrypto/deriveKey#hkdf\">HKDF</a>, pass an <a href=\"$MDN_URL$/Web/API/HkdfParams\"><code>HkdfParams</code></a> object.</li>\n<li>To use <a href=\"$MDN_URL$/Web/API/SubtleCrypto/deriveKey#pbkdf2\">PBKDF2</a>, pass a <a href=\"$MDN_URL$/Web/API/Pbkdf2Params\"><code>Pbkdf2Params</code></a> object.</li>\n<li>To use <a href=\"$MDN_URL$/Web/API/SubtleCrypto/deriveKey#x25519\">X25519</a>, pass an <a href=\"$MDN_URL$/Web/API/EcdhKeyDeriveParams\"><code>EcdhKeyDeriveParams</code></a> object, specifying the string <code>X25519</code> as the <code>name</code> property.</li>\n</ul>",
-        "baseKey": "A <a href=\"$MDN_URL$/Web/API/CryptoKey\"><code>CryptoKey</code></a> representing the input\nto the derivation algorithm. If <code>algorithm</code> is ECDH, this will be the ECDH\nprivate key. Otherwise it will be the initial key material for the derivation\nfunction: for example, for PBKDF2 it might be a password, imported as a\n<code>CryptoKey</code> using <a href=\"$MDN_URL$/Web/API/SubtleCrypto/importKey\"><code>SubtleCrypto.importKey()</code></a>.",
-        "length": "A number representing the number of bits to derive. To be compatible with all browsers, the number should be a multiple of 8."
-      },
-      "returns": "A <a href=\"$MDN_URL$/Web/JavaScript/Reference/Global_Objects/Promise\"><code>Promise</code></a>\nthat fulfills with an <a href=\"$MDN_URL$/Web/JavaScript/Reference/Global_Objects/ArrayBuffer\"><code>ArrayBuffer</code></a>\ncontaining the derived bits.",
-      "throws": {
-        "OperationError DOMException": "Raised if the <em>length</em> parameter of the <code>deriveBits()</code> call is null, and also in some cases if the <em>length</em> parameter is not a multiple of 8.",
-        "InvalidAccessError DOMException": "Raised when the base key is not a key for the requested derivation algorithm or if\nthe <a href=\"$MDN_URL$/Web/API/CryptoKey\"><code>CryptoKey.usages</code></a> value of that key doesn't contain\n<code>deriveBits</code>.",
-        "NotSupported DOMException": "Raised when trying to use an algorithm that is either unknown or isn't suitable for\nderivation."
-      }
-    },
     "subtlecrypto.derivekey": {
-      "url": "$MDN_URL$/web/api/subtlecrypto/derivekey",
-      "status": [
-        "StandardTrack"
-      ],
-      "compatibility": {
-        "Chrome": "41",
-        "ChromeAndroid": "41",
-        "Edge": "79",
-        "Firefox": "34",
-        "FirefoxAndroid": "34",
-        "Opera": "28",
-        "Safari": "11",
-        "SafariIOS": "11",
-        "Nodejs": "15.0.0",
-        "Deno": "1.15"
-      },
-      "baseline": {
-        "level": "HIGH",
-        "lowDate": "2020-01-15",
-        "highDate": "2022-07-15"
-      },
-      "doc": "<div class=\"notecard secure\"><p><strong>Secure context:</strong> This feature is available only in <a href=\"$MDN_URL$/Web/Security/Defenses/Secure_Contexts\">secure contexts</a> (HTTPS), in some or all <a href=\"#browser_compatibility\">supporting browsers</a>.</div>\n<div class=\"notecard note\"><p><strong>Note:</strong> This feature is available in <a href=\"$MDN_URL$/Web/API/Web_Workers_API\">Web Workers</a>.</div>\n<p>The <strong><code>deriveKey()</code></strong> method of the <a href=\"$MDN_URL$/Web/API/SubtleCrypto\"><code>SubtleCrypto</code></a> interface can be used to derive a secret key from a master key.\n<p>It takes as arguments some initial key material, the derivation algorithm to use, and the desired properties for the key to derive.\nIt returns a <a href=\"$MDN_URL$/Web/JavaScript/Reference/Global_Objects/Promise\"><code>Promise</code></a> which will be fulfilled with a <a href=\"$MDN_URL$/Web/API/CryptoKey\"><code>CryptoKey</code></a> object representing the new key.\n<p>It's worth noting that the supported key derivation algorithms have quite different characteristics and are appropriate in quite different situations.\nSee <a href=\"#supported_algorithms\">Supported algorithms</a> for some more detail on this.",
-      "parameters": {
-        "algorithm": "An object defining the <a href=\"#supported_algorithms\">derivation algorithm</a> to use.\n<ul>\n<li>To use <a href=\"#ecdh\">ECDH</a>, pass an <a href=\"$MDN_URL$/Web/API/EcdhKeyDeriveParams\"><code>EcdhKeyDeriveParams</code></a> object, specifying the string <code>ECDH</code> as the <code>name</code> property.</li>\n<li>To use <a href=\"#hkdf\">HKDF</a>, pass an <a href=\"$MDN_URL$/Web/API/HkdfParams\"><code>HkdfParams</code></a> object.</li>\n<li>To use <a href=\"#pbkdf2\">PBKDF2</a>, pass a <a href=\"$MDN_URL$/Web/API/Pbkdf2Params\"><code>Pbkdf2Params</code></a> object.</li>\n<li>To use <a href=\"#x25519\">X25519</a>, pass an <a href=\"$MDN_URL$/Web/API/EcdhKeyDeriveParams\"><code>EcdhKeyDeriveParams</code></a> object, specifying the string <code>X25519</code> as the <code>name</code> property.</li>\n</ul>",
-        "baseKey": "A <a href=\"$MDN_URL$/Web/API/CryptoKey\"><code>CryptoKey</code></a> representing the input to the derivation algorithm.\nIf <code>algorithm</code> is ECDH or X25519, then this will be the ECDH or X25519 private key.\nOtherwise it will be the initial key material for the derivation function: for example, for PBKDF2 it might be a password, imported as a <code>CryptoKey</code> using <a href=\"$MDN_URL$/Web/API/SubtleCrypto/importKey\"><code>SubtleCrypto.importKey()</code></a>.",
-        "derivedKeyType": "An object defining the algorithm the derived key will be used for:\n<ul>\n<li>For <a href=\"$MDN_URL$/Web/API/SubtleCrypto/sign#hmac\">HMAC</a> pass an <a href=\"$MDN_URL$/Web/API/HmacImportParams\"><code>HmacImportParams</code></a> object.</li>\n<li>For <a href=\"$MDN_URL$/Web/API/SubtleCrypto/encrypt#aes-ctr\">AES-CTR</a>, <a href=\"$MDN_URL$/Web/API/SubtleCrypto/encrypt#aes-cbc\">AES-CBC</a>, <a href=\"$MDN_URL$/Web/API/SubtleCrypto/encrypt#aes-gcm\">AES-GCM</a>, or <a href=\"$MDN_URL$/Web/API/SubtleCrypto/wrapKey#aes-kw\">AES-KW</a>, pass an <a href=\"$MDN_URL$/Web/API/AesDerivedKeyParams\"><code>AesDerivedKeyParams</code></a> object.</li>\n</ul>",
-        "extractable": "A boolean value indicating whether it will be possible to export the key using <a href=\"$MDN_URL$/Web/API/SubtleCrypto/exportKey\"><code>SubtleCrypto.exportKey()</code></a> or <a href=\"$MDN_URL$/Web/API/SubtleCrypto/wrapKey\"><code>SubtleCrypto.wrapKey()</code></a>.",
-        "keyUsages": "An <a href=\"$MDN_URL$/Web/JavaScript/Reference/Global_Objects/Array\"><code>Array</code></a> indicating what can be done with the derived key.\nNote that the key usages must be allowed by the algorithm set in <code>derivedKeyAlgorithm</code>.\nPossible values of the array are:\n<ul>\n<li><code>encrypt</code>: The key may be used to <a href=\"$MDN_URL$/Web/API/SubtleCrypto/encrypt\">encrypt</a> messages.</li>\n<li><code>decrypt</code>: The key may be used to <a href=\"$MDN_URL$/Web/API/SubtleCrypto/decrypt\">decrypt</a> messages.</li>\n<li><code>sign</code>: The key may be used to <a href=\"$MDN_URL$/Web/API/SubtleCrypto/sign\">sign</a> messages.</li>\n<li><code>verify</code>: The key may be used to <a href=\"$MDN_URL$/Web/API/SubtleCrypto/verify\">verify</a> signatures.</li>\n<li><code>deriveKey</code>: The key may be used in deriving a new key.</li>\n<li><code>deriveBits</code>: The key may be used in <a href=\"$MDN_URL$/Web/API/SubtleCrypto/deriveBits\">deriving bits</a>.</li>\n<li><code>wrapKey</code>: The key may be used to <a href=\"$MDN_URL$/Web/API/SubtleCrypto/wrapKey\">wrap a key</a>.</li>\n<li><code>unwrapKey</code>: The key may be used to <a href=\"$MDN_URL$/Web/API/SubtleCrypto/unwrapKey\">unwrap a key</a>.</li>\n</ul>"
-      },
-      "returns": "A <a href=\"$MDN_URL$/Web/JavaScript/Reference/Global_Objects/Promise\"><code>Promise</code></a> that fulfills with a <a href=\"$MDN_URL$/Web/API/CryptoKey\"><code>CryptoKey</code></a>.",
-      "throws": {
-        "InvalidAccessError DOMException": "Raised when the master key is not a key for the requested derivation algorithm or if the <code>keyUsages</code> value of that key doesn't contain <code>deriveKey</code>.",
-        "NotSupported DOMException": "Raised when trying to use an algorithm that is either unknown or isn't suitable for derivation, or if the algorithm requested for the derived key doesn't define a key length.",
-        "SyntaxError DOMException": "Raised when <code>keyUsages</code> is empty but the unwrapped key is of type <code>secret</code> or <code>private</code>."
-      }
-    },
-    "subtlecrypto.derivekey.derivekey": {
       "url": "$MDN_URL$/web/api/subtlecrypto/derivekey",
       "status": [
         "StandardTrack"
@@ -17480,73 +17478,7 @@
         "TypeError": "Raised when trying to use an invalid format."
       }
     },
-    "subtlecrypto.exportkey.exportkey": {
-      "url": "$MDN_URL$/web/api/subtlecrypto/exportkey",
-      "status": [
-        "StandardTrack"
-      ],
-      "compatibility": {
-        "Chrome": "37",
-        "ChromeAndroid": "37",
-        "Edge": "79",
-        "Firefox": "34",
-        "FirefoxAndroid": "34",
-        "Opera": "24",
-        "Safari": "11",
-        "SafariIOS": "11",
-        "Nodejs": "15.0.0",
-        "Deno": "1.18"
-      },
-      "baseline": {
-        "level": "HIGH",
-        "lowDate": "2020-01-15",
-        "highDate": "2022-07-15"
-      },
-      "doc": "<div class=\"notecard secure\"><p><strong>Secure context:</strong> This feature is available only in <a href=\"$MDN_URL$/Web/Security/Defenses/Secure_Contexts\">secure contexts</a> (HTTPS), in some or all <a href=\"#browser_compatibility\">supporting browsers</a>.</div>\n<div class=\"notecard note\"><p><strong>Note:</strong> This feature is available in <a href=\"$MDN_URL$/Web/API/Web_Workers_API\">Web Workers</a>.</div>\n<p>The <strong><code>exportKey()</code></strong> method of the <a href=\"$MDN_URL$/Web/API/SubtleCrypto\"><code>SubtleCrypto</code></a>\ninterface exports a key: that is, it takes as input a <a href=\"$MDN_URL$/Web/API/CryptoKey\"><code>CryptoKey</code></a> object\nand gives you the key in an external, portable format.\n<p>To export a key, the key must have <a href=\"$MDN_URL$/Web/API/CryptoKey/extractable\"><code>CryptoKey.extractable</code></a> set to\n<code>true</code>.\n<p>Keys can be exported in several formats: see <a href=\"$MDN_URL$/Web/API/SubtleCrypto/importKey#supported_formats\">Supported formats</a> in the\n<a href=\"$MDN_URL$/Web/API/SubtleCrypto/importKey\"><code>SubtleCrypto.importKey()</code></a>\npage for details.\n<p>Keys are not exported in an encrypted format: to encrypt keys when exporting them use\nthe\n<a href=\"$MDN_URL$/Web/API/SubtleCrypto/wrapKey\"><code>SubtleCrypto.wrapKey()</code></a>\nAPI instead.",
-      "parameters": {
-        "format": "A string value describing the data format in which the key should be exported. It can be one of the following:\n<ul>\n<li><code>raw</code>: <a href=\"$MDN_URL$/Web/API/SubtleCrypto/importKey#raw\">Raw</a> format.</li>\n<li><code>pkcs8</code>: <a href=\"$MDN_URL$/Web/API/SubtleCrypto/importKey#pkcs_8\">PKCS #8</a> format.</li>\n<li><code>spki</code>: <a href=\"$MDN_URL$/Web/API/SubtleCrypto/importKey#subjectpublickeyinfo\">SubjectPublicKeyInfo</a> format.</li>\n<li><code>jwk</code>: <a href=\"$MDN_URL$/Web/API/SubtleCrypto/importKey#json_web_key\">JSON Web Key</a> format.</li>\n</ul>",
-        "key": "The <a href=\"$MDN_URL$/Web/API/CryptoKey\"><code>CryptoKey</code></a> to export."
-      },
-      "returns": "A <a href=\"$MDN_URL$/Web/JavaScript/Reference/Global_Objects/Promise\"><code>Promise</code></a>.\n<ul>\n<li>If <code>format</code> was <code>jwk</code>, then the promise fulfills\nwith a JSON object containing the key.</li>\n<li>Otherwise the promise fulfills with an\n<a href=\"$MDN_URL$/Web/JavaScript/Reference/Global_Objects/ArrayBuffer\"><code>ArrayBuffer</code></a>\ncontaining the key.</li>\n</ul>",
-      "throws": {
-        "InvalidAccessError DOMException": "Raised when trying to export a non-extractable key.",
-        "NotSupported DOMException": "Raised when trying to export in an unknown format.",
-        "TypeError": "Raised when trying to use an invalid format."
-      }
-    },
     "subtlecrypto.generatekey": {
-      "url": "$MDN_URL$/web/api/subtlecrypto/generatekey",
-      "status": [
-        "StandardTrack"
-      ],
-      "compatibility": {
-        "Chrome": "37",
-        "ChromeAndroid": "37",
-        "Edge": "79",
-        "Firefox": "34",
-        "FirefoxAndroid": "34",
-        "Opera": "24",
-        "Safari": "11",
-        "SafariIOS": "11",
-        "Nodejs": "15.0.0"
-      },
-      "baseline": {
-        "level": "HIGH",
-        "lowDate": "2020-01-15",
-        "highDate": "2022-07-15"
-      },
-      "doc": "<div class=\"notecard secure\"><p><strong>Secure context:</strong> This feature is available only in <a href=\"$MDN_URL$/Web/Security/Defenses/Secure_Contexts\">secure contexts</a> (HTTPS), in some or all <a href=\"#browser_compatibility\">supporting browsers</a>.</div>\n<div class=\"notecard note\"><p><strong>Note:</strong> This feature is available in <a href=\"$MDN_URL$/Web/API/Web_Workers_API\">Web Workers</a>.</div>\n<p>The <strong><code>generateKey()</code></strong> method of the <a href=\"$MDN_URL$/Web/API/SubtleCrypto\"><code>SubtleCrypto</code></a> interface is used to generate a new key (for symmetric algorithms) or key pair (for public-key algorithms).",
-      "parameters": {
-        "algorithm": "An object defining the type of key to generate and providing extra algorithm-specific parameters.\n<ul>\n<li>For <a href=\"$MDN_URL$/Web/API/SubtleCrypto/sign#rsassa-pkcs1-v1_5\">RSASSA-PKCS1-v1_5</a>, <a href=\"$MDN_URL$/Web/API/SubtleCrypto/sign#rsa-pss\">RSA-PSS</a>,\nor <a href=\"$MDN_URL$/Web/API/SubtleCrypto/encrypt#rsa-oaep\">RSA-OAEP</a>:\npass an <a href=\"$MDN_URL$/Web/API/RsaHashedKeyGenParams\"><code>RsaHashedKeyGenParams</code></a> object.</li>\n<li>For <a href=\"$MDN_URL$/Web/API/SubtleCrypto/sign#ecdsa\">ECDSA</a> or <a href=\"$MDN_URL$/Web/API/SubtleCrypto/deriveKey#ecdh\">ECDH</a>:\npass an <a href=\"$MDN_URL$/Web/API/EcKeyGenParams\"><code>EcKeyGenParams</code></a> object.</li>\n<li>For <a href=\"$MDN_URL$/Web/API/SubtleCrypto/sign#hmac\">HMAC</a>: pass an <a href=\"$MDN_URL$/Web/API/HmacKeyGenParams\"><code>HmacKeyGenParams</code></a> object.</li>\n<li>For <a href=\"$MDN_URL$/Web/API/SubtleCrypto/encrypt#aes-ctr\">AES-CTR</a>, <a href=\"$MDN_URL$/Web/API/SubtleCrypto/encrypt#aes-cbc\">AES-CBC</a>,\n<a href=\"$MDN_URL$/Web/API/SubtleCrypto/encrypt#aes-gcm\">AES-GCM</a>, or <a href=\"$MDN_URL$/Web/API/SubtleCrypto/wrapKey#aes-kw\">AES-KW</a>:\npass an <a href=\"$MDN_URL$/Web/API/AesKeyGenParams\"><code>AesKeyGenParams</code></a> object.</li>\n<li>For <a href=\"$MDN_URL$/Web/API/SubtleCrypto/sign#ed25519\">Ed25519</a>: pass the string <code>Ed25519</code> or an object of the form <code>{ name: \"Ed25519\" }</code>.</li>\n<li>For <a href=\"$MDN_URL$/Web/API/SubtleCrypto/deriveKey#x25519\">X25519</a>: pass the string <code>X25519</code> or an object of the form <code>{ name: \"X25519\" }</code>.</li>\n</ul>",
-        "extractable": "A boolean value indicating whether it will be possible to export the key using <a href=\"$MDN_URL$/Web/API/SubtleCrypto/exportKey\"><code>SubtleCrypto.exportKey()</code></a> or <a href=\"$MDN_URL$/Web/API/SubtleCrypto/wrapKey\"><code>SubtleCrypto.wrapKey()</code></a>.",
-        "keyUsages": "An <a href=\"$MDN_URL$/Web/JavaScript/Reference/Global_Objects/Array\"><code>Array</code></a> of strings indicating what can be done with the newly generated key.\nPossible values for array elements are:\n<dl>\n<dt id=\"encrypt\"><a href=\"#encrypt\"><code>encrypt</code></a></dt>\n<dd>\n<p>The key may be used to <a href=\"$MDN_URL$/Web/API/SubtleCrypto/encrypt\" >encrypt</a> messages.\n</dd>\n<dt id=\"decrypt\"><a href=\"#decrypt\"><code>decrypt</code></a></dt>\n<dd>\n<p>The key may be used to <a href=\"$MDN_URL$/Web/API/SubtleCrypto/decrypt\" >decrypt</a> messages.\n</dd>\n<dt id=\"sign\"><a href=\"#sign\"><code>sign</code></a></dt>\n<dd>\n<p>The key may be used to <a href=\"$MDN_URL$/Web/API/SubtleCrypto/sign\" >sign</a> messages.\n</dd>\n<dt id=\"verify\"><a href=\"#verify\"><code>verify</code></a></dt>\n<dd>\n<p>The key may be used to <a href=\"$MDN_URL$/Web/API/SubtleCrypto/verify\" >verify</a> signatures.\n</dd>\n<dt id=\"derivekey\"><a href=\"#derivekey\"><code>deriveKey</code></a></dt>\n<dd>\n<p>The key may be used in <a href=\"$MDN_URL$/Web/API/SubtleCrypto/deriveKey\" >deriving a new key</a>.\n</dd>\n<dt id=\"derivebits\"><a href=\"#derivebits\"><code>deriveBits</code></a></dt>\n<dd>\n<p>The key may be used in <a href=\"$MDN_URL$/Web/API/SubtleCrypto/deriveBits\" >deriving bits</a>.\n</dd>\n<dt id=\"wrapkey\"><a href=\"#wrapkey\"><code>wrapKey</code></a></dt>\n<dd>\n<p>The key may be used to <a href=\"$MDN_URL$/Web/API/SubtleCrypto/wrapKey\" >wrap a key</a>.\n</dd>\n<dt id=\"unwrapkey\"><a href=\"#unwrapkey\"><code>unwrapKey</code></a></dt>\n<dd>\n<p>The key may be used to <a href=\"$MDN_URL$/Web/API/SubtleCrypto/unwrapKey\" >unwrap a key</a>.\n</dd>\n</dl>"
-      },
-      "returns": "A <a href=\"$MDN_URL$/Web/JavaScript/Reference/Global_Objects/Promise\"><code>Promise</code></a> that fulfills with a <a href=\"$MDN_URL$/Web/API/CryptoKey\"><code>CryptoKey</code></a> (for symmetric algorithms) or a <a href=\"$MDN_URL$/Web/API/CryptoKeyPair\"><code>CryptoKeyPair</code></a> (for public-key algorithms).",
-      "throws": {
-        "SyntaxError DOMException": "Raised when the result is a <a href=\"$MDN_URL$/Web/API/CryptoKey\"><code>CryptoKey</code></a> of type <code>secret</code> or <code>private</code> but <code>keyUsages</code> is empty, or invalid for the algorithm type.<p>Raised when the result is a <a href=\"$MDN_URL$/Web/API/CryptoKeyPair\"><code>CryptoKeyPair</code></a> and its <code>privateKey.usages</code> attribute is empty, or invalid for the algorithm type."
-      }
-    },
-    "subtlecrypto.generatekey.generatekey": {
       "url": "$MDN_URL$/web/api/subtlecrypto/generatekey",
       "status": [
         "StandardTrack"
@@ -17613,75 +17545,7 @@
         "TypeError": "Raised when trying to use an invalid format or if the <code>keyData</code> is not suited for that format."
       }
     },
-    "subtlecrypto.importkey.importkey": {
-      "url": "$MDN_URL$/web/api/subtlecrypto/importkey",
-      "status": [
-        "StandardTrack"
-      ],
-      "compatibility": {
-        "Chrome": "37",
-        "ChromeAndroid": "37",
-        "Edge": "79",
-        "Firefox": "34",
-        "FirefoxAndroid": "34",
-        "Opera": "24",
-        "Safari": "11",
-        "SafariIOS": "11",
-        "Nodejs": "15.0.0"
-      },
-      "baseline": {
-        "level": "HIGH",
-        "lowDate": "2020-01-15",
-        "highDate": "2022-07-15"
-      },
-      "doc": "<div class=\"notecard secure\"><p><strong>Secure context:</strong> This feature is available only in <a href=\"$MDN_URL$/Web/Security/Defenses/Secure_Contexts\">secure contexts</a> (HTTPS), in some or all <a href=\"#browser_compatibility\">supporting browsers</a>.</div>\n<div class=\"notecard note\"><p><strong>Note:</strong> This feature is available in <a href=\"$MDN_URL$/Web/API/Web_Workers_API\">Web Workers</a>.</div>\n<p>The <strong><code>importKey()</code></strong> method of the <a href=\"$MDN_URL$/Web/API/SubtleCrypto\"><code>SubtleCrypto</code></a> interface imports a key: that is, it takes as input a key in an external, portable format and gives you a <a href=\"$MDN_URL$/Web/API/CryptoKey\"><code>CryptoKey</code></a> object that you can use in the <a href=\"$MDN_URL$/Web/API/Web_Crypto_API\">Web Crypto API</a>.\n<p>The function accepts several import formats: see <a href=\"#supported_formats\">Supported formats</a> for details.",
-      "parameters": {
-        "format": "A string describing the data format of the key to import. It can be one of the following:\n<ul>\n<li><code>raw</code>: <a href=\"#raw\">Raw</a> format.</li>\n<li><code>pkcs8</code>: <a href=\"#pkcs_8\">PKCS #8</a> format.</li>\n<li><code>spki</code>: <a href=\"#subjectpublickeyinfo\">SubjectPublicKeyInfo</a> format.</li>\n<li><code>jwk</code>: <a href=\"#json_web_key\">JSON Web Key</a> format.</li>\n</ul>",
-        "keyData": "An <a href=\"$MDN_URL$/Web/JavaScript/Reference/Global_Objects/ArrayBuffer\"><code>ArrayBuffer</code></a>, a <a href=\"$MDN_URL$/Web/JavaScript/Reference/Global_Objects/TypedArray\">TypedArray</a>,\na <a href=\"$MDN_URL$/Web/JavaScript/Reference/Global_Objects/DataView\"><code>DataView</code></a>, or a <code>JSONWebKey</code> object containing the key in\nthe given format.",
-        "algorithm": "An object defining the type of key to import and providing extra algorithm-specific parameters.\n<ul>\n<li>For <a href=\"$MDN_URL$/Web/API/SubtleCrypto/sign#rsassa-pkcs1-v1_5\">RSASSA-PKCS1-v1_5</a>, <a href=\"$MDN_URL$/Web/API/SubtleCrypto/sign#rsa-pss\">RSA-PSS</a>,\nor <a href=\"$MDN_URL$/Web/API/SubtleCrypto/encrypt#rsa-oaep\">RSA-OAEP</a>:\npass an <a href=\"$MDN_URL$/Web/API/RsaHashedImportParams\"><code>RsaHashedImportParams</code></a> object.</li>\n<li>For <a href=\"$MDN_URL$/Web/API/SubtleCrypto/sign#ecdsa\">ECDSA</a> or <a href=\"$MDN_URL$/Web/API/SubtleCrypto/deriveKey#ecdh\">ECDH</a>:\npass an <a href=\"$MDN_URL$/Web/API/EcKeyImportParams\"><code>EcKeyImportParams</code></a> object.</li>\n<li>For <a href=\"$MDN_URL$/Web/API/SubtleCrypto/sign#hmac\">HMAC</a>:\npass an <a href=\"$MDN_URL$/Web/API/HmacImportParams\"><code>HmacImportParams</code></a> object.</li>\n<li>For <a href=\"$MDN_URL$/Web/API/SubtleCrypto/encrypt#aes-ctr\">AES-CTR</a>, <a href=\"$MDN_URL$/Web/API/SubtleCrypto/encrypt#aes-cbc\">AES-CBC</a>,\n<a href=\"$MDN_URL$/Web/API/SubtleCrypto/encrypt#aes-gcm\">AES-GCM</a>, and <a href=\"$MDN_URL$/Web/API/SubtleCrypto/wrapKey#aes-kw\">AES-KW</a>:\npass the string identifying the algorithm or an object of the form <code>{ name: ALGORITHM }</code>, where <code>ALGORITHM</code> is the name of the algorithm.</li>\n<li>For <a href=\"$MDN_URL$/Web/API/SubtleCrypto/deriveKey#pbkdf2\">PBKDF2</a>: pass the string <code>PBKDF2</code> or an object of the form <code>{ name: \"PBKDF2\" }</code>.</li>\n<li>For <a href=\"$MDN_URL$/Web/API/SubtleCrypto/deriveKey#hkdf\">HKDF</a>: pass the string <code>HKDF</code> or an object of the form <code>{ name: \"HKDF\" }</code>.</li>\n<li>For <a href=\"$MDN_URL$/Web/API/SubtleCrypto/sign#ed25519\">Ed25519</a>: pass the string <code>Ed25519</code> or an object of the form <code>{ name: \"Ed25519\" }</code>.</li>\n<li>For <a href=\"$MDN_URL$/Web/API/SubtleCrypto/deriveKey#x25519\">X25519</a>: pass the string <code>X25519</code> or an object of the form <code>{ name: \"X25519\" }</code>.</li>\n</ul>",
-        "extractable": "A boolean value indicating whether it will be possible to export the key using <a href=\"$MDN_URL$/Web/API/SubtleCrypto/exportKey\"><code>SubtleCrypto.exportKey()</code></a> or <a href=\"$MDN_URL$/Web/API/SubtleCrypto/wrapKey\"><code>SubtleCrypto.wrapKey()</code></a>.",
-        "keyUsages": "An <a href=\"$MDN_URL$/Web/JavaScript/Reference/Global_Objects/Array\"><code>Array</code></a> indicating what can be done with the key. Possible array values are:\n<ul>\n<li><code>encrypt</code>: The key may be used to <a href=\"$MDN_URL$/Web/API/SubtleCrypto/encrypt\">encrypt</a> messages.</li>\n<li><code>decrypt</code>: The key may be used to <a href=\"$MDN_URL$/Web/API/SubtleCrypto/decrypt\">decrypt</a> messages.</li>\n<li><code>sign</code>: The key may be used to <a href=\"$MDN_URL$/Web/API/SubtleCrypto/sign\">sign</a> messages.</li>\n<li><code>verify</code>: The key may be used to <a href=\"$MDN_URL$/Web/API/SubtleCrypto/verify\">verify</a> signatures.</li>\n<li><code>deriveKey</code>: The key may be used in <a href=\"$MDN_URL$/Web/API/SubtleCrypto/deriveKey\">deriving a new key</a>.</li>\n<li><code>deriveBits</code>: The key may be used in <a href=\"$MDN_URL$/Web/API/SubtleCrypto/deriveBits\">deriving bits</a>.</li>\n<li><code>wrapKey</code>: The key may be used to <a href=\"$MDN_URL$/Web/API/SubtleCrypto/wrapKey\">wrap a key</a>.</li>\n<li><code>unwrapKey</code>: The key may be used to <a href=\"$MDN_URL$/Web/API/SubtleCrypto/unwrapKey\">unwrap a key</a>.</li>\n</ul>"
-      },
-      "returns": "A <a href=\"$MDN_URL$/Web/JavaScript/Reference/Global_Objects/Promise\"><code>Promise</code></a> that fulfills with the imported key as a <a href=\"$MDN_URL$/Web/API/CryptoKey\"><code>CryptoKey</code></a> object.",
-      "throws": {
-        "SyntaxError DOMException": "Raised when <code>keyUsages</code> is empty but the unwrapped key is of type <code>secret</code> or <code>private</code>.",
-        "TypeError": "Raised when trying to use an invalid format or if the <code>keyData</code> is not suited for that format."
-      }
-    },
     "subtlecrypto.sign": {
-      "url": "$MDN_URL$/web/api/subtlecrypto/sign",
-      "status": [
-        "StandardTrack"
-      ],
-      "compatibility": {
-        "Chrome": "37",
-        "ChromeAndroid": "37",
-        "Edge": "79",
-        "Firefox": "34",
-        "FirefoxAndroid": "34",
-        "Opera": "24",
-        "Safari": "11",
-        "SafariIOS": "11",
-        "Nodejs": "15.0.0",
-        "Deno": "1.12"
-      },
-      "baseline": {
-        "level": "HIGH",
-        "lowDate": "2020-01-15",
-        "highDate": "2022-07-15"
-      },
-      "doc": "<div class=\"notecard secure\"><p><strong>Secure context:</strong> This feature is available only in <a href=\"$MDN_URL$/Web/Security/Defenses/Secure_Contexts\">secure contexts</a> (HTTPS), in some or all <a href=\"#browser_compatibility\">supporting browsers</a>.</div>\n<div class=\"notecard note\"><p><strong>Note:</strong> This feature is available in <a href=\"$MDN_URL$/Web/API/Web_Workers_API\">Web Workers</a>.</div>\n<p>The <strong><code>sign()</code></strong> method of the <a href=\"$MDN_URL$/Web/API/SubtleCrypto\"><code>SubtleCrypto</code></a> interface generates a digital <a href=\"$MDN_URL$/Glossary/Signature\">signature</a>.\n<p>It takes as its arguments a <a href=\"$MDN_URL$/Glossary/Key\">key</a> to sign with, some algorithm-specific parameters, and the data to sign. It returns a <a href=\"$MDN_URL$/Web/JavaScript/Reference/Global_Objects/Promise\"><code>Promise</code></a> which will be fulfilled with the signature.\n<p>You can use the corresponding <a href=\"$MDN_URL$/Web/API/SubtleCrypto/verify\"><code>SubtleCrypto.verify()</code></a> method to verify the signature.",
-      "parameters": {
-        "algorithm": "A string or object that specifies the signature algorithm to use and its parameters:\n<ul>\n<li>To use <a href=\"#rsassa-pkcs1-v1_5\">RSASSA-PKCS1-v1_5</a>, pass the string <code>RSASSA-PKCS1-v1_5</code> or an object of the form <code>{ name: \"RSASSA-PKCS1-v1_5\" }</code>.</li>\n<li>To use <a href=\"#rsa-pss\">RSA-PSS</a>, pass an <a href=\"$MDN_URL$/Web/API/RsaPssParams\"><code>RsaPssParams</code></a> object.</li>\n<li>To use <a href=\"#ecdsa\">ECDSA</a>, pass an <a href=\"$MDN_URL$/Web/API/EcdsaParams\"><code>EcdsaParams</code></a> object.</li>\n<li>To use <a href=\"#hmac\">HMAC</a>, pass the string <code>HMAC</code> or an object of the form <code>{ name: \"HMAC\" }</code>.</li>\n<li>To use <a href=\"#ed25519\">Ed25519</a>, pass the string <code>Ed25519</code> or an object of the form <code>{ name: \"Ed25519\" }</code>.</li>\n</ul>",
-        "key": "A <a href=\"$MDN_URL$/Web/API/CryptoKey\"><code>CryptoKey</code></a> object containing the key to be used for signing.\nIf <code>algorithm</code> identifies a public-key cryptosystem, this is the private key.",
-        "data": "An <a href=\"$MDN_URL$/Web/JavaScript/Reference/Global_Objects/ArrayBuffer\"><code>ArrayBuffer</code></a>, a <a href=\"$MDN_URL$/Web/JavaScript/Reference/Global_Objects/TypedArray\"><code>TypedArray</code></a> or a <a href=\"$MDN_URL$/Web/JavaScript/Reference/Global_Objects/DataView\"><code>DataView</code></a> object containing the data to be signed."
-      },
-      "returns": "A <a href=\"$MDN_URL$/Web/JavaScript/Reference/Global_Objects/Promise\"><code>Promise</code></a> that fulfills with an <a href=\"$MDN_URL$/Web/JavaScript/Reference/Global_Objects/ArrayBuffer\"><code>ArrayBuffer</code></a> containing the signature.",
-      "throws": {
-        "InvalidAccessError DOMException": "Raised when the signing key is not a key for the request signing algorithm or when trying to use an algorithm that is either unknown or isn't suitable for signing."
-      }
-    },
-    "subtlecrypto.sign.sign": {
       "url": "$MDN_URL$/web/api/subtlecrypto/sign",
       "status": [
         "StandardTrack"
@@ -17755,40 +17619,6 @@
       }
     },
     "subtlecrypto.verify": {
-      "url": "$MDN_URL$/web/api/subtlecrypto/verify",
-      "status": [
-        "StandardTrack"
-      ],
-      "compatibility": {
-        "Chrome": "37",
-        "ChromeAndroid": "37",
-        "Edge": "79",
-        "Firefox": "34",
-        "FirefoxAndroid": "34",
-        "Opera": "24",
-        "Safari": "11",
-        "SafariIOS": "11",
-        "Nodejs": "15.0.0",
-        "Deno": "1.14"
-      },
-      "baseline": {
-        "level": "HIGH",
-        "lowDate": "2020-01-15",
-        "highDate": "2022-07-15"
-      },
-      "doc": "<div class=\"notecard secure\"><p><strong>Secure context:</strong> This feature is available only in <a href=\"$MDN_URL$/Web/Security/Defenses/Secure_Contexts\">secure contexts</a> (HTTPS), in some or all <a href=\"#browser_compatibility\">supporting browsers</a>.</div>\n<div class=\"notecard note\"><p><strong>Note:</strong> This feature is available in <a href=\"$MDN_URL$/Web/API/Web_Workers_API\">Web Workers</a>.</div>\n<p>The <strong><code>verify()</code></strong> method of the <a href=\"$MDN_URL$/Web/API/SubtleCrypto\"><code>SubtleCrypto</code></a>\ninterface verifies a digital <a href=\"$MDN_URL$/Glossary/Signature\">signature</a>.\n<p>It takes as its arguments a <a href=\"$MDN_URL$/Glossary/Key\">key</a> to verify the signature with, some algorithm-specific parameters, the signature, and the original signed data.\nIt returns a <a href=\"$MDN_URL$/Web/JavaScript/Reference/Global_Objects/Promise\"><code>Promise</code></a> which will be fulfilled with a boolean value indicating whether the signature is valid.",
-      "parameters": {
-        "algorithm": "A string or object defining the algorithm to use, and for some algorithm choices, some extra parameters.\nThe values given for the extra parameters must match those passed into the corresponding <a href=\"$MDN_URL$/Web/API/SubtleCrypto/sign\" ><code>sign()</code></a> call.\n<ul>\n<li>To use <a href=\"$MDN_URL$/Web/API/SubtleCrypto/sign#rsassa-pkcs1-v1_5\">RSASSA-PKCS1-v1_5</a>,\npass the string <code>\"RSASSA-PKCS1-v1_5\"</code> or an object of the form <code>{ \"name\": \"RSASSA-PKCS1-v1_5\" }</code>.</li>\n<li>To use <a href=\"$MDN_URL$/Web/API/SubtleCrypto/sign#rsa-pss\">RSA-PSS</a>, pass an <a href=\"$MDN_URL$/Web/API/RsaPssParams\"><code>RsaPssParams</code></a> object.</li>\n<li>To use <a href=\"$MDN_URL$/Web/API/SubtleCrypto/sign#ecdsa\">ECDSA</a>, pass an <a href=\"$MDN_URL$/Web/API/EcdsaParams\"><code>EcdsaParams</code></a> object.</li>\n<li>To use <a href=\"$MDN_URL$/Web/API/SubtleCrypto/sign#hmac\">HMAC</a>, pass the string <code>\"HMAC\"</code> or an object of the form <code>{ \"name\": \"HMAC\" }</code>.</li>\n<li>To use <a href=\"$MDN_URL$/Web/API/SubtleCrypto/sign#ed25519\">Ed25519</a>, pass an object of the form <code>{ \"name\": \"Ed25519\" }</code>.</li>\n</ul>",
-        "key": "A <a href=\"$MDN_URL$/Web/API/CryptoKey\"><code>CryptoKey</code></a> containing the key that will be used to verify the signature.\nIt is the secret key for a symmetric algorithm and the public key for a public-key system.",
-        "signature": "An <a href=\"$MDN_URL$/Web/JavaScript/Reference/Global_Objects/ArrayBuffer\"><code>ArrayBuffer</code></a> containing the <a href=\"$MDN_URL$/Glossary/Signature\">signature</a> to verify.",
-        "data": "An <a href=\"$MDN_URL$/Web/JavaScript/Reference/Global_Objects/ArrayBuffer\"><code>ArrayBuffer</code></a> containing the data whose signature is to be verified."
-      },
-      "returns": "A <a href=\"$MDN_URL$/Web/JavaScript/Reference/Global_Objects/Promise\"><code>Promise</code></a> that fulfills with a\nboolean value: <code>true</code> if the signature is valid, <code>false</code>\notherwise.",
-      "throws": {
-        "InvalidAccessError DOMException": "Raised when the encryption key is not a key for the requested verifying algorithm or when trying to use an algorithm that is either unknown or isn't suitable for a verify operation."
-      }
-    },
-    "subtlecrypto.verify.verify": {
       "url": "$MDN_URL$/web/api/subtlecrypto/verify",
       "status": [
         "StandardTrack"
@@ -18229,7 +18059,8 @@
         "SafariIOS": "26.2"
       },
       "baseline": {
-        "level": "NONE"
+        "level": "LOW",
+        "lowDate": "2026-01-21"
       },
       "doc": "The <strong><code>hreflang</code></strong> property of the <a href=\"$MDN_URL$/Web/API/SVGAElement\"><code>SVGAElement</code></a> interface returns a string indicating the language of the linked resource.\n<p>This property can be set, to change the URL's <code>hreflang</code> value. It reflects the value of the <a href=\"$MDN_URL$/Web/HTML/Reference/Elements/a#hreflang\"><code>hreflang</code></a> attribute."
     },
@@ -18389,7 +18220,8 @@
         "SafariIOS": "26.2"
       },
       "baseline": {
-        "level": "NONE"
+        "level": "LOW",
+        "lowDate": "2026-01-21"
       },
       "doc": "The <strong><code>type</code></strong> property of the <a href=\"$MDN_URL$/Web/API/SVGAElement\"><code>SVGAElement</code></a> interface returns a string indicating the MIME type of the linked resource.\n<p>This property can be set, to change the URL's <code>type</code> value. It reflects the value of the <a href=\"$MDN_URL$/Web/HTML/Reference/Elements/a#type\"><code>type</code></a> attribute."
     },
@@ -23038,91 +22870,6 @@
         "highDate": "2018-01-29"
       },
       "doc": "The <strong><code>result</code></strong> read-only property of the <a href=\"$MDN_URL$/Web/API/SVGFEImageElement\"><code>SVGFEImageElement</code></a> interface describes the assigned name of an SVG filter primitive as a <a href=\"$MDN_URL$/Web/API/SVGAnimatedString\"><code>SVGAnimatedString</code></a>.\n<p>It reflects the <a href=\"$MDN_URL$/Web/SVG/Reference/Attribute/result\"><code>result</code></a> attribute of the <a href=\"$MDN_URL$/Web/SVG/Reference/Element/feImage\"><code>&lt;feImage&gt;</code></a> element, which fetches image data from an external source and provides the pixel data as output. The attribute value is a <a href=\"$MDN_URL$/Web/CSS/Reference/Values/custom-ident\"><code>&lt;custom-ident&gt;</code></a>. If supplied, then graphics that result from processing this filter primitive can be referenced by an <a href=\"$MDN_URL$/Web/SVG/Reference/Attribute/in\"><code>in</code></a> attribute on a subsequent filter primitive within the same <a href=\"$MDN_URL$/Web/SVG/Reference/Element/filter\"><code>&lt;filter&gt;</code></a> element.\n<p>If no <code>result</code> attribute is defined, the filter's <code>result.baseVal</code> and <code>result.animVal</code> are empty strings, and the output of the <code>&lt;feImage&gt;</code> filter will only be available for re-use as the implicit input into the next filter primitive if that filter primitive provides no value for its <code>in</code> attribute."
-    },
-    "svgfeimageelement.svgfeimageelement": {
-      "url": "$MDN_URL$/web/api/svgfeimageelement",
-      "status": [
-        "StandardTrack"
-      ],
-      "compatibility": {
-        "Chrome": "5",
-        "ChromeAndroid": "18",
-        "Edge": "12",
-        "Firefox": "3",
-        "FirefoxAndroid": "4",
-        "Opera": "12.1",
-        "Safari": "6",
-        "SafariIOS": "6"
-      },
-      "baseline": {
-        "level": "HIGH",
-        "lowDate": "2015-07-29",
-        "highDate": "2018-01-29"
-      },
-      "doc": "The <strong><code>SVGFEImageElement</code></strong> interface corresponds to the <a href=\"$MDN_URL$/Web/SVG/Reference/Element/feImage\"><code>&lt;feImage&gt;</code></a> element."
-    },
-    "svgfeimageelement.svgfeimageelement.height": {
-      "url": "$MDN_URL$/web/api/svgfeimageelement/height",
-      "baseline": {
-        "level": "HIGH",
-        "lowDate": "2015-07-29",
-        "highDate": "2018-01-29"
-      },
-      "doc": "The <strong><code>height</code></strong> read-only property of the <a href=\"$MDN_URL$/Web/API/SVGFEImageElement\"><code>SVGFEImageElement</code></a> interface describes the vertical size of an SVG filter primitive as a <a href=\"$MDN_URL$/Web/API/SVGAnimatedLength\"><code>SVGAnimatedLength</code></a>.\n<p>It reflects the <a href=\"$MDN_URL$/Web/SVG/Reference/Attribute/height\"><code>height</code></a> attribute of the <a href=\"$MDN_URL$/Web/SVG/Reference/Element/feImage\"><code>&lt;feImage&gt;</code></a> element, which fetches image data from an external source and provides the pixel data as output. The attribute is a <a href=\"$MDN_URL$/Web/SVG/Guides/Content_type#length\"><code>&lt;length&gt;</code></a> or a <a href=\"$MDN_URL$/Web/SVG/Guides/Content_type#percentage\"><code>&lt;percentage&gt;</code></a> relative to the height of the filter region. The default value is <code>100%</code>. The property value is a length in user coordinate system units."
-    },
-    "svgfeimageelement.svgfeimageelement.href": {
-      "url": "$MDN_URL$/web/api/svgfeimageelement/href",
-      "baseline": {
-        "level": "HIGH",
-        "lowDate": "2015-07-29",
-        "highDate": "2018-01-29"
-      },
-      "doc": "The <strong><code>href</code></strong> read-only property of the <a href=\"$MDN_URL$/Web/API/SVGFEImageElement\"><code>SVGFEImageElement</code></a> interface reflects the <a href=\"$MDN_URL$/Web/SVG/Reference/Attribute/href\"><code>href</code></a> or <a href=\"$MDN_URL$/Web/SVG/Reference/Attribute/xlink:href\"><code>xlink:href</code></a>  attribute of the given <a href=\"$MDN_URL$/Web/SVG/Reference/Element/feImage\"><code>&lt;feImage&gt;</code></a> element."
-    },
-    "svgfeimageelement.svgfeimageelement.preserveaspectratio": {
-      "url": "$MDN_URL$/web/api/svgfeimageelement/preserveaspectratio",
-      "baseline": {
-        "level": "HIGH",
-        "lowDate": "2015-07-29",
-        "highDate": "2018-01-29"
-      },
-      "doc": "The <strong><code>preserveAspectRatio</code></strong> read-only property of the <a href=\"$MDN_URL$/Web/API/SVGFEImageElement\"><code>SVGFEImageElement</code></a> interface reflects the <a href=\"$MDN_URL$/Web/SVG/Reference/Attribute/preserveAspectRatio\"><code>preserveAspectRatio</code></a> attribute of the given <a href=\"$MDN_URL$/Web/SVG/Reference/Element/feImage\"><code>&lt;feImage&gt;</code></a> element."
-    },
-    "svgfeimageelement.svgfeimageelement.result": {
-      "url": "$MDN_URL$/web/api/svgfeimageelement/result",
-      "baseline": {
-        "level": "HIGH",
-        "lowDate": "2015-07-29",
-        "highDate": "2018-01-29"
-      },
-      "doc": "The <strong><code>result</code></strong> read-only property of the <a href=\"$MDN_URL$/Web/API/SVGFEImageElement\"><code>SVGFEImageElement</code></a> interface describes the assigned name of an SVG filter primitive as a <a href=\"$MDN_URL$/Web/API/SVGAnimatedString\"><code>SVGAnimatedString</code></a>.\n<p>It reflects the <a href=\"$MDN_URL$/Web/SVG/Reference/Attribute/result\"><code>result</code></a> attribute of the <a href=\"$MDN_URL$/Web/SVG/Reference/Element/feImage\"><code>&lt;feImage&gt;</code></a> element, which fetches image data from an external source and provides the pixel data as output. The attribute value is a <a href=\"$MDN_URL$/Web/CSS/Reference/Values/custom-ident\"><code>&lt;custom-ident&gt;</code></a>. If supplied, then graphics that result from processing this filter primitive can be referenced by an <a href=\"$MDN_URL$/Web/SVG/Reference/Attribute/in\"><code>in</code></a> attribute on a subsequent filter primitive within the same <a href=\"$MDN_URL$/Web/SVG/Reference/Element/filter\"><code>&lt;filter&gt;</code></a> element.\n<p>If no <code>result</code> attribute is defined, the filter's <code>result.baseVal</code> and <code>result.animVal</code> are empty strings, and the output of the <code>&lt;feImage&gt;</code> filter will only be available for re-use as the implicit input into the next filter primitive if that filter primitive provides no value for its <code>in</code> attribute."
-    },
-    "svgfeimageelement.svgfeimageelement.width": {
-      "url": "$MDN_URL$/web/api/svgfeimageelement/width",
-      "baseline": {
-        "level": "HIGH",
-        "lowDate": "2015-07-29",
-        "highDate": "2018-01-29"
-      },
-      "doc": "The <strong><code>width</code></strong> read-only property of the <a href=\"$MDN_URL$/Web/API/SVGFEImageElement\"><code>SVGFEImageElement</code></a> interface describes the horizontal size of an SVG filter primitive as a <a href=\"$MDN_URL$/Web/API/SVGAnimatedLength\"><code>SVGAnimatedLength</code></a>.\n<p>It reflects the <a href=\"$MDN_URL$/Web/SVG/Reference/Attribute/width\"><code>width</code></a> attribute of the <a href=\"$MDN_URL$/Web/SVG/Reference/Element/feImage\"><code>&lt;feImage&gt;</code></a> element, which fetches image data from an external source and provides the pixel data as output. The attribute is a <a href=\"$MDN_URL$/Web/SVG/Guides/Content_type#length\"><code>&lt;length&gt;</code></a> or a <a href=\"$MDN_URL$/Web/SVG/Guides/Content_type#percentage\"><code>&lt;percentage&gt;</code></a> relative to the width of the filter region. The default value is <code>100%</code>. The property value is a length in user coordinate system units."
-    },
-    "svgfeimageelement.svgfeimageelement.x": {
-      "url": "$MDN_URL$/web/api/svgfeimageelement/x",
-      "baseline": {
-        "level": "HIGH",
-        "lowDate": "2015-07-29",
-        "highDate": "2018-01-29"
-      },
-      "doc": "The <strong><code>x</code></strong> read-only property of the <a href=\"$MDN_URL$/Web/API/SVGFEImageElement\"><code>SVGFEImageElement</code></a> interface describes the horizontal coordinate of the position of an SVG filter primitive as a <a href=\"$MDN_URL$/Web/API/SVGAnimatedLength\"><code>SVGAnimatedLength</code></a>.\n<p>It reflects the <a href=\"$MDN_URL$/Web/SVG/Reference/Attribute/x\"><code>x</code></a> attribute of the <a href=\"$MDN_URL$/Web/SVG/Reference/Element/feImage\"><code>&lt;feImage&gt;</code></a> element, which fetches image data from an external source and provides the pixel data as output. The attribute is a <a href=\"$MDN_URL$/Web/SVG/Guides/Content_type#length\"><code>&lt;length&gt;</code></a> or <a href=\"$MDN_URL$/Web/SVG/Guides/Content_type#percentage\"><code>&lt;percentage&gt;</code></a>. The <code>&lt;coordinate&gt;</code> is a length in the user coordinate system that is the given distance from the origin of the user coordinate system along the x-axis. If the <code>x</code> attribute is a percent value, the property value is relative to the width of the filter region in user coordinate system units. The default value is <code>0</code>."
-    },
-    "svgfeimageelement.svgfeimageelement.y": {
-      "url": "$MDN_URL$/web/api/svgfeimageelement/y",
-      "baseline": {
-        "level": "HIGH",
-        "lowDate": "2015-07-29",
-        "highDate": "2018-01-29"
-      },
-      "doc": "The <strong><code>y</code></strong> read-only property of the <a href=\"$MDN_URL$/Web/API/SVGFEImageElement\"><code>SVGFEImageElement</code></a> interface describes the vertical coordinate of the position of an SVG filter primitive as a <a href=\"$MDN_URL$/Web/API/SVGAnimatedLength\"><code>SVGAnimatedLength</code></a>.\n<p>It reflects the <a href=\"$MDN_URL$/Web/SVG/Reference/Attribute/y\"><code>y</code></a> attribute of the <a href=\"$MDN_URL$/Web/SVG/Reference/Element/feImage\"><code>&lt;feImage&gt;</code></a> element, which fetches image data from an external source and provides the pixel data as output. The attribute is a <a href=\"$MDN_URL$/Web/SVG/Guides/Content_type#length\"><code>&lt;length&gt;</code></a> or <a href=\"$MDN_URL$/Web/SVG/Guides/Content_type#percentage\"><code>&lt;percentage&gt;</code></a>. The <code>&lt;coordinate&gt;</code> is a length in the user coordinate system that is the given distance from the origin of the filter along the y-axis. If the <code>y</code> attribute is a percent value, the property value is a relative to the height of the filter region in user coordinate system units. The default value is <code>0</code>."
     },
     "svgfeimageelement.width": {
       "url": "$MDN_URL$/web/api/svgfeimageelement/width",
@@ -32562,8 +32309,9 @@
         "SafariIOS": "11.3"
       },
       "baseline": {
-        "level": "LOW",
-        "lowDate": "2023-08-01"
+        "level": "HIGH",
+        "lowDate": "2023-08-01",
+        "highDate": "2026-02-01"
       },
       "doc": "<div class=\"notecard note\"><p><strong>Note:</strong> This feature is available in <a href=\"$MDN_URL$/Web/API/Web_Workers_API\">Web Workers</a>.</div>\n<p>The read-only <code>fontBoundingBoxAscent</code> property of the <a href=\"$MDN_URL$/Web/API/TextMetrics\"><code>TextMetrics</code></a> interface returns the distance from the horizontal line indicated by the <a href=\"$MDN_URL$/Web/API/CanvasRenderingContext2D/textBaseline\"><code>CanvasRenderingContext2D.textBaseline</code></a> attribute, to the top of the highest bounding rectangle of all the fonts used to render the text, in CSS pixels."
     },
@@ -32583,8 +32331,9 @@
         "SafariIOS": "11.3"
       },
       "baseline": {
-        "level": "LOW",
-        "lowDate": "2023-08-01"
+        "level": "HIGH",
+        "lowDate": "2023-08-01",
+        "highDate": "2026-02-01"
       },
       "doc": "<div class=\"notecard note\"><p><strong>Note:</strong> This feature is available in <a href=\"$MDN_URL$/Web/API/Web_Workers_API\">Web Workers</a>.</div>\n<p>The read-only <code>fontBoundingBoxDescent</code> property of the <a href=\"$MDN_URL$/Web/API/TextMetrics\"><code>TextMetrics</code></a> interface returns the distance from the horizontal line indicated by the <a href=\"$MDN_URL$/Web/API/CanvasRenderingContext2D/textBaseline\"><code>CanvasRenderingContext2D.textBaseline</code></a> attribute to the bottom of the bounding rectangle of all the fonts used to render the text, in CSS pixels."
     },
@@ -32935,7 +32684,7 @@
         "lowDate": "2015-07-29",
         "highDate": "2018-01-29"
       },
-      "doc": "The <strong><code>TextTrackCue</code></strong> interface of the <a href=\"$MDN_URL$/Web/API/WebVTT_API\">WebVTT API</a> is the abstract base class for the various derived cue types, such as <a href=\"$MDN_URL$/Web/API/VTTCue\"><code>VTTCue</code></a>; you will work with these derived types rather than the base class.\n<p>These cues represent strings of text presented for some duration of time during the performance of a <a href=\"$MDN_URL$/Web/API/TextTrack\"><code>TextTrack</code></a>. The cue includes the start time (the time at which the text will be displayed) and the end time (the time at which it will be removed from the display), as well as other information."
+      "doc": "The <strong><code>TextTrackCue</code></strong> interface of the <a href=\"$MDN_URL$/Web/API/WebVTT_API\">WebVTT API</a> is the abstract base class for the various derived cue types, such as <a href=\"$MDN_URL$/Web/API/VTTCue\"><code>VTTCue</code></a> and <a href=\"$MDN_URL$/Web/API/DataCue\"><code>DataCue</code></a>; you will work with these derived types rather than the base class.\n<p>These cues represent strings of text presented for some duration of time during the performance of a <a href=\"$MDN_URL$/Web/API/TextTrack\"><code>TextTrack</code></a>. The cue includes the start time (the time at which the text will be displayed) and the end time (the time at which it will be removed from the display), as well as other information."
     },
     "texttrackcue.endtime": {
       "url": "$MDN_URL$/web/api/texttrackcue/endtime",
@@ -33550,6 +33299,32 @@
       },
       "doc": "The <strong><code>Touch</code></strong> interface represents a single contact point on a touch-sensitive device. The contact point is commonly a finger or stylus and the device may be a touchscreen or trackpad.\n<p>The <a href=\"$MDN_URL$/Web/API/Touch/radiusX\"><code>Touch.radiusX</code></a>, <a href=\"$MDN_URL$/Web/API/Touch/radiusY\"><code>Touch.radiusY</code></a>, and <a href=\"$MDN_URL$/Web/API/Touch/rotationAngle\"><code>Touch.rotationAngle</code></a> describe the area of contact between the user and the screen, the <em>touch area</em>. This can be helpful when dealing with imprecise pointing devices such as fingers. These values are set to describe an ellipse that as closely as possible matches the entire area of contact (such as the user's fingertip).\n<div class=\"notecard note\">\n<p><strong>Note:</strong>\nMany of the properties' values are hardware-dependent; for example, if the device doesn't have a way to detect the amount of pressure placed on the surface, the <code>force</code> value will always be 0. This may also be the case for <code>radiusX</code> and <code>radiusY</code>; if the hardware reports only a single point, these values will be 1.\n</div>"
     },
+    "touch.altitudeangle": {
+      "url": "$MDN_URL$/web/api/touch/altitudeangle",
+      "status": [
+        "StandardTrack"
+      ],
+      "compatibility": {
+        "SafariIOS": "10"
+      },
+      "baseline": {
+        "level": "NONE"
+      },
+      "doc": "The <strong><code>altitudeAngle</code></strong> read-only property of the <a href=\"$MDN_URL$/Web/API/Touch\"><code>Touch</code></a> interface returns the angle between a transducer (a pointer or stylus) axis and the X-Y plane of a device screen. The altitude angle describes whether the transducer is perpendicular to the screen, parallel, or at some angle in between.\n<div class=\"notecard note\">\n<p><strong>Note:</strong>\nThe default value of <code>altitudeAngle</code> is <code>0</code> (parallel to the device surface), which differs from the <a href=\"$MDN_URL$/Web/API/PointerEvent/altitudeAngle\"><code>PointerEvent.altitudeAngle</code></a> property, which defaults to <code>π/2</code> (perpendicular to the surface).\n</div>\n<p>For hardware and platforms that do not report tilt or angle, the value is <code>0</code>."
+    },
+    "touch.azimuthangle": {
+      "url": "$MDN_URL$/web/api/touch/azimuthangle",
+      "status": [
+        "StandardTrack"
+      ],
+      "compatibility": {
+        "SafariIOS": "10"
+      },
+      "baseline": {
+        "level": "NONE"
+      },
+      "doc": "The <strong><code>azimuthAngle</code></strong> read-only property of the <a href=\"$MDN_URL$/Web/API/Touch\"><code>Touch</code></a> interface returns the angle between the Y-Z plane and the plane containing both the transducer (pointer or stylus) axis and the Y axis. This represents the compass direction that the transducer is pointing in relative to the device surface.\n<p>For hardware and platforms that do not report tilt or angle, the value is <code>0</code>. When the transducer is perpendicular to the surface (<a href=\"$MDN_URL$/Web/API/Touch/altitudeAngle\" ><code>altitudeAngle</code></a> of <code>π/2</code>), the value is <code>0</code>."
+    },
     "touch.clientx": {
       "url": "$MDN_URL$/web/api/touch/clientx",
       "status": [
@@ -33786,6 +33561,19 @@
       "parameters": {
         "touchInit": "An object with the following fields:\n<dl>\n<dt id=\"identifier\"><a href=\"#identifier\"><code>identifier</code></a></dt>\n<dd>\n<p>A <code>long</code> value, that is the identification number for the touch point.\n</dd>\n<dt id=\"target\"><a href=\"#target\"><code>target</code></a></dt>\n<dd>\n<p>An <a href=\"$MDN_URL$/Web/API/EventTarget\"><code>EventTarget</code></a> object, the item at which the touch point started when it was first placed on the surface.\n</dd>\n<dt id=\"clientx\"><a href=\"#clientx\"><code>clientX</code> <span class=\"badge inline optional\">Optional</span></a></dt>\n<dd>\n<p>Defaults to <code>0</code>, of type <code>double</code>, that is the horizontal position of the touch on the client window of user's screen, excluding any scroll offset.\n</dd>\n<dt id=\"clienty\"><a href=\"#clienty\"><code>clientY</code> <span class=\"badge inline optional\">Optional</span></a></dt>\n<dd>\n<p>Defaults to <code>0</code>, of type <code>double</code>, that is the vertical position of the touch on the client window of the user's screen, excluding any scroll offset.\n</dd>\n<dt id=\"screenx\"><a href=\"#screenx\"><code>screenX</code> <span class=\"badge inline optional\">Optional</span></a></dt>\n<dd>\n<p>Defaults to <code>0</code>, of type <code>double</code>, that is the horizontal position of the touch on the user's screen.\n</dd>\n<dt id=\"screeny\"><a href=\"#screeny\"><code>screenY</code> <span class=\"badge inline optional\">Optional</span></a></dt>\n<dd>\n<p>Defaults to <code>0</code>, of type <code>double</code>, that is the vertical position of the touch on the user's screen.\n</dd>\n<dt id=\"pagex\"><a href=\"#pagex\"><code>pageX</code> <span class=\"badge inline optional\">Optional</span></a></dt>\n<dd>\n<p>Defaults to <code>0</code>, of type <code>double</code>, that is the horizontal position of the touch on the client window of user's screen, including any scroll offset.\n</dd>\n<dt id=\"pagey\"><a href=\"#pagey\"><code>pageY</code> <span class=\"badge inline optional\">Optional</span></a></dt>\n<dd>\n<p>Defaults to <code>0</code>, of type <code>double</code>, that is the vertical position of the touch on the client window of the user's screen, including any scroll offset.\n</dd>\n<dt id=\"radiusx\"><a href=\"#radiusx\"><code>radiusX</code> <span class=\"badge inline optional\">Optional</span></a></dt>\n<dd>\n<p>Defaults to <code>0</code>, of type <code>float</code>, that is the radius of the ellipse which most closely circumscribes the touching area (e.g., finger, stylus) along the axis indicated by rotationAngle, in CSS pixels of the same scale as screenX; <code>0</code> if no value is known. The value must not be negative.\n</dd>\n<dt id=\"radiusy\"><a href=\"#radiusy\"><code>radiusY</code> <span class=\"badge inline optional\">Optional</span></a></dt>\n<dd>\n<p>Defaults to <code>0</code>, of type <code>float</code>, that is the radius of the ellipse which most closely circumscribes the touching area (e.g., finger, stylus) along the axis perpendicular to that indicated by rotationAngle, in CSS pixels of the same scale as screenY; <code>0</code> if no value is known. The value must not be negative.\n</dd>\n<dt id=\"rotationangle\"><a href=\"#rotationangle\"><code>rotationAngle</code> <span class=\"badge inline optional\">Optional</span></a></dt>\n<dd>\n<p>Defaults to <code>0</code>, of type <code>float</code>, that is the angle (in degrees) that the ellipse described by radiusX and radiusY is rotated clockwise about its center; <code>0</code> if no value is known. The value must be greater than or equal to <code>0</code> and less than <code>90</code>. If the ellipse described by radiusX and radiusY is circular, then rotationAngle has no effect. The user agent may use <code>0</code> as the value in this case, or it may use any other value in the allowed range. (For example, the user agent may use the rotationAngle value from the previous touch event, to avoid sudden changes.).\n</dd>\n<dt id=\"force\"><a href=\"#force\"><code>force</code> <span class=\"badge inline optional\">Optional</span></a></dt>\n<dd>\n<p>Defaults to <code>0</code>, of type <code>float</code>, that is the relative value of pressure applied, in the range <code>0</code> to <code>1</code>, where <code>0</code> is no pressure, and <code>1</code> is the highest level of pressure the touch device is capable of sensing; <code>0</code> if no value is known. In environments where force is known, the absolute pressure represented by the force attribute, and the sensitivity in levels of pressure, may vary.\n</dd>\n</dl>"
       }
+    },
+    "touch.touchtype": {
+      "url": "$MDN_URL$/web/api/touch/touchtype",
+      "status": [
+        "StandardTrack"
+      ],
+      "compatibility": {
+        "SafariIOS": "10"
+      },
+      "baseline": {
+        "level": "NONE"
+      },
+      "doc": "The <strong><code>touchType</code></strong> read-only property of the <a href=\"$MDN_URL$/Web/API/Touch\"><code>Touch</code></a> interface returns the type of device that triggered the touch, such as a stylus, or direct touch from a finger."
     },
     "touchevent": {
       "url": "$MDN_URL$/web/api/touchevent",
@@ -34450,6 +34238,9 @@
         "Chrome": "138",
         "Opera": "122"
       },
+      "baseline": {
+        "level": "NONE"
+      },
       "doc": "<div class=\"notecard experimental\"><p><strong>Experimental:</strong> <strong>This is an <a href=\"$MDN_URL$/MDN/Writing_guidelines/Experimental_deprecated_obsolete#experimental\">experimental technology</a></strong><br>Check the <a href=\"#browser_compatibility\">Browser compatibility table</a> carefully before using this in production.</div>\n<div class=\"notecard secure\"><p><strong>Secure context:</strong> This feature is available only in <a href=\"$MDN_URL$/Web/Security/Defenses/Secure_Contexts\">secure contexts</a> (HTTPS), in some or all <a href=\"#browser_compatibility\">supporting browsers</a>.</div>\n<p>The <strong><code>Translator</code></strong> interface of the <a href=\"$MDN_URL$/Web/API/Translator_and_Language_Detector_APIs\" >Translator and Language Detector APIs</a> contains all the associated translation functionality, including checking AI model availability, creating a new <code>Translator</code> instance, using it to create a translation, and more."
     },
     "translator.availability": {
@@ -34461,6 +34252,9 @@
       "compatibility": {
         "Chrome": "138",
         "Opera": "122"
+      },
+      "baseline": {
+        "level": "NONE"
       },
       "doc": "<div class=\"notecard experimental\"><p><strong>Experimental:</strong> <strong>This is an <a href=\"$MDN_URL$/MDN/Writing_guidelines/Experimental_deprecated_obsolete#experimental\">experimental technology</a></strong><br>Check the <a href=\"#browser_compatibility\">Browser compatibility table</a> carefully before using this in production.</div>\n<div class=\"notecard secure\"><p><strong>Secure context:</strong> This feature is available only in <a href=\"$MDN_URL$/Web/Security/Defenses/Secure_Contexts\">secure contexts</a> (HTTPS), in some or all <a href=\"#browser_compatibility\">supporting browsers</a>.</div>\n<p>The <strong><code>availability()</code></strong> static method of the <a href=\"$MDN_URL$/Web/API/Translator\"><code>Translator</code></a> interface returns an enumerated value that indicates the availability of the AI model for the given <code>Translator</code> configuration.",
       "parameters": {
@@ -34482,6 +34276,9 @@
       "compatibility": {
         "Chrome": "138",
         "Opera": "122"
+      },
+      "baseline": {
+        "level": "NONE"
       },
       "doc": "<div class=\"notecard experimental\"><p><strong>Experimental:</strong> <strong>This is an <a href=\"$MDN_URL$/MDN/Writing_guidelines/Experimental_deprecated_obsolete#experimental\">experimental technology</a></strong><br>Check the <a href=\"#browser_compatibility\">Browser compatibility table</a> carefully before using this in production.</div>\n<div class=\"notecard secure\"><p><strong>Secure context:</strong> This feature is available only in <a href=\"$MDN_URL$/Web/Security/Defenses/Secure_Contexts\">secure contexts</a> (HTTPS), in some or all <a href=\"#browser_compatibility\">supporting browsers</a>.</div>\n<p>The <strong><code>create()</code></strong> static method of the <a href=\"$MDN_URL$/Web/API/Translator\"><code>Translator</code></a> interface creates a new <code>Translator</code> instance that can be used to translate text.\n<div class=\"notecard note\">\n<p><strong>Note:</strong>\nThe <code>create()</code> method requires <a href=\"$MDN_URL$/Glossary/Transient_activation\">transient activation</a>, that is, it must be invoked in response to a user action such as a mouse click or button press.\n</div>",
       "parameters": {
@@ -34506,6 +34303,9 @@
         "Chrome": "138",
         "Opera": "122"
       },
+      "baseline": {
+        "level": "NONE"
+      },
       "doc": "<div class=\"notecard experimental\"><p><strong>Experimental:</strong> <strong>This is an <a href=\"$MDN_URL$/MDN/Writing_guidelines/Experimental_deprecated_obsolete#experimental\">experimental technology</a></strong><br>Check the <a href=\"#browser_compatibility\">Browser compatibility table</a> carefully before using this in production.</div>\n<div class=\"notecard secure\"><p><strong>Secure context:</strong> This feature is available only in <a href=\"$MDN_URL$/Web/Security/Defenses/Secure_Contexts\">secure contexts</a> (HTTPS), in some or all <a href=\"#browser_compatibility\">supporting browsers</a>.</div>\n<p>The <strong><code>destroy()</code></strong> method of the <a href=\"$MDN_URL$/Web/API/Translator\"><code>Translator</code></a> interface releases the resources assigned to the <code>Translator</code> instance it is called on and stops any further activity on it. This means that any ongoing and subsequent method calls made on the <code>Translator</code> will reject with an <code>AbortError</code>.\n<p>It makes sense to destroy <code>Translator</code> objects if they are no longer being used, as they tie up significant resources in their handling.",
       "returns": "None (<a href=\"$MDN_URL$/Web/JavaScript/Reference/Global_Objects/undefined\"><code>undefined</code></a>)."
     },
@@ -34519,6 +34319,9 @@
         "Chrome": "138",
         "Opera": "122"
       },
+      "baseline": {
+        "level": "NONE"
+      },
       "doc": "<div class=\"notecard experimental\"><p><strong>Experimental:</strong> <strong>This is an <a href=\"$MDN_URL$/MDN/Writing_guidelines/Experimental_deprecated_obsolete#experimental\">experimental technology</a></strong><br>Check the <a href=\"#browser_compatibility\">Browser compatibility table</a> carefully before using this in production.</div>\n<div class=\"notecard secure\"><p><strong>Secure context:</strong> This feature is available only in <a href=\"$MDN_URL$/Web/Security/Defenses/Secure_Contexts\">secure contexts</a> (HTTPS), in some or all <a href=\"#browser_compatibility\">supporting browsers</a>.</div>\n<p>The <strong><code>inputQuota</code></strong> read-only property of the <a href=\"$MDN_URL$/Web/API/Translator\"><code>Translator</code></a> interface returns the input quota available to the browser for generating translations."
     },
     "translator.measureinputusage": {
@@ -34530,6 +34333,9 @@
       "compatibility": {
         "Chrome": "138",
         "Opera": "122"
+      },
+      "baseline": {
+        "level": "NONE"
       },
       "doc": "<div class=\"notecard experimental\"><p><strong>Experimental:</strong> <strong>This is an <a href=\"$MDN_URL$/MDN/Writing_guidelines/Experimental_deprecated_obsolete#experimental\">experimental technology</a></strong><br>Check the <a href=\"#browser_compatibility\">Browser compatibility table</a> carefully before using this in production.</div>\n<div class=\"notecard secure\"><p><strong>Secure context:</strong> This feature is available only in <a href=\"$MDN_URL$/Web/Security/Defenses/Secure_Contexts\">secure contexts</a> (HTTPS), in some or all <a href=\"#browser_compatibility\">supporting browsers</a>.</div>\n<p>The <strong><code>measureInputUsage()</code></strong> method of the <a href=\"$MDN_URL$/Web/API/Translator\"><code>Translator</code></a> interface reports how much input quota would be used by a translation operation for a given text input.",
       "parameters": {
@@ -34553,6 +34359,9 @@
         "Chrome": "138",
         "Opera": "122"
       },
+      "baseline": {
+        "level": "NONE"
+      },
       "doc": "<div class=\"notecard experimental\"><p><strong>Experimental:</strong> <strong>This is an <a href=\"$MDN_URL$/MDN/Writing_guidelines/Experimental_deprecated_obsolete#experimental\">experimental technology</a></strong><br>Check the <a href=\"#browser_compatibility\">Browser compatibility table</a> carefully before using this in production.</div>\n<div class=\"notecard secure\"><p><strong>Secure context:</strong> This feature is available only in <a href=\"$MDN_URL$/Web/Security/Defenses/Secure_Contexts\">secure contexts</a> (HTTPS), in some or all <a href=\"#browser_compatibility\">supporting browsers</a>.</div>\n<p>The <strong><code>sourceLanguage</code></strong> read-only property of the <a href=\"$MDN_URL$/Web/API/Translator\"><code>Translator</code></a> interface returns the expected language of the input text to be translated.\n<p>A <code>Translator</code> instance's <code>sourceLanguage</code> is set when creating it via a <a href=\"$MDN_URL$/Web/API/Translator/create_static\" ><code>create()</code></a> call."
     },
     "translator.targetlanguage": {
@@ -34565,6 +34374,9 @@
         "Chrome": "138",
         "Opera": "122"
       },
+      "baseline": {
+        "level": "NONE"
+      },
       "doc": "<div class=\"notecard experimental\"><p><strong>Experimental:</strong> <strong>This is an <a href=\"$MDN_URL$/MDN/Writing_guidelines/Experimental_deprecated_obsolete#experimental\">experimental technology</a></strong><br>Check the <a href=\"#browser_compatibility\">Browser compatibility table</a> carefully before using this in production.</div>\n<div class=\"notecard secure\"><p><strong>Secure context:</strong> This feature is available only in <a href=\"$MDN_URL$/Web/Security/Defenses/Secure_Contexts\">secure contexts</a> (HTTPS), in some or all <a href=\"#browser_compatibility\">supporting browsers</a>.</div>\n<p>The <strong><code>targetLanguage</code></strong> read-only property of the <a href=\"$MDN_URL$/Web/API/Translator\"><code>Translator</code></a> interface returns the language that the input text will be translated into.\n<p>A <code>Translator</code> instance's <code>targetLanguage</code> is set when creating it via a <a href=\"$MDN_URL$/Web/API/Translator/create_static\" ><code>create()</code></a> call."
     },
     "translator.translate": {
@@ -34576,6 +34388,9 @@
       "compatibility": {
         "Chrome": "138",
         "Opera": "122"
+      },
+      "baseline": {
+        "level": "NONE"
       },
       "doc": "<div class=\"notecard experimental\"><p><strong>Experimental:</strong> <strong>This is an <a href=\"$MDN_URL$/MDN/Writing_guidelines/Experimental_deprecated_obsolete#experimental\">experimental technology</a></strong><br>Check the <a href=\"#browser_compatibility\">Browser compatibility table</a> carefully before using this in production.</div>\n<div class=\"notecard secure\"><p><strong>Secure context:</strong> This feature is available only in <a href=\"$MDN_URL$/Web/Security/Defenses/Secure_Contexts\">secure contexts</a> (HTTPS), in some or all <a href=\"#browser_compatibility\">supporting browsers</a>.</div>\n<p>The <strong><code>translate()</code></strong> method of the <a href=\"$MDN_URL$/Web/API/Translator\"><code>Translator</code></a> interface returns a translation of an input string.",
       "parameters": {
@@ -34598,6 +34413,9 @@
       "compatibility": {
         "Chrome": "138",
         "Opera": "122"
+      },
+      "baseline": {
+        "level": "NONE"
       },
       "doc": "<div class=\"notecard experimental\"><p><strong>Experimental:</strong> <strong>This is an <a href=\"$MDN_URL$/MDN/Writing_guidelines/Experimental_deprecated_obsolete#experimental\">experimental technology</a></strong><br>Check the <a href=\"#browser_compatibility\">Browser compatibility table</a> carefully before using this in production.</div>\n<div class=\"notecard secure\"><p><strong>Secure context:</strong> This feature is available only in <a href=\"$MDN_URL$/Web/Security/Defenses/Secure_Contexts\">secure contexts</a> (HTTPS), in some or all <a href=\"#browser_compatibility\">supporting browsers</a>.</div>\n<p>The <strong><code>translateStreaming()</code></strong> method of the <a href=\"$MDN_URL$/Web/API/Translator\"><code>Translator</code></a> interface generates a translation as a <a href=\"$MDN_URL$/Web/API/ReadableStream\"><code>ReadableStream</code></a>.",
       "parameters": {
