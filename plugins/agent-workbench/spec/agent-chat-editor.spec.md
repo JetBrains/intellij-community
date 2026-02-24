@@ -80,7 +80,7 @@ Define how Agent chat tabs are opened, restored, reused, and rendered in editor 
 - Reopening an already-open tab with a newer thread title must update existing tab presentation.
   [@test] ../chat/testSrc/AgentChatEditorServiceTest.kt
 
-- Editor tab icon must be provider-specific using canonical identity and must include activity badge mapping; unknown provider must use default chat icon and unknown activity must default to `READY`.
+- Editor tab icon must be provider-specific using canonical identity; `READY` is unbadged, non-`READY` activities use the activity badge mapping, unknown provider uses the default chat icon, and unknown activity defaults to `READY`.
   [@test] ../chat/testSrc/AgentChatFileEditorProviderTest.kt
 
 - Provider icon lookup in chat/editor tab providers must use shared typed icon holder (`AgentWorkbenchCommonIcons`), not inline path-based icon loading.

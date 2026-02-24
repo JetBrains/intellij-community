@@ -7,8 +7,7 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 
-@Service(Service.Level.APP)
-class AgentSessionsStateStore {
+internal class AgentSessionsStateStore {
   private val mutableState = MutableStateFlow(AgentSessionsState())
   val state: StateFlow<AgentSessionsState> = mutableState.asStateFlow()
 
@@ -58,9 +57,8 @@ class AgentSessionsStateStore {
 
   fun showMoreThreads(path: String) {
     val normalizedPath = normalizeAgentWorkbenchPath(path)
-    var deltaToPersist = 0
     mutableState.update { state ->
-      val current = state.visibleThreadCounts[normalizedPath] ?: treeUiState.getVisibleThreadCount(normalizedPath)
+      val current = state.visibleThreadCounts[normalizedPath] ?: DEFAULT_VISIBLE_THREAD_COUNT
       val nextVisible = current + DEFAULT_VISIBLE_THREAD_COUNT
       state.copy(visibleThreadCounts = state.visibleThreadCounts + (normalizedPath to nextVisible))
     }
@@ -68,7 +66,6 @@ class AgentSessionsStateStore {
 
   fun ensureThreadVisible(path: String, provider: AgentSessionProvider, threadId: String) {
     val normalizedPath = normalizeAgentWorkbenchPath(path)
-    var deltaToPersist = 0
     mutableState.update { state ->
       val threadIndex = findThreadIndex(
         projects = state.projects,
@@ -86,9 +83,6 @@ class AgentSessionsStateStore {
         nextVisible += DEFAULT_VISIBLE_THREAD_COUNT
       }
       state.copy(visibleThreadCounts = state.visibleThreadCounts + (normalizedPath to nextVisible))
-    }
-    if (deltaToPersist > 0) {
-      treeUiState.incrementVisibleThreadCount(normalizedPath, deltaToPersist)
     }
   }
 

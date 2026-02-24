@@ -6,7 +6,6 @@ targets:
   - ../codex/common/src/CodexAppServerClient.kt
   - ../sessions/src/CodexSessionsCompatibility.kt
   - ../sessions/src/AgentSessionModels.kt
-  - ../sessions/src/SessionTreeStyle.kt
   - ../sessions/src/AgentSessionsService.kt
   - ../codex/sessions/testSrc/*.kt
   - ../sessions/testSrc/CodexAppServerClientTest.kt
@@ -15,7 +14,7 @@ targets:
 # Codex Sessions Rollout Source
 
 Status: Draft
-Date: 2026-02-22
+Date: 2026-02-24
 
 ## Summary
 Define Codex thread-list behavior where discovery defaults to rollout files under `~/.codex/sessions`, while write/archive operations continue to use app-server RPC. This spec owns rollout parsing, watcher semantics, backend selection, and Codex activity derivation.

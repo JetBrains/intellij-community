@@ -83,10 +83,9 @@ class AgentSessionRefreshServiceIntegrationTest {
   }
 
   @Test
-  fun refreshKeepsProjectLoadingUntilAllProvidersFinish() = runBlocking(Dispatchers.Default) {
-    val codexStarted = CompletableDeferred<Unit>()
-    val claudeStarted = CompletableDeferred<Unit>()
-    val releaseClaude = CompletableDeferred<Unit>()
+  fun refreshIgnoresPersistedVisibleThreadCountForKnownPath() = runBlocking {
+    val treeUiState = InMemorySessionsTreeUiState()
+    treeUiState.incrementVisibleThreadCount(PROJECT_PATH, delta = 6)
 
     withService(
       sessionSourcesProvider = {
@@ -159,18 +158,8 @@ class AgentSessionRefreshServiceIntegrationTest {
         service.state.value.projects.any { it.path == PROJECT_PATH }
       }
 
-      service.showMoreThreads(PROJECT_PATH)
-      assertThat(service.state.value.visibleThreadCounts[PROJECT_PATH])
-        .isEqualTo(DEFAULT_VISIBLE_THREAD_COUNT + DEFAULT_VISIBLE_THREAD_COUNT)
-
-      service.refresh()
-      waitForCondition {
-        service.state.value.projects.any { it.path == PROJECT_PATH } &&
-        service.state.value.visibleThreadCounts[PROJECT_PATH] == DEFAULT_VISIBLE_THREAD_COUNT + DEFAULT_VISIBLE_THREAD_COUNT
-      }
-
-      assertThat(service.state.value.visibleThreadCounts[PROJECT_PATH])
-        .isEqualTo(DEFAULT_VISIBLE_THREAD_COUNT + DEFAULT_VISIBLE_THREAD_COUNT)
+      assertThat(service.state.value.visibleThreadCounts)
+        .doesNotContainKey(PROJECT_PATH)
     }
   }
 

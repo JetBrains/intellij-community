@@ -17,8 +17,6 @@ jvm_library(
     "@lib//:kotlin-stdlib",
     "//libraries/fastutil",
     "//libraries/kotlinx/serialization/core",
-    "//platform/analysis-api:analysis",
-    "//platform/lang-api:lang",
     "//platform/core-api:core",
     "//platform/core-ui",
     "//platform/platform-api:ide",
@@ -36,8 +34,7 @@ jvm_library(
     "@lib//:jna",
     "//platform/project-frame",
     "//platform/projectModel-impl",
-  ],
-  plugins = ["@lib//:compose-plugin"]
+  ]
 )
 
 jvm_library(
@@ -49,8 +46,7 @@ jvm_library(
     "@lib//:kotlin-stdlib",
     "//libraries/fastutil",
     "//libraries/kotlinx/serialization/core",
-    "//platform/analysis-api:analysis",
-    "//platform/lang-api:lang",
+    "//libraries/kotlinx/serialization/core:core_test_lib",
     "//platform/core-api:core",
     "//platform/core-ui",
     "//platform/platform-api:ide",
@@ -73,6 +69,7 @@ jvm_library(
     "//libraries/junit5",
     "//libraries/junit5-params",
     "//libraries/junit4",
+    "//libraries/junit4:junit4_test_lib",
     "//platform/testFramework",
     "//platform/testFramework:testFramework_test_lib",
     "//platform/testFramework/junit5",
@@ -85,10 +82,10 @@ jvm_library(
   ],
   runtime_deps = [
     "//platform/platform-impl:ide-impl_test_lib",
+    "//platform/platform-impl/concurrency:concurrency_test_lib",
     "//platform/ide-core-impl:ide-core-impl_test_lib",
     "//platform/platform-util-io:ide-util-io_test_lib",
-  ],
-  plugins = ["@lib//:compose-plugin"]
+  ]
 )
 ### auto-generated section `build intellij.agent.workbench.sessions` end
 

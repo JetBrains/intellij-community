@@ -48,7 +48,14 @@ internal fun providerIcon(
   threadIdentity: String,
   threadActivity: AgentThreadActivity = AgentThreadActivity.READY,
 ): Icon {
-  val providerId = parseAgentThreadIdentity(threadIdentity)?.providerId ?: threadIdentity.substringBefore(':')
-  val provider = AgentSessionProvider.fromOrNull(providerId.lowercase(Locale.ROOT))
-  return providerIcon(provider = provider, threadActivity = threadActivity)
+  val providerId = parseAgentThreadIdentity(threadIdentity)?.providerId ?: threadIdentity.substringBefore(':').lowercase()
+  val key = AgentChatIconKey(providerId = providerId, activity = threadActivity)
+  return ICON_CACHE.computeIfAbsent(key) {
+    val baseIcon = when (providerId) {
+      "codex" -> AgentWorkbenchCommonIcons.Codex_14x14
+      "claude" -> AgentWorkbenchCommonIcons.Claude_14x14
+      else -> AllIcons.Toolwindows.ToolWindowMessages
+    }
+    if (threadActivity == AgentThreadActivity.READY) baseIcon else IconManager.getInstance().withIconBadge(baseIcon, threadActivity.badgeColor())
+  }
 }
