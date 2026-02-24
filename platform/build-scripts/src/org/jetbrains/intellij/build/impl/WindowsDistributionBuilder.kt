@@ -222,7 +222,7 @@ internal class WindowsDistributionBuilder(
     val winScripts = context.paths.communityHomeDir.resolve("platform/build-scripts/resources/win/scripts")
     val actualScriptNames = Files.newDirectoryStream(winScripts).use { dirStream -> dirStream.map { it.fileName.toString() }.sorted() }
 
-    val expectedScriptNames = listOf("executable-template.bat", "format.bat", "inspect.bat", @Suppress("SpellCheckingInspection") "ltedit.bat", "profiler.bat")  // Android Studio: b/247670444
+    val expectedScriptNames = listOf("executable-template.bat", "format.bat", "inspect.bat", @Suppress("SpellCheckingInspection") "ltedit.bat")
     check(actualScriptNames == expectedScriptNames) {
       "Expected script names '${expectedScriptNames.joinToString(separator = " ")}', " +
       "but got '${actualScriptNames.joinToString(separator = " ")}' " +
