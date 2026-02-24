@@ -198,7 +198,6 @@ abstract class AbstractGotoSEContributor @ApiStatus.Internal protected construct
   }
 
   protected open fun createScopes(): List<ScopeDescriptor> {
-    @Suppress("DEPRECATION")
     return createScopes(myProject, myPsiContext)
   }
 
