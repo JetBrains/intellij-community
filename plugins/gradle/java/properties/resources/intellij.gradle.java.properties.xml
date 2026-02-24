@@ -19,7 +19,7 @@
                      groupBundle="messages.GradleInspectionBundle"
                      enabledByDefault="true" level="WARNING"
                      implementationClass="org.jetbrains.plugins.gradle.codeInspection.GradleLatestMinorVersionInspection"
-                     isInternal="true"/>
+                     isInternal="false"/>
 
     <localInspection language="UAST" groupPath="Gradle" shortName="RedundantKotlinStdLibDependency"
                      bundle="messages.GradleInspectionBundle"
@@ -27,7 +27,7 @@
                      groupBundle="messages.GradleInspectionBundle"
                      enabledByDefault="true" level="WARNING"
                      implementationClass="com.intellij.gradle.java.properties.codeInspection.GradleRedundantKotlinStdLibInspection"
-                     isInternal="true"/>
+                     isInternal="false"/>
   </extensions>
 
   <extensions defaultExtensionNs="org.intellij.groovy">

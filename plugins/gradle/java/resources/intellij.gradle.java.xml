@@ -157,7 +157,7 @@
                      groupBundle="messages.GradleInspectionBundle"
                      enabledByDefault="true" level="WEAK WARNING"
                      implementationClass="org.jetbrains.plugins.gradle.codeInspection.GradleAvoidDependencyNamedArgumentsNotationInspection"
-                     isInternal="true"/>
+                     isInternal="false"/>
 
   </extensions>
 </idea-plugin>
