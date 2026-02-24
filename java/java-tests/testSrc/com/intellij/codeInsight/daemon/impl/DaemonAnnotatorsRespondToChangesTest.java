@@ -225,14 +225,14 @@ public class DaemonAnnotatorsRespondToChangesTest extends DaemonAnalyzerTestCase
     });
   }
 
-  public static void useAnnotatorsIn(@NotNull com.intellij.lang.Language language,
+  public static <T extends Throwable> void useAnnotatorsIn(@NotNull com.intellij.lang.Language language,
                                      MyRecordingAnnotator @NotNull [] annotators,
-                                     @NotNull Runnable runnable) {
+                                     @NotNull ThrowableRunnable<T> runnable) throws T {
     useAnnotatorsIn(Collections.singletonMap(language, annotators), runnable);
   }
 
-  private static void useAnnotatorsIn(@NotNull Map<com.intellij.lang.Language, MyRecordingAnnotator @NotNull []> annotatorsByLanguage,
-                                      @NotNull Runnable runnable) {
+  private static <T extends Throwable> void useAnnotatorsIn(@NotNull Map<com.intellij.lang.Language, MyRecordingAnnotator @NotNull []> annotatorsByLanguage,
+                                      @NotNull ThrowableRunnable<T> runnable) throws T {
     MyRecordingAnnotator.clearAll();
     for (Map.Entry<com.intellij.lang.Language, MyRecordingAnnotator[]> entry : annotatorsByLanguage.entrySet()) {
       com.intellij.lang.Language language = entry.getKey();

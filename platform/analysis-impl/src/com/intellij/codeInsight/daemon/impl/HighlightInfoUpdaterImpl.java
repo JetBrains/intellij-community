@@ -1436,9 +1436,10 @@ public final class HighlightInfoUpdaterImpl extends HighlightInfoUpdater impleme
     for (int i = 0; i < sorted.size(); i++) {
       HighlightInfo info = sorted.get(i);
       assert toolId.equals(info.toolId) : info + "; " + toolId + "(" + toolId.getClass() + ")";
-      assert info.getHighlighter() != null : info;
-      assert info.getHighlighter().isValid() : info;
-      HighlightInfo assignedInfo = HighlightInfo.fromRangeHighlighter(info.getHighlighter());
+      RangeHighlighterEx infoHighlighter = info.getHighlighter();
+      assert infoHighlighter != null : info;
+      assert infoHighlighter.isValid() : info;
+      HighlightInfo assignedInfo = HighlightInfo.fromRangeHighlighter(infoHighlighter);
       assert assignedInfo == info : "from RH: " + assignedInfo + "(" + System.identityHashCode(assignedInfo)+ "); but expected: " + info+ "(" + System.identityHashCode(info)+ ")";
       if (i>0) {
         int compare = BY_OFFSETS_AND_HASH_ERRORS_FIRST.compare(sorted.get(i - 1), sorted.get(i));
