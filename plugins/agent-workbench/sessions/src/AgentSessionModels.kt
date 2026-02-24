@@ -1,55 +1,50 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.agent.workbench.sessions
 
-import androidx.compose.runtime.Immutable
 import com.intellij.agent.workbench.sessions.core.AgentSessionProvider
 import com.intellij.agent.workbench.sessions.core.AgentSessionThread
+import com.intellij.openapi.util.NlsSafe
 
-@Immutable
 data class AgentSessionThreadPreview(
   @JvmField val id: String,
-  @JvmField val title: String,
+  @JvmField val title: @NlsSafe String,
   @JvmField val updatedAt: Long,
   val provider: AgentSessionProvider = AgentSessionProvider.CODEX,
 )
 
-@Immutable
 internal data class ArchiveThreadTarget(
   @JvmField val path: String,
   @JvmField val thread: AgentSessionThread,
 )
 
-@Immutable
 internal data class AgentSessionProviderWarning(
   val provider: AgentSessionProvider,
-  @JvmField val message: String,
+  @JvmField val message: @NlsSafe String,
 )
 
-@Immutable
 internal data class AgentWorktree(
   @JvmField val path: String,
-  @JvmField val name: String,
-  @JvmField val branch: String?,
+  @JvmField val name: @NlsSafe String,
+  @JvmField val branch: @NlsSafe String?,
   @JvmField val isOpen: Boolean,
   @JvmField val threads: List<AgentSessionThread> = emptyList(),
   @JvmField val isLoading: Boolean = false,
   @JvmField val hasLoaded: Boolean = false,
   @JvmField val hasUnknownThreadCount: Boolean = false,
-  @JvmField val errorMessage: String? = null,
+  @JvmField val errorMessage: @NlsSafe String? = null,
   @JvmField val providerWarnings: List<AgentSessionProviderWarning> = emptyList(),
 )
 
-@Immutable
 internal data class AgentProjectSessions(
   @JvmField val path: String,
-  @JvmField val name: String,
-  @JvmField val branch: String? = null,
+  @JvmField val name: @NlsSafe String,
+  @JvmField val branch: @NlsSafe String? = null,
   @JvmField val isOpen: Boolean,
   @JvmField val threads: List<AgentSessionThread> = emptyList(),
   @JvmField val isLoading: Boolean = false,
   @JvmField val hasLoaded: Boolean = false,
   @JvmField val hasUnknownThreadCount: Boolean = false,
-  @JvmField val errorMessage: String? = null,
+  @JvmField val errorMessage: @NlsSafe String? = null,
   @JvmField val providerWarnings: List<AgentSessionProviderWarning> = emptyList(),
   @JvmField val worktrees: List<AgentWorktree> = emptyList(),
 )

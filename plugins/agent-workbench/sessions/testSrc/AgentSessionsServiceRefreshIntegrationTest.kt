@@ -72,7 +72,7 @@ class AgentSessionsServiceRefreshIntegrationTest {
   }
 
   @Test
-  fun refreshRestoresPersistedVisibleThreadCountForKnownPath() = runBlocking {
+  fun refreshIgnoresPersistedVisibleThreadCountForKnownPath() = runBlocking {
     val treeUiState = InMemorySessionsTreeUiState()
     treeUiState.incrementVisibleThreadCount(PROJECT_PATH, delta = 6)
 
@@ -94,8 +94,8 @@ class AgentSessionsServiceRefreshIntegrationTest {
         service.state.value.projects.any { it.path == PROJECT_PATH }
       }
 
-      assertThat(service.state.value.visibleThreadCounts[PROJECT_PATH])
-        .isEqualTo(DEFAULT_VISIBLE_THREAD_COUNT + 6)
+      assertThat(service.state.value.visibleThreadCounts)
+        .doesNotContainKey(PROJECT_PATH)
     }
   }
 

@@ -557,7 +557,7 @@ private suspend fun withLoadingCoordinator(
   @Suppress("RAW_SCOPE_CREATION")
   val scope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
   val treeUiState = InMemorySessionsTreeUiState()
-  val stateStore = AgentSessionsStateStore(treeUiState)
+  val stateStore = AgentSessionsStateStore()
   try {
     val coordinator = AgentSessionsLoadingCoordinator(
       serviceScope = scope,

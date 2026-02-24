@@ -56,7 +56,7 @@ class AgentThreadQuickStartServiceImplTest {
     val project = ProjectManager.getInstance().defaultProject
     val claudeBridge = TestProviderBridge(
       provider = AgentSessionProvider.CLAUDE,
-      isCliAvailable = false,
+      supportedLaunchModes = setOf(AgentSessionLaunchMode.YOLO),
     )
     val codexYoloOnlyBridge = TestProviderBridge(
       provider = AgentSessionProvider.CODEX,
@@ -92,9 +92,9 @@ class AgentThreadQuickStartServiceImplTest {
       provider = AgentSessionProvider.CODEX,
       supportedLaunchModes = setOf(AgentSessionLaunchMode.YOLO),
     )
-    val claudeMissingCliBridge = TestProviderBridge(
+    val claudeYoloOnlyBridge = TestProviderBridge(
       provider = AgentSessionProvider.CLAUDE,
-      isCliAvailable = false,
+      supportedLaunchModes = setOf(AgentSessionLaunchMode.YOLO),
     )
 
     var launchCount = 0
@@ -104,11 +104,11 @@ class AgentThreadQuickStartServiceImplTest {
       findBridge = {
         when (it) {
           AgentSessionProvider.CODEX -> codexYoloOnlyBridge
-          AgentSessionProvider.CLAUDE -> claudeMissingCliBridge
+          AgentSessionProvider.CLAUDE -> claudeYoloOnlyBridge
           else -> null
         }
       },
-      allBridges = { listOf(codexYoloOnlyBridge, claudeMissingCliBridge) },
+      allBridges = { listOf(codexYoloOnlyBridge, claudeYoloOnlyBridge) },
       createNewSession = { _, _, _ -> launchCount++ },
     )
 

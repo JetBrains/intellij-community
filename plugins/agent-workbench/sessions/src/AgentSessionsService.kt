@@ -101,7 +101,7 @@ internal class AgentSessionsService private constructor(
 
   private val actionGate = SingleFlightActionGate()
   internal val projectCatalog = AgentSessionsProjectCatalog()
-  private val stateStore = AgentSessionsStateStore(treeUiState)
+  private val stateStore = AgentSessionsStateStore()
   private val loadingCoordinator = AgentSessionsLoadingCoordinator(
     serviceScope = serviceScope,
     sessionSourcesProvider = sessionSourcesProvider,

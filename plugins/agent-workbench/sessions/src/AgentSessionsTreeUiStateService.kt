@@ -155,7 +155,7 @@ internal class AgentSessionsTreeUiStateService
     return previews.map { preview ->
       AgentSessionThreadPreview(
         id = preview.id,
-        title = preview.title,
+        title = threadDisplayTitle(threadId = preview.id, title = preview.title),
         updatedAt = preview.updatedAt,
         provider = preview.provider
           ?.let(AgentSessionProvider::fromOrNull)
@@ -297,6 +297,9 @@ private fun normalizeVisibleThreadCount(value: Int): Int {
 
 private fun normalizeOpenProjectThreadPreviewList(threads: List<AgentSessionThreadPreview>): List<AgentSessionThreadPreview> {
   return threads
+    .map { thread ->
+      thread.copy(title = threadDisplayTitle(threadId = thread.id, title = thread.title))
+    }
     .sortedByDescending { it.updatedAt }
     .take(OPEN_PROJECT_THREAD_CACHE_LIMIT)
 }

@@ -75,5 +75,5 @@ internal class AgentThreadQuickStartServiceImpl : AgentThreadQuickStartService {
 }
 
 private fun AgentSessionProviderBridge.canCreateStandardSession(): Boolean {
-  return AgentSessionLaunchMode.STANDARD in supportedLaunchModes && isCliAvailable()
+  return AgentSessionLaunchMode.STANDARD in supportedLaunchModes
 }

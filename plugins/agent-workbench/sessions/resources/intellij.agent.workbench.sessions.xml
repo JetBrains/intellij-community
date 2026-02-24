@@ -6,7 +6,6 @@
     <module name="intellij.agent.workbench.common"/>
     <module name="intellij.agent.workbench.chat"/>
     <module name="intellij.agent.workbench.sessions.core"/>
-    <module name="intellij.platform.compose"/>
     <!-- endregion -->
   </dependencies>
 
@@ -43,19 +42,41 @@
       <action id="AgentWorkbenchSessions.Refresh" class="com.intellij.agent.workbench.sessions.AgentSessionsRefreshAction"/>
     </group>
     <action
-      id="AgentWorkbenchSessions.SelectThreadInAgentThreads"
-      class="com.intellij.agent.workbench.sessions.AgentSessionsSelectThreadInToolWindowAction">
-      <add-to-group group-id="EditorTabPopupMenu" anchor="after" relative-to-action="CopyPaths"/>
-    </action>
+      id="AgentWorkbenchSessions.TreePopup.Open"
+      class="com.intellij.agent.workbench.sessions.AgentSessionsTreePopupOpenAction"/>
+    <action
+      id="AgentWorkbenchSessions.TreePopup.More"
+      class="com.intellij.agent.workbench.sessions.AgentSessionsTreePopupMoreAction"/>
+    <group
+      id="AgentWorkbenchSessions.TreePopup.NewThread"
+      popup="true"
+      class="com.intellij.agent.workbench.sessions.AgentSessionsTreePopupNewThreadGroup"/>
+    <action
+      id="AgentWorkbenchSessions.TreePopup.Archive"
+      class="com.intellij.agent.workbench.sessions.AgentSessionsArchiveThreadAction"/>
+    <group id="AgentWorkbenchSessions.TreePopup">
+      <reference ref="AgentWorkbenchSessions.TreePopup.Open"/>
+      <reference ref="AgentWorkbenchSessions.TreePopup.More"/>
+      <reference ref="AgentWorkbenchSessions.TreePopup.NewThread"/>
+      <separator/>
+      <reference ref="AgentWorkbenchSessions.TreePopup.Archive"/>
+    </group>
     <action
       id="AgentWorkbenchSessions.ArchiveThreadFromEditorTab"
-      class="com.intellij.agent.workbench.sessions.AgentSessionsArchiveThreadFromEditorTabAction">
-      <add-to-group group-id="EditorTabPopupMenu" anchor="after" relative-to-action="AgentWorkbenchSessions.SelectThreadInAgentThreads"/>
+      class="com.intellij.agent.workbench.sessions.AgentSessionsArchiveThreadAction">
+      <add-to-group group-id="EditorTabPopupMenu" anchor="before" relative-to-action="CloseEditorsGroup"/>
+      <keyboard-shortcut keymap="$default" first-keystroke="control alt F4"/>
+      <keyboard-shortcut keymap="Mac OS X 10.5+" first-keystroke="meta alt W"/>
+    </action>
+    <action
+      id="AgentWorkbenchSessions.SelectThreadInAgentThreads"
+      class="com.intellij.agent.workbench.sessions.AgentSessionsSelectThreadInToolWindowAction">
+      <add-to-group group-id="EditorTabPopupMenu" anchor="before" relative-to-action="CloseEditorsGroup"/>
     </action>
     <action
       id="AgentWorkbenchSessions.CopyThreadIdFromEditorTab"
       class="com.intellij.agent.workbench.sessions.AgentSessionsCopyThreadIdFromEditorTabAction">
-      <add-to-group group-id="EditorTabPopupMenu" anchor="after" relative-to-action="AgentWorkbenchSessions.ArchiveThreadFromEditorTab"/>
+      <add-to-group group-id="EditorTabPopupMenu" anchor="after" relative-to-action="AgentWorkbenchSessions.SelectThreadInAgentThreads"/>
     </action>
     <action
       id="AgentWorkbenchSessions.ActivateWithProjectShortcut"

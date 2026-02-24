@@ -6,7 +6,6 @@ targets:
   - ../codex/common/src/CodexAppServerClient.kt
   - ../sessions/src/CodexSessionsCompatibility.kt
   - ../sessions/src/AgentSessionModels.kt
-  - ../sessions/src/SessionTreeStyle.kt
   - ../sessions/src/AgentSessionsService.kt
   - ../codex/sessions/testSrc/*.kt
   - ../sessions/testSrc/CodexAppServerClientTest.kt
@@ -15,7 +14,7 @@ targets:
 # Codex Sessions Rollout Source
 
 Status: Draft
-Date: 2026-02-23
+Date: 2026-02-24
 
 ## Summary
 Define Codex thread-list behavior where discovery defaults to app-server `thread/list`, while rollout parsing remains available as explicit compatibility backend. This spec owns backend selection, app-server sub-agent mapping, rollout compatibility, and Codex activity derivation.

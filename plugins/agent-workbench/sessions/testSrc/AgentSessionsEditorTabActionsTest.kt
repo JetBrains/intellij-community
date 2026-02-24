@@ -63,20 +63,22 @@ class AgentSessionsEditorTabActionsTest {
   fun archiveThreadActionVisibleAndEnabledOnlyWhenProviderSupportsArchive() {
     val context = threadContext()
 
-    val unsupported = AgentSessionsArchiveThreadFromEditorTabAction(
-      resolveContext = { context },
+    val unsupported = AgentSessionsArchiveThreadAction(
+      resolveTreeContext = { null },
+      resolveEditorContext = { context },
       canArchiveThread = { false },
-      archiveThread = { _, _ -> },
+      archiveThreads = { _ -> },
     )
     val unsupportedEvent = TestActionEvent.createTestEvent(unsupported)
     unsupported.update(unsupportedEvent)
     assertThat(unsupportedEvent.presentation.isVisible).isTrue()
     assertThat(unsupportedEvent.presentation.isEnabled).isFalse()
 
-    val supported = AgentSessionsArchiveThreadFromEditorTabAction(
-      resolveContext = { context },
+    val supported = AgentSessionsArchiveThreadAction(
+      resolveTreeContext = { null },
+      resolveEditorContext = { context },
       canArchiveThread = { true },
-      archiveThread = { _, _ -> },
+      archiveThreads = { _ -> },
     )
     val supportedEvent = TestActionEvent.createTestEvent(supported)
     supported.update(supportedEvent)
@@ -87,23 +89,21 @@ class AgentSessionsEditorTabActionsTest {
   @Test
   fun archiveThreadActionInvokesArchiveCallback() {
     val context = threadContext()
-    var archivedPath: String? = null
-    var archivedThread: AgentSessionThread? = null
+    var archivedTargets: List<ArchiveThreadTarget>? = null
 
-    val action = AgentSessionsArchiveThreadFromEditorTabAction(
-      resolveContext = { context },
+    val action = AgentSessionsArchiveThreadAction(
+      resolveTreeContext = { null },
+      resolveEditorContext = { context },
       canArchiveThread = { true },
-      archiveThread = { path, thread ->
-        archivedPath = path
-        archivedThread = thread
-      },
+      archiveThreads = { targets -> archivedTargets = targets },
     )
 
     action.actionPerformed(TestActionEvent.createTestEvent(action))
 
-    assertThat(archivedPath).isEqualTo(context.path)
-    assertThat(archivedThread?.id).isEqualTo(context.threadId)
-    assertThat(archivedThread?.provider).isEqualTo(context.provider)
+    val archivedTarget = checkNotNull(archivedTargets).single()
+    assertThat(archivedTarget.path).isEqualTo(context.path)
+    assertThat(archivedTarget.thread.id).isEqualTo(context.threadId)
+    assertThat(archivedTarget.thread.provider).isEqualTo(context.provider)
   }
 
   @Test

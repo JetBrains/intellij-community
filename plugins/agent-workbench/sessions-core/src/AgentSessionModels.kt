@@ -2,6 +2,7 @@
 package com.intellij.agent.workbench.sessions.core
 
 import com.intellij.agent.workbench.common.AgentThreadActivity
+import com.intellij.openapi.util.NlsSafe
 
 private val AGENT_SESSION_PROVIDER_ID_REGEX = Regex("[a-z][a-z0-9._-]*")
 
@@ -33,8 +34,8 @@ enum class AgentSessionLaunchMode {
 }
 
 data class AgentSubAgent(
-  @JvmField val id: String,
-  @JvmField val name: String,
+  @JvmField val id: @NlsSafe String,
+  @JvmField val name: @NlsSafe String,
 )
 
 data class AgentSessionThread(

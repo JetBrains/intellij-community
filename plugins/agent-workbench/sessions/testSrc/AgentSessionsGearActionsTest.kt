@@ -58,7 +58,31 @@ class AgentSessionsGearActionsTest {
       .contains("id=\"AgentWorkbenchSessions.SelectThreadInAgentThreads\"")
       .contains("id=\"AgentWorkbenchSessions.ArchiveThreadFromEditorTab\"")
       .contains("id=\"AgentWorkbenchSessions.CopyThreadIdFromEditorTab\"")
+      .contains("class=\"com.intellij.agent.workbench.sessions.AgentSessionsArchiveThreadAction\"")
       .contains("group-id=\"EditorTabPopupMenu\"")
+      .contains("anchor=\"before\" relative-to-action=\"CloseEditorsGroup\"")
+      .contains("anchor=\"after\" relative-to-action=\"CloseEditorsGroup\"")
+      .contains("anchor=\"after\" relative-to-action=\"AgentWorkbenchSessions.SelectThreadInAgentThreads\"")
+      .contains("keymap=\"" + '$' + "default\" first-keystroke=\"control alt F4\"")
+      .contains("keymap=\"Mac OS X 10.5+\" first-keystroke=\"meta alt W\"")
+  }
+
+  @Test
+  fun treePopupActionsAreRegisteredInActionSystem() {
+    val descriptor = checkNotNull(javaClass.classLoader.getResource("intellij.agent.workbench.sessions.xml")) {
+      "Module descriptor intellij.agent.workbench.sessions.xml is missing"
+    }.readText()
+
+    assertThat(descriptor)
+      .contains("<group id=\"AgentWorkbenchSessions.TreePopup\">")
+      .contains("<reference ref=\"AgentWorkbenchSessions.TreePopup.Open\"/>")
+      .contains("<reference ref=\"AgentWorkbenchSessions.TreePopup.More\"/>")
+      .contains("<reference ref=\"AgentWorkbenchSessions.TreePopup.NewThread\"/>")
+      .contains("<reference ref=\"AgentWorkbenchSessions.TreePopup.Archive\"/>")
+      .contains("id=\"AgentWorkbenchSessions.TreePopup.Open\"")
+      .contains("id=\"AgentWorkbenchSessions.TreePopup.More\"")
+      .contains("id=\"AgentWorkbenchSessions.TreePopup.NewThread\"")
+      .contains("id=\"AgentWorkbenchSessions.TreePopup.Archive\"")
   }
 
   @Test

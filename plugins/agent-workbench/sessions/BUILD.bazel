@@ -17,11 +17,11 @@ jvm_library(
     "@lib//:kotlin-stdlib",
     "//libraries/fastutil",
     "//libraries/kotlinx/serialization/core",
-    "//platform/compose",
     "//platform/core-api:core",
     "//platform/core-ui",
     "//platform/platform-api:ide",
     "//platform/platform-impl:ide-impl",
+    "//platform/platform-impl/concurrency",
     "//platform/ide-core-impl",
     "//plugins/agent-workbench/common",
     "//plugins/agent-workbench/sessions-core:agent-workbench-sessions-core",
@@ -33,8 +33,7 @@ jvm_library(
     "@lib//:jna",
     "//platform/project-frame",
     "//platform/projectModel-impl",
-  ],
-  plugins = ["@lib//:compose-plugin"]
+  ]
 )
 
 jvm_library(
@@ -48,8 +47,6 @@ jvm_library(
     "//libraries/fastutil:fastutil_test_lib",
     "//libraries/kotlinx/serialization/core",
     "//libraries/kotlinx/serialization/core:core_test_lib",
-    "//platform/compose",
-    "//platform/compose:compose_test_lib",
     "//platform/core-api:core",
     "//platform/core-api:core_test_lib",
     "//platform/core-ui",
@@ -57,6 +54,7 @@ jvm_library(
     "//platform/platform-api:ide",
     "//platform/platform-api:ide_test_lib",
     "//platform/platform-impl:ide-impl",
+    "//platform/platform-impl/concurrency",
     "//platform/ide-core-impl",
     "//plugins/agent-workbench/common",
     "//plugins/agent-workbench/common:common_test_lib",
@@ -80,10 +78,6 @@ jvm_library(
     "//libraries/junit5-params:junit5-params_test_lib",
     "//libraries/junit4",
     "//libraries/junit4:junit4_test_lib",
-    "//libraries/compose-foundation-desktop-junit",
-    "//libraries/compose-foundation-desktop-junit:compose-foundation-desktop-junit_test_lib",
-    "//platform/jewel/int-ui/int-ui-standalone:jewel-intUi-standalone",
-    "//platform/jewel/int-ui/int-ui-standalone:jewel-intUi-standalone_test_lib",
     "//platform/testFramework",
     "//platform/testFramework:testFramework_test_lib",
     "//platform/testFramework/junit5",
@@ -97,10 +91,10 @@ jvm_library(
   ],
   runtime_deps = [
     "//platform/platform-impl:ide-impl_test_lib",
+    "//platform/platform-impl/concurrency:concurrency_test_lib",
     "//platform/ide-core-impl:ide-core-impl_test_lib",
     "//platform/platform-util-io:ide-util-io_test_lib",
-  ],
-  plugins = ["@lib//:compose-plugin"]
+  ]
 )
 ### auto-generated section `build intellij.agent.workbench.sessions` end
 

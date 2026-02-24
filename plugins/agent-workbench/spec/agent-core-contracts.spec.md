@@ -8,8 +8,8 @@ targets:
   - ../sessions/src/AgentSessionModels.kt
   - ../sessions/src/AgentSessionsEditorTabActionContext.kt
   - ../sessions/src/AgentSessionsService.kt
+  - ../sessions/src/AgentSessionsToolWindow.kt
   - ../sessions/src/SessionTree.kt
-  - ../sessions/src/SessionTreeRows.kt
   - ../chat/src/*.kt
   - ../sessions/resources/intellij.agent.workbench.sessions.xml
   - ../sessions/resources/messages/AgentSessionsBundle.properties
@@ -22,7 +22,7 @@ targets:
 # Agent Workbench Core Contracts
 
 Status: Draft
-Date: 2026-02-23
+Date: 2026-02-24
 
 ## Summary
 Define the single source of truth for cross-feature behavior that must stay consistent across Agent Threads, Agent Chat editor tabs, dedicated-frame routing, and provider-specific session actions.
@@ -66,11 +66,16 @@ Define the single source of truth for cross-feature behavior that must stay cons
   [@test] ../sessions/testSrc/AgentSessionCliTest.kt
   [@test] ../codex/sessions/testSrc/CodexAgentSessionProviderBridgeTest.kt
 
-- Editor-tab popup contract for a selected Agent chat tab must expose exactly these actions:
-  - `Select in Agent Threads`
-  - `Archive Thread`
-  - `Copy Thread ID`
+- Editor-tab popup contract for a selected Agent chat tab must expose exactly these actions with this placement:
+  - `Archive Thread` appears before built-in close actions.
+  - `Select in Agent Threads` appears after `CopyPaths`.
+  - `Copy Thread ID` appears after `Select in Agent Threads`.
   [@test] ../sessions/testSrc/AgentSessionsEditorTabActionsTest.kt
+  [@test] ../sessions/testSrc/AgentSessionsGearActionsTest.kt
+
+- `Archive Thread` default shortcuts must be:
+  - Win/Linux keymaps: `Ctrl+Alt+F4`
+  - macOS (`Mac OS X 10.5+`) keymap: `Cmd+Alt+W`
   [@test] ../sessions/testSrc/AgentSessionsGearActionsTest.kt
 
 - `Archive Thread` visibility/enablement must be gated by provider archive capability consistently for both tree-row and editor-tab entry points.
@@ -86,13 +91,9 @@ Define the single source of truth for cross-feature behavior that must stay cons
   [@test] ../sessions/testSrc/SessionTreeSelectionSyncTest.kt
 
 - Shared visibility primitives are canonical:
-  - `showMoreThreads(path)` increments visible count by +3 and persists it for the normalized path.
-  - `ensureThreadVisible(path, provider, threadId)` increments visibility in +3 steps until target thread is visible and persists each increment.
+  - `showMoreThreads(path)` increments visible count by +3 in runtime state for the normalized path.
+  - `ensureThreadVisible(path, provider, threadId)` increments runtime visibility in +3 steps until target thread is visible.
   [@test] ../sessions/testSrc/AgentSessionsServiceOnDemandIntegrationTest.kt
-  [@test] ../sessions/testSrc/AgentSessionsToolWindowTest.kt
-
-- User-visible labels for session entities must use `Thread`; `Chat` terminology is reserved for editor-tab/file surfaces.
-  [@test] ../sessions/testSrc/AgentSessionsToolWindowTest.kt
 
 ## User Experience
 - Users should see identical behavior regardless of whether actions are triggered from the tree or editor tabs.

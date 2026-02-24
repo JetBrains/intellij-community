@@ -1,13 +1,12 @@
 ---
 name: Agent Threads Tool Window
-description: Requirements for provider-agnostic session aggregation, project/worktree loading, and tree lifecycle behavior in Agent Threads.
+description: Requirements for the Swing Async Tree implementation of Agent Threads, including aggregation, loading, activation, and tree lifecycle behavior.
 targets:
-  - ../plugin/resources/META-INF/plugin.xml
-  - ../plugin-content.yaml
   - ../sessions/src/*.kt
-  - ../sessions/src/providers/*.kt
   - ../sessions/resources/intellij.agent.workbench.sessions.xml
   - ../sessions/resources/messages/AgentSessionsBundle.properties
+  - ../sessions/intellij.agent.workbench.sessions.iml
+  - ../sessions/BUILD.bazel
   - ../sessions/testSrc/*.kt
   - ../chat/src/*.kt
 ---
@@ -15,29 +14,45 @@ targets:
 # Agent Threads Tool Window
 
 Status: Draft
-Date: 2026-02-23
+Date: 2026-02-24
 
 ## Summary
-Define Agent Threads as a provider-agnostic, project-scoped thread browser. This spec owns aggregation, loading, deduplication, cache bootstrap, and tree lifecycle behavior. Shared cross-feature contracts are defined in `spec/agent-core-contracts.spec.md`.
+Define Agent Threads as a provider-agnostic, project-scoped browser implemented with native IntelliJ Swing tree APIs (`StructureTreeModel` + `AsyncTreeModel` + `Tree`).
+
+This spec owns:
+- session aggregation and loading lifecycle,
+- tree snapshot/rendering rules,
+- interaction policy (selection vs activation),
+- new-session affordances,
+- quota hint visibility behavior.
+
+Shared contracts remain in `spec/agent-core-contracts.spec.md`.
 
 ## Goals
 - Keep project/worktree grouping deterministic across open and recent projects.
 - Merge provider results without dropping successful data when one provider fails.
 - Keep refresh/on-demand behavior predictable under concurrency.
-- Preserve stable tree behavior across refresh and UI recreation.
+- Follow IntelliJ tree conventions: single-click selects, activation happens on Enter or double-click.
+- Use one UI path only (Swing async tree), with no Compose compatibility layer.
 
 ## Non-goals
-- Thread transcript rendering and compose UX.
+- Thread transcript rendering.
+- Reintroducing Compose/Jewel UI in the sessions module.
+- Feature-flagged dual-path UI rollout for sessions.
 - Backend-specific rollout parsing rules (owned by Codex rollout spec).
 - Shared command/action contracts (owned by core contracts spec).
 
+## Architecture Decision
+- The sessions tool window must use IntelliJ-native Swing async tree infrastructure.
+  Rationale: this aligns interaction semantics with platform conventions, removes duplicate UI stacks in the plugin, and reduces maintenance/testing overhead.
+  [@test] ../sessions/testSrc/AgentSessionsToolWindowFactorySwingTest.kt
+
 ## Requirements
 - Project registry must merge open projects and recent projects, excluding the dedicated-frame project.
-  [@test] ../sessions/testSrc/AgentSessionsToolWindowTest.kt
+  [@test] ../sessions/testSrc/AgentSessionsProjectCatalogTest.kt
 
 - Git worktrees must be represented under parent projects when detected.
   [@test] ../sessions/testSrc/GitWorktreeDiscoveryTest.kt
-  [@test] ../sessions/testSrc/AgentSessionsToolWindowTest.kt
 
 - Default session-source registration must include Codex and Claude provider bridges.
   [@test] ../sessions/testSrc/AgentSessionProviderBridgesTest.kt
@@ -48,14 +63,13 @@ Define Agent Threads as a provider-agnostic, project-scoped thread browser. This
 
 - If at least one provider succeeds, successful threads must be shown and failed providers must surface provider-local warning rows.
   [@test] ../sessions/testSrc/AgentSessionLoadAggregationTest.kt
-  [@test] ../sessions/testSrc/AgentSessionsToolWindowTest.kt
 
 - If all providers fail for a path load, a blocking path error must be shown and provider warning rows for that load must be suppressed.
   [@test] ../sessions/testSrc/AgentSessionLoadAggregationTest.kt
-  [@test] ../sessions/testSrc/AgentSessionsToolWindowTest.kt
 
 - Unknown provider totals must propagate through `hasUnknownThreadCount` to tree state.
   [@test] ../sessions/testSrc/AgentSessionLoadAggregationTest.kt
+  [@test] ../sessions/testSrc/AgentSessionsSwingTreeRenderingTest.kt
   [@test] ../sessions/testSrc/AgentSessionsServiceRefreshIntegrationTest.kt
 
 - Refresh bootstrap must seed open project/worktree paths from preview cache immediately and keep those paths marked loaded until live provider results arrive.
@@ -71,7 +85,7 @@ Define Agent Threads as a provider-agnostic, project-scoped thread browser. This
   [@test] ../sessions/testSrc/AgentSessionsServiceRefreshIntegrationTest.kt
 
 - Auto-open default project expansion must skip paths persisted as collapsed.
-  [@test] ../sessions/testSrc/AgentSessionsToolWindowTest.kt
+  [@test] ../sessions/testSrc/AgentSessionsSwingTreeStatePersistenceTest.kt
 
 - User collapse/expand interactions must update persisted collapsed state.
   [@test] ../sessions/testSrc/AgentSessionsTreeUiStateServiceTest.kt
@@ -91,27 +105,41 @@ Define Agent Threads as a provider-agnostic, project-scoped thread browser. This
 - Session-source update observation and refresh scheduling must be event-driven; periodic polling loops are not allowed.
   [@test] ../sessions/testSrc/AgentSessionsLoadingCoordinatorTest.kt
 
-- Project primary click must open/focus the project; closed projects must expose `Open` in context menu.
-  [@test] ../sessions/testSrc/AgentSessionsToolWindowTest.kt
+- Tree rendering must preserve precedence and exclusivity rules:
+  - error row suppresses warning/empty rows for that path,
+  - warning rows suppress empty row,
+  - `More` rows preserve exact/unknown count semantics.
+  [@test] ../sessions/testSrc/AgentSessionsSwingTreeRenderingTest.kt
+
+- Activation policy must follow IntelliJ tree conventions:
+  - single-click selects rows,
+  - single-click actions are reserved for `More...` rows,
+  - Enter/double-click open project/worktree/thread/sub-agent rows.
+  [@test] ../sessions/testSrc/AgentSessionsSwingTreeInteractionTest.kt
+
+- Context-menu selection policy must preserve multi-selection when right-clicking an already selected row and retarget selection when right-clicking an unselected row.
+  [@test] ../sessions/testSrc/AgentSessionsSwingTreeInteractionTest.kt
 
 - Thread and sub-agent open routing must follow mode policy defined in `spec/agent-dedicated-frame.spec.md`.
   [@test] ../sessions/testSrc/AgentSessionsOpenModeRoutingTest.kt
 
-- Tree row open policy must be pointer-gesture aware: plain primary click opens, multi-selection gestures (`Cmd/Ctrl+click`, `Shift+click`) do not open, and context-menu gestures (`secondary click`, macOS `Ctrl+click`) do not open.
-  [@test] ../sessions/testSrc/SessionTreePointerEventActionsTest.kt
+- Tree/chat tab selection synchronization must resolve project/worktree/thread/sub-agent identities to stable tree IDs.
+  [@test] ../sessions/testSrc/SessionTreeSelectionSyncTest.kt
 
-- Context-menu selection policy for thread rows must preserve existing multi-selection when right-clicking an already selected row; right-click on an unselected row must retarget selection to the clicked row.
-  [@test] ../sessions/testSrc/SessionTreePointerEventActionsTest.kt
+- New-session row affordances for project/worktree rows must be hover-or-selection based and must offer:
+  - quick create with last used provider when standard mode is supported,
+  - provider popup entries split into Standard and YOLO sections.
+  [@test] ../sessions/testSrc/AgentSessionsSwingNewSessionActionsTest.kt
 
 - Session-driven thread title updates must refresh open chat tab metadata and editor-tab presentation.
   [@test] ../chat/testSrc/AgentChatEditorServiceTest.kt
   [@test] ../chat/testSrc/AgentChatTabSelectionServiceTest.kt
 
-- Codex thread discovery must default to rollout source; app-server discovery remains an explicit compatibility override defined in `spec/agent-sessions-codex-rollout-source.spec.md`.
+- Codex thread discovery must default to app-server source; rollout discovery remains an explicit compatibility override defined in `spec/agent-sessions-codex-rollout-source.spec.md`.
   [@test] ../codex/sessions/testSrc/CodexSessionBackendSelectorTest.kt
 
 - Branch mismatch between thread origin and current worktree branch must show warning confirmation before opening chat.
-  [@test] ../codex/sessions/testSrc/CodexRolloutSessionBackendTest.kt
+  [@test] ../sessions/testSrc/AgentSessionsOpenModeRoutingTest.kt
 
 - Shared command mapping, editor-tab popup actions, archive gating, and visibility primitives must follow `spec/agent-core-contracts.spec.md`.
   [@test] ../sessions/testSrc/AgentSessionCliTest.kt
@@ -124,23 +152,32 @@ Define Agent Threads as a provider-agnostic, project-scoped thread browser. This
 - Unarchive flow for previously archived Codex targets must restore thread visibility on refresh without requiring tool-window recreation.
   [@test] ../sessions/testSrc/AgentSessionsServiceArchiveIntegrationTest.kt
 
+- Tool window factory must create Swing panel content and register tool-window gear actions.
+  [@test] ../sessions/testSrc/AgentSessionsToolWindowFactorySwingTest.kt
+  [@test] ../sessions/testSrc/AgentSessionsGearActionsTest.kt
+
+- Claude quota hint visibility and acknowledgement must follow eligibility/ack/widget-enabled gating rules.
+  [@test] ../sessions/testSrc/AgentSessionsSwingQuotaHintTest.kt
+  [@test] ../sessions/testSrc/AgentSessionsClaudeQuotaWidgetActionRegistrationTest.kt
+
 ## User Experience
 - Project rows are always expandable and may show worktree children.
 - Open project rows must be visually emphasized via stronger title weight.
 - Closed project rows must remain readable but visually de-emphasized relative to open rows.
 - Default project visibility must include all open projects and up to 3 closed recent projects; additional closed projects appear behind `More`.
-- Thread rows show provider icon marker and relative activity time.
-- Thread-row archive context menu should apply to current multi-selection when invoked from a selected thread and show `Archive Selected (N)` when `N > 1`.
-- Selection gestures (`Cmd/Ctrl+click`, `Shift+click`) update selection without opening the clicked thread/sub-agent row.
-- Context-menu gestures (`secondary click`, macOS `Ctrl+click`) never open rows.
+- Thread rows use a provider-aware leading icon; non-`READY` activities add an overlay badge, and rows show a right-aligned relative activity time.
+- Thread-row archive context menu applies to current multi-selection when invoked from a selected thread and shows `Archive Selected (N)` when `N > 1`.
+- Single-click on normal rows selects only; open happens on Enter or double-click.
+- Project/worktree rows expose new-session affordances when hovered/selected.
 - Provider warnings are inline and non-blocking when partial data exists.
-- Blocking errors provide inline retry affordance.
+- Blocking errors are inline and non-openable.
 
 ## Data & Backend
 - Open projects may use long-lived provider sessions where available.
 - Closed project/worktree loads may use path-scoped short-lived provider calls.
 - Aggregation normalizes provider differences (paging/count capability) into one state model.
 - Sessions service must not impose global CLI home overrides; provider clients own process environment rules.
+- UI-layer migration to Swing does not change backend/service contracts.
 
 ## Error Handling
 - Missing provider tooling must produce provider-specific messages.
@@ -152,7 +189,8 @@ Define Agent Threads as a provider-agnostic, project-scoped thread browser. This
 ## Testing / Local Run
 - `./tests.cmd '-Dintellij.build.test.patterns=com.intellij.agent.workbench.sessions.AgentSessionLoadAggregationTest'`
 - `./tests.cmd '-Dintellij.build.test.patterns=com.intellij.agent.workbench.sessions.AgentSessionsService*IntegrationTest'`
-- `./tests.cmd '-Dintellij.build.test.patterns=com.intellij.agent.workbench.sessions.AgentSessionsToolWindowTest'`
+- `./tests.cmd '-Dintellij.build.test.patterns=com.intellij.agent.workbench.sessions.AgentSessionsSwing*Test'`
+- `./tests.cmd '-Dintellij.build.test.patterns=com.intellij.agent.workbench.sessions.AgentSessionsToolWindowFactorySwingTest'`
 
 ## Open Questions / Risks
 - New providers may require additional provider-specific warning or context-row UX.

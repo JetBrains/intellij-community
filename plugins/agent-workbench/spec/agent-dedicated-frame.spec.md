@@ -12,7 +12,7 @@ targets:
 # Agent Chat Dedicated Frame
 
 Status: Draft
-Date: 2026-02-22
+Date: 2026-02-24
 
 ## Summary
 Define dedicated-frame mode behavior for Agent chat routing. This spec owns frame policy, frame lifecycle, filtering, and shortcut semantics. Shared command mapping and action contracts are owned by `spec/agent-core-contracts.spec.md`.
@@ -57,7 +57,7 @@ Define dedicated-frame mode behavior for Agent chat routing. This spec owns fram
   [@test] ../sessions/testSrc/AgentSessionsOpenModeRoutingTest.kt
 
 - Dedicated-frame project must be excluded from Sessions project registry for both open and recent project enumeration.
-  [@test] ../sessions/testSrc/AgentSessionsToolWindowTest.kt
+  [@test] ../sessions/testSrc/AgentSessionsProjectCatalogTest.kt
 
 - Chat terminal `cwd` must remain source project path regardless of frame mode.
   [@test] ../sessions/testSrc/AgentSessionsOpenModeRoutingTest.kt
@@ -70,7 +70,7 @@ Define dedicated-frame mode behavior for Agent chat routing. This spec owns fram
 
 - Shared command mapping and new-thread semantics must follow `spec/agent-core-contracts.spec.md` and `spec/actions/new-thread.spec.md`.
   [@test] ../sessions/testSrc/AgentSessionCliTest.kt
-  [@test] ../sessions/testSrc/AgentSessionsToolWindowTest.kt
+  [@test] ../sessions/testSrc/AgentSessionsSwingNewSessionActionsTest.kt
 
 ## User Experience
 - Default click behavior opens chat in dedicated frame.
@@ -91,7 +91,7 @@ Define dedicated-frame mode behavior for Agent chat routing. This spec owns fram
 ## Testing / Local Run
 - `./tests.cmd '-Dintellij.build.test.patterns=com.intellij.agent.workbench.sessions.AgentSessionsGearActionsTest'`
 - `./tests.cmd '-Dintellij.build.test.patterns=com.intellij.agent.workbench.sessions.AgentSessionsOpenModeRoutingTest'`
-- `./tests.cmd '-Dintellij.build.test.patterns=com.intellij.agent.workbench.sessions.AgentSessionsToolWindowTest'`
+- `./tests.cmd '-Dintellij.build.test.patterns=com.intellij.agent.workbench.sessions.AgentSessionsSwingNewSessionActionsTest'`
 
 ## Open Questions / Risks
 - Dedicated-frame storage-path policy may later align with broader welcome-project storage conventions.

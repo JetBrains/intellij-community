@@ -14,6 +14,6 @@ public final class AgentWorkbenchCommonIcons {
   private static @NotNull Icon load(@NotNull String path, int cacheKey, int flags) {
     return IconManager.getInstance().loadRasterizedIcon(path, AgentWorkbenchCommonIcons.class.getClassLoader(), cacheKey, flags);
   }
-  /** 14x14 */ public static final @NotNull Icon Claude_14x14 = load("icons/claude@14x14.svg", -825930958, 0);
-  /** 14x14 */ public static final @NotNull Icon Codex_14x14 = load("icons/codex@14x14.svg", 1879148665, 0);
+  /** 14x14 */ public static final @NotNull Icon Claude_14x14 = load("icons/claude@14x14.svg", 546821582, 0);
+  /** 14x14 */ public static final @NotNull Icon Codex_14x14 = load("icons/codex@14x14.svg", -534494734, 0);
 }

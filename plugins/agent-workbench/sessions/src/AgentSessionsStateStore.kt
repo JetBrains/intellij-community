@@ -8,9 +8,7 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 
-internal class AgentSessionsStateStore(
-  private val treeUiState: SessionsTreeUiState,
-) {
+internal class AgentSessionsStateStore {
   private val mutableState = MutableStateFlow(AgentSessionsState())
   val state: StateFlow<AgentSessionsState> = mutableState.asStateFlow()
 
@@ -60,21 +58,15 @@ internal class AgentSessionsStateStore(
 
   fun showMoreThreads(path: String) {
     val normalizedPath = normalizeAgentWorkbenchPath(path)
-    var deltaToPersist = 0
     mutableState.update { state ->
-      val current = state.visibleThreadCounts[normalizedPath] ?: treeUiState.getVisibleThreadCount(normalizedPath)
+      val current = state.visibleThreadCounts[normalizedPath] ?: DEFAULT_VISIBLE_THREAD_COUNT
       val nextVisible = current + DEFAULT_VISIBLE_THREAD_COUNT
-      deltaToPersist = nextVisible - current
       state.copy(visibleThreadCounts = state.visibleThreadCounts + (normalizedPath to nextVisible))
-    }
-    if (deltaToPersist > 0) {
-      treeUiState.incrementVisibleThreadCount(normalizedPath, deltaToPersist)
     }
   }
 
   fun ensureThreadVisible(path: String, provider: AgentSessionProvider, threadId: String) {
     val normalizedPath = normalizeAgentWorkbenchPath(path)
-    var deltaToPersist = 0
     mutableState.update { state ->
       val threadIndex = findThreadIndex(
         projects = state.projects,
@@ -82,7 +74,7 @@ internal class AgentSessionsStateStore(
         provider = provider,
         threadId = threadId,
       ) ?: return@update state
-      val currentVisible = state.visibleThreadCounts[normalizedPath] ?: treeUiState.getVisibleThreadCount(normalizedPath)
+      val currentVisible = state.visibleThreadCounts[normalizedPath] ?: DEFAULT_VISIBLE_THREAD_COUNT
       if (threadIndex < currentVisible) {
         return@update state
       }
@@ -91,11 +83,7 @@ internal class AgentSessionsStateStore(
       while (nextVisible < minVisible) {
         nextVisible += DEFAULT_VISIBLE_THREAD_COUNT
       }
-      deltaToPersist = nextVisible - currentVisible
       state.copy(visibleThreadCounts = state.visibleThreadCounts + (normalizedPath to nextVisible))
-    }
-    if (deltaToPersist > 0) {
-      treeUiState.incrementVisibleThreadCount(normalizedPath, deltaToPersist)
     }
   }
 
@@ -189,13 +177,6 @@ internal class AgentSessionsStateStore(
       val normalized = normalizeAgentWorkbenchPath(path)
       if (normalized in normalizedKnownPaths && count > DEFAULT_VISIBLE_THREAD_COUNT) {
         visibleThreadCounts[normalized] = count
-      }
-    }
-    for (path in normalizedKnownPaths) {
-      if (path in visibleThreadCounts) continue
-      val persisted = treeUiState.getVisibleThreadCount(path)
-      if (persisted > DEFAULT_VISIBLE_THREAD_COUNT) {
-        visibleThreadCounts[path] = persisted
       }
     }
     return visibleThreadCounts

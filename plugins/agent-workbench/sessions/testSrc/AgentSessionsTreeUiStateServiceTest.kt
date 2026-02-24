@@ -82,6 +82,25 @@ class AgentSessionsTreeUiStateServiceTest {
   }
 
   @Test
+  fun openProjectThreadPreviewCacheNormalizesBlankTitleToFallback() {
+    val uiState = AgentSessionsTreeUiStateService()
+    val threads = listOf(
+      AgentSessionThreadPreview(
+        id = "blank-title-thread",
+        title = "   \n ",
+        updatedAt = 5L,
+        provider = AgentSessionProvider.CODEX,
+      )
+    )
+
+    assertTrue(uiState.setOpenProjectThreadPreviews("/work/project-a", threads))
+    assertEquals(
+      "Thread blank-ti",
+      uiState.getOpenProjectThreadPreviews("/work/project-a")?.single()?.title,
+    )
+  }
+
+  @Test
   fun treeStateFieldsSurviveServiceStateRoundTrip() {
     val original = AgentSessionsTreeUiStateService()
     val path = "/work/project-a/"

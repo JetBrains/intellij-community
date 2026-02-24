@@ -57,12 +57,12 @@ class AgentSessionsServiceOnDemandIntegrationTest {
       assertThat(service.state.value.visibleThreadCounts[PROJECT_PATH])
         .isEqualTo(DEFAULT_VISIBLE_THREAD_COUNT + DEFAULT_VISIBLE_THREAD_COUNT)
       assertThat(treeUiState.getVisibleThreadCount(PROJECT_PATH))
-        .isEqualTo(DEFAULT_VISIBLE_THREAD_COUNT + DEFAULT_VISIBLE_THREAD_COUNT)
+        .isEqualTo(DEFAULT_VISIBLE_THREAD_COUNT)
     }
   }
 
   @Test
-  fun showMoreThreadsPersistsVisibleCountToUiState() = runBlocking {
+  fun showMoreThreadsUpdatesRuntimeVisibleCountWithoutPersistingUiState() = runBlocking {
     val treeUiState = InMemorySessionsTreeUiState()
     withService(
       sessionSourcesProvider = {
@@ -88,7 +88,7 @@ class AgentSessionsServiceOnDemandIntegrationTest {
       assertThat(service.state.value.visibleThreadCounts[PROJECT_PATH])
         .isEqualTo(DEFAULT_VISIBLE_THREAD_COUNT + DEFAULT_VISIBLE_THREAD_COUNT)
       assertThat(treeUiState.getVisibleThreadCount(PROJECT_PATH))
-        .isEqualTo(DEFAULT_VISIBLE_THREAD_COUNT + DEFAULT_VISIBLE_THREAD_COUNT)
+        .isEqualTo(DEFAULT_VISIBLE_THREAD_COUNT)
     }
   }
 
