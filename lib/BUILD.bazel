@@ -7431,6 +7431,21 @@ jvm_import(
 )
 
 copy_file(
+  name = "com.jetbrains.format-ripper/format-ripper-1.3.0.jar_copy",
+  src = "@com_jetbrains_format-ripper-format-ripper-1_3_0_http//file",
+  out = "com.jetbrains.format-ripper/format-ripper-1.3.0.jar",
+  allow_symlink = True,
+  visibility = ["//visibility:public"]
+)
+
+jvm_import(
+  name = "jetbrains-format-ripper",
+  jar = "@com_jetbrains_format-ripper-format-ripper-1_3_0_http//file",
+  source_jar = "@com_jetbrains_format-ripper-format-ripper-1_3_0-sources_http//file",
+  visibility = ["//visibility:public"]
+)
+
+copy_file(
   name = "org.jetbrains.intellij.deps/org.eclipse.jgit-6.6.1.202309021850-r-jb-202510311356.jar_copy",
   src = "@org_jetbrains_intellij_deps-org_eclipse_jgit-6_6_1_202309021850-r-jb-202510311356_http//file",
   out = "org.jetbrains.intellij.deps/org.eclipse.jgit-6.6.1.202309021850-r-jb-202510311356.jar",
@@ -17733,21 +17748,6 @@ jvm_import(
   name = "com_auth0-java-jwt-4_3_0_http_import",
   jar = "@com_auth0-java-jwt-4_3_0_http//file",
   source_jar = "@com_auth0-java-jwt-4_3_0-sources_http//file"
-)
-
-copy_file(
-  name = "com.jetbrains.format-ripper/format-ripper-1.2.0.jar_copy",
-  src = "@com_jetbrains_format-ripper-format-ripper-1_2_0_http//file",
-  out = "com.jetbrains.format-ripper/format-ripper-1.2.0.jar",
-  allow_symlink = True,
-  visibility = ["//visibility:public"]
-)
-
-jvm_import(
-  name = "platform-build_scripts-jetbrains-format-ripper",
-  jar = "@com_jetbrains_format-ripper-format-ripper-1_2_0_http//file",
-  source_jar = "@com_jetbrains_format-ripper-format-ripper-1_2_0-sources_http//file",
-  visibility = ["//visibility:public"]
 )
 
 copy_file(
