@@ -214,9 +214,9 @@ public class ClassesProcessor {
         if (superConst != null) qualifiedSealedSuperNames.add(superConst.getString());
         clazz.setNonSealed(
           qualifiedSealedSuperNames.stream()
-            .map(mapRootClasses::get)
+            .map(context.getClasses()::get)
             .filter(Objects::nonNull)
-            .map(potentialSuper -> potentialSuper.classStruct.getPermittedSubclasses())
+            .map(potentialSuper -> potentialSuper.getPermittedSubclasses())
             .filter(Objects::nonNull)
             .anyMatch(permittedList -> permittedList.contains(clazz.classStruct.qualifiedName))
         );

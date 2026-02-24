@@ -8534,6 +8534,33 @@ java_library(
 )
 
 copy_file(
+  name = "org.junit.jupiter/junit-jupiter-params-6.0.0.jar_copy",
+  src = "@org_junit_jupiter-junit-jupiter-params-6_0_0_http//file",
+  out = "org.junit.jupiter/junit-jupiter-params-6.0.0.jar",
+  allow_symlink = True,
+  visibility = ["//visibility:public"]
+)
+
+java_library(
+  name = "junit6Params",
+  exports = [
+    ":org_junit_jupiter-junit-jupiter-params-6_0_0_http_import",
+    ":org_junit_jupiter-junit-jupiter-api-6_0_0_http_import",
+    ":org_opentest4j-opentest4j-1_3_0_http_import",
+    ":org_junit_platform-junit-platform-commons-6_0_0_http_import",
+    ":org_apiguardian-apiguardian-api-1_1_2_http_import",
+    ":org_jspecify-jspecify-1_0_0_http_import",
+  ],
+  visibility = ["//visibility:public"]
+)
+
+jvm_import(
+  name = "org_junit_jupiter-junit-jupiter-params-6_0_0_http_import",
+  jar = "@org_junit_jupiter-junit-jupiter-params-6_0_0_http//file",
+  source_jar = "@org_junit_jupiter-junit-jupiter-params-6_0_0-sources_http//file"
+)
+
+copy_file(
   name = "org.jetbrains.nativecerts/jvm-native-trusted-roots-1.1.7.jar_copy",
   src = "@org_jetbrains_nativecerts-jvm-native-trusted-roots-1_1_7_http//file",
   out = "org.jetbrains.nativecerts/jvm-native-trusted-roots-1.1.7.jar",

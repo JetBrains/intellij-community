@@ -26,7 +26,10 @@ dependencies {
   implementation("org.jetbrains:annotations:26.1.0")
   testImplementation(platform("org.junit:junit-bom:6.0.3"))
   testImplementation("org.junit.jupiter:junit-jupiter")
+  testImplementation("org.junit.jupiter:junit-jupiter-params")
   testRuntimeOnly("org.junit.platform:junit-platform-launcher")
+  testImplementation("org.eclipse.jdt:ecj:3.31.0")
+  testImplementation("org.codehaus.groovy:groovy-all:3.0.25")
 }
 
 application {
