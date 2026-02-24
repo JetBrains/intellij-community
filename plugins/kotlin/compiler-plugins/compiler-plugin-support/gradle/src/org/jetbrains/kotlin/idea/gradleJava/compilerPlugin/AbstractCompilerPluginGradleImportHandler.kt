@@ -69,7 +69,7 @@ abstract class AbstractCompilerPluginGradleImportHandler<T> : GradleProjectImpor
 
         // For now we can't use plugins from Gradle cause they're shaded and may have an incompatible version.
         // So we use ones from the IDEA plugin.
-        val classpath = listOf(pluginJarFromIdea)
+        val classpath = listOf(pluginJarFromIdea.toString())
 
         return CompilerPluginSetup(options, classpath)
     }
