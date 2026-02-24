@@ -7,6 +7,7 @@ import com.intellij.debugger.streams.core.wrapper.QualifierExpression
 import com.intellij.debugger.streams.core.wrapper.StreamChain
 import com.intellij.debugger.streams.trace.breakpoint.ObjectStorage
 import com.intellij.openapi.diagnostic.logger
+import com.sun.jdi.ArrayReference
 import com.sun.jdi.Method
 import com.sun.jdi.ObjectReference
 import com.sun.jdi.Value
@@ -41,6 +42,12 @@ internal class StreamInstrumentationManager private constructor(
       chain: StreamChain,
       evaluationContext: EvaluationContextImpl,
     ): StreamInstrumentationManager {
+      DebuggerManagerThreadImpl.assertIsManagerThread()
+      if (!evaluationContext.suspendContext.myInProgress) {
+        LOG.error("${StreamInstrumentationManager::class.simpleName} must be initialized inside commands invoked for SuspendContext. " +
+                  "evaluationContext = $evaluationContext")
+      }
+
       handlerFactory.beforeStreamTracing(evaluationContext)
       return StreamInstrumentationManager(
         objectStorage = objectStorage,
@@ -234,13 +241,16 @@ internal class StreamInstrumentationManager private constructor(
 
     return objectStorage.watch(evaluationContext) {
       val intermediateResults = intermediateHandlers.map { it.result(evaluationContext) }
-      val terminalResult = terminalHandler.result(evaluationContext)
+      val terminalResult = terminalHandler.result(evaluationContext) as ArrayReference
 
-      // Format: [intermediateResults[], terminalResult, timing[]]
+      val terminalBeforeAfter = terminalResult.getValue(0)
+      val evaluationResult = terminalResult.getValue(1)
+
+      // Format: [intermediateResults[], evaluationResult, evaluationTiming[]]
       // Note: timing is already included in terminal result, so we pass a placeholder
       array(
-        array(*intermediateResults.toTypedArray()),
-        terminalResult,
+        array(*intermediateResults.toTypedArray(), terminalBeforeAfter),
+        evaluationResult,
         array(0L.mirror)  // Placeholder for timing
       )
     }
@@ -266,7 +276,7 @@ internal class StreamInstrumentationManager private constructor(
    */
   private fun transformIfObjectReference(
     value: Value?,
-    transformer: (ObjectReference) -> Value?
+    transformer: (ObjectReference) -> Value?,
   ): Value? {
     return if (value is ObjectReference) {
       transformer(value)

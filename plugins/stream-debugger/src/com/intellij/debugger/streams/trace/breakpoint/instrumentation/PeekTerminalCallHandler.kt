@@ -29,7 +29,7 @@ internal open class PeekTerminalCallHandler(
   ): Value? {
     DebuggerManagerThreadImpl.assertIsManagerThread()
     streamResult = value  // Capture terminal result
-    return super.afterCall(evaluationContextImpl, value)
+    return value
   }
 
   override fun result(evaluationContextImpl: EvaluationContextImpl): Value {
@@ -63,7 +63,7 @@ internal open class PeekTerminalCallHandler(
     val getMethod = time.referenceType().method("get", "()I")
     val timeValue = getMethod.invoke(time)
 
-    return array("I", 1).apply {
+    return array("int", 1).apply {
       setValue(0, timeValue)
     }
   }
