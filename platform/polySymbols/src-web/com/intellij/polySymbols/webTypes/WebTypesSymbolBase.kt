@@ -17,7 +17,7 @@ import com.intellij.polySymbols.documentation.PolySymbolDocumentation
 import com.intellij.polySymbols.documentation.PolySymbolDocumentationProvider
 import com.intellij.polySymbols.documentation.PolySymbolDocumentationTarget
 import com.intellij.polySymbols.framework.framework
-import com.intellij.polySymbols.html.PROP_HTML_ATTRIBUTE_VALUE
+import com.intellij.polySymbols.html.HtmlAttributeValueProperty
 import com.intellij.polySymbols.html.PolySymbolHtmlAttributeValue
 import com.intellij.polySymbols.html.htmlAttributeValue
 import com.intellij.polySymbols.patterns.PolySymbolPattern
@@ -72,6 +72,7 @@ open class WebTypesSymbolBase : WebTypesSymbol {
     base.contribution.genericProperties
   }
 
+  @PolySymbol.Property(HtmlAttributeValueProperty::class)
   private val attributeValue by lazy {
     (base.contribution.attributeValue?.let { sequenceOf(HtmlAttributeValueImpl(it)) } ?: emptySequence())
       .plus(superContributions.asSequence().map { it.htmlAttributeValue })
@@ -85,7 +86,6 @@ open class WebTypesSymbolBase : WebTypesSymbol {
   @Suppress("UNCHECKED_CAST")
   override fun <T : Any> get(property: PolySymbolProperty<T>): T? =
     when (property) {
-      PROP_HTML_ATTRIBUTE_VALUE -> attributeValue as T?
       PROP_TYPE_SUPPORT -> property.tryCast(base.jsonOrigin.typeSupport)
       base.jsonOrigin.typeSupport?.typeProperty -> {
         property.tryCast(
@@ -95,6 +95,8 @@ open class WebTypesSymbolBase : WebTypesSymbol {
         )
       }
       else -> property.tryCast(contributionProperties[property.name])
+              ?: super[property]
+
     }
 
   override fun isEquivalentTo(symbol: Symbol): Boolean =

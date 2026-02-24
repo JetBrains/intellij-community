@@ -23,14 +23,13 @@ val HTML_ATTRIBUTE_VALUES: PolySymbolKind = PolySymbolKind.Companion[NAMESPACE_H
 @JvmField
 val HTML_SLOTS: PolySymbolKind = PolySymbolKind.Companion[NAMESPACE_HTML, "slots"]
 
-val PolySymbol.htmlAttributeValue: PolySymbolHtmlAttributeValue?
-  get() = if (this is PolySymbolMatchBase)
-    this.reversedSegments().flatMap { it.symbols }.map { it[PROP_HTML_ATTRIBUTE_VALUE] }.merge()
-  else
-    this[PROP_HTML_ATTRIBUTE_VALUE]
-
 /**
  * A special property to support symbols representing HTML attributes.
  **/
-@JvmField
-val PROP_HTML_ATTRIBUTE_VALUE: PolySymbolProperty<PolySymbolHtmlAttributeValue> = PolySymbolProperty.Companion["html-attribute-value"]
+object HtmlAttributeValueProperty : PolySymbolProperty<PolySymbolHtmlAttributeValue>("html-attribute-value", PolySymbolHtmlAttributeValue::class.java)
+
+val PolySymbol.htmlAttributeValue: PolySymbolHtmlAttributeValue?
+  get() = if (this is PolySymbolMatchBase)
+    this.reversedSegments().flatMap { it.symbols }.map { it[HtmlAttributeValueProperty] }.merge()
+  else
+    this[HtmlAttributeValueProperty]

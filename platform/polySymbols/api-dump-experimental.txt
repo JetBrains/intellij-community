@@ -613,14 +613,16 @@
 - f:inLocation(com.intellij.psi.PsiElement):com.intellij.polySymbols.framework.PolySymbolFramework
 *f:com.intellij.polySymbols.framework.PolySymbolFrameworkKt
 - sf:getFramework(com.intellij.polySymbols.context.PolyContext):java.lang.String
+*f:com.intellij.polySymbols.html.HtmlAttributeValueProperty
+- com.intellij.polySymbols.PolySymbolProperty
+- sf:INSTANCE:com.intellij.polySymbols.html.HtmlAttributeValueProperty
 *f:com.intellij.polySymbols.html.HtmlSymbolKinds
 - sf:HTML_ATTRIBUTES:com.intellij.polySymbols.PolySymbolKind
 - sf:HTML_ATTRIBUTE_VALUES:com.intellij.polySymbols.PolySymbolKind
 - sf:HTML_ELEMENTS:com.intellij.polySymbols.PolySymbolKind
 - sf:HTML_SLOTS:com.intellij.polySymbols.PolySymbolKind
 - sf:NAMESPACE_HTML:java.lang.String
-- sf:PROP_HTML_ATTRIBUTE_VALUE:com.intellij.polySymbols.PolySymbolProperty
-- sf:getHtmlAttributeValue(com.intellij.polySymbols.PolySymbol):com.intellij.polySymbols.html.PolySymbolHtmlAttributeValue
+- sf:getHtmlAttributeValue(com.intellij.polySymbols.PolySymbol,com.intellij.psi.PsiElement):com.intellij.polySymbols.html.PolySymbolHtmlAttributeValue
 *:com.intellij.polySymbols.html.PolySymbolHtmlAttributeValue
 - *sf:Companion:com.intellij.polySymbols.html.PolySymbolHtmlAttributeValue$Companion
 - copy(com.intellij.polySymbols.html.PolySymbolHtmlAttributeValue$Kind,com.intellij.polySymbols.html.PolySymbolHtmlAttributeValue$Type,java.lang.Boolean,java.lang.String,java.lang.Object):com.intellij.polySymbols.html.PolySymbolHtmlAttributeValue
