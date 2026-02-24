@@ -78,14 +78,8 @@ public class IdeaMenuUI extends BasicMenuUI {
       outerInsets = JBUI.CurrentTheme.PopupMenu.Selection.outerInsets();
     }
     else if (IdeaPopupMenuUI.isMenuBarItem(c)) {
-      if (ShowMode.Companion.isMergedMainMenu()) {
-        outerInsets = JBUI.insets(height / JBUIScale.scale(8), 0);
-        radius = JBUI.CurrentTheme.MainToolbar.Dropdown.hoverArc().get();
-      }
-      else {
-        outerInsets = DarculaMenuItemBorder.menuBarItemOuterInsets();
-        radius = 0;
-      }
+      outerInsets = DarculaMenuItemBorder.menuBarItemOuterInsets(height);
+      radius = JBUI.CurrentTheme.MainToolbar.Dropdown.hoverArc().get();
     }
     else {
       radius = JBUI.CurrentTheme.Menu.Selection.ARC.get();
