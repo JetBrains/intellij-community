@@ -473,6 +473,9 @@ public final class HighlightInfoUpdaterImpl extends HighlightInfoUpdater impleme
         }
         return matches;
       });
+      if (evictedInfos.isEmpty()) {
+        document.putUserData(EVICTED_PSI_ELEMENTS, null);
+      }
     }
   }
 
