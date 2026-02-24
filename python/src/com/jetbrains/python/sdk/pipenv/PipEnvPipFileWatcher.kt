@@ -15,7 +15,6 @@ import com.intellij.openapi.editor.event.EditorFactoryListener
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleUtil
-import com.intellij.openapi.progress.Cancellation
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.NlsContexts
@@ -83,7 +82,7 @@ internal class PipEnvPipFileWatcher : EditorFactoryListener {
     }
     val content = PyBundle.message("python.sdk.pipenv.pip.file.notification.content")
     val notification = withContext(Dispatchers.EDT) {
-      LOCK_NOTIFICATION_GROUP.createNotification(
+      NotificationGroupManager.getInstance().getNotificationGroup("Pipfile Watcher").createNotification(
         title = title,
         content = content,
         type = NotificationType.INFORMATION,
@@ -137,10 +136,6 @@ internal class PipEnvPipFileWatcher : EditorFactoryListener {
 
   private fun VirtualFile.getModule(project: Project): Module? =
     ModuleUtil.findModuleForFile(this, project)
-
-  private val LOCK_NOTIFICATION_GROUP = Cancellation.forceNonCancellableSectionInClassInitializer {
-    NotificationGroupManager.getInstance().getNotificationGroup("Pipfile Watcher")
-  }
 
   private suspend fun getPipFileLock(module: Module): VirtualFile? = findAmongRoots(module, PipEnvFileHelper.PIP_FILE_LOCK)
 }
