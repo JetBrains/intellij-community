@@ -9,13 +9,16 @@ import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vfs.impl.wsl.WslConstants
 import com.intellij.testFramework.fixtures.BasePlatformTestCase
 import com.intellij.testFramework.utils.io.deleteRecursively
+import com.intellij.util.EnvironmentUtil
 import com.intellij.util.containers.CollectionFactory
 import com.intellij.util.system.OS
+import kotlinx.coroutines.CompletableDeferred
 import org.assertj.core.api.Assertions.assertThat
 import org.jetbrains.plugins.terminal.ShellStartupOptions
 import org.jetbrains.plugins.terminal.TerminalProjectOptionsProvider
 import org.jetbrains.plugins.terminal.runner.LocalOptionsConfigurer
 import org.jetbrains.plugins.terminal.runner.LocalTerminalStartCommandBuilder.convertShellPathToCommand
+import org.jetbrains.plugins.terminal.startup.TerminalProcessType
 import org.jetbrains.plugins.terminal.util.TerminalEnvironment
 import org.jetbrains.plugins.terminal.util.TerminalEnvironment.TERMINAL_EMULATOR
 import org.jetbrains.plugins.terminal.util.TerminalEnvironment.TERM_SESSION_ID
@@ -106,6 +109,43 @@ internal class LocalOptionsConfigurerTest : BasePlatformTestCase() {
     assertEquals("JetBrains-JediTerm", actual.envVariables["TERMINAL_EMULATOR"])
     assertTrue(actual.envVariables["TERM_SESSION_ID"].let { it != null && it.isNotBlank() })
     assertEquals("MY_CUSTOM_ENV_VALUE1", actual.envVariables["MY_CUSTOM_ENV1"])
+  }
+
+  fun testShellTerminalProcessTypeUsesSystemEnvironment() {
+    setDefaultStartingDirectory(tempDirectory.pathString)
+
+    val probeName = "TERMINAL_MINIMAL_ENV_PROBE_${System.nanoTime()}"
+    assertThat(System.getenv()).doesNotContainKey(probeName)
+    setEnvironmentMapForTest(EnvironmentUtil.getEnvironmentMap() + (probeName to "DEFAULT_ENV_VALUE"))
+
+    val actual = LocalOptionsConfigurer.configureStartupOptions(
+      ShellStartupOptions.Builder()
+        .shellCommand(listOf("some-shell"))
+        .processType(TerminalProcessType.SHELL)
+        .build(),
+      project
+    )
+
+    assertThat(actual.envVariables).doesNotContainKey(probeName)
+  }
+
+  fun testNonShellTerminalProcessTypeUsesEnvironmentMap() {
+    setDefaultStartingDirectory(tempDirectory.pathString)
+
+    val probeName = "TERMINAL_DEFAULT_ENV_PROBE_${System.nanoTime()}"
+    val probeValue = "DEFAULT_ENV_VALUE"
+    assertThat(System.getenv()).doesNotContainKey(probeName)
+    setEnvironmentMapForTest(EnvironmentUtil.getEnvironmentMap() + (probeName to probeValue))
+
+    val actual = LocalOptionsConfigurer.configureStartupOptions(
+      ShellStartupOptions.Builder()
+        .shellCommand(listOf("non-shell"))
+        .processType(TerminalProcessType.NON_SHELL)
+        .build(),
+      project
+    )
+
+    assertEquals(probeValue, actual.envVariables[probeName])
   }
 
   fun testWslEnvSetup() {
@@ -261,6 +301,14 @@ internal class LocalOptionsConfigurerTest : BasePlatformTestCase() {
     prop.set(newValue)
     Disposer.register(testRootDisposable) {
       prop.set(prevValue)
+    }
+  }
+
+  private fun setEnvironmentMapForTest(environmentMap: Map<String, String>) {
+    val previous = EnvironmentUtil.getEnvironmentMap()
+    EnvironmentUtil.setEnvironmentLoader(CompletableDeferred(environmentMap))
+    Disposer.register(testRootDisposable) {
+      EnvironmentUtil.setEnvironmentLoader(CompletableDeferred(previous))
     }
   }
 }
