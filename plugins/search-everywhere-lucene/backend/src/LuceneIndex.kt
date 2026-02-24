@@ -1,6 +1,9 @@
 package com.intellij.searchEverywhereLucene.backend
 
 import com.intellij.openapi.Disposable
+import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.diagnostic.debug
+import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.getProjectDataPath
 import kotlinx.coroutines.CoroutineScope
@@ -26,7 +29,7 @@ import java.nio.file.Path
 import kotlin.io.path.div
 
 
-class LuceneIndex(val project: Project, val coroutineScope: CoroutineScope, indexName: String) : Disposable {
+class LuceneIndex(val project: Project, val coroutineScope: CoroutineScope, indexName: String, val LOG: Logger) : Disposable {
 
   private val indexPath: Path = let {
     project.getProjectDataPath("luceneIndex") / indexName
@@ -59,6 +62,7 @@ class LuceneIndex(val project: Project, val coroutineScope: CoroutineScope, inde
    *                interrupted by coroutine context switches.
    */
   fun processChanges(changes: (IndexWriter) -> Unit) {
+    val before = searcherManager.acquire().indexReader.numDocs()
     try {
       changes(writer)
       writer.commit()
@@ -76,6 +80,8 @@ class LuceneIndex(val project: Project, val coroutineScope: CoroutineScope, inde
       throw t
     }
     searcherManager.maybeRefresh()
+    val after = searcherManager.acquire().indexReader.numDocs()
+    LOG.debug{ "Lucene Index docs number changes: before=$before, after=${after} (diff ${after - before})" }
   }
 
   fun createIndex(initial_entities: List<Document>) {

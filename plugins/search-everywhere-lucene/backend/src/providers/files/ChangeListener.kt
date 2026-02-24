@@ -19,35 +19,35 @@ internal class ChangeListener : AsyncFileListener {
     val projects = ProjectManager.getInstance().openProjects
       .filter { project -> project.basePath != null }
 
+    val virtualFilesToIndex = mutableSetOf<VirtualFile>()
+    val changedUrls = mutableSetOf<String>()
 
-    val filesToReindex = events.asSequence().flatMap { event ->
+    // We rely on the fact that the VirtualFiles will not reflect renaming changes here.
+    events.asSequence().forEach { event ->
       when (event) {
-        is VFileCreateEvent -> listOfNotNull(event.file)
-        is VFileDeleteEvent -> listOfNotNull(event.file)
-        is VFileCopyEvent -> listOfNotNull(event.file)
-        // TODO somehow inform the FileIndex that the moved/renamed file is gone. Currently it only adds the new file to the index.
+        is VFileCreateEvent -> changedUrls.add("${event.parent.url}/${event.getChildName()}")
+        is VFileDeleteEvent -> virtualFilesToIndex.add(event.file)
+        is VFileCopyEvent -> changedUrls.add("${event.newParent.url}/${event.newChildName}")
         is VFileMoveEvent -> {
-          listOfNotNull(event.oldParent.findChild(event.file.name), event.file)
+          virtualFilesToIndex.add(event.file)
+          changedUrls.add(event.file.url)
         }
         is VFilePropertyChangeEvent -> {
-          if (event.propertyName == VirtualFile.PROP_NAME) {
-            listOfNotNull(event.file) // Both old and new location use the same VFile reference
-          }
-          else {
-            emptyList()
+          if (event.isRename) {
+            virtualFilesToIndex.add(event.file)
+            changedUrls.add(event.file.url)
           }
         }
-        else -> emptyList()
       }
     }
-      .toList()
 
-    if (filesToReindex.isEmpty()) {
+
+    if (virtualFilesToIndex.isEmpty() && changedUrls.isEmpty()) {
       return null
     }
 
     projects.forEach { project ->
-      FileIndex.getInstance(project).scheduleIndexingOp(LuceneFileIndexOperation.ReindexFiles(filesToReindex))
+      FileIndex.getInstance(project).scheduleIndexingOp(LuceneFileIndexOperation.ReindexFiles(virtualFilesToIndex,changedUrls))
     }
 
     return null

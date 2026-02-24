@@ -27,7 +27,6 @@ import java.nio.file.Path
 class SearchEverywhereLuceneFileItem(
   private val project: Project,
   val file: VirtualFile,
-  val name: String,
   val score: Float,
   private val inputQuery: String,
   private val fileModel: GotoFileModel,
@@ -83,8 +82,7 @@ class SearchEverywhereLuceneFilesProvider(private val project: Project) : SeItem
     FileIndex.getInstance(project)
       .search(params)
       .collect {
-        val virtualFile = VirtualFileManager.getInstance().findFileByNioPath(Path.of((it.path))) ?: return@collect
-        collector.put(SearchEverywhereLuceneFileItem(project, virtualFile, it.name, it.score, params.inputQuery, fileModel, presentationRenderer))
+        collector.put(SearchEverywhereLuceneFileItem(project, it.file, it.score, params.inputQuery, fileModel, presentationRenderer))
       }
   }
 

@@ -1,3 +1,5 @@
 package com.intellij.searchEverywhereLucene.backend.providers.files
 
-class LuceneFileSearchResult(val name: String, val path: String, val score: Float)
+import com.intellij.openapi.vfs.VirtualFile
+
+class LuceneFileSearchResult(val file: VirtualFile, val score: Float)

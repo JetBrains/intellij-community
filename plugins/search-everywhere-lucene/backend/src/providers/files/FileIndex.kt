@@ -7,11 +7,11 @@ import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.logger
-import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.ProjectFileIndex
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.platform.searchEverywhere.SeParams
 import com.intellij.searchEverywhereLucene.backend.LuceneIndex
 import com.intellij.searchEverywhereLucene.backend.SearchEverywhereLucenePluginDisposable
@@ -23,7 +23,8 @@ import kotlinx.coroutines.channels.ReceiveChannel
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.channelFlow
 import kotlinx.coroutines.flow.consumeAsFlow
-import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.mapNotNull
+import kotlinx.coroutines.flow.onCompletion
 import kotlinx.coroutines.flow.produceIn
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.selects.onTimeout
@@ -41,14 +42,12 @@ import org.apache.lucene.search.FuzzyQuery
 import org.apache.lucene.search.PrefixQuery
 import org.apache.lucene.search.Query
 import java.io.IOException
-import java.nio.file.Files
-import java.nio.file.Paths
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.seconds
 
 @Service(Service.Level.PROJECT)
 internal class FileIndex(val project: Project, val coroutineScope: CoroutineScope) : Disposable {
-  private val luceneIndex = LuceneIndex(project, coroutineScope, SearchEverywhereLuceneProviderIdUtils.LUCENE_FILES)
+  private val luceneIndex = LuceneIndex(project, coroutineScope, SearchEverywhereLuceneProviderIdUtils.LUCENE_FILES,LOG)
   private val scheduledIndexingOps = Channel<LuceneFileIndexOperation>(capacity = Channel.UNLIMITED)
 
   init {
@@ -75,10 +74,15 @@ internal class FileIndex(val project: Project, val coroutineScope: CoroutineScop
           // Since all others are ReindexFiles, we can merge them to reduce the number of times indexing runs:
           val merged_files = ops.asSequence()
             .filterIsInstance<LuceneFileIndexOperation.ReindexFiles>()
-            .flatMap { it.addedFiles }
-            .toList()
+            .flatMap { it.changedFiles }
+            .toSet()
 
-          processFileIndexOp(LuceneFileIndexOperation.ReindexFiles(merged_files))
+          val merged_urls = ops.asSequence()
+            .filterIsInstance<LuceneFileIndexOperation.ReindexFiles>()
+            .flatMap { it.changedUrls }
+            .toSet()
+
+          processFileIndexOp(LuceneFileIndexOperation.ReindexFiles(merged_files, merged_urls))
         }
       }
     }
@@ -119,22 +123,50 @@ internal class FileIndex(val project: Project, val coroutineScope: CoroutineScop
 
       is LuceneFileIndexOperation.ReindexFiles -> {
         val fileIndex = ProjectFileIndex.getInstance(project)
-        val files = readAction { op.addedFiles.filter { fileIndex.isInProject(it) } }
+        val files_to_reindex = mutableListOf<VirtualFile>()
+        val urls_to_delete = mutableListOf<Term>()
+        
+        
+        // The reindexing Op may point to directories that should be reindexed, so we must reindex the contents of the dir, as these paths have changed.
+        readAction {
+          val virtualFiles = mutableListOf<VirtualFile>()
+          virtualFiles.addAll(op.changedFiles)
 
-        if (files.isEmpty()) return
+          op.changedUrls.forEach { url ->
+            val virtualFile = VirtualFileManager.getInstance().findFileByUrl(url) ?: let {
+              urls_to_delete.add(getTerm("$url"))
+              return@forEach
+            } 
+            virtualFiles.add(virtualFile)
+          }
 
-        LOG.debug {"Reindexing  ${files.size} files:" }
+          virtualFiles.forEach { virtualFile ->
+            if (!fileIndex.isInProject(virtualFile)) return@forEach
+            check(virtualFile.isValid) { "The file at ${virtualFile.presentableUrl} is not Valid! We assume file events only returns valid files" }
+            if (!virtualFile.isDirectory) {
+              files_to_reindex.add(virtualFile);
+            } else {
+              // Should be used from readAction
+              fileIndex.iterateContentUnderDirectory(virtualFile) { file ->
+                if (!file.isDirectory) {
+                  files_to_reindex.add(file)
+                }
+                true // continue iteration
+              }
+            }
+          }
+        }
 
+        if (files_to_reindex.isEmpty() && urls_to_delete.isEmpty()) return
+        LOG.debug {"Reindexing ${files_to_reindex.size} files, deleting ${urls_to_delete.size} files" }
 
         luceneIndex.processChanges { writer ->
-          files.forEach { file ->
-
-            check(Files.exists(Paths.get(file.path))) { "The file at ${file.path} does not exist! We assume file events only returns existing files" }
-            check(file.isValid) { "The file at ${file.path} is not Valid! We assume file events only returns valid files" }
+          files_to_reindex.forEach { file ->
             val (term, doc) = getDocument(file)
-            LOG.debug { "Updating $term to $doc" }
             writer.updateDocument(term, doc)
           }
+
+          urls_to_delete.forEach { writer.deleteDocuments(it) }
 
           LOG.debug("Reindexed all updated files for the next lucene index commit.")
         }
@@ -163,17 +195,26 @@ internal class FileIndex(val project: Project, val coroutineScope: CoroutineScop
     return builder.build()
   }
 
-  // TODO figure out why old files no longer show up. They ARE returned from this search function after all.
-  //   SearchEverywhereLuceneFilesProvider performs refiltering: val virtualFile = VirtualFileManager.getInstance().findFileByNioPath(Path.of((it.path))) ?: return@collect
-  // TODO Store virtual file ID in the index to allow efficient retrieval later.
   fun search(params: SeParams): Flow<LuceneFileSearchResult> {
     val query = buildQuery(params)
-    LOG.debug { "Search for ${params.inputQuery} with ${params.filter} was translated into Lucene Query: $query" }
-    return luceneIndex.search(query).map { (scoreDoc, doc) ->
+    val deletedFilesToRemoveFromIndex = mutableSetOf<String>()
+    return luceneIndex.search(query).mapNotNull { (scoreDoc, doc) ->
       //LOG.debug { "Search \"${params.inputQuery}\" returned $doc with score ${scoreDoc.score}" }
-      val name = doc.get(FILE_NAME)
-      val path = doc.get(FILE_ABSOLUTE_PATH)
-      LuceneFileSearchResult(name, path, scoreDoc.score)
+      val url = doc.get(FILE_URL)
+      val virtualFile = VirtualFileManager.getInstance().findFileByUrl(url) ?: let {
+        deletedFilesToRemoveFromIndex.add(url)
+        return@mapNotNull null
+      }
+      LuceneFileSearchResult(virtualFile, scoreDoc.score)
+    }.onCompletion {
+      //This will fire often, as each character typed by the user causes a new search.
+      //And since the same deleted files are likely showing up repeatedly, there are a bunch of requests to delete the same file.
+      //We could track the deleted files in the FilesProvider instead, but this would make the FileIndex interface more complex.
+      //The debouncing/merging logic in place should be enough to handle this anyway.
+      if (deletedFilesToRemoveFromIndex.isNotEmpty()) {
+        LOG.debug { "Scheduling deletion of ${deletedFilesToRemoveFromIndex.size} files from index: ${deletedFilesToRemoveFromIndex.toString()}" }
+        scheduleIndexingOp(LuceneFileIndexOperation.ReindexFiles(changedUrls = deletedFilesToRemoveFromIndex))
+      }
     }
   }
 
@@ -185,9 +226,8 @@ internal class FileIndex(val project: Project, val coroutineScope: CoroutineScop
     val LOG: Logger = logger<FileIndex>()
     const val FILE_NAME: String = "fileName"
     const val FILE_LOWERCASE_NAME: String = "fileLowercaseName"
-    const val FILE_CONTENT_ROOT_PATH: String = "fileContentRootPath"
-    const val FILE_SOURCE_ROOT_PATH: String = "fileSourceRootPath"
-    const val FILE_ABSOLUTE_PATH: String = "fileAbsolutePath"
+
+    const val FILE_URL: String = "uri"
 
 
     @Throws(IOException::class)
@@ -203,25 +243,28 @@ internal class FileIndex(val project: Project, val coroutineScope: CoroutineScop
       val fields = listOf(
         //Field(FILE_SOURCE_ROOT_PATH, fileInfo.sourceRootPath, tokenizedField),
         //StringField(FILE_CONTENT_ROOT_PATH, fileInfo.contentRootPath, Field.Store.YES),
-        StringField(FILE_ABSOLUTE_PATH, virtualFile.path, Field.Store.YES),
-        StringField(FILE_NAME, virtualFile.nameWithoutExtension, Field.Store.YES),
-        StringField(FILE_LOWERCASE_NAME, virtualFile.nameWithoutExtension.lowercase(), Field.Store.YES)
+        StringField(FILE_URL, virtualFile.url, Field.Store.YES),
+        StringField(FILE_NAME, virtualFile.nameWithoutExtension, Field.Store.NO),
+        StringField(FILE_LOWERCASE_NAME, virtualFile.nameWithoutExtension.lowercase(), Field.Store.NO)
       )
 
       fields.forEach { document.add(it) }
 
-      val term = Term(FILE_ABSOLUTE_PATH, virtualFile.path)
+      val term = getTerm(virtualFile.url)
 
       return Pair(term, document)
+    }
+
+    private fun getTerm(url: String): Term {
+      val term = Term(FILE_URL, url)
+      return term
     }
   }
 }
 
 sealed class LuceneFileIndexOperation {
   data object IndexAll : LuceneFileIndexOperation()
-
-  //TODO how to represent deleted files?
-  data class ReindexFiles(val addedFiles: List<VirtualFile>) : LuceneFileIndexOperation()
+  data class ReindexFiles(val changedFiles: Set<VirtualFile> = emptySet(), val changedUrls: Set<String> = emptySet()) : LuceneFileIndexOperation()
 }
 
 
