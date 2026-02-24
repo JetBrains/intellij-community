@@ -10,6 +10,7 @@ import com.intellij.ide.plugins.PluginUtil
 import com.intellij.ide.util.PropertiesComponent
 import com.intellij.idea.AppMode
 import com.intellij.internal.statistic.utils.getPluginInfoByDescriptor
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.impl.ApplicationInfoImpl
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.project.Project
@@ -36,6 +37,14 @@ object ExceptionAutoReportUtil {
       if (!isAutoReportVisible) return false
       val (consent, needsReconfirm) = getConsentAndNeedsReconfirm()
       return consent?.isAccepted == true && !needsReconfirm
+    }
+
+  @JvmStatic
+  val isAutoReportEnabledOrUndecided: Boolean
+    get() {
+      if (!isAutoReportVisible) return false
+      val (consent, needsReconfirm) = getConsentAndNeedsReconfirm()
+      return consent?.isAccepted == true || needsReconfirm
     }
 
   private fun getConsentAndNeedsReconfirm(): Pair<Consent?, Boolean> {
@@ -88,7 +97,12 @@ object ExceptionAutoReportUtil {
     return Pair(submitter, plugin)
   }
 
-  private fun isDefaultSubmitter(submitter: ITNReporter): Boolean = submitter.javaClass == ITNReporter::class.java
+  private fun isDefaultSubmitter(submitter: ITNReporter): Boolean {
+    val cls = submitter.javaClass
+    return cls == ITNReporter::class.java
+           || cls.name == $$"com.intellij.rustrover.RustRoverMessagePoolAutoReporter$MyITNReporter"
+           && ApplicationManager.getApplication().isEAP
+  }
 }
 
 internal class ReporterIdForEAAutoReporters : AboutPopupDescriptionProvider {
