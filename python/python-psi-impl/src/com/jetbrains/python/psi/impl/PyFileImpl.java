@@ -13,7 +13,15 @@ import com.intellij.openapi.util.RecursionManager;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.*;
+import com.intellij.psi.FileViewProvider;
+import com.intellij.psi.PsiComment;
+import com.intellij.psi.PsiDirectory;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiElementVisitor;
+import com.intellij.psi.PsiInvalidElementAccessException;
+import com.intellij.psi.PsiNamedElement;
+import com.intellij.psi.PsiWhiteSpace;
+import com.intellij.psi.ResolveState;
 import com.intellij.psi.scope.DelegatingScopeProcessor;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.stubs.StubElement;
@@ -29,7 +37,36 @@ import com.jetbrains.python.PythonLanguage;
 import com.jetbrains.python.ast.PyAstElementVisitor;
 import com.jetbrains.python.codeInsight.controlflow.ControlFlowCache;
 import com.jetbrains.python.documentation.docstrings.DocStringUtil;
-import com.jetbrains.python.psi.*;
+import com.jetbrains.python.psi.FutureFeature;
+import com.jetbrains.python.psi.LanguageLevel;
+import com.jetbrains.python.psi.PyAugAssignmentStatement;
+import com.jetbrains.python.psi.PyBinaryExpression;
+import com.jetbrains.python.psi.PyCallExpression;
+import com.jetbrains.python.psi.PyClass;
+import com.jetbrains.python.psi.PyCompoundStatement;
+import com.jetbrains.python.psi.PyElement;
+import com.jetbrains.python.psi.PyElementVisitor;
+import com.jetbrains.python.psi.PyExceptPart;
+import com.jetbrains.python.psi.PyExpression;
+import com.jetbrains.python.psi.PyExpressionStatement;
+import com.jetbrains.python.psi.PyFile;
+import com.jetbrains.python.psi.PyFromImportStatement;
+import com.jetbrains.python.psi.PyFunction;
+import com.jetbrains.python.psi.PyImportElement;
+import com.jetbrains.python.psi.PyImportStatement;
+import com.jetbrains.python.psi.PyImportedNameDefiner;
+import com.jetbrains.python.psi.PyKeywordArgument;
+import com.jetbrains.python.psi.PyQualifiedExpression;
+import com.jetbrains.python.psi.PyRecursiveElementVisitor;
+import com.jetbrains.python.psi.PyReferenceExpression;
+import com.jetbrains.python.psi.PyStarImportElement;
+import com.jetbrains.python.psi.PyStatement;
+import com.jetbrains.python.psi.PyStringLiteralExpression;
+import com.jetbrains.python.psi.PyTargetExpression;
+import com.jetbrains.python.psi.PyTypeAliasStatement;
+import com.jetbrains.python.psi.PyUtil;
+import com.jetbrains.python.psi.PythonVisitorFilter;
+import com.jetbrains.python.psi.StructuredDocString;
 import com.jetbrains.python.psi.impl.references.PyReferenceImpl;
 import com.jetbrains.python.psi.impl.stubs.PyVersionSpecificStubBaseKt;
 import com.jetbrains.python.psi.resolve.*;
@@ -642,23 +679,29 @@ public class PyFileImpl extends PsiFileBase implements PyFile, PyExpression {
   }
 
   public boolean calculateImportFromFuture(FutureFeature feature) {
-    if (getText().contains(feature.toString())) {
-      final List<PyFromImportStatement> fromImports = getFromImports();
-      for (PyFromImportStatement fromImport : fromImports) {
-        if (fromImport.isFromFuture()) {
-          final PyImportElement[] pyImportElements = fromImport.getImportElements();
-          for (PyImportElement element : pyImportElements) {
-            final QualifiedName qName = element.getImportedQName();
-            if (qName != null && qName.matches(feature.toString())) {
-              return true;
-            }
+    for (PsiElement current = getFirstChild(); current != null; current = current.getNextSibling()) {
+      if (current instanceof PsiWhiteSpace || current instanceof PsiComment) {
+        continue;
+      }
+      boolean isModuleDocString = current instanceof PyExpressionStatement exprStatement &&
+                                  exprStatement.getExpression() instanceof PyStringLiteralExpression stringLiteral &&
+                                  stringLiteral.isDocString();
+      if (isModuleDocString) {
+        continue;
+      }
+      if (current instanceof PyFromImportStatement fromImport && fromImport.isFromFuture()) {
+        for (PyImportElement importElement : fromImport.getImportElements()) {
+          QualifiedName qName = importElement.getImportedQName();
+          if (qName != null && qName.matches(feature.toString())) {
+            return true;
           }
         }
+        continue;
       }
+      break;
     }
     return false;
   }
-
 
   @Override
   public @Nullable PyType getType(@NotNull TypeEvalContext context, @NotNull TypeEvalContext.Key key) {
