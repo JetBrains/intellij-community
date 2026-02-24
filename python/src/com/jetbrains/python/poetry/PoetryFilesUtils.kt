@@ -12,8 +12,7 @@ import com.intellij.openapi.vfs.findPsiFile
 import com.intellij.psi.PsiElement
 import com.intellij.psi.util.PsiElementFilter
 import com.intellij.psi.util.PsiTreeUtil
-import com.jetbrains.python.poetry.VersionType.Companion.getVersionType
-import com.jetbrains.python.psi.LanguageLevel
+import com.jetbrains.python.packaging.PyVersionSpecifiers
 import com.jetbrains.python.sdk.add.v2.PathHolder
 import com.jetbrains.python.sdk.add.v2.PythonSelectableInterpreter
 import kotlinx.coroutines.Dispatchers
@@ -78,132 +77,25 @@ suspend fun poetryFindPythonVersionFromToml(tomlFile: VirtualFile, project: Proj
 @Internal
 @Service(Service.Level.PROJECT)
 class PoetryPyProjectTomlPythonVersionsService : Disposable {
-  private val modulePythonVersions: ConcurrentMap<VirtualFile, PoetryPythonVersion> = ConcurrentHashMap()
+  private val modulePythonVersions: ConcurrentMap<VirtualFile, PyVersionSpecifiers> = ConcurrentHashMap()
 
   companion object {
     fun getInstance(project: Project): PoetryPyProjectTomlPythonVersionsService = project.service()
   }
 
   fun setVersion(moduleFile: VirtualFile, stringVersion: String) {
-    modulePythonVersions[moduleFile] = PoetryPythonVersion(stringVersion)
+    modulePythonVersions[moduleFile] = PyVersionSpecifiers(stringVersion)
   }
 
-  fun getVersionString(moduleFile: VirtualFile): String = getVersion(moduleFile).stringVersion
+  fun getVersionString(moduleFile: VirtualFile): String = getVersion(moduleFile).constraintSpec
 
   fun <P : PathHolder> validateInterpretersVersions(moduleFile: VirtualFile, interpreters: Flow<List<PythonSelectableInterpreter<P>>?>): Flow<List<PythonSelectableInterpreter<P>>?> {
     val version = getVersion(moduleFile)
     return interpreters.map { list -> list?.filter { version.isValid(it.pythonInfo.languageLevel) } }
   }
 
-  private fun getVersion(moduleFile: VirtualFile): PoetryPythonVersion =
-    modulePythonVersions[moduleFile] ?: PoetryPythonVersion("")
+  private fun getVersion(moduleFile: VirtualFile): PyVersionSpecifiers =
+    modulePythonVersions[moduleFile] ?: PyVersionSpecifiers.ANY_SUPPORTED
 
   override fun dispose() {}
-}
-
-@Internal
-enum class VersionType {
-  LESS,
-  LESS_OR_EQUAL,
-  EQUAL,
-  MORE_OR_EQUAL,
-  MORE;
-
-  companion object {
-    fun String.getVersionType(): VersionType? =
-      when (this) {
-        "<" -> LESS
-        "<=" -> LESS_OR_EQUAL
-        "=", "" -> EQUAL
-        "^", ">=" -> MORE_OR_EQUAL
-        ">" -> MORE
-        else -> null
-      }
-  }
-}
-
-
-private fun getDefaultValueByType(type: VersionType): Int? =
-  when (type) {
-    VersionType.LESS, VersionType.MORE_OR_EQUAL -> 0
-    VersionType.LESS_OR_EQUAL, VersionType.MORE -> 20
-    VersionType.EQUAL -> null
-  }
-
-private fun Triple<Int, Int?, Int?>.compare(versionTriple: Pair<VersionType, Triple<Int, Int?, Int?>>): Int {
-  val type = versionTriple.first
-  val version = versionTriple.second
-
-  return this.first.compareTo(version.first).takeIf { it != 0 }
-         ?: this.second?.compareTo(version.second ?: (getDefaultValueByType(type) ?: this.second ?: 0)).takeIf { it != 0 }
-         ?: this.third?.compareTo(version.third ?: (getDefaultValueByType(type) ?: this.third ?: 0)).takeIf { it != 0 }
-         ?: 0
-}
-
-@Internal
-data class PoetryPythonVersion(val stringVersion: String) {
-  val descriptions: List<Pair<VersionType, Triple<Int, Int?, Int?>>>
-
-  init {
-    descriptions = parseVersion(stringVersion)
-  }
-
-  private fun parseVersion(versionString: String): List<Pair<VersionType, Triple<Int, Int?, Int?>>> {
-    if (versionString.isEmpty()) return emptyList()
-    val versionParts = versionString.split(",")
-    val result = mutableListOf<Pair<VersionType, Triple<Int, Int?, Int?>>>()
-
-    for (part in versionParts) {
-      val firstDigit = part.indexOfFirst { it.isDigit() }
-      if (firstDigit == -1) continue
-      val type = part.substring(0, firstDigit).trim().getVersionType() ?: continue
-      val version = part.substring(firstDigit).trim()
-      val versionTriple = PoetryVersionValue.create(version).getOrNull()?.version
-      versionTriple?.let { result.add(Pair(type, versionTriple)) }
-    }
-    return result
-  }
-
-  fun isValid(versionString: String?): Boolean {
-    if (versionString.isNullOrBlank()) return false
-    val baseInterpreterVersion = PoetryVersionValue.create(versionString).getOrNull()?.version ?: return false
-    if (baseInterpreterVersion.first < 3 || baseInterpreterVersion.first == 3 && baseInterpreterVersion.second?.let { it < 6 } == true) return false
-    for (description in descriptions) {
-      val type = description.first
-      val compareResult = baseInterpreterVersion.compare(description)
-      when (type) {
-        VersionType.LESS -> if (compareResult >= 0) return false
-        VersionType.LESS_OR_EQUAL -> if (compareResult > 0) return false
-        VersionType.EQUAL -> if (compareResult != 0) return false
-        VersionType.MORE_OR_EQUAL -> if (compareResult < 0) return false
-        VersionType.MORE -> if (compareResult <= 0) return false
-      }
-    }
-    return true
-  }
-
-  fun isValid(languageLevel: LanguageLevel): Boolean {
-    val languageLevelString = languageLevel.toString()
-    return isValid(languageLevelString)
-  }
-}
-
-@JvmInline
-value class PoetryVersionValue private constructor(val version: Triple<Int, Int?, Int?>) {
-  companion object {
-    fun create(versionString: String): Result<PoetryVersionValue> {
-      try {
-        val integers = versionString.split(".").map { it.toInt() }
-        return when (integers.size) {
-          1 -> Result.success(PoetryVersionValue(Triple(integers[0], null, null)))
-          2 -> Result.success(PoetryVersionValue(Triple(integers[0], integers[1], null)))
-          3 -> Result.success(PoetryVersionValue(Triple(integers[0], integers[1], integers[2])))
-          else -> Result.failure(NumberFormatException())
-        }
-      }
-      catch (e: NumberFormatException) {
-        return Result.failure(e)
-      }
-    }
-  }
 }

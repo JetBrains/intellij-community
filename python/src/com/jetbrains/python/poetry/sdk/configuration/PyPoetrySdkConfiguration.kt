@@ -14,12 +14,18 @@ import com.intellij.platform.util.progress.reportRawProgress
 import com.intellij.python.common.tools.ToolId
 import com.intellij.python.community.impl.poetry.common.POETRY_TOOL_ID
 import com.intellij.python.community.impl.poetry.common.poetryPath
+import com.intellij.python.community.services.systemPython.SystemPythonService
+import com.intellij.openapi.application.readAction
+import com.intellij.openapi.vfs.findPsiFile
 import com.intellij.python.pyproject.PyProjectToml
+import com.intellij.python.pyproject.psi.resolvePythonVersionSpecifiers
 import com.jetbrains.python.PyBundle
+import com.jetbrains.python.packaging.PyVersionSpecifiers
 import com.jetbrains.python.PythonBinary
 import com.jetbrains.python.errorProcessing.PyResult
 import com.jetbrains.python.poetry.findPoetryLock
 import com.jetbrains.python.poetry.getPyProjectTomlForPoetry
+import com.jetbrains.python.projectCreation.getSystemPython
 import com.jetbrains.python.sdk.PythonSdkType
 import com.jetbrains.python.sdk.baseDir
 import com.jetbrains.python.sdk.configuration.CheckToml
@@ -120,7 +126,23 @@ internal class PyPoetrySdkConfiguration : PyProjectTomlConfigurationExtension {
         )
       }
       val tomlFile = PyProjectToml.findFile(module)
-      val poetry = setupPoetry(basePath, null, true, tomlFile == null).getOr { return@withBackgroundProgress it }
+      val versionSpecifiers = tomlFile?.let { vf ->
+        readAction { vf.findPsiFile(module.project) }?.resolvePythonVersionSpecifiers()
+      } ?: PyVersionSpecifiers.ANY_SUPPORTED
+
+      val baseSystemPython = getSystemPython(
+        confirmInstallation = { true },
+        pythonService = SystemPythonService(),
+        versionSpecifiers = versionSpecifiers,
+      ).getOr { return@withBackgroundProgress it }
+
+      val poetry = setupPoetry(
+        projectPath = basePath,
+        basePythonBinaryPath = baseSystemPython.pythonBinary,
+        installPackages = true,
+        init = tomlFile == null
+      ).getOr { return@withBackgroundProgress it }
+
       val path = poetry.resolvePythonBinary()
                  ?: return@withBackgroundProgress PyResult.localizedError(PySdkBundle.message("cannot.find.executable", "python", poetry))
 

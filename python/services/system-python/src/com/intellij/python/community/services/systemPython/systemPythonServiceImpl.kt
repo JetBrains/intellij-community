@@ -1,7 +1,6 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.python.community.services.systemPython
 
-import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.components.BaseState
 import com.intellij.openapi.components.RoamingType
@@ -31,8 +30,8 @@ import com.jetbrains.python.PythonBinary
 import com.jetbrains.python.Result
 import com.jetbrains.python.errorProcessing.getOr
 import com.jetbrains.python.getOrNull
+import com.jetbrains.python.packaging.PyVersionSpecifiers
 import com.jetbrains.python.sdk.installer.installBinary
-import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -191,11 +190,12 @@ class SystemPythonServiceImpl internal constructor(
 
 
 private object LocalPythonInstaller : PythonInstallerService {
-  override suspend fun installLatestPython(): Result<Unit, String> {
-    val pythonToInstall =
-      withContext(Dispatchers.IO) {
-        PySdkToInstallManager.getAvailableVersionsToInstall().toSortedMap().values.last()
-      }
+  override suspend fun installLatestPython(versionSpecifiers: PyVersionSpecifiers): Result<Unit, String> {
+    val pythonToInstall = withContext(Dispatchers.IO) {
+      PySdkToInstallManager.getAvailableVersionsToInstall()
+        .filterKeys { versionSpecifiers.isValid(it) }
+        .maxByOrNull { it.key }?.value
+    } ?: return Result.Companion.failure("No matching Python version available for installation")
     withContext(Dispatchers.EDT) {
       installBinary(pythonToInstall, null) {
       }

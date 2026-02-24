@@ -84,7 +84,7 @@ suspend fun runPoetryWithSdk(sdk: Sdk, vararg args: String): PyResult<String> {
 @Internal
 suspend fun setupPoetry(
   projectPath: Path,
-  basePythonBinaryPath: PythonBinary?,
+  basePythonBinaryPath: PythonBinary,
   installPackages: Boolean,
   init: Boolean,
 ): PyResult<PythonHomePath> {
@@ -92,25 +92,18 @@ suspend fun setupPoetry(
     // Build poetry init command with Python version constraint if available
     val initArgs = mutableListOf("init", "-n")
 
-    if (basePythonBinaryPath != null) {
-      // Validate Python and get version info
-      val pythonInfo = basePythonBinaryPath.validatePythonAndGetInfo().getOr { return it }
-      val major = pythonInfo.languageLevel.majorVersion
-      val minor = pythonInfo.languageLevel.minorVersion
-      // Add --python flag with caret constraint (e.g., "^3.10")
-      initArgs.add("--python")
-      initArgs.add("^$major.$minor")
-    }
+    // Validate Python and get version info
+    val pythonInfo = basePythonBinaryPath.validatePythonAndGetInfo().getOr { return it }
+    val major = pythonInfo.languageLevel.majorVersion
+    val minor = pythonInfo.languageLevel.minorVersion
+    // Add --python flag with caret constraint (e.g., "^3.10")
+    initArgs.add("--python")
+    initArgs.add("^$major.$minor")
 
     runPoetry(projectPath, *initArgs.toTypedArray()).getOr { return it }
   }
 
-  if (basePythonBinaryPath != null) {
-    runPoetry(projectPath, "env", "use", basePythonBinaryPath.pathString).getOr { return it }
-  }
-  else {
-    runPoetry(projectPath, "run", "python", "-V").getOr { return it }
-  }
+  runPoetry(projectPath, "env", "use", basePythonBinaryPath.pathString).getOr { return it }
 
   if (installPackages) {
     runPoetry(projectPath, "install", "--no-root").getOr { return it }

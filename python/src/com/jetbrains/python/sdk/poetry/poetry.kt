@@ -27,7 +27,7 @@ fun suggestedSdkName(basePath: Path): @NlsSafe String = "Poetry (${PathUtil.getF
 @Internal
 suspend fun createNewPoetrySdk(
   moduleBasePath: Path,
-  basePythonBinaryPath: PythonBinary?,
+  basePythonBinaryPath: PythonBinary,
   installPackages: Boolean,
 ): PyResult<Sdk> {
   val pythonBinaryPath = setUpPoetry(moduleBasePath, basePythonBinaryPath, installPackages).getOr { return it }
@@ -58,7 +58,7 @@ internal val Sdk.isPoetry: Boolean
     return getOrCreateAdditionalData() is PyPoetrySdkAdditionalData
   }
 
-private suspend fun setUpPoetry(moduleBasePath: Path, basePythonBinaryPath: PythonBinary?, installPackages: Boolean): PyResult<PythonBinary> {
+private suspend fun setUpPoetry(moduleBasePath: Path, basePythonBinaryPath: PythonBinary, installPackages: Boolean): PyResult<PythonBinary> {
   val init = PyProjectToml.findInRoot(moduleBasePath) == null
   val pythonHomePath = setupPoetry(moduleBasePath, basePythonBinaryPath, installPackages, init).getOr { return it }
   val pythonBinaryPath = pythonHomePath.resolvePythonBinary()

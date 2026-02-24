@@ -58,6 +58,7 @@ jvm_library(
     "//platform/core-api:core",
     "//platform/projectModel-api:projectModel",
     "@lib//:junit5",
+    "@lib//:junit5Params",
     "//platform/eel",
     "//platform/eel-provider",
     "//platform/execution",
