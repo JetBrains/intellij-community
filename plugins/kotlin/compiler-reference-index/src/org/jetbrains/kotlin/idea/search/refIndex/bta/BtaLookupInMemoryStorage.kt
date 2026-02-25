@@ -1,15 +1,11 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-@file:Suppress("IO_FILE_USAGE")
-
 package org.jetbrains.kotlin.idea.search.refIndex.bta
 
 import org.jetbrains.kotlin.buildtools.api.ExperimentalBuildToolsApi
 import org.jetbrains.kotlin.buildtools.api.KotlinToolchains
 import org.jetbrains.kotlin.buildtools.api.cri.CriToolchain
 import org.jetbrains.kotlin.buildtools.api.cri.CriToolchain.Companion.cri
-import org.jetbrains.kotlin.incremental.storage.RelocatableFileToPathConverter
 import org.jetbrains.kotlin.name.FqName
-import java.io.File
 import java.nio.file.Path
 import kotlin.io.path.exists
 import kotlin.io.path.readBytes
@@ -19,15 +15,13 @@ internal class BtaLookupInMemoryStorage private constructor(
     private val fileIdsToPaths: Map<Int, String>,
     projectPath: String,
 ) {
-    private val pathConverter = RelocatableFileToPathConverter(File(projectPath))
+    private val baseDir = Path.of(projectPath)
 
     operator fun get(fqName: FqName): List<Path> {
         val hashCode = fqName.hashCode()
         val fileIds = lookups[hashCode] ?: return emptyList()
         return fileIds.mapNotNull { fileId ->
-            fileIdsToPaths[fileId]
-                ?.let(pathConverter::toFile)
-                ?.toPath()
+            fileIdsToPaths[fileId]?.let { baseDir.resolve(it).normalize() }
         }
     }
 
