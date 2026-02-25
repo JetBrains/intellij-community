@@ -3,7 +3,7 @@ load("@rules_jvm//:jvm.bzl", "jvm_library")
 
 load("//build:intellij_dev_community.bzl", "intellij_dev_binary_community")
 load("//build:intellij_dev.bzl", "INTELLIJ_ADD_OPENS")
-load("@jps_dynamic_deps_community//:targets.bzl", "ALL_COMMUNITY_TARGETS")
+load("@jps_dynamic_deps_community//:targets.bzl", "ALL_COMMUNITY_TARGETS", "ALL_PRODUCTION_COMMUNITY_TARGETS", "ALL_LIBRARY_COMMUNITY_TARGETS")
 
 # Can't name the target 'installers' since it triggers elevation in Windows
 java_binary(
@@ -28,6 +28,14 @@ java_binary(
   ],
   add_opens = INTELLIJ_ADD_OPENS,
   data = ALL_COMMUNITY_TARGETS,
+)
+
+java_binary(
+  name = "jewel_standalone_maven_artifacts",
+  runtime_deps = [":build"],
+  main_class = "JewelMavenArtifactsBuildTarget",
+  add_opens = INTELLIJ_ADD_OPENS,
+  data = ALL_PRODUCTION_COMMUNITY_TARGETS + ALL_LIBRARY_COMMUNITY_TARGETS,
 )
 
 # Dev-build targets for running IDEs locally via `bazel run //build:<target>`
