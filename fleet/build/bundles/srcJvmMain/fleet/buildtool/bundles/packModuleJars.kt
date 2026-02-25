@@ -13,69 +13,68 @@ import kotlin.collections.toList
 import kotlin.io.path.createDirectories
 import kotlin.io.path.listDirectoryEntries
 
-suspend fun Map<LayerSelector, Collection<Path>>.packModuleJars(
-  shouldPackModuleJars: Boolean,
-  fullClassPath: Map<LayerSelector, Collection<Path>>,
+fun Map<LayerSelector, Collection<Path>>.packModuleJars(
   outputDirectory: Path,
   logger: Logger,
   pluginId: String,
-  scrambler: JarScrambler,
 ): Map<LayerSelector, Collection<Path>> {
 
-  return when {
-    !shouldPackModuleJars -> this // Do nothing, return the current map
-    else -> {
-      val packer = ModulePacker(
-        directory = outputDirectory,
-        nativeLibraryExtractor = NativeLibraryExtractor.Noop,
-        version = null,
-        logger = logger,
-        shadowedJarSpecs = listOf(licenseClientShadowedJarSpec),
-        scrambledJarSpecs = listOf(fleetCommonScrambleJarSpec),
-      )
 
-      this.mapValues { (layerSelector, jars) ->
-        val moduleName = "$pluginId.${layerSelector.selector}"
-        val fullClassPathForLayer = fullClassPath[layerSelector] ?: emptyList()
-        packModule(moduleName, jars, packer, fullClassPathForLayer, outputDirectory, logger, scrambler)
-      }
-    }
+  val packer = ModulePacker(
+    directory = outputDirectory,
+    nativeLibraryExtractor = NativeLibraryExtractor.Noop,
+    version = null,
+    logger = logger,
+    shadowedJarSpecs = listOf(licenseClientShadowedJarSpec),
+    scrambledJarSpecs = listOf(), // We will handle scrambled jars in a separate step
+  )
+
+  return this.mapValues { (layerSelector, jars) ->
+    val moduleName = "$pluginId.${layerSelector.selector}"
+    packModule(moduleName, jars, packer)
   }
 }
 
-suspend fun packModule(
+fun packModule(
   moduleName: String,
   jars: Collection<Path>,
   packer: ModulePacker,
-  fullClassPath: Collection<Path>,
-  outputDirectory: Path,
-  logger: Logger,
-  scrambler: JarScrambler,
 ): Collection<Path> {
   val packedModule = packer.packModule(
     object : ModuleToPack {
       override val name: String = moduleName
       override val filesToPack: List<Path> = jars.toList()
     })
+  return packedModule.jarFiles.map { it.path }
+}
 
-  val (toScramble, nonScrambledJars) = packedModule.jarFiles.partition { it.needsScrambling }
-  val scrambledJars = when {
-    toScramble.isNotEmpty() -> {
-      val scrambledJarsOutputDirectory = outputDirectory.resolve("scrambled")
-      scrambledJarsOutputDirectory.createDirectories()
-      scrambler.scramble(
-        classpath = fullClassPath.toList(),
-        jarsToScramble = toScramble.map { it.path },
-        outputDirectory = scrambledJarsOutputDirectory,
-        logger = logger,
-        passthroughJars = emptyList(),
-      )
-      scrambledJarsOutputDirectory.listDirectoryEntries()
+suspend fun Map<LayerSelector, Collection<Path>>.scrambleModuleJars(
+  fullClasspath: Map<LayerSelector, Collection<Path>>,
+  outputDirectory: Path,
+  logger: Logger,
+  scrambler: JarScrambler,
+): Map<LayerSelector, Collection<Path>> {
+  return this.mapValues { (layerSelector, jars) ->
+    val (toScramble, nonScrambledJars) = jars.partition(fleetCommonScrambleJarSpec::needsScrambling)
+    val fullClassPath = fullClasspath[layerSelector] ?: emptyList()
+    val scrambledJars = when {
+      toScramble.isNotEmpty() -> {
+        val scrambledJarsOutputDirectory = outputDirectory.resolve("scrambled")
+        scrambledJarsOutputDirectory.createDirectories()
+        scrambler.scramble(
+          classpath = fullClassPath.toList(),
+          jarsToScramble = toScramble,
+          outputDirectory = scrambledJarsOutputDirectory,
+          logger = logger,
+          passthroughJars = emptyList(),
+        )
+        scrambledJarsOutputDirectory.listDirectoryEntries()
+      }
+      else -> listOf()
     }
-    else -> listOf()
-  }
 
-  return nonScrambledJars.map { it.path } + scrambledJars
+    nonScrambledJars + scrambledJars
+  }
 }
 
 private val fleetCommonScrambleJarSpec = ScrambledJarSpec(

@@ -115,14 +115,23 @@ suspend fun generatePluginDescriptor(
   val outputModuleJarsByLayer =
     runtimeClasspathByLayer
       .filterJarsByLayer(alreadyIncludedJarsByLayer, temporaryDir.resolve("filteredJars"), logger)
-      .packModuleJars(
-        shouldPackModuleJars = shouldPackModuleJars,
-        fullClassPath = runtimeClasspathByLayer,
-        outputDirectory = temporaryDir.resolve("packedJars"),
-        logger = logger,
-        pluginId = pluginId,
-        scrambler = scrambler,
-      )
+      .let { moduleJars ->
+        when (shouldPackModuleJars) {
+          false -> moduleJars // do not pack and modify module jars. Consider it is already done on the previous steps (immutableJars task)
+          true -> moduleJars
+            .packModuleJars(
+              outputDirectory = temporaryDir.resolve("packedJars"),
+              logger = logger,
+              pluginId = pluginId,
+            )
+            .scrambleModuleJars(
+              fullClasspath = runtimeClasspathByLayer,
+              outputDirectory = temporaryDir.resolve("scrambledJars"),
+              logger = logger,
+              scrambler = scrambler,
+            )
+        }
+      }
 
   outputModuleJarsByLayer.flatMap { (_, paths) -> paths }
     .forEach {
@@ -251,16 +260,16 @@ private fun packResourcesToZip(
 }
 
 private fun readDocumentationResourcesContent(jars: Collection<Path>): List<Pair<String, ByteArray>>? = jars.flatMap { jar ->
-    // TODO: this is a hack, in theory we should not pack the documentation json files in the jars, but we don't want to repack for performance reasons, instead this resource zip building should ideally be moved at module packaging level and exposes to other subprojects via consumable configuration
-    ZipFile(jar.toFile()).use { zip ->
-      zip.entries().asSequence()
-        .filter { it.name.endsWith(JSON_DOCUMENTATION_FILENAME_EXTENSION) }
-        // Zip entries are required to have '/' as a file separator on any platform (see. 4.4.17.1 in a spec: https://pkware.cachefly.net/webdocs/casestudies/APPNOTE.TXT)
-        .onEach { require(!it.name.contains('/')) { "Documentation should be located in a root of a module" } }
-        .map { entry -> entry.name to zip.getInputStream(entry).readBytes() }
-        .toList()
-    }
-  }.takeIf { it.isNotEmpty() }
+  // TODO: this is a hack, in theory we should not pack the documentation json files in the jars, but we don't want to repack for performance reasons, instead this resource zip building should ideally be moved at module packaging level and exposes to other subprojects via consumable configuration
+  ZipFile(jar.toFile()).use { zip ->
+    zip.entries().asSequence()
+      .filter { it.name.endsWith(JSON_DOCUMENTATION_FILENAME_EXTENSION) }
+      // Zip entries are required to have '/' as a file separator on any platform (see. 4.4.17.1 in a spec: https://pkware.cachefly.net/webdocs/casestudies/APPNOTE.TXT)
+      .onEach { require(!it.name.contains('/')) { "Documentation should be located in a root of a module" } }
+      .map { entry -> entry.name to zip.getInputStream(entry).readBytes() }
+      .toList()
+  }
+}.takeIf { it.isNotEmpty() }
 
 private fun Path.toCoordinates(
   pluginName: PluginName,

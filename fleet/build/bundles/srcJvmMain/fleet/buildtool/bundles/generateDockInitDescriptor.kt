@@ -28,7 +28,7 @@ suspend fun generateDockInitDescriptor(
   moduleName: String,
   runtimeClasspath: List<Path>,
   targetJdkVersionFeature: Int,
-  scrambler: JarScrambler,
+  shouldPackModuleJars: Boolean,
   logger: Logger,
 
   outputModuleDescriptor: Path,
@@ -37,10 +37,14 @@ suspend fun generateDockInitDescriptor(
 ) {
   outputModuleDescriptor.deleteIfExists()
 
-  val descriptorClassPath = when {
-    outputImmutableJars != null -> {
+  val descriptorClassPath = when (shouldPackModuleJars) {
+    false -> runtimeClasspath // Return current non-modified classPath. Consider it is already done on the previous steps (immutableJars task)
+    true -> {
+      requireNotNull(outputImmutableJars) {
+        "shouldPackModuleJars is specified, but output-immutable-jars is not. Outputs should be specified when packing module jars"
+      }
       requireNotNull(outputNativeLibs) {
-        "output-immutable-jars is specified, but output-native-libs is not. Both options must be specified when generating immutableJars"
+        "shouldPackModuleJars is specified, but output-native-libs is not. Outputs should be specified when packing module jars"
       }
       val temporaryDir = createTempDirectory("init-descriptor-jars")
       val uniqueJarsDir = temporaryDir.resolve("unique-jars")
@@ -67,14 +71,9 @@ suspend fun generateDockInitDescriptor(
         moduleName = moduleName,
         jars = uniqueJarsClassPath,
         packer = modulePacker,
-        fullClassPath = uniqueJarsClassPath,
-        outputDirectory = packedModulesDir,
-        logger = logger,
-        scrambler = scrambler,
       )
       packedJars.map { jar -> jar.copyTo(outputImmutableJars.resolve(jar.fileName), overwrite = true) }
     }
-    else -> runtimeClasspath
   }
 
   val classpath = descriptorClassPath.map { file ->
