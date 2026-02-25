@@ -25,6 +25,10 @@ import org.jetbrains.intellij.build.impl.PluginLayout
 import org.jetbrains.intellij.build.impl.PluginLayout.Companion.pluginAuto
 import org.jetbrains.intellij.build.impl.getPluginLayoutsByJpsModuleNames
 import org.jetbrains.intellij.build.kotlin.KotlinBinaries
+import org.jetbrains.intellij.build.productLayout.CommunityModuleSets
+import org.jetbrains.intellij.build.productLayout.CommunityProductFragments
+import org.jetbrains.intellij.build.productLayout.ProductModulesContentSpec
+import org.jetbrains.intellij.build.productLayout.productModules
 import java.nio.file.Path
 import java.util.function.BiPredicate
 import kotlin.io.path.copyTo
@@ -191,6 +195,23 @@ class AndroidStudioProperties : ProductProperties() {
         delegatePatcher(pluginXml, ctx).replace("allow-bundled-update=\"true\"", "allow-bundled-update=\"false\"")
       }
     }
+  }
+
+  override fun getProductContentDescriptor(): ProductModulesContentSpec = productModules {
+    // This is loosely based on IdeaCommunityProperties but tailored for Android Studio.
+    alias("com.intellij.modules.androidstudio")
+    alias("com.intellij.modules.java-capable")
+    alias("com.intellij.modules.python-core-capable") // The Python plugin can be installed.
+    alias("com.intellij.modules.python-in-non-pycharm-ide-capable") // Enable Non-Pycharm-IDE support in the Python plugin.
+
+    include(CommunityProductFragments.javaIdeBaseFragment())
+    moduleSet(CommunityModuleSets.ideCommon())
+    moduleSet(CommunityModuleSets.debuggerStreams())
+    module("intellij.platform.coverage")
+    module("intellij.platform.coverage.agent")
+    module("intellij.platform.customization.min")
+
+    module("intellij.rml.dfa.impl") // For CIDR.
   }
 
   private fun copyCidrLicense(spec: PluginLayout.PluginLayoutBuilder) {
