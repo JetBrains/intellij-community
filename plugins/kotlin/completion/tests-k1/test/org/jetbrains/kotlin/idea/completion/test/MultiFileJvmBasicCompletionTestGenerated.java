@@ -215,6 +215,11 @@ public class MultiFileJvmBasicCompletionTestGenerated extends AbstractMultiFileJ
         runTest("../testData/basic/multifile/FlexibleTypeNotNull/");
     }
 
+    @TestMetadata("FlexibleTypeSealed")
+    public void testFlexibleTypeSealed() throws Exception {
+        runTest("../testData/basic/multifile/FlexibleTypeSealed/");
+    }
+
     @TestMetadata("GroovyClassNameCompletionFromDefaultPackage")
     public void testGroovyClassNameCompletionFromDefaultPackage() throws Exception {
         runTest("../testData/basic/multifile/GroovyClassNameCompletionFromDefaultPackage/");

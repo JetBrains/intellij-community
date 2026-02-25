@@ -18,6 +18,7 @@ import org.jetbrains.kotlin.analysis.api.components.ShortenCommand
 import org.jetbrains.kotlin.analysis.api.components.containingSymbol
 import org.jetbrains.kotlin.analysis.api.components.resolveToSymbols
 import org.jetbrains.kotlin.analysis.api.components.staticDeclaredMemberScope
+import org.jetbrains.kotlin.analysis.api.components.upperBoundIfFlexible
 import org.jetbrains.kotlin.analysis.api.symbols.KaAnonymousObjectSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaClassKind
 import org.jetbrains.kotlin.analysis.api.symbols.KaClassLikeSymbol
@@ -169,8 +170,12 @@ internal open class K2ClassifierCompletionContributor : K2CompletionContributor<
             symbol.containingSymbol?.staticScope?.let(scopesToCheck::add)
         }
 
-        context.expectedType?.symbol?.takeIf { it.modality == KaSymbolModality.SEALED }?.let(::addContainingScopesToCheck)
-        context.preferredSubtype?.symbol?.let(::addContainingScopesToCheck)
+        context.expectedType?.upperBoundIfFlexible()?.symbol
+            ?.takeIf { it.modality == KaSymbolModality.SEALED }
+            ?.let(::addContainingScopesToCheck)
+
+        context.preferredSubtype?.upperBoundIfFlexible()?.symbol
+            ?.let(::addContainingScopesToCheck)
 
         val scopeClassifiers = scopesToCheck
             .asSequence()
