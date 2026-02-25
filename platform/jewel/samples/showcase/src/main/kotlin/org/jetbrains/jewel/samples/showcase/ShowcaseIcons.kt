@@ -39,6 +39,7 @@ public object ShowcaseIcons {
         public val tooltip: PathIconKey = PathIconKey("icons/components/tooltip.svg", ShowcaseIcons::class.java)
         public val tree: PathIconKey = PathIconKey("icons/components/tree.svg", ShowcaseIcons::class.java)
         public val typography: PathIconKey = PathIconKey("icons/components/typography.svg", ShowcaseIcons::class.java)
+        public val speedSearch: PathIconKey = PathIconKey("icons/components/speedSearch.svg", ShowcaseIcons::class.java)
     }
 
     public object ProgrammingLanguages {

@@ -7,9 +7,6 @@ import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.interaction.collectIsFocusedAsState
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxScope
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.text.input.TextFieldState
 import androidx.compose.foundation.text.input.delete
 import androidx.compose.foundation.text.input.placeCursorAtEnd
@@ -19,32 +16,26 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.ProvidableCompositionLocal
 import androidx.compose.runtime.State
 import androidx.compose.runtime.compositionLocalOf
-import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshotFlow
+import androidx.compose.runtime.snapshots.Snapshot
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.SolidColor
-import androidx.compose.ui.graphics.isSpecified
-import androidx.compose.ui.graphics.takeOrElse
 import androidx.compose.ui.input.key.Key
 import androidx.compose.ui.input.key.KeyEvent
 import androidx.compose.ui.input.key.KeyEventType
 import androidx.compose.ui.input.key.isAltPressed
-import androidx.compose.ui.input.key.isCtrlPressed
 import androidx.compose.ui.input.key.isMetaPressed
 import androidx.compose.ui.input.key.isShiftPressed
 import androidx.compose.ui.input.key.key
 import androidx.compose.ui.input.key.nativeKeyCode
 import androidx.compose.ui.input.key.type
-import androidx.compose.ui.input.key.utf16CodePoint
 import androidx.compose.ui.layout.onFirstVisible
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.TextStyle
@@ -53,12 +44,15 @@ import androidx.compose.ui.window.rememberComponentRectPositionProvider
 import java.awt.event.KeyEvent as AWTKeyEvent
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.flowOn
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.jewel.foundation.ExperimentalJewelApi
+import org.jetbrains.jewel.foundation.InternalJewelApi
+import org.jetbrains.jewel.foundation.search.EmptySpeedSearchMatcher
 import org.jetbrains.jewel.foundation.search.SpeedSearchMatcher
 import org.jetbrains.jewel.foundation.theme.JewelTheme
 import org.jetbrains.jewel.ui.component.styling.SearchMatchStyle
@@ -67,8 +61,52 @@ import org.jetbrains.jewel.ui.component.styling.TextFieldStyle
 import org.jetbrains.jewel.ui.theme.searchMatchStyle
 import org.jetbrains.jewel.ui.theme.speedSearchStyle
 import org.jetbrains.jewel.ui.theme.textFieldStyle
-import org.jetbrains.skiko.hostOs
+import org.jetbrains.jewel.ui.util.handleKeyEvent
 
+@Composable
+@ExperimentalJewelApi
+@ApiStatus.Experimental
+@Deprecated("Kept for binary compatibility", level = DeprecationLevel.HIDDEN)
+public fun SpeedSearchArea(
+    modifier: Modifier = Modifier,
+    matcherBuilder: (String) -> SpeedSearchMatcher = SpeedSearchMatcher::patternMatcher,
+    styling: SpeedSearchStyle = JewelTheme.speedSearchStyle,
+    textFieldStyle: TextFieldStyle = JewelTheme.textFieldStyle,
+    textStyle: TextStyle = JewelTheme.defaultTextStyle,
+    searchMatchStyle: SearchMatchStyle = JewelTheme.searchMatchStyle,
+    interactionSource: MutableInteractionSource? = null,
+    content: @Composable SpeedSearchScope.() -> Unit,
+) {
+    SpeedSearchArea(
+        modifier = modifier,
+        styling = styling,
+        textFieldStyle = textFieldStyle,
+        textStyle = textStyle,
+        searchMatchStyle = searchMatchStyle,
+        interactionSource = interactionSource,
+        state = rememberSpeedSearchState(matcherBuilder),
+        content = content,
+    )
+}
+
+/**
+ * Creates a speed search area that provides keyboard-driven search functionality for its content.
+ *
+ * This composable enables users to quickly filter or highlight items by typing characters. The search input appears as
+ * an overlay when the user starts typing, and matches are computed using the provided [matcherBuilder].
+ *
+ * @param modifier The modifier to be applied to the container.
+ * @param matcherBuilder A function that creates a [SpeedSearchMatcher] from the search text. Defaults to
+ *   [SpeedSearchMatcher.patternMatcher].
+ * @param styling The visual styling for the speed search input overlay.
+ * @param textFieldStyle The styling for the text field within the search overlay.
+ * @param textStyle The text style for the search input text.
+ * @param searchMatchStyle The styling for highlighting matched text in search results.
+ * @param interactionSource The interaction source for tracking focus state. If null, a new one will be created.
+ * @param dismissOnLoseFocus Whether to automatically hide the search input when it loses focus. Defaults to true.
+ * @param content The content to be displayed within the speed search area. Use [SpeedSearchScope] to access search
+ *   state and process key events.
+ */
 @Composable
 @ExperimentalJewelApi
 @ApiStatus.Experimental
@@ -80,15 +118,58 @@ public fun SpeedSearchArea(
     textStyle: TextStyle = JewelTheme.defaultTextStyle,
     searchMatchStyle: SearchMatchStyle = JewelTheme.searchMatchStyle,
     interactionSource: MutableInteractionSource? = null,
+    dismissOnLoseFocus: Boolean = true,
+    content: @Composable SpeedSearchScope.() -> Unit,
+) {
+    SpeedSearchArea(
+        modifier = modifier,
+        styling = styling,
+        textFieldStyle = textFieldStyle,
+        textStyle = textStyle,
+        searchMatchStyle = searchMatchStyle,
+        interactionSource = interactionSource,
+        state = rememberSpeedSearchState(matcherBuilder),
+        dismissOnLoseFocus = dismissOnLoseFocus,
+        content = content,
+    )
+}
+
+/**
+ * Creates a speed search area with an externally managed [SpeedSearchState].
+ *
+ * This overload allows for more control over the speed search state, enabling features like sharing state between
+ * components or programmatically controlling the search.
+ *
+ * @param state The [SpeedSearchState] that manages the search functionality and provides access to search results and
+ *   matching logic.
+ * @param modifier The modifier to be applied to the container.
+ * @param styling The visual styling for the speed search input overlay.
+ * @param textFieldStyle The styling for the text field within the search overlay.
+ * @param textStyle The text style for the search input text.
+ * @param searchMatchStyle The styling for highlighting matched text in search results.
+ * @param interactionSource The interaction source for tracking focus state. If null, a new one will be created.
+ * @param dismissOnLoseFocus Whether to automatically hide the search input when it loses focus. Defaults to true.
+ * @param content The content to be displayed within the speed search area. Use [SpeedSearchScope] to access search
+ *   state and process key events.
+ */
+@Composable
+@ExperimentalJewelApi
+@ApiStatus.Experimental
+public fun SpeedSearchArea(
+    state: SpeedSearchState,
+    modifier: Modifier = Modifier,
+    styling: SpeedSearchStyle = JewelTheme.speedSearchStyle,
+    textFieldStyle: TextFieldStyle = JewelTheme.textFieldStyle,
+    textStyle: TextStyle = JewelTheme.defaultTextStyle,
+    searchMatchStyle: SearchMatchStyle = JewelTheme.searchMatchStyle,
+    interactionSource: MutableInteractionSource? = null,
+    dismissOnLoseFocus: Boolean = true,
     content: @Composable SpeedSearchScope.() -> Unit,
 ) {
     val intSource = interactionSource ?: remember { MutableInteractionSource() }
-    val currentMatcherBuilder = rememberUpdatedState(matcherBuilder)
-
-    val state = remember { SpeedSearchStateImpl(currentMatcherBuilder) }
     val isFocused by intSource.collectIsFocusedAsState()
 
-    LaunchedEffect(isFocused) { if (!isFocused) state.hideSearch() }
+    LaunchedEffect(isFocused) { if (!isFocused && dismissOnLoseFocus) state.hideSearch() }
 
     Box(modifier = modifier) {
         val scope =
@@ -111,48 +192,162 @@ public fun SpeedSearchArea(
     }
 }
 
+/**
+ * Scope for the content of a [SpeedSearchArea], providing access to search state and styling.
+ *
+ * This scope extends [BoxScope] and provides additional properties and functions specific to speed search
+ * functionality.
+ */
 @ExperimentalJewelApi
 @ApiStatus.Experimental
 public interface SpeedSearchScope : BoxScope {
+    /** The style to use for highlighting search matches in the content. */
     public val searchMatchStyle: SearchMatchStyle
+
+    /** The current state of the speed search, including search text, visibility, and matching results. */
     public val speedSearchState: SpeedSearchState
+
+    /** The interaction source for tracking user interactions with the search input. */
     public val interactionSource: MutableInteractionSource
 
+    /**
+     * Processes a keyboard event, potentially updating the search state or input.
+     *
+     * @param event The keyboard event to process.
+     * @return `true` if the event was handled and should not be propagated further, `false` otherwise.
+     */
     public fun processKeyEvent(event: KeyEvent): Boolean
 }
 
+/**
+ * State holder for speed search functionality, managing search text, visibility, and match results.
+ *
+ * This interface provides access to the current search state and methods for controlling the search behavior. Use
+ * [rememberSpeedSearchState] to create an instance of this state.
+ */
 @ExperimentalJewelApi
 @ApiStatus.Experimental
 public interface SpeedSearchState {
+    /** The vertical position of the search input overlay (Top or Bottom). */
     public var position: Alignment.Vertical
+
+    /** The current search text entered by the user. */
     public val searchText: String
-    public val isVisible: Boolean
+
+    /** The current [SpeedSearchMatcher] used to match items against the search text. */
+    public val currentMatcher: SpeedSearchMatcher
+
+    /** Whether the search input overlay is currently visible. */
+    public var isVisible: Boolean
+
+    /** Whether there are any matches for the current search text. */
     public val hasMatches: Boolean
+
+    /** List of indices of items that match the current search text. */
     public val matchingIndexes: List<Int>
 
+    /**
+     * Internal text field state. Should not be accessed directly by public API consumers.
+     *
+     * This property is exposed with [InternalJewelApi] to allow internal Jewel components (such as [SpeedSearchArea]
+     * and [SpeedSearchScope]) to access the underlying text field for keyboard event handling, cursor management, and
+     * text manipulation. Public API consumers should use the [searchText] property to read the current search query.
+     */
+    @InternalJewelApi @get:ApiStatus.Internal public val textFieldState: TextFieldState
+
+    /**
+     * Retrieves the match result for a specific text value.
+     *
+     * @param text The text to check for matches against the current search query.
+     * @return The match result indicating whether and where the text matches.
+     */
     public fun matchResultForText(text: String?): SpeedSearchMatcher.MatchResult
 
+    /**
+     * Clears the search text without hiding the search input.
+     *
+     * @return `true` if the search was cleared, `false` if it was already empty or not visible.
+     */
     public fun clearSearch(): Boolean
 
+    /**
+     * Hides the search input and clears the search text.
+     *
+     * @return `true` if the search was hidden, `false` if it was already hidden.
+     */
     public fun hideSearch(): Boolean
 
+    /**
+     * Attaches the speed search state to a flow of searchable entries.
+     *
+     * This suspending function continuously listens to changes in the entries and updates the matching results
+     * accordingly. It should be launched in a coroutine scope that matches the lifetime of the component using the
+     * speed search.
+     *
+     * @param entriesFlow A [StateFlow] containing the list of searchable items.
+     * @param dispatcher The coroutine dispatcher to use for search matching operations. Defaults to
+     *   [Dispatchers.Default].
+     */
     public suspend fun attach(
         entriesFlow: StateFlow<List<String?>>,
         dispatcher: CoroutineDispatcher = Dispatchers.Default,
     )
 }
 
+/**
+ * Creates and remembers a [SpeedSearchState] instance.
+ *
+ * @param matcherBuilder A function that creates a [SpeedSearchMatcher] from the search text. Defaults to
+ *   [SpeedSearchMatcher.patternMatcher].
+ * @return A remembered [SpeedSearchState] instance that will be preserved across recompositions.
+ */
+@Composable
+@ExperimentalJewelApi
+@ApiStatus.Experimental
+public fun rememberSpeedSearchState(
+    matcherBuilder: (String) -> SpeedSearchMatcher = SpeedSearchMatcher::patternMatcher
+): SpeedSearchState {
+    val currentMatcherBuilder = rememberUpdatedState(matcherBuilder)
+    val searchState = rememberSearchTextFieldState()
+    return remember { SpeedSearchStateImpl(searchState, currentMatcherBuilder) }
+}
+
+/**
+ * State that provides match result and styling information for an individual node in the search results.
+ *
+ * This interface is typically provided through [LocalNodeSearchMatchState] composition local and accessed by child
+ * composables that need to render search match highlights.
+ */
 @ExperimentalJewelApi
 @ApiStatus.Experimental
 public interface NodeSearchMatchState {
+    /** The match result for this specific node, indicating whether and how it matches the search query. */
     public val matchResult: SpeedSearchMatcher.MatchResult
+
+    /** The styling to apply when highlighting search matches in this node. */
     public val style: SearchMatchStyle
 }
 
+/**
+ * Composition local that provides [NodeSearchMatchState] to child composables.
+ *
+ * Use [ProvideSearchMatchState] to set this value for a specific composable tree.
+ */
 @ExperimentalJewelApi
 @ApiStatus.Experimental
 public val LocalNodeSearchMatchState: ProvidableCompositionLocal<NodeSearchMatchState?> = compositionLocalOf { null }
 
+/**
+ * Provides search match state to child composables through [LocalNodeSearchMatchState].
+ *
+ * This composable computes the match result for the given [textContent] using the current speed search state and makes
+ * it available to descendants via composition local.
+ *
+ * @param speedSearchState The current speed search state containing the search query.
+ * @param textContent The text content to check for matches. If null, no match will be found.
+ * @param style The styling to use when highlighting matches.
+ * @param content The child composables that can access the match state through [LocalNodeSearchMatchState].
+ */
 @Composable
 @ExperimentalJewelApi
 @ApiStatus.Experimental
@@ -187,8 +382,6 @@ private fun SpeedSearchInput(
     textStyle: TextStyle,
     textFieldStyle: TextFieldStyle,
 ) {
-    val foregroundColor = styling.getCurrentForegroundColor(hasMatch, textFieldStyle, textStyle)
-
     val (anchor, alignment) =
         remember(position) {
             when (position) {
@@ -200,40 +393,18 @@ private fun SpeedSearchInput(
     Popup(popupPositionProvider = rememberComponentRectPositionProvider(anchor, alignment)) {
         val focusRequester = remember { FocusRequester() }
 
-        BasicTextField(
-            state = state,
-            cursorBrush = SolidColor(foregroundColor),
-            textStyle = textStyle.merge(TextStyle(color = foregroundColor)),
+        SearchTextField(
+            state = rememberSearchTextFieldState(state),
+            textStyle = textStyle,
+            allowClear = false,
+            error = !hasMatch,
+            textFieldStyle = textFieldStyle,
             modifier =
-                Modifier.testTag("SpeedSearchArea.Input").focusRequester(focusRequester).onFirstVisible {
-                    focusRequester.requestFocus()
-                },
-            decorator = { innerTextField ->
-                Row(
-                    modifier =
-                        Modifier.background(styling.colors.background)
-                            .border(1.dp, styling.colors.border)
-                            .padding(styling.metrics.contentPadding)
-                ) {
-                    Icon(
-                        key = styling.icons.magnifyingGlass,
-                        contentDescription = null,
-                        tint = styling.colors.foreground,
-                        modifier = Modifier.padding(end = 10.dp),
-                    )
-
-                    Box(contentAlignment = Alignment.CenterStart) {
-                        if (state.text.isEmpty()) {
-                            Text(
-                                text = "Search",
-                                style = textStyle.merge(TextStyle(color = textFieldStyle.colors.placeholder)),
-                            )
-                        }
-
-                        innerTextField()
-                    }
-                }
-            },
+                Modifier.testTag("SpeedSearchArea.Input")
+                    .background(styling.colors.background)
+                    .border(1.dp, styling.colors.border)
+                    .focusRequester(focusRequester)
+                    .onFirstVisible { focusRequester.requestFocus() },
         )
     }
 }
@@ -241,7 +412,7 @@ private fun SpeedSearchInput(
 private class SpeedSearchScopeImpl(
     val delegate: BoxScope,
     override val searchMatchStyle: SearchMatchStyle,
-    override val speedSearchState: SpeedSearchStateImpl,
+    override val speedSearchState: SpeedSearchState,
     override val interactionSource: MutableInteractionSource,
 ) : SpeedSearchScope, BoxScope by delegate {
     /** @see com.intellij.ui.SpeedSearchBase.isNavigationKey function */
@@ -267,17 +438,21 @@ private class SpeedSearchScopeImpl(
             textFieldState.text.isNotEmpty() && event.key.nativeKeyCode in validKeyEvent ->
                 textFieldState.handleTextNavigationKeys(event)
             event.key == Key.Escape -> hideSpeedSearch()
-            event.key == Key.Delete -> textFieldState.handleDeleteKeyInput(event)
-            event.key == Key.Backspace -> textFieldState.handleBackspaceKeyInput(event)
-            event.key == Key.Spacebar && textFieldState.text.isBlank() -> false
-            !event.isReallyTypedEvent() -> false // Only handle printable keys
-            else -> textFieldState.handleValidKeyInput(event)
+            else ->
+                speedSearchState.textFieldState.handleKeyEvent(
+                    event = event,
+                    allowNavigationWithArrowKeys = false,
+                    allowedSymbols = PUNCTUATION_MARKS,
+                    onTextChange = { text ->
+                        if (!speedSearchState.isVisible && text.isNotEmpty()) {
+                            speedSearchState.isVisible = true
+                        }
+                    },
+                )
         }
     }
 
     private fun hideSpeedSearch(): Boolean = speedSearchState.hideSearch()
-
-    private fun clearSearchInput(): Boolean = speedSearchState.clearSearch()
 
     private fun TextFieldState.handleTextNavigationKeys(event: KeyEvent): Boolean =
         when (event.key.nativeKeyCode) {
@@ -299,119 +474,22 @@ private class SpeedSearchScopeImpl(
                 }
             else -> false
         }
-
-    private fun TextFieldState.handleDeleteKeyInput(event: KeyEvent): Boolean =
-        when {
-            text.isEmpty() -> false
-            event.isAltPressed -> clearSearchInput()
-            selection.end < text.length -> false
-            else -> {
-                edit {
-                    if (selection.start != selection.end) {
-                        delete(selection.min, selection.max)
-                    } else if (selection.end < length) {
-                        delete(selection.end, selection.end + 1)
-                    }
-                }
-
-                true
-            }
-        }
-
-    private fun TextFieldState.handleBackspaceKeyInput(event: KeyEvent): Boolean =
-        when {
-            text.isEmpty() -> false
-            event.isAltPressed -> clearSearchInput()
-            selection.start <= 0 -> false
-            else -> {
-                edit {
-                    if (selection.start != selection.end) {
-                        delete(selection.min, selection.max)
-                    } else if (selection.end > 0) {
-                        delete(selection.start - 1, selection.start)
-                    }
-                }
-
-                true
-            }
-        }
-
-    private fun TextFieldState.handleValidKeyInput(event: KeyEvent): Boolean {
-        val char = event.toChar()
-
-        if (!char.isLetterOrDigit() && !PUNCTUATION_MARKS.contains(char)) {
-            return false
-        }
-
-        edit {
-            if (selection.start != selection.end) {
-                replace(selection.min, selection.max, char.toString())
-            } else {
-                append(char.toString())
-            }
-        }
-
-        if (!speedSearchState.isVisible && text.isNotEmpty()) {
-            speedSearchState.isVisible = true
-        }
-
-        return true
-    }
-}
-
-private fun SpeedSearchStyle.getCurrentForegroundColor(
-    hasMatch: Boolean,
-    textFieldStyle: TextFieldStyle,
-    textStyle: TextStyle,
-): Color {
-    if (!hasMatch && colors.error.isSpecified) return colors.error
-    return colors.foreground.takeOrElse { textFieldStyle.colors.content }.takeOrElse { textStyle.color }
-}
-
-/**
- * **Swing Version:**
- * [UIUtil.isReallyTypedEvent](https://github.com/JetBrains/intellij-community/blob/master/platform/util/ui/src/com/intellij/util/ui/UIUtil.java)
- */
-private fun KeyEvent.isReallyTypedEvent(): Boolean {
-    val keyChar = toChar()
-    val code = keyChar.code
-
-    return when {
-        // Ignoring undefined characters
-        keyChar == AWTKeyEvent.CHAR_UNDEFINED -> {
-            false
-        }
-
-        // Handling non-printable chars (e.g. Tab, Enter, Delete, etc.)
-        keyChar.code < 0x20 || keyChar.code == 0x7F -> {
-            false
-        }
-
-        // Allow input of special characters on Windows in Persian keyboard layout using Ctrl+Shift+1..4
-        hostOs.isWindows && code >= 0x200C && code <= 0x200D -> {
-            true
-        }
-        hostOs.isMacOS -> {
-            !isMetaPressed && !isCtrlPressed
-        }
-        else -> {
-            !isAltPressed && !isCtrlPressed
-        }
-    }
 }
 
 @ExperimentalJewelApi
 @ApiStatus.Experimental
-internal class SpeedSearchStateImpl(private val matcherBuilderState: State<(String) -> SpeedSearchMatcher>) :
-    SpeedSearchState {
-    internal val textFieldState = TextFieldState()
+internal class SpeedSearchStateImpl(
+    private val searchState: SearchTextFieldState,
+    private val matcherBuilderState: State<(String) -> SpeedSearchMatcher>,
+) : SpeedSearchState {
+    override val textFieldState
+        get() = searchState.textFieldState
+
     private var allMatches: Map<String?, SpeedSearchMatcher.MatchResult> by mutableStateOf(emptyMap())
-    override val searchText: String by derivedStateOf { textFieldState.text.toString() }
+    override var searchText: String by mutableStateOf("")
 
     override var position: Alignment.Vertical by mutableStateOf(Alignment.Top)
-
     override var isVisible: Boolean by mutableStateOf(false)
-        internal set
 
     override var hasMatches: Boolean by mutableStateOf(true)
         private set
@@ -419,12 +497,18 @@ internal class SpeedSearchStateImpl(private val matcherBuilderState: State<(Stri
     override var matchingIndexes: List<Int> by mutableStateOf(emptyList<Int>())
         private set
 
+    override var currentMatcher by mutableStateOf<SpeedSearchMatcher>(EmptySpeedSearchMatcher)
+        private set
+
     override fun matchResultForText(text: String?): SpeedSearchMatcher.MatchResult =
         allMatches[text] ?: SpeedSearchMatcher.MatchResult.NoMatch
 
     override fun clearSearch(): Boolean {
         if (!isVisible) return false
-        textFieldState.edit { delete(0, length) }
+        Snapshot.withMutableSnapshot {
+            textFieldState.edit { delete(0, length) }
+            searchText = ""
+        }
         return true
     }
 
@@ -438,58 +522,99 @@ internal class SpeedSearchStateImpl(private val matcherBuilderState: State<(Stri
     // To prevent this issue, I'm aggregating the states in this method and posting the values
     // to the relevant properties.
     override suspend fun attach(entriesFlow: StateFlow<List<String?>>, dispatcher: CoroutineDispatcher) {
-        val searchTextFlow = snapshotFlow { searchText }
+        val searchTextFlow = snapshotFlow { textFieldState.text.toString() }
         val matcherBuilderFlow = snapshotFlow { matcherBuilderState.value }
 
-        combine(searchTextFlow, matcherBuilderFlow) { text, buildMatcher ->
-                val items = entriesFlow.value
-
-                if (text.isBlank() || items.isEmpty()) {
-                    allMatches = emptyMap()
-                    matchingIndexes = emptyList()
-                    hasMatches = true
-                    return@combine
-                }
-
-                val matcher = buildMatcher(text)
-
-                // Please note that use the default capacity can have a significant impact on performance for larger
-                // data sets. After the first "round", we can start creating the array with an "educated guess" to
-                // prevent tons of array copy in memory
-                val newMatchingIndexes = ArrayList<Int>(matchingIndexes.size.takeIf { it > 0 } ?: 128)
-                val newMatches = hashMapOf<String?, SpeedSearchMatcher.MatchResult>()
-                var anyMatch = false
-
-                for (index in items.indices) {
-                    val item = items[index]
-                    val matches = matcher.matches(item)
-
-                    if (matches is SpeedSearchMatcher.MatchResult.Match) {
-                        newMatchingIndexes.add(index)
-                        newMatches[item] = matches
-                        anyMatch = true
-                    }
-                }
-
-                newMatchingIndexes.trimToSize()
-
-                allMatches = newMatches
-                matchingIndexes = newMatchingIndexes
-                hasMatches = anyMatch
-            }
+        createMatcherFlow(searchTextFlow, matcherBuilderFlow)
+            .combineWithEntries(entriesFlow)
             .flowOn(dispatcher)
             .collect()
     }
-}
 
-private fun KeyEvent.toChar(): Char =
-    when (key) {
-        Key.Spacebar -> ' '
-        else -> utf16CodePoint.toChar()
-    }
+    private fun createMatcherFlow(
+        searchTextFlow: Flow<String>,
+        matcherBuilderFlow: Flow<(String) -> SpeedSearchMatcher>,
+    ) =
+        combine(searchTextFlow, matcherBuilderFlow) { text, buildMatcher ->
+            val matcher =
+                if (text.isBlank()) {
+                    EmptySpeedSearchMatcher
+                } else {
+                    buildMatcher(text).cached()
+                }
+
+            text to matcher
+        }
+
+    private fun Flow<Pair<String, SpeedSearchMatcher>>.combineWithEntries(entriesFlow: StateFlow<List<String?>>) =
+        combine(entriesFlow) { (text, matcher), items ->
+            if (text.isBlank()) {
+                // Batch all state updates in a single snapshot to prevent intermediate recompositions.
+                // This ensures atomicity when resetting the search state and improves performance by
+                // triggering only one recomposition instead of four separate ones.
+                Snapshot.withMutableSnapshot {
+                    allMatches = emptyMap()
+                    matchingIndexes = emptyList()
+                    searchText = ""
+                    hasMatches = true
+                    currentMatcher = matcher
+                }
+                return@combine
+            }
+
+            // Please note that use the default capacity can have a significant impact on performance for larger
+            // data sets. After the first "round", we can start creating the array with an "educated guess" to
+            // prevent tons of array copy in memory
+            val newMatchingIndexes = ArrayList<Int>(matchingIndexes.size.takeIf { it > 0 } ?: 128)
+            val newMatches = hashMapOf<String?, SpeedSearchMatcher.MatchResult>()
+            var anyMatch = false
+
+            for (index in items.indices) {
+                val item = items[index]
+                val matches = matcher.matches(item)
+
+                if (matches is SpeedSearchMatcher.MatchResult.Match) {
+                    newMatchingIndexes.add(index)
+                    newMatches[item] = matches
+                    anyMatch = true
+                }
+            }
+
+            newMatchingIndexes.trimToSize()
+
+            // Batch all state updates in a single snapshot to prevent intermediate recompositions.
+            // This ensures atomicity when updating search results and improves performance by
+            // triggering only one recomposition instead of four separate ones.
+            Snapshot.withMutableSnapshot {
+                allMatches = newMatches
+                matchingIndexes = newMatchingIndexes
+                hasMatches = anyMatch
+                searchText = text
+                currentMatcher = matcher
+            }
+        }
+}
 
 /**
  * **Swing Version:**
  * [SpeedSearch.PUNCTUATION_MARKS](https://github.com/JetBrains/intellij-community/blob/master/platform/platform-api/src/com/intellij/ui/speedSearch/SpeedSearch.java)
  */
 private const val PUNCTUATION_MARKS = "*_-+\"'/.#$>: ,;?!@%^&"
+
+private fun SpeedSearchMatcher.cached() =
+    object : SpeedSearchMatcher {
+        private val cache = LRUCache<CharSequence, SpeedSearchMatcher.MatchResult>(100)
+
+        override fun matches(text: String?): SpeedSearchMatcher.MatchResult = matches(text as? CharSequence)
+
+        override fun matches(text: CharSequence?): SpeedSearchMatcher.MatchResult =
+            if (text.isNullOrBlank()) {
+                this@cached.matches(text)
+            } else {
+                cache.getOrPut(text) { this@cached.matches(text) }
+            }
+    }
+
+private class LRUCache<K : Any, V : Any>(private val capacity: Int) : LinkedHashMap<K, V>(capacity, 0.75f, true) {
+    override fun removeEldestEntry(eldest: MutableMap.MutableEntry<K, V>?): Boolean = size > capacity
+}

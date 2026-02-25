@@ -12,7 +12,9 @@ import org.jetbrains.jewel.foundation.search.SpeedSearchMatcher.MatchResult
  */
 internal class ExactSubstringSpeedSearchMatcher(private val pattern: String, private val ignoreCase: Boolean = true) :
     SpeedSearchMatcher {
-    override fun matches(text: String?): MatchResult {
+    override fun matches(text: String?): MatchResult = matches(text as? CharSequence)
+
+    override fun matches(text: CharSequence?): MatchResult {
         if (pattern.isBlank() || text.isNullOrBlank()) return MatchResult.NoMatch
         val matchIndex = text.indexOf(pattern, ignoreCase = ignoreCase)
         return if (matchIndex >= 0) {

@@ -47,6 +47,7 @@ import org.jetbrains.jewel.ui.component.styling.LocalPopupContainerStyle
 import org.jetbrains.jewel.ui.component.styling.LocalRadioButtonStyle
 import org.jetbrains.jewel.ui.component.styling.LocalScrollbarStyle
 import org.jetbrains.jewel.ui.component.styling.LocalSearchMatchStyle
+import org.jetbrains.jewel.ui.component.styling.LocalSearchTextFieldStyle
 import org.jetbrains.jewel.ui.component.styling.LocalSegmentedControlButtonStyle
 import org.jetbrains.jewel.ui.component.styling.LocalSegmentedControlStyle
 import org.jetbrains.jewel.ui.component.styling.LocalSelectableLazyColumnStyle
@@ -64,6 +65,7 @@ import org.jetbrains.jewel.ui.component.styling.PopupContainerStyle
 import org.jetbrains.jewel.ui.component.styling.RadioButtonStyle
 import org.jetbrains.jewel.ui.component.styling.ScrollbarStyle
 import org.jetbrains.jewel.ui.component.styling.SearchMatchStyle
+import org.jetbrains.jewel.ui.component.styling.SearchTextFieldStyle
 import org.jetbrains.jewel.ui.component.styling.SegmentedControlButtonStyle
 import org.jetbrains.jewel.ui.component.styling.SegmentedControlStyle
 import org.jetbrains.jewel.ui.component.styling.SelectableLazyColumnStyle
@@ -77,6 +79,7 @@ import org.jetbrains.jewel.ui.component.styling.TextFieldStyle
 import org.jetbrains.jewel.ui.component.styling.TooltipStyle
 import org.jetbrains.jewel.ui.component.styling.fallbackPopupAdStyle
 import org.jetbrains.jewel.ui.component.styling.fallbackSearchMatchStyle
+import org.jetbrains.jewel.ui.component.styling.fallbackSearchTextField
 import org.jetbrains.jewel.ui.component.styling.fallbackSpeedSearchStyle
 
 @Stable
@@ -118,8 +121,9 @@ public class DefaultComponentStyling(
     public val speedSearchStyle: SpeedSearchStyle,
     public val searchMatchStyle: SearchMatchStyle,
     public val popupAdStyle: PopupAdStyle,
+    public val searchTextFieldStyle: SearchTextFieldStyle,
 ) : ComponentStyling {
-    @Deprecated("Use the variant with popupAdStyle.", level = DeprecationLevel.HIDDEN)
+    @Deprecated("Use the variant with popupAdStyle and speedSearchStyle.", level = DeprecationLevel.HIDDEN)
     public constructor(
         checkboxStyle: CheckboxStyle,
         chipStyle: ChipStyle,
@@ -193,6 +197,7 @@ public class DefaultComponentStyling(
         speedSearchStyle,
         searchMatchStyle,
         fallbackPopupAdStyle(),
+        fallbackSearchTextField(),
     )
 
     @Deprecated("Use the variant with speedSearchStyle.", level = DeprecationLevel.HIDDEN)
@@ -267,6 +272,7 @@ public class DefaultComponentStyling(
         fallbackSpeedSearchStyle(),
         fallbackSearchMatchStyle(),
         fallbackPopupAdStyle(),
+        fallbackSearchTextField(),
     )
 
     @Deprecated("Use the variant with transparentIconButtonStyle.", level = DeprecationLevel.HIDDEN)
@@ -340,6 +346,7 @@ public class DefaultComponentStyling(
         fallbackSpeedSearchStyle(),
         fallbackSearchMatchStyle(),
         fallbackPopupAdStyle(),
+        fallbackSearchTextField(),
     )
 
     @Composable
@@ -383,6 +390,7 @@ public class DefaultComponentStyling(
             LocalSpeedSearchStyle provides speedSearchStyle,
             LocalSearchMatchStyle provides searchMatchStyle,
             LocalPopupAdStyle provides popupAdStyle,
+            LocalSearchTextFieldStyle provides searchTextFieldStyle,
         )
 
     override fun equals(other: Any?): Boolean {
@@ -427,6 +435,7 @@ public class DefaultComponentStyling(
         if (speedSearchStyle != other.speedSearchStyle) return false
         if (searchMatchStyle != other.searchMatchStyle) return false
         if (popupAdStyle != other.popupAdStyle) return false
+        if (searchTextFieldStyle != other.searchTextFieldStyle) return false
 
         return true
     }
@@ -468,6 +477,7 @@ public class DefaultComponentStyling(
         result = 31 * result + speedSearchStyle.hashCode()
         result = 31 * result + searchMatchStyle.hashCode()
         result = 31 * result + popupAdStyle.hashCode()
+        result = 31 * result + searchTextFieldStyle.hashCode()
         return result
     }
 
@@ -507,7 +517,8 @@ public class DefaultComponentStyling(
             "tooltipStyle=$tooltipStyle, " +
             "undecoratedDropdownStyle=$undecoratedDropdownStyle, " +
             "speedSearchStyle=$speedSearchStyle, " +
-            "searchMatchStyle=$searchMatchStyle," +
-            "popupAdStyle=$popupAdStyle" +
+            "searchMatchStyle=$searchMatchStyle, " +
+            "popupAdStyle=$popupAdStyle, " +
+            "searchTextFieldStyle=$searchTextFieldStyle" +
             ")"
 }

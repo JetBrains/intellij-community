@@ -56,6 +56,7 @@ import org.jetbrains.jewel.ui.component.styling.PopupContainerStyle
 import org.jetbrains.jewel.ui.component.styling.RadioButtonStyle
 import org.jetbrains.jewel.ui.component.styling.ScrollbarStyle
 import org.jetbrains.jewel.ui.component.styling.SearchMatchStyle
+import org.jetbrains.jewel.ui.component.styling.SearchTextFieldStyle
 import org.jetbrains.jewel.ui.component.styling.SegmentedControlButtonStyle
 import org.jetbrains.jewel.ui.component.styling.SegmentedControlStyle
 import org.jetbrains.jewel.ui.component.styling.SelectableLazyColumnStyle
@@ -282,6 +283,7 @@ public fun ComponentStyling.dark(
     speedSearchStyle: SpeedSearchStyle = SpeedSearchStyle.dark(),
     searchMatchStyle: SearchMatchStyle = SearchMatchStyle.dark(),
     popupAdStyle: PopupAdStyle = PopupAdStyle.dark(),
+    searchTextFieldStyle: SearchTextFieldStyle = SearchTextFieldStyle.dark(),
 ): ComponentStyling =
     DefaultComponentStyling(
         checkboxStyle = checkboxStyle,
@@ -320,6 +322,7 @@ public fun ComponentStyling.dark(
         speedSearchStyle = speedSearchStyle,
         searchMatchStyle = searchMatchStyle,
         popupAdStyle = popupAdStyle,
+        searchTextFieldStyle = searchTextFieldStyle,
     )
 
 @Suppress("UnusedReceiverParameter", "DEPRECATION_ERROR")
@@ -398,6 +401,7 @@ public fun ComponentStyling.dark(
         speedSearchStyle = speedSearchStyle,
         searchMatchStyle = searchMatchStyle,
         popupAdStyle = PopupAdStyle.dark(),
+        searchTextFieldStyle = SearchTextFieldStyle.dark(),
     )
 
 @Suppress("UnusedReceiverParameter", "DEPRECATION_ERROR")
@@ -474,6 +478,7 @@ public fun ComponentStyling.dark(
         speedSearchStyle = SpeedSearchStyle.dark(),
         searchMatchStyle = SearchMatchStyle.dark(),
         popupAdStyle = PopupAdStyle.dark(),
+        searchTextFieldStyle = SearchTextFieldStyle.dark(),
     )
 
 @Suppress("UnusedReceiverParameter", "DEPRECATION_ERROR")
@@ -549,6 +554,7 @@ public fun ComponentStyling.dark(
         speedSearchStyle = SpeedSearchStyle.dark(),
         searchMatchStyle = SearchMatchStyle.dark(),
         popupAdStyle = PopupAdStyle.dark(),
+        searchTextFieldStyle = SearchTextFieldStyle.dark(),
     )
 
 @Suppress("UnusedReceiverParameter")
@@ -589,6 +595,7 @@ public fun ComponentStyling.light(
     speedSearchStyle: SpeedSearchStyle = SpeedSearchStyle.light(),
     searchMatchStyle: SearchMatchStyle = SearchMatchStyle.light(),
     popupAdStyle: PopupAdStyle = PopupAdStyle.light(),
+    searchTextFieldStyle: SearchTextFieldStyle = SearchTextFieldStyle.light(),
 ): ComponentStyling =
     DefaultComponentStyling(
         checkboxStyle = checkboxStyle,
@@ -627,10 +634,11 @@ public fun ComponentStyling.light(
         speedSearchStyle = speedSearchStyle,
         searchMatchStyle = searchMatchStyle,
         popupAdStyle = popupAdStyle,
+        searchTextFieldStyle = searchTextFieldStyle,
     )
 
-@Suppress("UnusedReceiverParameter", "DEPRECATION_ERROR")
-@Deprecated("Use the variant with popupAdTextStyle.", level = DeprecationLevel.HIDDEN)
+@Suppress("UnusedReceiverParameter")
+@Deprecated("Use the variant with popupAdTextStyle and searchTextFieldStyle.", level = DeprecationLevel.HIDDEN)
 public fun ComponentStyling.light(
     checkboxStyle: CheckboxStyle = CheckboxStyle.light(),
     chipStyle: ChipStyle = ChipStyle.light(),
@@ -705,6 +713,7 @@ public fun ComponentStyling.light(
         speedSearchStyle = speedSearchStyle,
         searchMatchStyle = searchMatchStyle,
         popupAdStyle = PopupAdStyle.light(),
+        searchTextFieldStyle = SearchTextFieldStyle.light(),
     )
 
 @Suppress("UnusedReceiverParameter", "DEPRECATION_ERROR")
@@ -781,6 +790,7 @@ public fun ComponentStyling.light(
         speedSearchStyle = SpeedSearchStyle.light(),
         searchMatchStyle = SearchMatchStyle.light(),
         popupAdStyle = PopupAdStyle.light(),
+        searchTextFieldStyle = SearchTextFieldStyle.light(),
     )
 
 @Suppress("UnusedReceiverParameter", "DEPRECATION_ERROR")
@@ -856,6 +866,7 @@ public fun ComponentStyling.light(
         speedSearchStyle = SpeedSearchStyle.light(),
         searchMatchStyle = SearchMatchStyle.light(),
         popupAdStyle = PopupAdStyle.light(),
+        searchTextFieldStyle = SearchTextFieldStyle.light(),
     )
 
 @Composable

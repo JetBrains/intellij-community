@@ -60,14 +60,16 @@ internal class PatternSpeedSearchMatcher(
         minMatchingTextLength = meaningfulCharacters.size / 2
     }
 
-    override fun matches(text: String?): MatchResult =
+    override fun matches(text: String?): MatchResult = matches(text as? CharSequence)
+
+    override fun matches(text: CharSequence?): MatchResult =
         if (text.isNullOrBlank()) {
             MatchResult.NoMatch
         } else {
             text.matchingFragments()
         }
 
-    private fun String.matchingFragments(): MatchResult {
+    private fun CharSequence.matchingFragments(): MatchResult {
         if (length < minMatchingTextLength) {
             return MatchResult.NoMatch
         }
@@ -94,7 +96,7 @@ internal class PatternSpeedSearchMatcher(
      * After a wildcard (* or space), search for the first non-wildcard pattern character in the string starting from
      * currentIndex and try to [matchFragment] for it.
      */
-    private fun String.matchWildcards(patternIndex: Int, currentIndex: Int, isAscii: Boolean): List<IntRange>? {
+    private fun CharSequence.matchWildcards(patternIndex: Int, currentIndex: Int, isAscii: Boolean): List<IntRange>? {
         if (currentIndex < 0) {
             return null
         }
@@ -140,7 +142,7 @@ internal class PatternSpeedSearchMatcher(
      * Enumerates places in the string that could be matched by the pattern at patternIndex position and invokes
      * [matchFragment] at those candidate positions
      */
-    private fun String.matchSkippingWords(
+    private fun CharSequence.matchSkippingWords(
         patternIndex: Int,
         currentIndex: Int,
         allowSpecialChars: Boolean,
@@ -179,14 +181,14 @@ internal class PatternSpeedSearchMatcher(
         return null
     }
 
-    private fun String.findNextPatternCharOccurrence(startAt: Int, patternIndex: Int, isAscii: Boolean): Int =
+    private fun CharSequence.findNextPatternCharOccurrence(startAt: Int, patternIndex: Int, isAscii: Boolean): Int =
         if (!'*'.isPatternChar(patternIndex - 1) && !isWordSeparator[patternIndex]) {
             indexOfWordStart(patternIndex, startAt, isAscii)
         } else {
             indexOfIgnoreCase(startAt, pattern[patternIndex], patternIndex, isAscii)
         }
 
-    private fun String.checkForSpecialChars(start: Int, end: Int, patternIndex: Int): Int {
+    private fun CharSequence.checkForSpecialChars(start: Int, end: Int, patternIndex: Int): Int {
         if (end < 0 || end < start) return -1
 
         // pattern humps are allowed to match in words separated by " ()", lowercase characters aren't
@@ -203,7 +205,7 @@ internal class PatternSpeedSearchMatcher(
         return end
     }
 
-    private fun String.seemsLikeFragmentStart(patternIndex: Int, nextOccurrence: Int): Boolean =
+    private fun CharSequence.seemsLikeFragmentStart(patternIndex: Int, nextOccurrence: Int): Boolean =
         !isUpperCase[patternIndex] ||
             this[nextOccurrence].isUpperCase() ||
             isWordStartingAt(nextOccurrence) ||
@@ -213,7 +215,7 @@ internal class PatternSpeedSearchMatcher(
         patternChar == this ||
             ignoreCase && (patternLowerCase[patternIndex] == this || patternUpperCase[patternIndex] == this)
 
-    private fun String.matchFragment(patternIndex: Int, currentIndex: Int, isAscii: Boolean): List<IntRange>? {
+    private fun CharSequence.matchFragment(patternIndex: Int, currentIndex: Int, isAscii: Boolean): List<IntRange>? {
         val fragmentLength = maxMatchingFragment(patternIndex, currentIndex)
         return if (fragmentLength == 0) {
             null
@@ -222,7 +224,7 @@ internal class PatternSpeedSearchMatcher(
         }
     }
 
-    private fun String.maxMatchingFragment(patternIndex: Int, currentIndex: Int): Int {
+    private fun CharSequence.maxMatchingFragment(patternIndex: Int, currentIndex: Int): Int {
         if (!isFirstCharMatching(currentIndex, patternIndex)) {
             return 0
         }
@@ -245,7 +247,7 @@ internal class PatternSpeedSearchMatcher(
         pattern[patternIndex].isDigit() && pattern[patternIndex - 1].isDigit() && isDigit()
 
     // we've found the longest fragment matching the pattern in the string
-    private fun String.matchInsideFragment(
+    private fun CharSequence.matchInsideFragment(
         patternIndex: Int,
         currentIndex: Int,
         isAscii: Boolean,
@@ -262,13 +264,13 @@ internal class PatternSpeedSearchMatcher(
         return findLongestMatchingPrefix(patternIndex, currentIndex, isAscii, fragmentLength, minFragment)
     }
 
-    private fun String.isMiddleMatch(patternIndex: Int, currentIndex: Int): Boolean =
+    private fun CharSequence.isMiddleMatch(patternIndex: Int, currentIndex: Int): Boolean =
         '*'.isPatternChar(patternIndex - 1) &&
             !isWildcard(patternIndex + 1) &&
             this[currentIndex].isLetterOrDigit() &&
             !isWordStartingAt(currentIndex)
 
-    private fun String.findLongestMatchingPrefix(
+    private fun CharSequence.findLongestMatchingPrefix(
         patternIndex: Int,
         currentIndex: Int,
         isAscii: Boolean,
@@ -308,7 +310,7 @@ internal class PatternSpeedSearchMatcher(
      * When pattern is "CU" and the string is "CurrentUser", we already have a prefix "Cu" that matches, but we try to
      * find uppercase "U" later in string for better matching degree
      */
-    private fun String.improveCamelHumps(
+    private fun CharSequence.improveCamelHumps(
         patternIndex: Int,
         currentIndex: Int,
         isAscii: Boolean,
@@ -326,10 +328,10 @@ internal class PatternSpeedSearchMatcher(
         return null
     }
 
-    private fun String.isUppercasePatternVsLowercaseNameChar(patternIndex: Int, currentIndex: Int): Boolean =
+    private fun CharSequence.isUppercasePatternVsLowercaseNameChar(patternIndex: Int, currentIndex: Int): Boolean =
         isUpperCase[patternIndex] && pattern[patternIndex] != this[currentIndex]
 
-    private fun String.findUppercaseMatchFurther(
+    private fun CharSequence.findUppercaseMatchFurther(
         patternIndex: Int,
         currentIndex: Int,
         isAscii: Boolean,
@@ -338,7 +340,7 @@ internal class PatternSpeedSearchMatcher(
         return matchWildcards(patternIndex, nextWordStart, isAscii)
     }
 
-    private fun String.isFirstCharMatching(currentIndex: Int, patternIndex: Int): Boolean {
+    private fun CharSequence.isFirstCharMatching(currentIndex: Int, patternIndex: Int): Boolean {
         if (currentIndex >= length) return false
 
         val patternChar = pattern[patternIndex]
@@ -368,7 +370,7 @@ internal class PatternSpeedSearchMatcher(
     private fun Char.isPatternChar(patternIndex: Int): Boolean =
         (patternIndex >= 0) && (patternIndex < pattern.size) && (pattern[patternIndex] == this)
 
-    private fun String.indexOfWordStart(patternIndex: Int, startFrom: Int, isAscii: Boolean): Int {
+    private fun CharSequence.indexOfWordStart(patternIndex: Int, startFrom: Int, isAscii: Boolean): Int {
         val p = pattern[patternIndex]
 
         // Suppressing condition to keep the structure as similar as the Java/Swing files as possible
@@ -391,7 +393,7 @@ internal class PatternSpeedSearchMatcher(
         }
     }
 
-    private fun String.indexOfIgnoreCase(fromIndex: Int, p: Char, patternIndex: Int, isAscii: Boolean): Int {
+    private fun CharSequence.indexOfIgnoreCase(fromIndex: Int, p: Char, patternIndex: Int, isAscii: Boolean): Int {
         if (isAscii && p.code < 128) {
             val pUpper = patternUpperCase[patternIndex]
             val pLower = patternLowerCase[patternIndex]
@@ -441,7 +443,7 @@ private fun Char.isWordSeparator(): Boolean =
  * **Swing equivalent:**:
  * [NameUtilCore.isWordStart](https://github.com/JetBrains/intellij-community/blob/master/platform/util/base/src/com/intellij/util/text/NameUtilCore.java)
  */
-private fun String.isWordStartingAt(index: Int): Boolean {
+private fun CharSequence.isWordStartingAt(index: Int): Boolean {
     val cur = this[index].code
     val prev = if (index > 0) this[index - 1].code else -1
     if (cur.toChar().isUpperCase()) {
@@ -471,7 +473,7 @@ private fun String.isWordStartingAt(index: Int): Boolean {
  * **Swing equivalent:**:
  * [NameUtilCore.isHardCodedWordStart](https://github.com/JetBrains/intellij-community/blob/master/platform/util/base/src/com/intellij/util/text/NameUtilCore.java)
  */
-private fun String.isHardCodedWordStart(i: Int): Boolean =
+private fun CharSequence.isHardCodedWordStart(i: Int): Boolean =
     this[i] == 'l' && i < length - 1 && this[i + 1] == 'n' && (length == i + 2 || isWordStartingAt(i + 2))
 
 /**
@@ -480,7 +482,7 @@ private fun String.isHardCodedWordStart(i: Int): Boolean =
  * **Swing equivalent:**:
  * [MinusculeMatcherImpl.nextWord](https://github.com/JetBrains/intellij-community/blob/master/platform/util/text-matching/src/com/intellij/psi/codeStyle/MinusculeMatcherImpl.java)
  */
-private fun String.nextWordAfter(start: Int): Int {
+private fun CharSequence.nextWordAfter(start: Int): Int {
     if (start < length && this[start].isDigit()) {
         return start + 1 // treat each digit as a separate hump
     }
@@ -493,7 +495,7 @@ private fun String.nextWordAfter(start: Int): Int {
  * **Swing equivalent:**:
  * [AsciiUtils.isAscii](https://github.com/JetBrains/intellij-community/blob/master/platform/util/text-matching/src/com/intellij/psi/codeStyle/AsciiUtils.java)
  */
-private fun String.isAscii(): Boolean = all { it.code < 128 }
+private fun CharSequence.isAscii(): Boolean = all { it.code < 128 }
 
 /**
  * **Swing equivalent:**:

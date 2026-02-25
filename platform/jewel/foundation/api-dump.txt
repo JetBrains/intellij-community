@@ -622,6 +622,7 @@ e:org.jetbrains.jewel.foundation.search.MatchingCaseSensitivity
 - s:values():org.jetbrains.jewel.foundation.search.MatchingCaseSensitivity[]
 org.jetbrains.jewel.foundation.search.SpeedSearchMatcher
 - sf:Companion:org.jetbrains.jewel.foundation.search.SpeedSearchMatcher$Companion
+- matches(java.lang.CharSequence):org.jetbrains.jewel.foundation.search.SpeedSearchMatcher$MatchResult
 - a:matches(java.lang.String):org.jetbrains.jewel.foundation.search.SpeedSearchMatcher$MatchResult
 f:org.jetbrains.jewel.foundation.search.SpeedSearchMatcher$Companion
 - f:exactSubstringMatcher(java.lang.String,Z):org.jetbrains.jewel.foundation.search.SpeedSearchMatcher
@@ -642,6 +643,10 @@ f:org.jetbrains.jewel.foundation.search.SpeedSearchMatcher$MatchResult$NoMatch
 - org.jetbrains.jewel.foundation.search.SpeedSearchMatcher$MatchResult
 - sf:$stable:I
 - sf:INSTANCE:org.jetbrains.jewel.foundation.search.SpeedSearchMatcher$MatchResult$NoMatch
+f:org.jetbrains.jewel.foundation.search.SpeedSearchMatcherKt
+- sf:filter(java.lang.Iterable,org.jetbrains.jewel.foundation.search.SpeedSearchMatcher):java.util.List
+- sf:filter(java.lang.Iterable,org.jetbrains.jewel.foundation.search.SpeedSearchMatcher,kotlin.jvm.functions.Function1):java.util.List
+- sf:matches(java.lang.CharSequence,org.jetbrains.jewel.foundation.search.SpeedSearchMatcher):Z
 f:org.jetbrains.jewel.foundation.state.CommonStateBitMask
 - sf:$stable:I
 - sf:FIRST_AVAILABLE_OFFSET:I
