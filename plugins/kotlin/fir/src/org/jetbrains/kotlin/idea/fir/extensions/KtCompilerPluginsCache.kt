@@ -3,7 +3,6 @@
 
 package org.jetbrains.kotlin.idea.fir.extensions
 
-import com.intellij.openapi.components.PathMacroManager
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.diagnostic.runAndLogException
 import com.intellij.openapi.module.Module
@@ -13,8 +12,6 @@ import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.CompilerModuleExtension
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.platform.eel.provider.getEelDescriptor
-import com.intellij.platform.eel.provider.utils.Path
 import com.intellij.util.concurrency.SynchronizedClearableLazy
 import com.intellij.util.containers.ContainerUtil
 import com.intellij.util.containers.orNull
@@ -249,31 +246,6 @@ class KtCompilerPluginsCache private constructor(
         }
 
         /**
-         * Returns the paths defined in [org.jetbrains.kotlin.cli.common.arguments.CommonCompilerArguments.pluginClasspaths]
-         * in the absolute form with the expansion of the present path macros
-         * (like 'KOTLIN_BUNDLED').
-         */
-        private fun CommonCompilerArguments.getOriginalPluginClasspaths(project: Project): List<Path> {
-            val pluginClassPaths = this.pluginClasspaths
-
-            if (pluginClassPaths.isNullOrEmpty()) return emptyList()
-
-            val pathMacroManager = PathMacroManager.getInstance(project)
-            val expandedPluginClassPaths = pluginClassPaths.map { pathMacroManager.expandPath(it) }
-            val eel = project.getEelDescriptor()
-            return expandedPluginClassPaths.mapNotNull {
-                try {
-                    Path(it, eel).toAbsolutePath()
-                } catch (e: ProcessCanceledException) {
-                    throw e
-                } catch (e: Throwable) {
-                    LOG.error(e)
-                    null
-                }
-            }
-        }
-
-        /**
          * We have the following logic for plugins' substitution:
          * 1. Always replace our own plugins (like "allopen", "noarg", etc.) with bundled ones to avoid binary incompatibility.
          * 2. Allow using other compiler plugins only if [onlyBundledPluginsEnabled] is set to false; otherwise, filter them.
@@ -299,7 +271,9 @@ class KtCompilerPluginsCache private constructor(
             onlyBundledPluginsEnabled: Boolean,
             compilerArguments: List<CommonCompilerArguments>
         ): List<Path> {
-            val combinedOriginalClasspaths = compilerArguments.asSequence().flatMap { it.getOriginalPluginClasspaths(project) }.distinct()
+            val combinedOriginalClasspaths = compilerArguments.asSequence().flatMap { arguments: CommonCompilerArguments ->
+                arguments.pluginClasspaths?.map(Path::of) ?: emptyList()
+            }.distinct()
 
             val substitutedClasspaths = combinedOriginalClasspaths.mapNotNull { userSuppliedPluginJar ->
                 substitutePluginJar(project, onlyBundledPluginsEnabled, userSuppliedPluginJar)

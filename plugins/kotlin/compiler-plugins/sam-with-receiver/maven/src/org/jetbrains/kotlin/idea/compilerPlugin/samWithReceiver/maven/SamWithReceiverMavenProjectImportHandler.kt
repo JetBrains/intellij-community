@@ -2,6 +2,7 @@
 
 package org.jetbrains.kotlin.idea.compilerPlugin.samWithReceiver.maven
 
+import com.intellij.openapi.project.Project
 import org.jetbrains.idea.maven.project.MavenProject
 import org.jetbrains.kotlin.idea.base.plugin.artifacts.KotlinArtifacts
 import org.jetbrains.kotlin.idea.compilerPlugin.CompilerPluginSetup.PluginOption
@@ -9,7 +10,7 @@ import org.jetbrains.kotlin.idea.maven.compilerPlugin.AbstractMavenImportHandler
 import org.jetbrains.kotlin.samWithReceiver.SamWithReceiverPluginNames
 import java.nio.file.Path
 
-class SamWithReceiverMavenProjectImportHandler : AbstractMavenImportHandler() {
+class SamWithReceiverMavenProjectImportHandler(project: Project) : AbstractMavenImportHandler(project) {
     override val compilerPluginId: String = SamWithReceiverPluginNames.PLUGIN_ID
     override val pluginName: String = "samWithReceiver"
     override val mavenPluginArtifactName: String = "kotlin-maven-sam-with-receiver"

@@ -25,14 +25,14 @@ internal class LazyZipUnpacker(private val destination: File) : AbstractLazyFile
         DigestUtil.updateContentHash(messageDigest, input.toPath(), buffer)
     }
 
-    fun lazyUnpack(zip: File): File {
-        return lazyProduceOutput(zip, Unit).singleOrNull()
-            ?: error("${LazyZipUnpacker::produceOutput.name} returns only single element")
-    }
+    fun lazyUnpack(zip: File): File =
+        lazyProduceOutput(zip, Unit).singleOrNull()
+            ?: error("expected ${LazyZipUnpacker::lazyProduceOutput.name} to return a single element for $zip")
 
-    fun lazyUnpack(zip: Path): Path {
-        return lazyUnpack(zip.toFile()).toPath()
-    }
-    fun getUnpackedIfUpToDateOrNull(zip: File): File? = getOutputIfUpToDateOrEmpty(zip).ifEmpty { return null }.singleOrNull()
-        ?: error("${LazyZipUnpacker::produceOutput.name} returns only single element")
+    fun lazyUnpack(zip: Path): Path =
+        lazyUnpack(zip.toFile()).toPath()
+
+    fun getUnpackedIfUpToDateOrNull(zip: File): File? =
+        getOutputIfUpToDateOrEmpty(zip).ifEmpty { return null }.singleOrNull()
+            ?: error("expected ${LazyZipUnpacker::getOutputIfUpToDateOrEmpty.name} to return a single element for $zip")
 }

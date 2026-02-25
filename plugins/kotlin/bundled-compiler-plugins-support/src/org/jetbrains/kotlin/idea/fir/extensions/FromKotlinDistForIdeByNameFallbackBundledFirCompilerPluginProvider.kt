@@ -15,17 +15,17 @@ import org.jetbrains.kotlin.idea.fir.extensions.KotlinK2BundledCompilerPlugins.N
 import org.jetbrains.kotlin.idea.fir.extensions.KotlinK2BundledCompilerPlugins.PARCELIZE_COMPILER_PLUGIN
 import org.jetbrains.kotlin.idea.fir.extensions.KotlinK2BundledCompilerPlugins.SAM_WITH_RECEIVER_COMPILER_PLUGIN
 import org.jetbrains.kotlin.idea.fir.extensions.KotlinK2BundledCompilerPlugins.SCRIPTING_COMPILER_PLUGIN
+import java.nio.file.Files
 import java.nio.file.Path
-import kotlin.io.path.exists
 import kotlin.io.path.name
 
 /**
  * A provider for substituting the bundled FIR compiler plugin jars by the file name alone.
  *
  * It intentionally does not handle files which actually exist - they should have been handled by other providers.
- * It only works on files from the [KotlinArtifactConstants.KOTLIN_DIST_LOCATION_PREFIX] folder.
+ * It only works on files from the [KotlinArtifactConstants.KOTLIN_DIST_LOCATION_PREFIX_PATH] folder.
  *
- * This is important for JPS projects, when the content of [KotlinArtifactConstants.KOTLIN_DIST_LOCATION_PREFIX] folder
+ * This is important for JPS projects, when the content of [KotlinArtifactConstants.KOTLIN_DIST_LOCATION_PREFIX_PATH] folder
  * for the selected Kotlin Plugin version might not have been downloaded yet.
  *
  * Important: this is supposed to be a fallback provider, meaning that it should work as a last resort.
@@ -33,10 +33,10 @@ import kotlin.io.path.name
 internal class FromKotlinDistForIdeByNameFallbackBundledFirCompilerPluginProvider : KotlinBundledFirCompilerPluginProvider {
     override fun provideBundledPluginJar(project: Project, userSuppliedPluginJar: Path): Path? {
         // this provider only handles files from 'kotlin-dist-for-ide' folder
-        if (!userSuppliedPluginJar.startsWith(KotlinArtifactConstants.KOTLIN_DIST_LOCATION_PREFIX.toPath())) return null
+        if (!userSuppliedPluginJar.startsWith(KotlinArtifactConstants.KOTLIN_DIST_LOCATION_PREFIX_PATH)) return null
 
         // this provider should not react to non-existing files
-        if (userSuppliedPluginJar.exists()) return null
+        if (Files.isReadable(userSuppliedPluginJar)) return null
 
         val suppliedJarName = userSuppliedPluginJar.name
         val matchingPlugin = KotlinK2BundledCompilerPlugins.entries.firstOrNull { it.defaultJarName == suppliedJarName }

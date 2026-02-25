@@ -21,6 +21,7 @@ jvm_library(
     "//plugins/maven",
     "//plugins/kotlin/base/plugin",
     "//plugins/kotlin/base/jps",
+    "//platform/core-api:core",
   ]
 )
 ### auto-generated section `build intellij.kotlin.compilerPlugins.serialization.maven` end

@@ -2,6 +2,7 @@
 
 package org.jetbrains.kotlin.idea.compilerPlugin.noarg.maven
 
+import com.intellij.openapi.project.Project
 import org.jetbrains.idea.maven.project.MavenProject
 import org.jetbrains.kotlin.idea.base.plugin.artifacts.KotlinArtifacts
 import org.jetbrains.kotlin.idea.compilerPlugin.CompilerPluginSetup.PluginOption
@@ -12,7 +13,7 @@ import org.jetbrains.kotlin.noarg.NoArgPluginNames.PLUGIN_ID
 import org.jetbrains.kotlin.noarg.NoArgPluginNames.SUPPORTED_PRESETS
 import java.nio.file.Path
 
-class NoArgMavenProjectImportHandler : AbstractMavenImportHandler() {
+class NoArgMavenProjectImportHandler(project: Project) : AbstractMavenImportHandler(project) {
     override val compilerPluginId: String = PLUGIN_ID
     override val pluginName: String = "noarg"
     override val mavenPluginArtifactName: String = "kotlin-maven-noarg"

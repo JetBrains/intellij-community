@@ -5,7 +5,16 @@ import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.ide.plugins.getPluginDistDirByClass
 import com.intellij.idea.AppMode
 import com.intellij.openapi.application.PathManager
+import com.intellij.openapi.components.Service
+import com.intellij.openapi.components.service
+import com.intellij.openapi.progress.runBlockingMaybeCancellable
 import com.intellij.openapi.project.Project
+import com.intellij.platform.eel.provider.LocalEelDescriptor
+import com.intellij.platform.eel.provider.asNioPath
+import com.intellij.platform.eel.provider.getEelDescriptor
+import com.intellij.platform.eel.provider.toEelApi
+import com.intellij.platform.eel.provider.utils.EelPathUtils
+import com.intellij.platform.eel.provider.utils.EelPathUtils.transferLocalContentToRemote
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.config.KotlinCompilerVersion
 import org.jetbrains.kotlin.idea.base.plugin.artifacts.KotlinArtifactConstants
@@ -21,6 +30,8 @@ import java.nio.file.Path
 import java.util.ServiceLoader
 import java.util.concurrent.atomic.AtomicReference
 import kotlin.io.path.exists
+import kotlin.io.path.name
+import kotlin.io.path.readText
 
 @get:ApiStatus.Internal
 val isRunningFromSources: Boolean
@@ -36,7 +47,7 @@ object KotlinPluginLayoutModeProvider {
 
     private fun computeDefaultMode(): KotlinPluginLayoutMode {
         val isRunningFromSources =
-          !AppMode.isRunningFromDevBuild() && Files.isDirectory(Path.of(PathManager.getHomePath(), Project.DIRECTORY_STORE_FOLDER))
+            !AppMode.isRunningFromDevBuild() && Files.isDirectory(PathManager.getHomeDir().resolve(Project.DIRECTORY_STORE_FOLDER))
         return if (isRunningFromSources) KotlinPluginLayoutMode.SOURCES else KotlinPluginLayoutMode.INTELLIJ
     }
 
@@ -123,7 +134,7 @@ object KotlinPluginLayout {
             if (!buildTxtPath.exists()) {
                 ideCompilerVersion
             } else {
-                val rawVersion = Files.readString(buildTxtPath).trim()
+                val rawVersion = buildTxtPath.readText().trim()
                 IdeKotlinVersion.get(rawVersion)
             }
         }
@@ -196,5 +207,48 @@ object KotlinPluginLayout {
         check(standaloneCompilerVersion.kotlinVersion <= ideCompilerVersion.kotlinVersion) {
             "standaloneCompilerVersion: $standaloneCompilerVersion, ideCompilerVersion: $ideCompilerVersion"
         }
+    }
+}
+
+@ApiStatus.Internal
+@Service(Service.Level.PROJECT)
+class KotlinPluginLayoutService(private val project: Project) {
+    companion object {
+        fun getInstance(project: Project): KotlinPluginLayoutService = project.service()
+    }
+
+    private val _remoteKotlincPath: AtomicReference<Path> = AtomicReference(null)
+
+    fun getRemoteKotlincPath(): Path {
+        _remoteKotlincPath.get()?.let { return it }
+
+        val localKotlinc = KotlinPluginLayout.kotlincPath
+        val eelDescriptor = project.getEelDescriptor()
+        if (eelDescriptor == LocalEelDescriptor) return localKotlinc
+
+        val parent = localKotlinc.parent
+
+        val path = runBlockingMaybeCancellable { eelDescriptor.toEelApi().userInfo.home.resolve(".kotlin/kotlinc/") }
+
+        val remote = transferLocalContentToRemote(
+            parent,
+            EelPathUtils.TransferTarget.Explicit(path.asNioPath())
+        )
+
+        val remoteKotlinc = remote.resolve(localKotlinc.name)
+
+        _remoteKotlincPath.getAndSet(remoteKotlinc)?.let { return it }
+        return remoteKotlinc
+    }
+
+
+    fun resolveRelativeToRemoteKotlinc(path: Path): Path {
+        val kotlinc = KotlinPluginLayout.kotlincPath
+        if (!path.startsWith(kotlinc)) return path
+
+        val relativize = kotlinc.relativize(path)
+
+        val resolve = getRemoteKotlincPath().resolve(relativize)
+        return resolve
     }
 }

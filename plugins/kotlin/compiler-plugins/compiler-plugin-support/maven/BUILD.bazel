@@ -15,12 +15,15 @@ jvm_library(
   resources = [":maven_resources"],
   deps = [
     "@lib//:kotlin-stdlib",
+    "//platform/core-api:core",
     "//platform/util/jdom",
     "//plugins/kotlin/base/facet",
     "//plugins/kotlin/maven",
     "//plugins/kotlin/compiler-plugins/compiler-plugin-support/common:kotlin-compilerPlugins-support",
     "//plugins/maven",
     "@lib//:kotlinc-kotlin-jps-common",
+    "//plugins/kotlin/base/plugin",
+    "//platform/eel-provider",
   ]
 )
 ### auto-generated section `build intellij.kotlin.compilerPlugins.support.maven` end
