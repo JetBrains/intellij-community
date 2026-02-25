@@ -19,8 +19,8 @@ class AllOpenKotlinMavenImporterTest : AbstractKotlinMavenImporterTest() {
 
         with(facetSettings) {
             assertNotNull(compilerArguments?.pluginClasspaths)
-            assertFalse(compilerArguments!!.pluginClasspaths!!.any { it.endsWith(KotlinArtifacts.allopenCompilerPlugin.name) })
-            assertTrue(compilerArguments!!.pluginClasspaths!!.any { it.endsWith(KotlinArtifacts.noargCompilerPlugin.name) })
+            assertFalse(compilerArguments!!.pluginClasspaths!!.any { it.endsWith(KotlinArtifacts.allopenCompilerPluginPath.fileName.toString()) })
+            assertTrue(compilerArguments!!.pluginClasspaths!!.any { it.endsWith(KotlinArtifacts.noargCompilerPluginPath.fileName.toString()) })
         }
     }
 
@@ -34,8 +34,8 @@ class AllOpenKotlinMavenImporterTest : AbstractKotlinMavenImporterTest() {
 
         with(facetSettings) {
             assertNotNull(compilerArguments?.pluginClasspaths)
-            assertTrue(compilerArguments!!.pluginClasspaths!!.any { it.endsWith(KotlinArtifacts.allopenCompilerPlugin.name) })
-            assertTrue(compilerArguments!!.pluginClasspaths!!.any { it.endsWith(KotlinArtifacts.noargCompilerPlugin.name) })
+            assertTrue(compilerArguments!!.pluginClasspaths!!.any { it.endsWith(KotlinArtifacts.allopenCompilerPluginPath.fileName.toString()) })
+            assertTrue(compilerArguments!!.pluginClasspaths!!.any { it.endsWith(KotlinArtifacts.noargCompilerPluginPath.fileName.toString()) })
             assertArrayEquals(
                 compilerArguments!!.pluginOptions!!,
                 arrayOf(
