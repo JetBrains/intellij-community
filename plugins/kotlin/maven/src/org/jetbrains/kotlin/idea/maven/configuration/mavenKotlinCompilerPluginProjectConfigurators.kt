@@ -48,6 +48,7 @@ abstract class AbstractMavenKotlinCompilerPluginProjectConfigurator: KotlinCompi
                 pluginDependencyMavenId?.let {
                     pom.addPluginDependency(kotlinPlugin, it)
                 }
+                configurationResultBuilder.configuredModule(module)
             }
         }
     }
