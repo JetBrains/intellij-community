@@ -205,6 +205,16 @@ public class HighLevelMultiFileJvmBasicCompletionTestGenerated extends AbstractH
         runTest("../../completion/testData/basic/multifile/FileRefInStringLiteralNoPrefix/");
     }
 
+    @TestMetadata("FlexibleType")
+    public void testFlexibleType() throws Exception {
+        runTest("../../completion/testData/basic/multifile/FlexibleType/");
+    }
+
+    @TestMetadata("FlexibleTypeNotNull")
+    public void testFlexibleTypeNotNull() throws Exception {
+        runTest("../../completion/testData/basic/multifile/FlexibleTypeNotNull/");
+    }
+
     @TestMetadata("GroovyClassNameCompletionFromDefaultPackage")
     public void testGroovyClassNameCompletionFromDefaultPackage() throws Exception {
         runTest("../../completion/testData/basic/multifile/GroovyClassNameCompletionFromDefaultPackage/");
