@@ -105,7 +105,7 @@ class SePopupHeaderPane(
     initialConfiguration.tabs.ifEmpty {
       listOf(Tab(SeAllTab.NAME, SeAllTab.ID, SeAllTab.PRIORITY, SeAllTab.ID))
     }.forEach { tab ->
-      tabbedPane.addTab(tab.name, null, JPanel(), tabShortcuts[tab.id])
+      tabbedPane.addTab(tab.name, null, TabComponent(tab.id), tabShortcuts[tab.id])
     }
 
     setSelectedIndexSafe(initialConfiguration.selectedIndexFlow.value)
@@ -135,17 +135,17 @@ class SePopupHeaderPane(
       // or take the selected tab directly from UI
       val tabIdToSelect = new.selectedTabOrNull?.id?.takeIf { newSelectedId ->
         !old.tabs.any { newSelectedId == it.id }
-      } ?: old.getTabOrNull(tabbedPane.selectedIndex)?.id
+      } ?: (tabbedPane.selectedComponent as? TabComponent)?.tabId
 
       tabbedPane.removeAll()
 
       if (new.tabs.isEmpty()) {
-        tabbedPane.addTab(SeAllTab.NAME, null, JPanel(), null)
+        tabbedPane.addTab(SeAllTab.NAME, null, TabComponent(SeAllTab.ID), null)
         return@withContext
       }
 
       for (tab in new.tabs) {
-        tabbedPane.addTab(tab.name, null, JPanel(), tabShortcuts[tab.id])
+        tabbedPane.addTab(tab.name, null, TabComponent(tab.id), tabShortcuts[tab.id])
       }
 
       new.selectedIndexFlow.value = new.tabs.indexOfTabWithIdOrZero(tabIdToSelect)
@@ -252,8 +252,6 @@ class SePopupHeaderPane(
   ) {
     val selectedTabOrNull: Tab? get() = tabs.getOrNull(selectedIndexFlow.value)
 
-    fun getTabOrNull(index: Int): Tab? = tabs.getOrNull(index)
-
     companion object {
       fun createInitial(
         initialTabs: List<SeDummyTabVm>,
@@ -264,6 +262,8 @@ class SePopupHeaderPane(
       }
     }
   }
+
+  private class TabComponent(val tabId: String) : JPanel()
 
   companion object {
     private const val MAX_FILTER_WIDTH = 100
