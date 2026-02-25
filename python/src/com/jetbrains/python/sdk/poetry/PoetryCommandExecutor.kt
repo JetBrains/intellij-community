@@ -11,9 +11,12 @@ import com.intellij.python.community.impl.poetry.common.poetryPath
 import com.jetbrains.python.PyBundle
 import com.jetbrains.python.PythonBinary
 import com.jetbrains.python.PythonHomePath
+import com.jetbrains.python.errorProcessing.ErrorSink
 import com.jetbrains.python.errorProcessing.PyResult
+import com.jetbrains.python.errorProcessing.emit
 import com.jetbrains.python.getOrNull
 import com.jetbrains.python.isSuccess
+import com.jetbrains.python.onFailure
 import com.jetbrains.python.packaging.PyPackage
 import com.jetbrains.python.packaging.PyRequirement
 import com.jetbrains.python.packaging.PyRequirementParser
@@ -87,6 +90,7 @@ suspend fun setupPoetry(
   basePythonBinaryPath: PythonBinary,
   installPackages: Boolean,
   init: Boolean,
+  errorSink: ErrorSink,
 ): PyResult<PythonHomePath> {
   if (init) {
     // Build poetry init command with Python version constraint if available
@@ -106,7 +110,7 @@ suspend fun setupPoetry(
   runPoetry(projectPath, "env", "use", basePythonBinaryPath.pathString).getOr { return it }
 
   if (installPackages) {
-    runPoetry(projectPath, "install", "--no-root").getOr { return it }
+    runPoetry(projectPath, "install", "--no-root").onFailure { errorSink.emit(it) }
   }
 
   return runPoetry(projectPath, "env", "info", "-p").mapSuccess { Path.of(it) }

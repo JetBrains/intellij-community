@@ -124,7 +124,8 @@ internal class EnvironmentCreatorPoetry<P : PathHolder>(
       is PathHolder.Eel -> createNewPoetrySdk(
         moduleBasePath = moduleBasePath,
         basePythonBinaryPath = basePythonBinaryPath.path,
-        installPackages = false
+        installPackages = false,
+        errorSink = errorSink
       )
       else -> PyResult.localizedError(PyBundle.message("target.is.not.supported", basePythonBinaryPath))
     }
