@@ -235,7 +235,7 @@ private fun generateScripts(distBinDir: Path, arch: JvmArchitecture, context: Bu
   val winScripts = context.paths.communityHomeDir.resolve("platform/build-scripts/resources/win/scripts")
   val actualScriptNames = Files.newDirectoryStream(winScripts).use { dirStream -> dirStream.map { it.fileName.toString() }.sorted() }
 
-  val expectedScriptNames = listOf("executable-template.bat", "format.bat", "inspect.bat", "ltedit.bat")
+  val expectedScriptNames = listOf("executable-template.bat", "format.bat", "inspect.bat", "ltedit.bat", "profiler.bat")  // Android Studio: b/247670444
   check(actualScriptNames == expectedScriptNames) {
     "Expected script names '${expectedScriptNames.joinToString(separator = " ")}', " +
     "but got '${actualScriptNames.joinToString(separator = " ")}' " +
