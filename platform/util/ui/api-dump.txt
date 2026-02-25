@@ -5720,6 +5720,8 @@ f:com.intellij.util.ui.html.HRViewEx
 - getBreakWeight(I,F,F):I
 - getPreferredSpan(I):F
 - getResizeWeight(I):I
+- modelToView(I,java.awt.Shape,javax.swing.text.Position$Bias):java.awt.Shape
+- viewToModel(F,F,java.awt.Shape,javax.swing.text.Position$Bias[]):I
 c:com.intellij.util.ui.html.ParagraphViewEx
 - javax.swing.text.html.ParagraphView
 - p:fixedLineHeight:java.lang.Float
