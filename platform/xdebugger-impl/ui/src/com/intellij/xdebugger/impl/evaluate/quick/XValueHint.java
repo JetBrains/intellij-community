@@ -198,20 +198,14 @@ public class XValueHint extends AbstractValueHint {
     text.appendToComponent(component);
     panel.add(component);
     if (evaluator != null || link != null) {
-      var linksPanel = installInformationProperties(new BorderLayoutPanel());
+      var linkComponent = new SimpleColoredComponent();
       if (link != null) {
-        var linkComponent = new SimpleColoredComponent();
         appendAdditionalHyperlink(link, linkComponent);
-        LinkMouseListenerBase.installSingleTagOn(linkComponent);
-        linksPanel.addToLeft(linkComponent);
-      }
-      if (evaluator != null) {
-        var linkComponent = new SimpleColoredComponent();
+      } else {
         appendEvaluatorLink(evaluator, linkComponent);
-        LinkMouseListenerBase.installSingleTagOn(linkComponent);
-        linksPanel.addToRight(linkComponent);
       }
-      panel.addToRight(linksPanel);
+      LinkMouseListenerBase.installSingleTagOn(linkComponent);
+      panel.addToRight(linkComponent);
     }
     return panel;
   }
