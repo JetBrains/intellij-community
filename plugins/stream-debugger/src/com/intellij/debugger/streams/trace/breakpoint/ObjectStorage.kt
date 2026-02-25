@@ -101,7 +101,9 @@ private class ValueContextImpl(
       evaluationContext,
       classType,
       constructor,
-      args
+      args,
+      0,
+      true
     )
 
     // Protect from GC
