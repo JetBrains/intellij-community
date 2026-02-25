@@ -645,6 +645,7 @@ public abstract class MavenProjectsManager extends MavenSimpleProjectComponent
     var tree = myProjectsTreeRef.get();
     if (tree == null) {
       tree = new MavenProjectsTree(myProject);
+      tree.addListener(myProjectsTreeDispatcher.getMulticaster(), this);
       applyStateToTree(tree, this);
     }
     return tree;
@@ -667,6 +668,7 @@ public abstract class MavenProjectsManager extends MavenSimpleProjectComponent
     if (isInitialized()) {
       getProjectsTree().setExplicitProfiles(profiles);
     }
+    myProjectsTreeDispatcher.getMulticaster().profilesChanged();
   }
 
   @ApiStatus.Internal
