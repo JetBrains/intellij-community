@@ -41,8 +41,11 @@ public class JUnit6SuiteApiIntegrationTest extends AbstractTestFrameworkCompilin
     ModuleRootModificationUtil.updateModel(myModule, model -> model.addContentEntry(getTestContentRoot())
       .addSourceFolder(getTestContentRoot() + "/test", true));
     final ArtifactRepositoryManager repoManager = getRepoManager();
-    addMavenLibs(myModule, new JpsMavenRepositoryLibraryDescriptor("org.junit.jupiter", "junit-jupiter-api", JUnit6Constants.VERSION), repoManager);
-    addMavenLibs(myModule, new JpsMavenRepositoryLibraryDescriptor("org.junit.platform", "junit-platform-suite-api", JUnit6Constants.VERSION), repoManager);
+    addMavenLibs(myModule, new JpsMavenRepositoryLibraryDescriptor("org.junit.jupiter", "junit-jupiter-api", JUnit6Constants.VERSION),
+                 repoManager);
+    addMavenLibs(myModule,
+                 new JpsMavenRepositoryLibraryDescriptor("org.junit.platform", "junit-platform-suite-api", JUnit6Constants.VERSION),
+                 repoManager);
   }
 
   public void testRunClass() throws Exception {
@@ -84,10 +87,11 @@ public class JUnit6SuiteApiIntegrationTest extends AbstractTestFrameworkCompilin
         .filter(e -> e.getValue().getAttributes().get("locationHint").equals("java:test://org.example.api.SimpleTest/test"))
         .map(e -> e.getKey()).collect(Collectors.toSet());
       assertEquals(Set.of(
-        // direct run
-        "[engine:junit-jupiter]/[class:org.example.api.SimpleTest]/[method:test()]",
-        // suite run
-        "[engine:junit-platform-suite]/[suite:org.example.api.AllTests]/[engine:junit-jupiter]/[class:org.example.api.SimpleTest]/[method:test()]"), ids);
+                     // direct run
+                     "[engine:junit-jupiter]/[class:org.example.api.SimpleTest]/[method:test()]",
+                     // suite run
+                     "[engine:junit-platform-suite]/[suite:org.example.api.AllTests]/[engine:junit-jupiter]/[class:org.example.api.SimpleTest]/[method:test()]"),
+                   ids);
     }
 
     assertEquals(tests.keySet(), getTests(messages, TestFinished.class).keySet());
@@ -159,10 +163,10 @@ public class JUnit6SuiteApiIntegrationTest extends AbstractTestFrameworkCompilin
 
     String tests = output.messages.stream().filter(m -> m instanceof MessageWithAttributes)
       .map(m -> replaceAttributes(m, Map.of(
-        "timestamp", "##timestamp##",
-        "duration", "##duration##",
-        "message", "##message##",
-        "details", "##details##"
+        "timestamp", (value) -> "##timestamp##",
+        "duration", (value) -> "##duration##",
+        "message", (value) -> "##message##",
+        "details", (value) -> "##details##"
       )))
       .map(m -> m.replaceAll("##teamcity\\[", "##TC["))
       .map(s -> s.replaceAll("timestamp = [0-9\\-:.T]+", "timestamp = ##timestamp##"))
@@ -184,10 +188,10 @@ public class JUnit6SuiteApiIntegrationTest extends AbstractTestFrameworkCompilin
 
     String tests = output.messages.stream().filter(m -> m instanceof MessageWithAttributes)
       .map(m -> replaceAttributes(m, Map.of(
-        "timestamp", "##timestamp##",
-        "duration", "##duration##",
-        "message", "##message##",
-        "details", "##details##"
+        "timestamp", (value) -> "##timestamp##",
+        "duration", (value) -> "##duration##",
+        "message", (value) -> "##message##",
+        "details", (value) -> "##details##"
       )))
       .map(m -> m.replaceAll("##teamcity\\[", "##TC["))
       .map(s -> s.replaceAll("timestamp = [0-9\\-:.T]+", "timestamp = ##timestamp##"))
