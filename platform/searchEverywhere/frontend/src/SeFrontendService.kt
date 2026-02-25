@@ -52,6 +52,7 @@ import com.intellij.util.ui.EDT
 import com.intellij.util.ui.StartupUiUtil
 import com.intellij.util.ui.UIUtil
 import fleet.kernel.change
+import fleet.kernel.onDispose
 import fleet.kernel.rebase.shared
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineScope

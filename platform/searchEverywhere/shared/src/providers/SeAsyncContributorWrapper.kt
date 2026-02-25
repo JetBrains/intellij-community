@@ -12,23 +12,36 @@ import com.intellij.openapi.progress.runBlockingCancellable
 import com.intellij.openapi.util.Disposer
 import com.intellij.platform.searchEverywhere.SeExtendedInfo
 import com.intellij.platform.searchEverywhere.SeExtendedInfoBuilder
+import com.intellij.platform.searchEverywhere.SeItemsProviderWithPossibleOperationDisposable
 import com.intellij.platform.searchEverywhere.providers.SeLog.ITEM_EMIT
 import org.jetbrains.annotations.ApiStatus.Internal
 
 @Internal
 class SeAsyncContributorWrapper<I : Any>(val contributor: SearchEverywhereContributor<I>) : Disposable {
-  suspend fun fetchElements(pattern: String, consumer: AsyncProcessor<I>) {
+  suspend fun fetchElements(pattern: String, consumer: AsyncProcessor<I>, operationDisposable: Disposable? = null) {
     coroutineToIndicator {
       val indicator = DelegatingProgressIndicator(ProgressManager.getGlobalProgressIndicator())
       if (pattern.isEmpty() && !contributor.isEmptyPatternSupported) return@coroutineToIndicator
 
       if (contributor is WeightedSearchEverywhereContributor) {
-        contributor.fetchWeightedElements(pattern, indicator) { t ->
-          runBlockingCancellable {
-            SeLog.log(ITEM_EMIT) {
-              "Provider async wrapper of ${contributor.searchProviderId} emitting: ${t.item.toString().split('\n').firstOrNull()}"
+        if (operationDisposable == null) {
+          contributor.fetchWeightedElements(pattern, indicator) { t ->
+            runBlockingCancellable {
+              SeLog.log(ITEM_EMIT) {
+                "Provider async wrapper of ${contributor.searchProviderId} emitting: ${t.item.toString().split('\n').firstOrNull()}"
+              }
+              consumer.process(t.item, t.weight)
             }
-            consumer.process(t.item, t.weight)
+          }
+        }
+        else {
+          contributor.fetchWeightedElementsWithOperationDisposable(pattern, indicator, operationDisposable) { t ->
+            runBlockingCancellable {
+              SeLog.log(ITEM_EMIT) {
+                "Provider async wrapper of ${contributor.searchProviderId} emitting: ${t.item.toString().split('\n').firstOrNull()}"
+              }
+              consumer.process(t.item, t.weight)
+            }
           }
         }
       }

@@ -17,6 +17,7 @@ import com.intellij.platform.searchEverywhere.SeItemDataFactory
 import com.intellij.platform.searchEverywhere.SeItemDataKeys
 import com.intellij.platform.searchEverywhere.SeItemsPreviewProvider
 import com.intellij.platform.searchEverywhere.SeItemsProvider
+import com.intellij.platform.searchEverywhere.SeItemsProviderWithPossibleOperationDisposable
 import com.intellij.platform.searchEverywhere.SeParams
 import com.intellij.platform.searchEverywhere.SePreviewInfo
 import com.intellij.platform.searchEverywhere.SeProviderId
@@ -128,17 +129,20 @@ class SeLocalItemDataProvider(
     }
   }.buffer(0, onBufferOverflow = BufferOverflow.SUSPEND)
 
-  @OptIn(ExperimentalAtomicApi::class)
-  fun getRawItems(params: SeParams): Flow<SeItem> {
-    if (params.inputQuery.isCommandWithArgs && !isCommandsSupported()) {
-      return emptyFlow()
-    }
-
+  private fun itemsRawChannelFlow(params: SeParams, operationDisposable: Disposable?): Flow<SeItem> {
     return channelFlow {
       try {
-        provider.collectItems(params) { item ->
-          send(item)
-          coroutineContext.isActive
+        if (provider is SeItemsProviderWithPossibleOperationDisposable && operationDisposable != null) {
+          provider.collectItemsWithOperationLifetime(params, operationDisposable) { item ->
+            send(item)
+            coroutineContext.isActive
+          }
+        }
+        else {
+          provider.collectItems(params) { item ->
+            send(item)
+            coroutineContext.isActive
+          }
         }
       }
       catch (e: Throwable) {
@@ -148,6 +152,26 @@ class SeLocalItemDataProvider(
     }.buffer(0, onBufferOverflow = BufferOverflow.SUSPEND).onCompletion {
       SeLog.log(SeLog.ITEM_EMIT) { "Item data provider flow completed - $logLabel - ${id.value}" }
     }
+  }
+
+  //// Rider ShowInUsagesView needs to prolong a union lifetime in its internals so that it could display the
+  //// usages in the find tool window :( sorry, the code is very legacy and hard to redesign
+  @ApiStatus.Internal
+  @OptIn(ExperimentalAtomicApi::class)
+  fun getRawItemsWithOperationLifetime(params: SeParams, operationDisposable: Disposable): Flow<SeItem> {
+    if (params.inputQuery.isCommandWithArgs && !isCommandsSupported()) {
+      return emptyFlow()
+    }
+    return itemsRawChannelFlow(params, operationDisposable)
+  }
+
+  @OptIn(ExperimentalAtomicApi::class)
+  fun getRawItems(params: SeParams): Flow<SeItem> {
+    if (params.inputQuery.isCommandWithArgs && !isCommandsSupported()) {
+      return emptyFlow()
+    }
+
+    return itemsRawChannelFlow(params, operationDisposable = null)
   }
 
   suspend fun itemSelected(

@@ -1,7 +1,6 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.usages.impl;
 
-import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.util.Factory;
 import com.intellij.usages.Usage;
 import com.intellij.usages.UsageSearcher;
@@ -11,12 +10,8 @@ import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-/**
- * Allows to create custom usage view instances for representing specific types of usages.
- */
-public interface UsageViewFactory {
-  @ApiStatus.Internal
-  ExtensionPointName<UsageViewFactory> EP_NAME = ExtensionPointName.create("com.intellij.usageViewFactory");
+@ApiStatus.Internal
+public interface UsageViewFactoryWithCallbackOnReady extends UsageViewFactory {
 
   /**
    * Creates a usage view instance for representing the given set of usages and appends the given usages to it.
@@ -26,5 +21,5 @@ public interface UsageViewFactory {
   UsageViewEx createUsageView(UsageTarget @NotNull [] targets,
                               Usage @NotNull [] usages,
                               @NotNull UsageViewPresentation presentation,
-                              Factory<? extends UsageSearcher> usageSearcherFactory);
+                              Factory<? extends UsageSearcher> usageSearcherFactory, @Nullable Runnable onReadyCallback);
 }
