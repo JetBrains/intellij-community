@@ -54,6 +54,8 @@ import com.intellij.psi.PsiManager
 import com.intellij.testFramework.common.EditorCaretTestUtil
 import com.intellij.testFramework.common.checkEditorsReleased
 import com.intellij.testFramework.common.runAll
+import com.intellij.testFramework.common.runAllSuspend
+import com.intellij.testFramework.common.testWorkspaceModelLeak
 import com.intellij.testFramework.replaceService
 import com.intellij.ui.docking.DockManager
 import com.intellij.util.application
@@ -214,8 +216,11 @@ fun projectFixture(
   // Wait until components fully loaded. Otherwise, we might start loading then when a project is already disposed when a test is too fast.
   RunManager.getInstanceAsync(project)
   initialized(project) {
-    ProjectManagerEx.getInstanceEx().forceCloseProjectAsync(project, save = false)
-    application.checkEditorsReleased()
+    runAllSuspend(
+      { testWorkspaceModelLeak(project) },
+      { ProjectManagerEx.getInstanceEx().forceCloseProjectAsync(project, save = false) },
+      { application.checkEditorsReleased() },
+    )
   }
 }
 

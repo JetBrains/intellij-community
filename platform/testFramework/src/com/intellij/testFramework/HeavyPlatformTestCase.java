@@ -87,6 +87,8 @@ import java.util.HashSet;
 import java.util.Objects;
 import java.util.Set;
 
+import static com.intellij.testFramework.common.WorkspaceModelLeakUtilsKt.testWorkspaceModelLeak;
+
 /**
  * Base class for heavy tests.
  * <p/>
@@ -469,6 +471,7 @@ public abstract class HeavyPlatformTestCase extends UsefulTestCase implements Da
     //noinspection Convert2MethodRef
     EdtTestUtil.runInEdtAndWait(() -> {
       RunAll.runAll(
+        () -> testWorkspaceModelLeak(myProject),
         () -> disposeRootDisposable(),
         () -> {
           if (project != null) {

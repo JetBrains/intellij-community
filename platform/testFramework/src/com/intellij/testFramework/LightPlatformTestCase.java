@@ -95,6 +95,8 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 
+import static com.intellij.testFramework.common.WorkspaceModelLeakUtilsKt.testWorkspaceModelLeak;
+
 /**
  * @deprecated Do not use in a new code. Use Junit 5.
  *
@@ -395,6 +397,7 @@ public abstract class LightPlatformTestCase extends UsefulTestCase implements Da
     // don't use method references here to make stack trace reading easier
     //noinspection Convert2MethodRef
     RunAll.runAll(
+      () -> testWorkspaceModelLeak(project),
       () -> {
         if (ApplicationManager.getApplication() != null) {
           CodeStyle.dropTemporarySettings(project);

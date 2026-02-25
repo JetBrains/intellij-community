@@ -60,6 +60,8 @@ jvm_library(
         "//platform/platform-impl/bootstrap/kernel",
         "//platform/progress/shared:ide-progress",
         "//platform/build-scripts/downloader",
+        "//platform/workspace/storage",
+        "//platform/backend/workspace",
     ],
 )
 
@@ -107,6 +109,8 @@ jvm_library(
         "//platform/platform-impl/bootstrap/kernel:kernel_test_lib",
         "//platform/progress/shared:ide-progress_test_lib",
         "//platform/build-scripts/downloader:downloader_test_lib",
+        "//platform/workspace/storage:storage_test_lib",
+        "//platform/backend/workspace:workspace_test_lib",
     ],
 )
 ### auto-generated section `build intellij.platform.testFramework.common` end
