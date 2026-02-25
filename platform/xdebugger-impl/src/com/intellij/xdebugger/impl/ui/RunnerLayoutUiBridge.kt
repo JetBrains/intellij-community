@@ -7,6 +7,7 @@ import com.intellij.execution.ui.layout.LayoutStateDefaults
 import com.intellij.execution.ui.layout.LayoutViewOptions
 import com.intellij.execution.ui.layout.PlaceInGrid
 import com.intellij.execution.ui.layout.impl.RunnerLayoutUiImpl
+import com.intellij.execution.ui.layout.impl.ViewImpl
 import com.intellij.ide.rpc.setupTransfer
 import com.intellij.ide.ui.icons.rpcIdOrNull
 import com.intellij.openapi.Disposable
@@ -54,6 +55,7 @@ internal class RunnerLayoutUiBridge(
     // Do not pass component to the fake content, as it will break LUX transfer due to adding content into a UI hierarchy
     val content = ContentFactory.getInstance().createContent(JLabel(), displayName, false)
     content.putUserData(RunnerLayoutUiImpl.CONTENT_TYPE, contentId)
+    content.putUserData(ViewImpl.ID, contentId)
     content.icon = icon
     if (toFocus != null) {
       content.preferredFocusableComponent = toFocus
@@ -92,6 +94,7 @@ internal class RunnerLayoutUiBridge(
       )
     }
     contentManager.addContent(content)
+    contentManager.removeFromSelection(content)
     return content
   }
 
