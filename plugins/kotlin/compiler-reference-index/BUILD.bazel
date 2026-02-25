@@ -71,6 +71,8 @@ jvm_library(
     "//java/compiler/impl:impl_test_lib",
     "//platform/external-system-impl:externalSystem-impl_test_lib",
     "//plugins/gradle:gradle_test_lib",
+    "//plugins/kotlin/gradle/gradle:gradle_test_lib",
+    "//plugins/maven:maven_test_lib",
   ]
 )
 ### auto-generated section `build intellij.kotlin.compilerReferenceIndex` end
