@@ -83,6 +83,7 @@ import com.jetbrains.python.psi.types.PyTypedDictType;
 import com.jetbrains.python.psi.types.PyUnionType;
 import com.jetbrains.python.psi.types.PyUnpackedTupleType;
 import com.jetbrains.python.psi.types.PyUnpackedTupleTypeImpl;
+import com.jetbrains.python.psi.types.PyUnpackedTypedDictType;
 import com.jetbrains.python.psi.types.TypeEvalContext;
 import com.jetbrains.python.pyi.PyiUtil;
 import one.util.streamex.StreamEx;
@@ -443,6 +444,22 @@ public class PyTypeCheckerInspection extends PyInspection {
                                             error.getMissingKeys().size(),
                                             StringUtil.join(error.getMissingKeys(), s -> String.format("'%s'", s), ", ")));
       });
+    }
+
+    private void reportUnpackedTypedDictProblems(@NotNull PyUnpackedTypedDictType expectedType,
+                                                 @Nullable PyType argumentType,
+                                                 @NotNull PyExpression expression) {
+      PyTypedDictType typedDictType = expectedType.getTypedDictType();
+      if (PyTypedDictType.isDictExpression(expression, myTypeEvalContext)) {
+        reportTypedDictProblems(typedDictType, expression);
+        return;
+      }
+      if (!PyTypeChecker.match(typedDictType, argumentType, myTypeEvalContext)) {
+        registerProblem(expression,
+                        PyPsiBundle.message("INSP.type.checker.expected.type.got.type.instead",
+                                            PythonDocumentationProvider.getTypeName(typedDictType, myTypeEvalContext),
+                                            PythonDocumentationProvider.getTypeName(argumentType, myTypeEvalContext)));
+      }
     }
 
     private @Nullable PyType tryPromotingType(@NotNull PyExpression expr, @Nullable PyType expected) {
@@ -919,9 +936,14 @@ public class PyTypeCheckerInspection extends PyInspection {
                                               @NotNull PyTypeChecker.GenericSubstitutions substitutions) {
       argument = PyUtil.peelArgument(argument);
 
-      if (parameterType instanceof PyTypedDictType expectedTypedDictType) {
-        if (argument != null && PyTypedDictType.isDictExpression(argument, myTypeEvalContext)) {
+      if (argument != null) {
+        if (PyTypedDictType.isDictExpression(argument, myTypeEvalContext) &&
+            parameterType instanceof PyTypedDictType expectedTypedDictType) {
           reportTypedDictProblems(expectedTypedDictType, argument);
+          return true;
+        }
+        else if (parameterType instanceof PyUnpackedTypedDictType unpackedTypedDictType) {
+          reportUnpackedTypedDictProblems(unpackedTypedDictType, argumentType, argument);
           return true;
         }
       }

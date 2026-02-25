@@ -111,6 +111,21 @@ class PyCallableParameterImpl @JvmOverloads internal constructor(
     }
   }
 
+  /**
+   * Returns the expected type for an argument passed to this parameter.
+   *
+   * For most parameters, this is the same as [getType].
+   * However, for variadic parameters, this method applies special handling:
+   * - For positional containers (`*args`):
+   *   - If the type is `tuple[T, ...]`, returns `T` (the element type)
+   *   - If the type is `*tuple[T1, T2, ...]`, returns the unpacked tuple type itself
+   * - For keyword containers (`**kwargs`):
+   *   - If the type is a collection (e.g., `dict[str, V]`), returns `V` (the value type)
+   *   - If the type is `Unpack[TypedDict]`, returns the unpacked TypedDict type
+   *
+   * @param context the type evaluation context
+   * @return the expected type of the argument, or `null` if the type cannot be determined
+   */
   override fun getArgumentType(context: TypeEvalContext): PyType? {
     val parameterType = getType(context)
 
@@ -128,12 +143,7 @@ class PyCallableParameterImpl @JvmOverloads internal constructor(
       if (parameterType is PyCollectionType) {
         parameterType.elementTypes.getOrNull(1)
       }
-      else if (parameterType is PyUnpackedTypedDictType) {
-        parameterType.typedDictType
-      }
-      else {
-        parameterType
-      }
+      else parameterType as? PyUnpackedTypedDictType ?: parameterType
     }
     else
       parameterType

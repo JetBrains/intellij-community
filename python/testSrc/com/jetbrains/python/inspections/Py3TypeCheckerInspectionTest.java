@@ -5142,7 +5142,7 @@ public class Py3TypeCheckerInspectionTest extends PyInspectionTestCase {
   // PY-76847
   public void testDictUnpackVsTypedDictParameter() {
     doTestByText("""
-                   from typing import Protocol, TypeVar, TypedDict, NotRequired, Required, Unpack, assert_type
+                   from typing import TypedDict, NotRequired, Required, Unpack
                    
                    class TD1(TypedDict):
                        v1: Required[int]
@@ -5155,8 +5155,27 @@ public class Py3TypeCheckerInspectionTest extends PyInspectionTestCase {
                    
                    my_dict: dict[str, str] = {}
                    my_typed_dict: TD2
-                   func1(<warning descr="Expected type 'TD2', got 'dict[str, str]' instead">**my_dict</warning>)
+                   func1(**<warning descr="Expected type 'TD2', got 'dict[str, str]' instead">my_dict</warning>)
                    func1(**my_typed_dict) # OK
+                   """);
+  }
+
+  // PY-76847
+  public void testDictUnpackVsUnpackedDictLiteral() {
+    doTestByText("""
+                   from typing import TypedDict, NotRequired, Required, Unpack
+                   
+                   class TD1(TypedDict):
+                       v1: Required[int]
+                       v2: NotRequired[str]
+                   
+                   class TD2(TD1):
+                       v3: Required[str]
+                   
+                   def func1(**kwargs: Unpack[TD2]) -> None: ...
+                   
+                   func1(**{'v1': 1, 'v2': 'test', 'v3': 'test'}) # OK
+                   func1(**{'v1': 1, 'v2': 'test', 'v3': <warning descr="Expected type 'str', got 'int' instead">1</warning>})
                    """);
   }
 
