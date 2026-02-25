@@ -2,6 +2,7 @@
 package git4idea.rebase
 
 import com.intellij.dvcs.repo.Repository
+import com.intellij.dvcs.repo.isHead
 import com.intellij.openapi.components.service
 import com.intellij.vcs.log.util.VcsUserUtil.getShortPresentation
 import git4idea.i18n.GitBundle
@@ -17,7 +18,7 @@ internal class GitRewordAction : GitSingleCommitEditingAction() {
   override fun checkNotMergeCommit(commitEditingData: SingleCommitEditingData): String? {
     val commit = commitEditingData.selectedCommit
     val repository = commitEditingData.repository
-    if (commit.id.asString() == repository.currentRevision) {
+    if (repository.isHead(commit.id)) {
       // allow amending merge commit
       return null
     }

@@ -1,6 +1,7 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.checkin
 
+import com.intellij.dvcs.repo.isHead
 import com.intellij.notification.Notification
 import com.intellij.notification.NotificationAction
 import com.intellij.openapi.components.service
@@ -61,7 +62,7 @@ internal object GitAmendSpecificCommitSquasher {
   }
 
   private suspend fun undoAmendCommit(repository: GitRepository, amendCommit: Hash, amendCommitParent: Hash) {
-    if (repository.currentRevision!! != amendCommit.asString()) return
+    if (!repository.isHead(amendCommit)) return
     // try to reset, don't report on fail
     coroutineToIndicator { indicator ->
       GitResetOperation(repository.project,
@@ -103,7 +104,7 @@ internal object GitAmendSpecificCommitSquasher {
 
     private fun canReset(): Boolean {
       repository.update()
-      return repository.currentRevision == amendCommitParent.asString()
+      return repository.isHead(amendCommitParent)
     }
 
     suspend fun resetToAmendCommit() {

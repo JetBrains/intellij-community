@@ -2,6 +2,7 @@
 package git4idea.checkin
 
 import com.intellij.dvcs.commit.AmendCommitService
+import com.intellij.dvcs.repo.isHead
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.registry.Registry
@@ -40,7 +41,7 @@ internal class GitAmendCommitService(project: Project) : AmendCommitService(proj
 
       commits.map { metadata ->
         CommitToAmend.Specific(metadata.id, metadata.subject)
-      }.dropWhile { it.targetHash.asString() == repo.currentRevision } // don't include last commit
+      }.dropWhile { repo.isHead(it.targetHash) } // don't include last commit
     }
 
   private fun getCommitMessageFormatPattern(): @NonNls String =
