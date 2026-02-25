@@ -363,6 +363,6 @@ object PyTypeUtil {
   fun widenLiteralAndNumeric(type: PyType?): PyType? {
     return type
       .let { PyLiteralType.upcastLiteralToClass(it) }
-      .let { PyNumericTowerType.enrich(it) }
+      .let { PyNumericTowerUtil.enrich(it) }
   }
 }

@@ -579,12 +579,12 @@ public final class PyTypeParser {
       }
       else if (PyNames.TYPE_FLOAT.equals(name)) {
         final PyClassType type = builtinCache.getFloatType();
-        PyType enriched = PyNumericTowerType.enrich(type);
+        PyType enriched = PyNumericTowerUtil.enrich(type);
         return enriched != null ? new ParseResult(enriched, range) : EMPTY_RESULT;
       }
       else if (PyNames.TYPE_COMPLEX.equals(name)) {
         final PyClassType type = builtinCache.getComplexType();
-        PyType enriched = PyNumericTowerType.enrich(type);
+        PyType enriched = PyNumericTowerUtil.enrich(type);
         return enriched != null ? new ParseResult(enriched, range) : EMPTY_RESULT;
       }
       else if ("dictionary".equals(name)) {

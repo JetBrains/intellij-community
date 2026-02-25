@@ -1722,34 +1722,34 @@ public class PyTypeHintsInspectionTest extends PyInspectionTestCase {
     doTestByText("""
                     from typing_extensions import TypeIs
                     
-                    def <warning descr="Return type of TypeIs 'float' is not consistent with the type of the first parameter 'int'">foo</warning>(x: int) -> TypeIs[float]:
-                      ...
+                    def <warning descr="Return type of TypeIs 'float | int' is not consistent with the type of the first parameter 'int'">foo</warning>(x: int) -> TypeIs[float]:
+                        ...
                     
                     def bar(x: float) -> TypeIs[float]:
-                      ...
+                        ...
                     
                     class A:
-                      def <warning descr="Return type of TypeIs 'float' is not consistent with the type of the first parameter 'int'">f1</warning>(self, x: int) -> TypeIs[float]:
-                        ...
+                        def <warning descr="Return type of TypeIs 'float | int' is not consistent with the type of the first parameter 'int'">f1</warning>(self, x: int) -> TypeIs[float]:
+                            ...
                     
-                      def f2(self, x: float) -> TypeIs[float]:
-                        ...
+                        def f2(self, x: float) -> TypeIs[float]:
+                            ...
                     
-                      @classmethod
-                      def <warning descr="Return type of TypeIs 'float' is not consistent with the type of the first parameter 'int'">f3</warning>(cls, x: int) -> TypeIs[float]:
-                        ...
+                        @classmethod
+                        def <warning descr="Return type of TypeIs 'float | int' is not consistent with the type of the first parameter 'int'">f3</warning>(cls, x: int) -> TypeIs[float]:
+                            ...
                     
-                      @classmethod
-                      def f4(cls, x: float) -> TypeIs[float]:
-                        ...
+                        @classmethod
+                        def f4(cls, x: float) -> TypeIs[float]:
+                            ...
 
-                      @staticmethod
-                      def <warning descr="Return type of TypeIs 'float' is not consistent with the type of the first parameter 'int'">f5</warning>(x: int) -> TypeIs[float]:
-                        ...
+                        @staticmethod
+                        def <warning descr="Return type of TypeIs 'float | int' is not consistent with the type of the first parameter 'int'">f5</warning>(x: int) -> TypeIs[float]:
+                            ...
                     
-                      @staticmethod
-                      def f6(x: float) -> TypeIs[float]:
-                        ...
+                        @staticmethod
+                        def f6(x: float) -> TypeIs[float]:
+                            ...
                     """);
   }
 

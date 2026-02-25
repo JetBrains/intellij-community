@@ -1744,7 +1744,7 @@ public class PyTypeTest extends PyTestCase {
 
   // PY-21083
   public void testFloatFromhex() {
-    doTest("float",
+    doTest("Union[float, int]",
            "expr = float.fromhex(\"0.5\")");
   }
 
@@ -3439,14 +3439,14 @@ public class PyTypeTest extends PyTestCase {
 
   // PY-13750
   public void testBuiltinRound() {
-    doTest("float", "expr = round(1)");
-    doTest("float", "expr = round(1, 1)");
+    doTest("Union[float, int]", "expr = round(1)");
+    doTest("Union[float, int]", "expr = round(1, 1)");
 
-    doTest("float", "expr = round(1.1)");
-    doTest("float", "expr = round(1.1, 1)");
+    doTest("Union[float, int]", "expr = round(1.1)");
+    doTest("Union[float, int]", "expr = round(1.1, 1)");
 
-    doTest("float", "expr = round(True)");
-    doTest("float", "expr = round(True, 1)");
+    doTest("Union[float, int]", "expr = round(True)");
+    doTest("Union[float, int]", "expr = round(True, 1)");
   }
 
   // PY-28227

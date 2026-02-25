@@ -251,16 +251,10 @@ object PyTypeChecker {
       return match(expected, actual.moduleClassType, context)
     }
 
-    if (PyNumericTowerType.isEnabled) {
-      val newExpected = PyNumericTowerType.unpackToUnion(expected);
-      if (expected != newExpected) {
-        return matchImpl(newExpected, actual, context);
-      }
+    if (PyNumericTowerUtil.isEnabled) {
       return Optional.of(false);
     }
-    else {
-      return Optional.of(matchNumericTypes(expected, actual));
-    }
+    return Optional.of(matchNumericTypes(expected, actual));
   }
 
   private fun match(
@@ -328,7 +322,7 @@ object PyTypeChecker {
 
     // Remove value-specific components from the actual type to make it safe to propagate
     var safeActual = if (constraints.isEmpty() && bound is PyLiteralStringType) actual else replaceLiteralStringWithStr(actual)
-    safeActual = PyNumericTowerType.enrich(safeActual)
+    safeActual = PyNumericTowerUtil.enrich(safeActual)
 
     if (substitutedRef != null) {
       val substitution = substitutedRef.get()
@@ -449,7 +443,7 @@ object PyTypeChecker {
 
   private fun enrichVariadicType(variadic: PyPositionalVariadicType): PyPositionalVariadicType {
     if (variadic is PyUnpackedTupleType) {
-      val enrichedElements = variadic.getElementTypes().map(PyNumericTowerType::enrich);
+      val enrichedElements = variadic.getElementTypes().map(PyNumericTowerUtil::enrich);
       return PyUnpackedTupleTypeImpl(enrichedElements, variadic.isUnbound());
     }
     return variadic;
@@ -2058,15 +2052,13 @@ object PyTypeChecker {
       get() = Collections.unmodifiableMap(myParamSpecs)
 
     var qualifierType: PyType? = null
-      set(value) {
-        field = PyNumericTowerType.enrich(value)
-      }
+
     private var frozenTypeVars: Set<PyTypeVarType> = emptySet()
 
     constructor(typeParameters: Map<out PyTypeParameterType, PyType?>) : this() {
       for ((key, value) in typeParameters) {
         when (key) {
-          is PyTypeVarType -> myTypeVars[key] = Ref(PyNumericTowerType.enrich(value))
+          is PyTypeVarType -> myTypeVars[key] = Ref(PyNumericTowerUtil.enrich(value))
           is PyTypeVarTupleType -> if (value is PyPositionalVariadicType) myTypeVarTuples[key] = value
           is PyParamSpecType -> if (value is PyCallableParameterVariadicType) myParamSpecs[key] = value
         }
@@ -2108,11 +2100,7 @@ object PyTypeChecker {
 
     @ApiStatus.Internal
     fun putTypeVar(typeVar: PyTypeVarType, substitute: Ref<PyType?>?, @Suppress("unused") key: Key, ifAbsent: Boolean = false) {
-      val safeSubstitute: Ref<PyType?>? = if (substitute != null) {
-        val t = Ref.deref(substitute)
-        Ref(PyNumericTowerType.enrich(t))
-      }
-      else null
+      val safeSubstitute: Ref<PyType?>? = substitute?.let { Ref(PyNumericTowerUtil.enrich(Ref.deref(it))) }
       if (ifAbsent) myTypeVars.putIfAbsent(typeVar, safeSubstitute)
       else myTypeVars[typeVar] = safeSubstitute 
     }

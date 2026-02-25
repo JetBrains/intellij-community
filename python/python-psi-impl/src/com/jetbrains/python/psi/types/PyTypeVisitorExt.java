@@ -66,8 +66,4 @@ public abstract class PyTypeVisitorExt<T> extends PyTypeVisitor<T> {
   public T visitPyConcatenateType(@NotNull PyConcatenateType concatenateType) {
     return visitPyType(concatenateType);
   }
-
-  public T visitPyNumericTowerType(@NotNull PyNumericTowerType numericTowerType) {
-    return visitPyClassType(numericTowerType);
-  }
 }

@@ -437,7 +437,7 @@ class PyExpectedTypeJudgmentTest : PyTestCase() {
   }
 
   fun testExpressionInVariadicTupleMiddle3() {
-    doTest("expr", "float", """
+    doTest("expr", "float | int", """
       x: tuple[str, *tuple[int, ...], float] = "s", 2, expr
       """)
   }
@@ -580,7 +580,7 @@ class PyExpectedTypeJudgmentTest : PyTestCase() {
   }
 
   fun testNestedLambda() {
-    doTest("yy", "float", """
+    doTest("yy", "float | int", """
       from typing import Callable
       
       func: Callable[[int], Callable[[float], str]] = lambda xx: lambda yy: "Hi"
@@ -624,7 +624,7 @@ class PyExpectedTypeJudgmentTest : PyTestCase() {
   }
 
   fun testNestedLambda_PreviouslyTyped() {
-    doTest("yy", "float", """
+    doTest("yy", "float | int", """
       from typing import Callable
       
       func: Callable[[int], Callable[[float], str]]
@@ -677,7 +677,7 @@ class PyExpectedTypeJudgmentTest : PyTestCase() {
   }
 
   fun testNestedLambda_TypedAsAttribute() {
-    doTest("yy", "float", """
+    doTest("yy", "float | int", """
       from typing import Callable
       
       class C:
@@ -1063,7 +1063,7 @@ class PyExpectedTypeJudgmentTest : PyTestCase() {
   }
 
   fun testReturnInTypedGenerator() {
-    doTest("result", "float", """
+    doTest("result", "float | int", """
       from typing import Generator
       
       def f() -> Generator[int, str, float]:

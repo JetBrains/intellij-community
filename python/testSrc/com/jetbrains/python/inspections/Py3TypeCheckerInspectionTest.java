@@ -1891,7 +1891,7 @@ public class Py3TypeCheckerInspectionTest extends PyInspectionTestCase {
                    foo(1, baz, args=(0, 'foo', 1.0, False))
                    
                    foo(1, bar, <warning descr="Expected type 'tuple[int, str]' (matched generic type 'tuple[*Ts]'), got 'tuple[str, int]' instead">args=('foo', 0)</warning>)
-                   foo(1, baz, <warning descr="Expected type 'tuple[int, str, float, bool]' (matched generic type 'tuple[*Ts]'), got 'tuple[str, int, float, bool]' instead">args=('foo', 0, 1.0, False)</warning>)
+                   foo(1, baz, <warning descr="Expected type 'tuple[int, str, float | int, bool]' (matched generic type 'tuple[*Ts]'), got 'tuple[str, int, float, bool]' instead">args=('foo', 0, 1.0, False)</warning>)
                    """);
   }
 
@@ -2209,7 +2209,7 @@ public class Py3TypeCheckerInspectionTest extends PyInspectionTestCase {
                    
                    
                    y: Float32Array[Height] = Array()
-                   takes_float_array_of_specific_shape(<warning descr="Expected type 'Array[float, Height, Width]', got 'Array[float, Height]' instead">y</warning>)
+                   takes_float_array_of_specific_shape(<warning descr="Expected type 'Array[float | int, Height, Width]', got 'Array[float | int, Height]' instead">y</warning>)
                    """);
   }
 
@@ -2238,7 +2238,7 @@ public class Py3TypeCheckerInspectionTest extends PyInspectionTestCase {
                    
                    
                    y: Float32Array[Height, Width] = Array()
-                   takes_float_array_of_specific_shape(<warning descr="Expected type 'Array[float, Height]', got 'Array[float, Height, Width]' instead">y</warning>)
+                   takes_float_array_of_specific_shape(<warning descr="Expected type 'Array[float | int, Height]', got 'Array[float | int, Height, Width]' instead">y</warning>)
                    """);
   }
 
@@ -2897,7 +2897,7 @@ public class Py3TypeCheckerInspectionTest extends PyInspectionTestCase {
     doTestByText("""
                    def func(p1: tuple[int, int], p2: tuple[float, complex]):
                        t1: tuple[float, complex] = p1
-                       t2: tuple[int, int] = <warning descr="Expected type 'tuple[int, int]', got 'tuple[float, complex]' instead">p2</warning>
+                       t2: tuple[int, int] = <warning descr="Expected type 'tuple[int, int]', got 'tuple[float | int, complex | float | int]' instead">p2</warning>
                    """);
   }
 
@@ -3579,9 +3579,9 @@ public class Py3TypeCheckerInspectionTest extends PyInspectionTestCase {
                    
                    
                    # PY-25989
-                   assert_type(<warning descr="Expected type 'float', got 'int | float' instead">max(1, 2.6)</warning>, float)
-                   assert_type(<warning descr="Expected type 'float', got 'float | int' instead">max(2.6, 1)</warning>, float)
-                   max(1, <warning descr="Expected type 'int' (matched generic type 'SupportsRichComparisonT ≤: SupportsDunderLT[Any] | SupportsDunderGT[Any]'), got 'object' instead">object()</warning>)    
+                   assert_type(max(1, 2.6), float | int)
+                   assert_type(max(2.6, 1), float | int)
+                   max(1, <warning descr="Expected type 'int' (matched generic type 'SupportsRichComparisonT ≤: SupportsDunderLT[Any] | SupportsDunderGT[Any]'), got 'object' instead">object()</warning>)
                    
                    
                    def bar[T: int, str](v1: T, v2: T) -> T:
@@ -3890,10 +3890,10 @@ public class Py3TypeCheckerInspectionTest extends PyInspectionTestCase {
                    
                        f4: Callable[[float], float] = cb1  # OK
                        f5: Callable[[float], float] = cb2  # OK
-                       f6: Callable[[float], float] = <warning descr="Expected type '(float) -> float', got '(int) -> int' instead">cb3</warning>  # Error
+                       f6: Callable[[float], float] = <warning descr="Expected type '(float | int) -> float | int', got '(int) -> int' instead">cb3</warning>  # Error
                    
                        f7: Callable[[int], int] = cb1  # OK
-                       f8: Callable[[int], int] = <warning descr="Expected type '(int) -> int', got '(float) -> float' instead">cb2</warning>  # Error
+                       f8: Callable[[int], int] = <warning descr="Expected type '(int) -> int', got '(float | int) -> float | int' instead">cb2</warning>  # Error
                        f9: Callable[[int], int] = cb3  # OK
                    """);
   }

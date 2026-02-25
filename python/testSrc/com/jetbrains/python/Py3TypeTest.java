@@ -2036,7 +2036,7 @@ public class Py3TypeTest extends PyTestCase {
     doTest("int", "expr = round(1, 1)");
 
     doTest("int", "expr = round(1.1)");
-    doTest("float", "expr = round(1.1, 1)");
+    doTest("float | int", "expr = round(1.1, 1)");
 
     doTest("int", "expr = round(True)");
     doTest("int", "expr = round(True, 1)");
@@ -3694,7 +3694,7 @@ public class Py3TypeTest extends PyTestCase {
   // PY-34617
   public void testClassMethodUnderVersionCheck() {
     runWithLanguageLevel(LanguageLevel.PYTHON34, () -> {
-      doMultiFileTest("float",
+      doMultiFileTest("Union[float, int]",
                       """
                         from mod import Foo
                         expr = Foo().foo()

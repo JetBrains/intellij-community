@@ -46,6 +46,7 @@ import com.jetbrains.python.psi.types.PyTupleType;
 import com.jetbrains.python.psi.types.PyType;
 import com.jetbrains.python.psi.types.PyTypeChecker;
 import com.jetbrains.python.psi.types.PyTypeParser;
+import com.jetbrains.python.psi.types.PyTypeUtil;
 import com.jetbrains.python.psi.types.PyUnionType;
 import com.jetbrains.python.psi.types.TypeEvalContext;
 import org.jetbrains.annotations.NotNull;
@@ -490,9 +491,11 @@ public final class PyStringFormatInspection extends PyInspection {
     private static class NewStyleInspection {
 
       private static final List<String> CHECKED_TYPES =
-        Arrays.asList(PyNames.TYPE_STR, PyNames.TYPE_INT, PyNames.TYPE_LONG, "float", "complex", "None", "LiteralString");
+        Arrays.asList(PyNames.TYPE_STR, PyNames.TYPE_INT, PyNames.TYPE_LONG, PyNames.TYPE_FLOAT, PyNames.TYPE_COMPLEX, PyNames.NONE,
+                      "LiteralString");
 
-      private static final List<String> NUMERIC_TYPES = Arrays.asList(PyNames.TYPE_INT, PyNames.TYPE_LONG, "float", "complex");
+      private static final List<String> NUMERIC_TYPES =
+        Arrays.asList(PyNames.TYPE_INT, PyNames.TYPE_LONG, PyNames.TYPE_FLOAT, PyNames.TYPE_COMPLEX);
 
       private static final ImmutableMap<Character, String> NEW_STYLE_FORMAT_CONVERSIONS = ImmutableMap.<Character, String>builder()
         .put('s', "str or None")
@@ -618,10 +621,10 @@ public final class PyStringFormatInspection extends PyInspection {
                                                            @NotNull String mappingKey) {
         final PyTypedElement typedElement = as(target, PyTypedElement.class);
         if (typedElement != null && myFormatSpec.containsKey(mappingKey)) {
-          final PyType actual = myTypeEvalContext.getType(typedElement);
+          final PyType actual = PyUnionType.toNonWeakType(myTypeEvalContext.getType(typedElement));
           final PyType expected = PyTypeParser.getTypeByName(anchor, myFormatSpec.get(mappingKey));
           if (expected != null && actual != null
-              && CHECKED_TYPES.contains(actual.getName())
+              && PyTypeUtil.toStream(actual).allMatch(member -> member != null && CHECKED_TYPES.contains(member.getName()))
               && !PyTypeChecker.match(expected, actual, myTypeEvalContext)) {
             registerProblem(typedElement, PyPsiBundle.message("INSP.str.format.unexpected.argument.type", actual.getName()));
           }

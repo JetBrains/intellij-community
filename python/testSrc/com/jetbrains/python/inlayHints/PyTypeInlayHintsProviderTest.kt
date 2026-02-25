@@ -47,11 +47,11 @@ class PyTypeInlayHintsProviderTest : DeclarativeInlayHintsProviderTestCase() {
     doTest("""    
     from typing import reveal_type
     
-    def example(x: int, y: float)/*<# -> float #>*/:
-        reveal_type(x + y)/*<# float #>*/
+    def example(x: int, y: float)/*<# -> float | int #>*/:
+        reveal_type(x + y)/*<# float | int #>*/
         return x + y
     
-    reveal_type(example(1, 2.5))/*<# float #>*/
+    reveal_type(example(1, 2.5))/*<# float | int #>*/
     """)
   }
 

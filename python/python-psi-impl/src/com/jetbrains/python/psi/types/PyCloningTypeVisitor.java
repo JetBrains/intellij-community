@@ -9,7 +9,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.IdentityHashMap;
-import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -173,11 +172,6 @@ public abstract class PyCloningTypeVisitor extends PyTypeVisitorExt<PyType> {
       ContainerUtil.map(concatenateType.getFirstTypes(), this::clone),
       clone(concatenateType.getParamSpec())
     );
-  }
-
-  @Override
-  public PyType visitPyNumericTowerType(@NotNull PyNumericTowerType numericTowerType) {
-    return numericTowerType;
   }
 
   @Override
