@@ -899,5 +899,19 @@ open class IDETestContext(
     return this
   }
 
+  /**
+   * Disables the Ultimate module plugin and enables license requirement checks.
+   *
+   * Use this in when you need to test Community Edition behavior or
+   * verify that features properly require Ultimate edition access.
+   *
+   * **Note:** This has no effect for IDEs that don't support subscription mode.
+   *
+   * @see [com.intellij.driver.sdk.PluginManagerKt.enableUltimateModule]
+   */
+  fun disableUltimateModule(): IDETestContext = apply {
+    applyVMOptionsPatch { addSystemProperty("eap.require.license", true) }
+    pluginConfigurator.disablePlugins("com.intellij.modules.ultimate")
+  }
 
 }
