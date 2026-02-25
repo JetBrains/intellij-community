@@ -2,7 +2,6 @@
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
 import org.jetbrains.intellij.build.BuildPaths.Companion.COMMUNITY_ROOT
-import org.jetbrains.intellij.build.BuildPaths.Companion.ULTIMATE_HOME
 import org.jetbrains.intellij.build.IdeaCommunityProperties
 import org.jetbrains.intellij.build.JewelMavenArtifacts
 import org.jetbrains.intellij.build.impl.createBuildContext
@@ -15,9 +14,10 @@ import kotlin.io.path.name
 internal object JewelMavenArtifactsBuildTarget {
   @JvmStatic
   fun main(args: Array<String>) = runBlocking(Dispatchers.Default) {
+    val communityRoot = COMMUNITY_ROOT.communityRoot
     val context = createBuildContext(
-      projectHome = ULTIMATE_HOME,
-      productProperties = IdeaCommunityProperties(COMMUNITY_ROOT.communityRoot),
+      projectHome = communityRoot,
+      productProperties = IdeaCommunityProperties(communityRoot),
     )
     context.compileModules(JewelMavenArtifacts.ALL_MODULES)
     val builder = MavenArtifactsBuilder(context)
