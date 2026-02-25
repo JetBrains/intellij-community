@@ -162,11 +162,8 @@ object PyExpectedTypeJudgement {
             return typeOfParentDict.elementTypes[index]
           }
           if (typeOfParentDict is PyUnpackedTypedDictType && parent.key is PyStringLiteralExpression) {
-            val wrapperType = typeOfParentDict.wrapperType
-            if (wrapperType is PyTypedDictType) {
-              val argName = (parent.key as PyStringLiteralExpression).stringValue
-              return wrapperType.getElementType(argName)
-            }
+            val argName = (parent.key as PyStringLiteralExpression).stringValue
+            return typeOfParentDict.typedDictType.getElementType(argName)
           }
         }
         return null

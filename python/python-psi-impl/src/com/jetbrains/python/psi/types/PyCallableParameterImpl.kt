@@ -129,7 +129,7 @@ class PyCallableParameterImpl @JvmOverloads internal constructor(
         parameterType.elementTypes.getOrNull(1)
       }
       else if (parameterType is PyUnpackedTypedDictType) {
-        parameterType.wrapperType
+        parameterType.typedDictType
       }
       else {
         parameterType
