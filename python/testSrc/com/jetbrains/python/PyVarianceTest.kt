@@ -167,4 +167,27 @@ internal class PyVarianceTest : PyTestCase() {
               ...
       """)
   }
+
+  @TestFor(issues = ["PY-87859"])
+  fun `test Variance error on frozen dataclass`() {
+    doTestByText("""
+      from dataclasses import dataclass
+      
+      @dataclass(frozen=True)
+      class A[T]:
+          a: T  # expect no error here
+      """)
+  }
+
+  @TestFor(issues = ["PY-87913"])
+  fun `test Variance ReadOnly attribute`() {
+    doTestByText("""
+      from typing import ReadOnly, TypeVar, TypedDict, Generic
+      
+      out_T = TypeVar("out_T", covariant=True)
+      
+      class TD(TypedDict, Generic[out_T]):
+          t: ReadOnly[out_T]  # expect no error here
+      """)
+  }
 }

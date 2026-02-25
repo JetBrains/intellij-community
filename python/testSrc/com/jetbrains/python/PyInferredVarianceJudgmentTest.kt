@@ -8,6 +8,7 @@ import com.jetbrains.python.psi.PyTypeParameter
 import com.jetbrains.python.psi.types.PyInferredVarianceJudgment.getInferredVariance
 import com.jetbrains.python.psi.types.PyTypeVarType.Variance
 import com.jetbrains.python.psi.types.TypeEvalContext
+import junit.framework.AssertionFailedError
 import org.intellij.lang.annotations.Language
 
 internal class PyInferredVarianceJudgmentTest : PyTestCase() {
@@ -189,6 +190,14 @@ internal class PyInferredVarianceJudgmentTest : PyTestCase() {
       from typing import Callable
       class A[T]:
           attr: Callable[[], T]
+      """)
+  }
+
+  fun `test Generic class readonly attribute`() {
+    doTest("T", Variance.COVARIANT, """
+      from typing import ReadOnly
+      class A[T]:
+          attr: ReadOnly[T] # attribute
       """)
   }
 
@@ -706,11 +715,11 @@ internal class PyInferredVarianceJudgmentTest : PyTestCase() {
 
   fun `test Alias to union of class`() {
     doTest("U]", Variance.INVARIANT, """
-      class A[T]:
-          def f(self, t: T): pass
+      class A[S]:
+          def f(self, t: S): pass
       class B[T]:
           def f(self) -> T: pass
-      type B[U] = A[U] | B[U]
+      type C[U] = A[U] | B[U]
       """)
   }
 
@@ -734,13 +743,32 @@ internal class PyInferredVarianceJudgmentTest : PyTestCase() {
       """)
   }
 
+  fun `test Type in string literal`() {
+    fixme("PY-87942: No AST in string literal of type annotation", AssertionFailedError::class.java) {
+      doTest("T", Variance.COVARIANT, """
+        class A[T]:
+            def method(self) -> "T": pass
+        """)
+    }
+  }
+
+  fun `test Type in string literal with Callable`() {
+    fixme("PY-87942: No AST in string literal of type annotation", AssertionFailedError::class.java) {
+      doTest("T", Variance.COVARIANT, """
+      from typing import Callable
+      class A[T]:
+          def method(self, arg: "Callable[[T], None]"): pass
+      """)
+    }
+  }
+
   fun `test Recursive generic classes`() {
     doTest("T", Variance.COVARIANT, """
       class A[T]:
-          def method(self) -> "B[T]": pass
+          def method(self) -> B[T]: pass
 
       class B[U]:
-          def method(self) -> "A[U]": pass
+          def method(self) -> A[U]: pass
       """)
   }
 }

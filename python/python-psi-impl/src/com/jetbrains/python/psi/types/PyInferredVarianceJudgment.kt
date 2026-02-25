@@ -6,13 +6,16 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.util.Processor
 import com.jetbrains.python.PyNames
-import com.jetbrains.python.codeInsight.parseStdDataclassParameters
 import com.jetbrains.python.codeInsight.typing.PyTypingTypeProvider
+import com.jetbrains.python.psi.LanguageLevel
+import com.jetbrains.python.psi.PyAnnotation
 import com.jetbrains.python.psi.PyCallExpression
 import com.jetbrains.python.psi.PyClass
+import com.jetbrains.python.psi.PyElementGenerator
 import com.jetbrains.python.psi.PyFunction
 import com.jetbrains.python.psi.PyQualifiedNameOwner
 import com.jetbrains.python.psi.PyReferenceExpression
+import com.jetbrains.python.psi.PyStringLiteralExpression
 import com.jetbrains.python.psi.PyTargetExpression
 import com.jetbrains.python.psi.PyTypeAliasStatement
 import com.jetbrains.python.psi.PyTypeParameter
@@ -92,8 +95,7 @@ object PyInferredVarianceJudgment {
       is PyClass -> collector.collectInClass(tvId, tvId.scopeOwner)
       is PyTypeAliasStatement -> {
         val typeExpression = tvId.scopeOwner.typeExpression ?: return INVARIANT
-        val typeAliasType = PyTypingTypeProvider.getType(typeExpression, context)?.get() ?: return INVARIANT
-        collector.collectInType(tvId, typeAliasType, COVARIANT)
+        collector.collectReferencesTo(tvId, typeExpression)
       }
       else -> return INVARIANT
     }
@@ -120,10 +122,9 @@ object PyInferredVarianceJudgment {
     fun collectInClass(tvId: TypeVariableId, clazz: PyClass) {
       val classType = context.getType(clazz)
       if (classType is PyClassLikeType) {
-        val isDataclassFrozen = parseStdDataclassParameters(clazz, context)?.frozen ?: false
         val processor = Processor<PsiElement> { element ->
           when (element) {
-            is PyTargetExpression -> collectInAttribute(tvId, element, isDataclassFrozen)
+            is PyTargetExpression -> collectInAttribute(tvId, element)
             is PyFunction -> collectInFunction(tvId, element)
           }
           val isInvariantAlready = usages.contains(INVARIANT) || (usages.contains(COVARIANT) && usages.contains(CONTRAVARIANT))
@@ -138,116 +139,44 @@ object PyInferredVarianceJudgment {
       for (superClassExpr in clazz.superClassExpressions) {
         val superType = PyTypingTypeProvider.getType(superClassExpr, context)?.get() ?: continue
         if (superType !is PyCollectionType) continue
-        val declaredType = PyTypeChecker.findGenericDefinitionType(superType.pyClass, context) ?: continue
-
-        val typeParams = declaredType.elementTypes
-        val typeArgs = superType.elementTypes
-        val idxMax = typeParams.size.coerceAtMost(typeArgs.size)
-        for (idx in 0 until idxMax) {
-          val typeParam = typeParams[idx] as? PyTypeVarType ?: continue
-          val typeArg = superType.elementTypes[idx]
-          if (typeArg is PyTypeVarType && typeArg.name == tvId.name && typeArg.scopeOwner == tvId.scopeOwner && typeParam.scopeOwner != null) {
-            // we need to infer the variance of the base classes type variable: `class Derived[T](Base[T])`
-            val substitutedTvId = TypeVariableId(typeParam.name, typeParam.scopeOwner!!)
-            collectInType(substitutedTvId, declaredType, BIVARIANT)
-          }
-        }
+        collectReferencesTo(tvId, superClassExpr)
       }
     }
 
-    private fun collectInAttribute(tvId: TypeVariableId, target: PyTargetExpression, isDataclassFrozen: Boolean) {
+    private fun collectInAttribute(tvId: TypeVariableId, target: PyTargetExpression) {
       if (attributeDoesNotAffectVarianceInference(target)) return
-      val attributeType = context.getType(target)
-      val variance = if (isDataclassFrozen || PyTypingTypeProvider.isFinal(target, context)) COVARIANT else INVARIANT
-      collectInType(tvId, attributeType, variance)
+      collectReferencesTo(tvId, target.annotation)
     }
 
     private fun collectInFunction(tvId: TypeVariableId, function: PyFunction) {
       if (functionDoesNotAffectVarianceInference(function)) return
       val callableType = context.getType(function) as? PyCallableType ?: return
-
-      val returnType = callableType.getReturnType(context)
-      collectInType(tvId, returnType, COVARIANT)
+      collectReferencesTo(tvId, function.annotation)
 
       val parameters = callableType.getParameters(context) ?: return
       for (parameter in parameters) {
         if (parameter.isSelf) continue
-        val parameterType = parameter.getType(context)
-        collectInType(tvId, parameterType, CONTRAVARIANT)
+        collectReferencesTo(tvId, parameter.parameter)
       }
     }
 
-    fun collectInType(tvId: TypeVariableId, type: PyType?, currentVariance: Variance) {
-      if (type == null) return
-      val visitor = VarianceInferenceTypeVisitor(tvId, usages, currentVariance, context)
-      PyTypeVisitor.visit(type, visitor)
-    }
-  }
-
-
-  private class VarianceInferenceTypeVisitor(
-    val tvId: TypeVariableId,
-    val usages: MutableSet<Variance>,
-    currentVariance: Variance,
-    val context: TypeEvalContext,
-  ) : PyTypeVisitorExt<Unit>() {
-
-    val varianceStack: MutableList<Variance> = mutableListOf(currentVariance)
-
-    override fun visitPyTypeVarType(typeVarType: PyTypeVarType) {
-      if (typeVarType.name == tvId.name && typeVarType.scopeOwner == tvId.scopeOwner) {
-        usages.add(varianceStack.last())
+    fun collectReferencesTo(tvId: TypeVariableId, element: PsiElement?) {
+      if (element == null) return
+      val annValue = if (element is PyAnnotation) element.value else element
+      if (annValue is PyStringLiteralExpression) {
+        val elementGenerator = PyElementGenerator.getInstance(annValue.project)
+        val syntheticElement = elementGenerator.createExpressionFromText(LanguageLevel.forElement(annValue), annValue.stringValue)
+        return collectReferencesTo(tvId, syntheticElement)
       }
-    }
 
-    override fun visitPyGenericType(genericType: PyCollectionType) {
-      val declaredType = PyTypeChecker.findGenericDefinitionType(genericType.pyClass, context) ?: return
-      val typeParams = declaredType.elementTypes
-      val typeArgs = genericType.elementTypes
-      val idxMax = typeParams.size.coerceAtMost(typeArgs.size)
-      for (idx in 0 until idxMax) {
-        val declaredTV = typeParams[idx] as? PyTypeVarType ?: continue
-        val paramVariance = if (declaredTV.variance == INFER_VARIANCE) getInferredVariance(declaredTV, context) else declaredTV.variance
-        val nextVariance = combineVariance(varianceStack.last(), paramVariance)
-
-        varianceStack.add(nextVariance)
-        visit(typeArgs[idx], this)
-        varianceStack.removeAt(varianceStack.size - 1)
-      }
-    }
-
-    override fun visitPyCallableType(callableType: PyCallableType) {
-      val returnType = callableType.getReturnType(context)
-      val nextCovariant = combineVariance(varianceStack.last(), COVARIANT)
-      varianceStack.add(nextCovariant)
-      visit(returnType, this)
-      varianceStack.removeAt(varianceStack.size - 1)
-
-      val parameters = callableType.getParameters(context) ?: return
-      val nextContravariant = combineVariance(varianceStack.last(), CONTRAVARIANT)
-      for (parameter in parameters) {
-        val parameterType = parameter.getType(context)
-        varianceStack.add(nextContravariant)
-        visit(parameterType, this)
-        varianceStack.removeAt(varianceStack.size - 1)
-      }
-    }
-
-    override fun visitPyUnionType(unionType: PyUnionType) {
-      for (member in unionType.members) {
-        visit(member, this)
-      }
-    }
-
-    override fun visitPyIntersectionType(unionType: PyIntersectionType) {
-      for (member in unionType.members) {
-        visit(member, this)
-      }
-    }
-
-    override fun visitPyTupleType(tupleType: PyTupleType) {
-      for (elementType in tupleType.elementTypes) {
-        visit(elementType, this)
+      val refExpressions = PsiTreeUtil.findChildrenOfType(element, PyReferenceExpression::class.java)
+      for (refExpression in refExpressions) {
+        val refType = PyTypingTypeProvider.getType(refExpression, context) ?: continue
+        val typeVarType = refType.get() as? PyTypeVarType ?: continue
+        if (typeVarType.name == tvId.name && typeVarType.scopeOwner == tvId.scopeOwner) {
+          val exprVariance = PyExpectedVarianceJudgment.getExpectedVariance(refExpression, context) ?: continue
+          usages.add(exprVariance)
+        }
       }
     }
   }

@@ -1,23 +1,30 @@
 package com.jetbrains.python.psi.types
 
 import com.intellij.psi.PsiElement
+import com.jetbrains.python.codeInsight.parseStdDataclassParameters
 import com.jetbrains.python.codeInsight.typing.PyTypingTypeProvider
 import com.jetbrains.python.codeInsight.typing.PyTypingTypeProvider.Companion.GENERIC
 import com.jetbrains.python.codeInsight.typing.PyTypingTypeProvider.Companion.PROTOCOL
 import com.jetbrains.python.codeInsight.typing.PyTypingTypeProvider.Companion.PROTOCOL_EXT
+import com.jetbrains.python.codeInsight.typing.PyTypingTypeProvider.Companion.isFinal
+import com.jetbrains.python.codeInsight.typing.PyTypingTypeProvider.Companion.isReadOnly
 import com.jetbrains.python.psi.PyAnnotation
 import com.jetbrains.python.psi.PyAnnotationOwner
 import com.jetbrains.python.psi.PyArgumentList
+import com.jetbrains.python.psi.PyBinaryExpression
 import com.jetbrains.python.psi.PyClass
+import com.jetbrains.python.psi.PyExpressionStatement
 import com.jetbrains.python.psi.PyFunction
 import com.jetbrains.python.psi.PyListLiteralExpression
 import com.jetbrains.python.psi.PyNamedParameter
 import com.jetbrains.python.psi.PyParameterList
 import com.jetbrains.python.psi.PyReferenceExpression
 import com.jetbrains.python.psi.PyStatementList
+import com.jetbrains.python.psi.PyStringLiteralExpression
 import com.jetbrains.python.psi.PySubscriptionExpression
 import com.jetbrains.python.psi.PyTargetExpression
 import com.jetbrains.python.psi.PyTupleExpression
+import com.jetbrains.python.psi.PyTypeAliasStatement
 import com.jetbrains.python.psi.PyTypeCommentOwner
 import com.jetbrains.python.psi.PyTypeDeclarationStatement
 import com.jetbrains.python.psi.types.PyInferredVarianceJudgment.attributeDoesNotAffectVarianceInference
@@ -45,9 +52,11 @@ object PyExpectedVarianceJudgment {
 
     return when (element) {
       is PyClass,
-        -> COVARIANT
+      is PyTypeAliasStatement,
+      is PyExpressionStatement, // parent of synthetic expressions created by PyElementGenerator#createExpressionFromText()
+        -> BIVARIANT
       is PyFunction,
-        -> fromFunction(element, parent, context)
+        -> fromFunction(element, parent)
       is PyTypeDeclarationStatement,
         -> fromTypeDeclarationStatement(element, parent, context)
       is PyNamedParameter,
@@ -57,9 +66,11 @@ object PyExpectedVarianceJudgment {
 
       // keep the following list as precise and short as possible to enforce returning null whenever possible
       is PyArgumentList,
+      is PyBinaryExpression,
       is PyParameterList,
       is PyStatementList,
       is PyAnnotation,
+      is PyStringLiteralExpression,
       is PyReferenceExpression,
       is PySubscriptionExpression,
       is PyTupleExpression,
@@ -79,16 +90,18 @@ object PyExpectedVarianceJudgment {
     }
   }
 
-  private fun fromFunction(function: PyFunction, parent: PsiElement, context: TypeEvalContext): Variance? {
+  private fun fromFunction(function: PyFunction, parent: PsiElement): Variance? {
+    if (parent !is PyStatementList && parent.parent !is PyClass) return null
     if (functionDoesNotAffectVarianceInference(function)) return null
-    return getExpectedVariance(parent, context)
+    return COVARIANT
   }
 
   private fun fromTypeDeclarationStatement(element: PyTypeDeclarationStatement, parent: PsiElement, context: TypeEvalContext): Variance? {
-    if (parent.parent !is PyClass) return null
+    val parentClass = parent.parent as? PyClass ?: return null
     val targetExpr = element.target as? PyTargetExpression ?: return null
     if (attributeDoesNotAffectVarianceInference(targetExpr)) return null
-    return if (isFinal(targetExpr, context)) COVARIANT else INVARIANT
+    if (isEffectivelyReadOnly(targetExpr, parentClass, context)) return COVARIANT
+    return INVARIANT
   }
 
   private fun fromElementInSubscriptionExpression(
@@ -141,11 +154,14 @@ object PyExpectedVarianceJudgment {
     return type is PyClassLikeType && PyTypingTypeProvider.CALLABLE == type.classQName
   }
 
-  private fun isFinal(element: PsiElement, context: TypeEvalContext): Boolean {
+  private fun isEffectivelyReadOnly(element: PsiElement, parentClass: PyClass, context: TypeEvalContext): Boolean {
     if (element is PyTypeCommentOwner && element is PyAnnotationOwner) {
-      return PyTypingTypeProvider.isFinal(element, context)
+      if (isFinal(element, context) || isReadOnly(element, context)) {
+        return true
+      }
     }
-    return false
+    val isFrozen = parseStdDataclassParameters(parentClass, context)?.frozen ?: false
+    return isFrozen
   }
 
   private fun Variance.invert(): Variance {
