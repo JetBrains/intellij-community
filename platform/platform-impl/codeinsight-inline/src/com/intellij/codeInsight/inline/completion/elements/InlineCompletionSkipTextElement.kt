@@ -3,7 +3,10 @@ package com.intellij.codeInsight.inline.completion.elements
 
 import com.intellij.openapi.editor.Editor
 import java.awt.Rectangle
-
+/**
+ * A suggestion element that already exists in the editor and should be skipped (not inserted/rendered),
+ * while preserving offsets and matching against the model output.
+ */
 class InlineCompletionSkipTextElement(override val text: String) : InlineCompletionElement {
 
   override fun toPresentable(): InlineCompletionElement.Presentable = Presentable(this)
