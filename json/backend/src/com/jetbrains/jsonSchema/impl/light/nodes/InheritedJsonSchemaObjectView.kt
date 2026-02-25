@@ -376,25 +376,25 @@ private fun <T, V> InheritedJsonSchemaObjectView.baseIfConditionOrOtherWithArgum
   argument: V,
   condition: (T) -> Boolean,
 ): T {
-  return baseIfConditionOrOtherWithArgument(other, base, memberReference, argument, condition)
+  return baseIfConditionOrOtherWithArgument(base, other, memberReference, argument, condition)
 }
 
 private fun <T> InheritedJsonSchemaObjectView.baseIfConditionOrOther(memberReference: JsonSchemaObject.() -> T, condition: (T) -> Boolean): T {
-  return baseIfConditionOrOther(other, base, memberReference, condition)
+  return baseIfConditionOrOther(base, other, memberReference, condition)
 }
 
 private fun <V> InheritedJsonSchemaObjectView.booleanOrWithArgument(memberReference: JsonSchemaObject.(V) -> Boolean, argument: V): Boolean {
-  return booleanOrWithArgument(other, base, memberReference, argument)
+  return booleanOrWithArgument(base, other, memberReference, argument)
 }
 
 private fun InheritedJsonSchemaObjectView.booleanAndNullable(memberReference: JsonSchemaObject.() -> Boolean?): Boolean? {
-  return booleanAndNullable(other, base, memberReference)
+  return booleanAndNullable(base, other, memberReference)
 }
 
 private fun InheritedJsonSchemaObjectView.booleanAnd(memberReference: JsonSchemaObject.() -> Boolean): Boolean {
-  return booleanAnd(other, base, memberReference)
+  return booleanAnd(base, other, memberReference)
 }
 
 private fun InheritedJsonSchemaObjectView.booleanOr(memberReference: JsonSchemaObject.() -> Boolean): Boolean {
-  return booleanOr(other, base, memberReference)
+  return booleanOr(base, other, memberReference)
 }
