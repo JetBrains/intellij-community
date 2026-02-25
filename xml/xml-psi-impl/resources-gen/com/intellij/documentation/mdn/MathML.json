@@ -14,7 +14,7 @@
       "doc": "The <strong><code>data-*</code></strong> MathML attributes are called custom data attributes. They let MathML markup and its resulting DOM share information that standard attributes can't, usually for scripting purposes. Their custom data are available via the <a href=\"$MDN_URL$/Web/API/MathMLElement\"><code>MathMLElement</code></a> interface of the element the attributes belong to, with the <a href=\"$MDN_URL$/Web/API/MathMLElement/dataset\"><code>MathMLElement.dataset</code></a> property.\n<p>The <code>*</code> can be replaced by any characters allowed in <a href=\"https://www.w3.org/TR/xml/#NT-Name\" class=\"external\" target=\"_blank\">XML's rules for names</a>, with the following restrictions:\n<ul>\n<li>Can't start with <code>xml</code>.</li>\n<li>No semicolons (<code>;</code>, <code>U+003A</code>).</li>\n<li>No capital <code>A</code> to <code>Z</code> letters.</li>\n</ul>\n<div class=\"notecard note\">\n<p><strong>Note:</strong>\nThe <a href=\"$MDN_URL$/Web/API/MathMLElement/dataset\"><code>MathMLElement.dataset</code></a> property is a <a href=\"$MDN_URL$/Web/API/DOMStringMap\"><code>DOMStringMap</code></a> that provides the attribute <code>data-test-value</code> via <code>MathMLElement.dataset.testValue</code>. Hyphen characters (<code>-</code>, <code>U+002D</code>) are removed and the next letter is capitalized, resulting in the <a href=\"$MDN_URL$/Glossary/Camel_case\">camel case</a> format.\n</div>\n<p>You can use this attribute with any MathML element."
     },
     "dir": {
-      "url": "$MDN_URL$/web/mathml/reference/global_attributes/dir",
+      "url": "https://developer.mozilla.org/docs/Web/MathML/Reference/Global_attributes/dir",
       "status": [
         "StandardTrack"
       ],
@@ -36,7 +36,7 @@
       "doc": "The <strong><code>dir</code></strong> <a href=\"$MDN_URL$/Web/MathML/Reference/Global_attributes\">global attribute</a> is an <a href=\"$MDN_URL$/Glossary/Enumerated\">enumerated</a> attribute that indicates the directionality of the MathML element.\n<p>The directionality controls whether math formulas are rendered left-to-right or right-to-left."
     },
     "displaystyle": {
-      "url": "$MDN_URL$/web/mathml/reference/global_attributes/displaystyle",
+      "url": "https://developer.mozilla.org/docs/Web/MathML/Reference/Global_attributes/displaystyle",
       "status": [
         "StandardTrack"
       ],
@@ -58,7 +58,7 @@
       "doc": "The <strong><code>displaystyle</code></strong> <a href=\"$MDN_URL$/Web/MathML/Reference/Global_attributes\">global attribute</a> is a boolean setting the <a href=\"$MDN_URL$/Web/CSS/Reference/Properties/math-style\">math-style</a> of a MathML element."
     },
     "href": {
-      "url": "$MDN_URL$/web/mathml/reference/global_attributes/href",
+      "url": "https://developer.mozilla.org/docs/Web/MathML/Reference/Global_attributes/href",
       "compatibility": {
         "Firefox": "7",
         "FirefoxAndroid": "7",
@@ -71,7 +71,7 @@
       "doc": "<div class=\"notecard nonstandard\"><p><strong>Non-standard:</strong> This feature is not standardized. We do not recommend using non-standard features in production, as they have limited browser support, and may change or be removed. However, they can be a suitable alternative in specific cases where no standard option exists.</div>\n<p>The <strong><code>href</code></strong> <a href=\"$MDN_URL$/Web/MathML/Reference/Global_attributes\">global attribute</a> creates a hyperlink on the MathML element pointing to the specified URL."
     },
     "mathbackground": {
-      "url": "$MDN_URL$/web/mathml/reference/global_attributes/mathbackground",
+      "url": "https://developer.mozilla.org/docs/Web/MathML/Reference/Global_attributes/mathbackground",
       "status": [
         "StandardTrack",
         "Deprecated"
@@ -92,7 +92,7 @@
       "doc": "<div class=\"notecard deprecated\"><p><strong>Deprecated:</strong> This feature is no longer recommended. Though some browsers might still support it, it may have already been removed from the relevant web standards, may be in the process of being dropped, or may only be kept for compatibility purposes. Avoid using it, and update existing code if possible; see the <a href=\"#browser_compatibility\">compatibility table</a> at the bottom of this page to guide your decision. Be aware that this feature may cease to work at any time.</div>\n<p>The <strong><code>mathbackground</code></strong> <a href=\"$MDN_URL$/Web/MathML/Reference/Global_attributes\">global attribute</a> sets the <a href=\"$MDN_URL$/Web/CSS/Reference/Properties/background-color\">background-color</a> of a MathML element.\n<div class=\"notecard note\">\n<p><strong>Note:</strong>\nUse CSS for styling MathML whenever possible. The <code>mathbackground</code> attribute should only be included for applications that are not CSS-aware and will be overridden by the CSS <code>background-color</code> property value, if set.\n</div>"
     },
     "mathcolor": {
-      "url": "$MDN_URL$/web/mathml/reference/global_attributes/mathcolor",
+      "url": "https://developer.mozilla.org/docs/Web/MathML/Reference/Global_attributes/mathcolor",
       "status": [
         "StandardTrack",
         "Deprecated"
@@ -113,7 +113,7 @@
       "doc": "<div class=\"notecard deprecated\"><p><strong>Deprecated:</strong> This feature is no longer recommended. Though some browsers might still support it, it may have already been removed from the relevant web standards, may be in the process of being dropped, or may only be kept for compatibility purposes. Avoid using it, and update existing code if possible; see the <a href=\"#browser_compatibility\">compatibility table</a> at the bottom of this page to guide your decision. Be aware that this feature may cease to work at any time.</div>\n<p>The <strong><code>mathcolor</code></strong> <a href=\"$MDN_URL$/Web/MathML/Reference/Global_attributes\">global attribute</a> sets the <a href=\"$MDN_URL$/Web/CSS/Reference/Properties/color\">color</a> of a MathML element.\n<div class=\"notecard note\">\n<p><strong>Note:</strong>\nUse CSS for styling MathML whenever possible. The <code>mathcolor</code> attribute should only be included for applications that are not CSS-aware and will be overridden by the CSS <code>color</code> property, if set.\n</div>"
     },
     "mathsize": {
-      "url": "$MDN_URL$/web/mathml/reference/global_attributes/mathsize",
+      "url": "https://developer.mozilla.org/docs/Web/MathML/Reference/Global_attributes/mathsize",
       "status": [
         "StandardTrack",
         "Deprecated"
@@ -134,7 +134,7 @@
       "doc": "<div class=\"notecard deprecated\"><p><strong>Deprecated:</strong> This feature is no longer recommended. Though some browsers might still support it, it may have already been removed from the relevant web standards, may be in the process of being dropped, or may only be kept for compatibility purposes. Avoid using it, and update existing code if possible; see the <a href=\"#browser_compatibility\">compatibility table</a> at the bottom of this page to guide your decision. Be aware that this feature may cease to work at any time.</div>\n<p>The <strong><code>mathsize</code></strong> <a href=\"$MDN_URL$/Web/MathML/Reference/Global_attributes\">global attribute</a> sets the <a href=\"$MDN_URL$/Web/CSS/Reference/Properties/font-size\">font-size</a> of a MathML element.\n<div class=\"notecard note\">\n<p><strong>Note:</strong>\nUse CSS for styling MathML whenever possible. The <code>mathsize</code> attribute should only be included for applications that are not CSS-aware and will be overridden by the CSS <code>font-size</code> property, if set.\n</div>"
     },
     "scriptlevel": {
-      "url": "$MDN_URL$/web/mathml/reference/global_attributes/scriptlevel",
+      "url": "https://developer.mozilla.org/docs/Web/MathML/Reference/Global_attributes/scriptlevel",
       "status": [
         "StandardTrack"
       ],
@@ -154,7 +154,7 @@
   },
   "tags": {
     "annotation": {
-      "url": "$MDN_URL$/web/mathml/reference/element/annotation",
+      "url": "https://developer.mozilla.org/docs/Web/MathML/Reference/Element/annotation",
       "status": [
         "StandardTrack"
       ],
@@ -179,17 +179,17 @@
       },
       "attrs": {
         "encoding": {
-          "url": "$MDN_URL$/web/mathml/reference/element/annotation#encoding",
+          "url": "https://developer.mozilla.org/docs/Web/MathML/Reference/Element/annotation#encoding",
           "doc": "The encoding of the semantic information in the annotation (e.g., <code>\"application/x-tex\"</code>)"
         },
         "src": {
-          "url": "$MDN_URL$/web/mathml/reference/element/annotation#src",
+          "url": "https://developer.mozilla.org/docs/Web/MathML/Reference/Element/annotation#src",
           "doc": "The location of an external source for semantic information."
         }
       }
     },
     "annotation-xml": {
-      "url": "$MDN_URL$/web/mathml/reference/element/annotation-xml",
+      "url": "https://developer.mozilla.org/docs/Web/MathML/Reference/Element/annotation-xml",
       "status": [
         "StandardTrack"
       ],
@@ -214,17 +214,17 @@
       },
       "attrs": {
         "encoding": {
-          "url": "$MDN_URL$/web/mathml/reference/element/annotation-xml#encoding",
+          "url": "https://developer.mozilla.org/docs/Web/MathML/Reference/Element/annotation-xml#encoding",
           "doc": "The encoding of the semantic information in the annotation (e.g., <code>\"application/mathml+xml\"</code>, <code>\"application/mathml-presentation+xml\"</code>, <code>\"application/mathml-content+xml\"</code>)"
         },
         "src": {
-          "url": "$MDN_URL$/web/mathml/reference/element/annotation-xml#src",
+          "url": "https://developer.mozilla.org/docs/Web/MathML/Reference/Element/annotation-xml#src",
           "doc": "The location of an external source for semantic information."
         }
       }
     },
     "maction": {
-      "url": "$MDN_URL$/web/mathml/reference/element/maction",
+      "url": "https://developer.mozilla.org/docs/Web/MathML/Reference/Element/maction",
       "status": [
         "StandardTrack",
         "Deprecated"
@@ -245,7 +245,7 @@
       },
       "attrs": {
         "actiontype": {
-          "url": "$MDN_URL$/web/mathml/reference/element/maction#actiontype",
+          "url": "https://developer.mozilla.org/docs/Web/MathML/Reference/Element/maction#actiontype",
           "status": [
             "Deprecated"
           ],
@@ -259,7 +259,7 @@
           "doc": "The action which specifies what happens for this element. Special behavior\nfor the following values were implemented by some browsers:\n<ul>\n<li><code>statusline</code>: If there is a click on the <em>expression</em> or the reader moves the pointer over it, the <em>message</em> is sent to the browser's status line. The syntax is: <code>&lt;maction actiontype=\"statusline\"&gt; expression message &lt;/maction&gt;</code>.</li>\n<li><code>toggle</code>: When there is a click on the subexpression, the rendering alternates the display of selected subexpressions. Therefore each click increments the <code>selection</code> value.\nThe syntax is: <code>&lt;maction actiontype=\"toggle\" selection=\"positive-integer\" &gt; expression1 expression2 expressionN &lt;/maction&gt;</code>.</li>\n</ul>"
         },
         "selection": {
-          "url": "$MDN_URL$/web/mathml/reference/element/maction#selection",
+          "url": "https://developer.mozilla.org/docs/Web/MathML/Reference/Element/maction#selection",
           "status": [
             "Deprecated"
           ],
@@ -275,7 +275,7 @@
       }
     },
     "math": {
-      "url": "$MDN_URL$/web/mathml/reference/element/math",
+      "url": "https://developer.mozilla.org/docs/Web/MathML/Reference/Element/math",
       "status": [
         "StandardTrack"
       ],
@@ -300,7 +300,7 @@
       },
       "attrs": {
         "display": {
-          "url": "$MDN_URL$/web/mathml/reference/element/math#display",
+          "url": "https://developer.mozilla.org/docs/Web/MathML/Reference/Element/math#display",
           "status": [
             "StandardTrack"
           ],
@@ -324,7 +324,7 @@
       }
     },
     "menclose": {
-      "url": "$MDN_URL$/web/mathml/reference/element/menclose",
+      "url": "https://developer.mozilla.org/docs/Web/MathML/Reference/Element/menclose",
       "compatibility": {
         "Firefox": "1",
         "FirefoxAndroid": "4",
@@ -340,7 +340,7 @@
       },
       "attrs": {
         "notation": {
-          "url": "$MDN_URL$/web/mathml/reference/element/menclose#notation",
+          "url": "https://developer.mozilla.org/docs/Web/MathML/Reference/Element/menclose#notation",
           "compatibility": {
             "Firefox": "1",
             "FirefoxAndroid": "4",
@@ -355,7 +355,7 @@
       }
     },
     "merror": {
-      "url": "$MDN_URL$/web/mathml/reference/element/merror",
+      "url": "https://developer.mozilla.org/docs/Web/MathML/Reference/Element/merror",
       "status": [
         "StandardTrack"
       ],
@@ -380,7 +380,7 @@
       }
     },
     "mfenced": {
-      "url": "$MDN_URL$/web/mathml/reference/element/mfenced",
+      "url": "https://developer.mozilla.org/docs/Web/MathML/Reference/Element/mfenced",
       "status": [
         "Deprecated"
       ],
@@ -394,21 +394,21 @@
       },
       "attrs": {
         "close": {
-          "url": "$MDN_URL$/web/mathml/reference/element/mfenced#close",
+          "url": "https://developer.mozilla.org/docs/Web/MathML/Reference/Element/mfenced#close",
           "doc": "A string for the closing delimiter. The default value is <code>\")\"</code> and any white space is trimmed."
         },
         "open": {
-          "url": "$MDN_URL$/web/mathml/reference/element/mfenced#open",
+          "url": "https://developer.mozilla.org/docs/Web/MathML/Reference/Element/mfenced#open",
           "doc": "A string for the opening delimiter. The default value is <code>\"(\"</code> and any white space is trimmed."
         },
         "separators": {
-          "url": "$MDN_URL$/web/mathml/reference/element/mfenced#separators",
+          "url": "https://developer.mozilla.org/docs/Web/MathML/Reference/Element/mfenced#separators",
           "doc": "A sequence of zero or more characters to be used for different separators, optionally divided by white space, which is ignored. The default value is \",\". By specifying more than one character, it is possible to set different separators for each argument in the expression. If there are too many separators, all excess is ignored. If there are too few separators in the expression, the last specified separator is repeated."
         }
       }
     },
     "mfrac": {
-      "url": "$MDN_URL$/web/mathml/reference/element/mfrac",
+      "url": "https://developer.mozilla.org/docs/Web/MathML/Reference/Element/mfrac",
       "status": [
         "StandardTrack"
       ],
@@ -433,7 +433,7 @@
       },
       "attrs": {
         "denomalign": {
-          "url": "$MDN_URL$/web/mathml/reference/element/mfrac#denomalign",
+          "url": "https://developer.mozilla.org/docs/Web/MathML/Reference/Element/mfrac#denomalign",
           "status": [
             "Deprecated"
           ],
@@ -447,7 +447,7 @@
           "doc": "The alignment of the denominator under the fraction. Possible values are: <code>left</code>, <code>center</code> (default), and <code>right</code>."
         },
         "linethickness": {
-          "url": "$MDN_URL$/web/mathml/reference/element/mfrac#linethickness",
+          "url": "https://developer.mozilla.org/docs/Web/MathML/Reference/Element/mfrac#linethickness",
           "status": [
             "StandardTrack"
           ],
@@ -469,7 +469,7 @@
           "doc": "A <a href=\"$MDN_URL$/Web/CSS/Reference/Values/length-percentage\"><code>&lt;length-percentage&gt;</code></a> indicating the thickness of the horizontal fraction line."
         },
         "numalign": {
-          "url": "$MDN_URL$/web/mathml/reference/element/mfrac#numalign",
+          "url": "https://developer.mozilla.org/docs/Web/MathML/Reference/Element/mfrac#numalign",
           "status": [
             "Deprecated"
           ],
@@ -485,7 +485,7 @@
       }
     },
     "mi": {
-      "url": "$MDN_URL$/web/mathml/reference/element/mi",
+      "url": "https://developer.mozilla.org/docs/Web/MathML/Reference/Element/mi",
       "status": [
         "StandardTrack"
       ],
@@ -510,7 +510,7 @@
       },
       "attrs": {
         "mathvariant": {
-          "url": "$MDN_URL$/web/mathml/reference/element/mi#mathvariant",
+          "url": "https://developer.mozilla.org/docs/Web/MathML/Reference/Element/mi#mathvariant",
           "status": [
             "StandardTrack"
           ],
@@ -534,7 +534,7 @@
       }
     },
     "mmultiscripts": {
-      "url": "$MDN_URL$/web/mathml/reference/element/mmultiscripts",
+      "url": "https://developer.mozilla.org/docs/Web/MathML/Reference/Element/mmultiscripts",
       "status": [
         "StandardTrack"
       ],
@@ -559,7 +559,7 @@
       },
       "attrs": {
         "subscriptshift": {
-          "url": "$MDN_URL$/web/mathml/reference/element/mmultiscripts#subscriptshift",
+          "url": "https://developer.mozilla.org/docs/Web/MathML/Reference/Element/mmultiscripts#subscriptshift",
           "status": [
             "Deprecated"
           ],
@@ -573,7 +573,7 @@
           "doc": "A <a href=\"$MDN_URL$/Web/CSS/Reference/Values/length-percentage\"><code>&lt;length-percentage&gt;</code></a> indicating the minimum amount to shift the baseline of the subscript down."
         },
         "superscriptshift": {
-          "url": "$MDN_URL$/web/mathml/reference/element/mmultiscripts#superscriptshift",
+          "url": "https://developer.mozilla.org/docs/Web/MathML/Reference/Element/mmultiscripts#superscriptshift",
           "status": [
             "Deprecated"
           ],
@@ -589,7 +589,7 @@
       }
     },
     "mn": {
-      "url": "$MDN_URL$/web/mathml/reference/element/mn",
+      "url": "https://developer.mozilla.org/docs/Web/MathML/Reference/Element/mn",
       "status": [
         "StandardTrack"
       ],
@@ -614,7 +614,7 @@
       }
     },
     "mo": {
-      "url": "$MDN_URL$/web/mathml/reference/element/mo",
+      "url": "https://developer.mozilla.org/docs/Web/MathML/Reference/Element/mo",
       "status": [
         "StandardTrack"
       ],
@@ -639,7 +639,7 @@
       },
       "attrs": {
         "accent": {
-          "url": "$MDN_URL$/web/mathml/reference/element/mo#accent",
+          "url": "https://developer.mozilla.org/docs/Web/MathML/Reference/Element/mo#accent",
           "compatibility": {
             "Firefox": "1",
             "FirefoxAndroid": "4",
@@ -652,11 +652,11 @@
           "doc": "A <a href=\"$MDN_URL$/Web/MathML/Reference/Values#mathml-specific_types\"><code>&lt;boolean&gt;</code></a> indicating whether the operator should be treated as an accent when used as an <a href=\"$MDN_URL$/Web/MathML/Reference/Element/munder\">under</a>- or <a href=\"$MDN_URL$/Web/MathML/Reference/Element/mover\">overscript</a> (i.e., drawn bigger and closer to the base expression)."
         },
         "fence": {
-          "url": "$MDN_URL$/web/mathml/reference/element/mo#fence",
+          "url": "https://developer.mozilla.org/docs/Web/MathML/Reference/Element/mo#fence",
           "doc": "A <a href=\"$MDN_URL$/Web/MathML/Reference/Values#mathml-specific_types\"><code>&lt;boolean&gt;</code></a> indicating whether the operator is a fence (such as parentheses). There is no visual effect for this attribute."
         },
         "form": {
-          "url": "$MDN_URL$/web/mathml/reference/element/mo#form",
+          "url": "https://developer.mozilla.org/docs/Web/MathML/Reference/Element/mo#form",
           "status": [
             "StandardTrack"
           ],
@@ -678,7 +678,7 @@
           "doc": "An <a href=\"$MDN_URL$/Glossary/Enumerated\">enumerated</a> attribute specifying how the operator is to be presented. For example, depending on the value, a different amount of space might be rendered on either side of the operator. It can have one of the following values:\n<ul>\n<li><code>prefix</code>: The operator appears before its operands. For example, in the expression <code>+ a</code>, the <code>+</code> is a prefix operator.</li>\n<li><code>infix</code>: The operator appears between its operands. In the expression <code>a + b</code>, the <code>+</code> is an infix operator.</li>\n<li><code>postfix</code>: The operator appears after its operands. For example, in the expression <code>a +</code>, the <code>+</code> is a postfix operator.</li>\n</ul>"
         },
         "largeop": {
-          "url": "$MDN_URL$/web/mathml/reference/element/mo#largeop",
+          "url": "https://developer.mozilla.org/docs/Web/MathML/Reference/Element/mo#largeop",
           "status": [
             "StandardTrack"
           ],
@@ -700,7 +700,7 @@
           "doc": "A <a href=\"$MDN_URL$/Web/MathML/Reference/Values#mathml-specific_types\"><code>&lt;boolean&gt;</code></a> indicating whether the operator should be drawn bigger when <a href=\"$MDN_URL$/Web/CSS/Reference/Properties/math-style\"><code>math-style</code></a> is set to <code>normal</code>."
         },
         "lspace": {
-          "url": "$MDN_URL$/web/mathml/reference/element/mo#lspace",
+          "url": "https://developer.mozilla.org/docs/Web/MathML/Reference/Element/mo#lspace",
           "status": [
             "StandardTrack"
           ],
@@ -722,7 +722,7 @@
           "doc": "A <a href=\"$MDN_URL$/Web/CSS/Reference/Values/length-percentage\"><code>&lt;length-percentage&gt;</code></a> indicating the amount of space before the operator."
         },
         "maxsize": {
-          "url": "$MDN_URL$/web/mathml/reference/element/mo#maxsize",
+          "url": "https://developer.mozilla.org/docs/Web/MathML/Reference/Element/mo#maxsize",
           "status": [
             "StandardTrack"
           ],
@@ -744,7 +744,7 @@
           "doc": "A <a href=\"$MDN_URL$/Web/CSS/Reference/Values/length-percentage\"><code>&lt;length-percentage&gt;</code></a> indicating the maximum size of the operator when it is stretchy."
         },
         "minsize": {
-          "url": "$MDN_URL$/web/mathml/reference/element/mo#minsize",
+          "url": "https://developer.mozilla.org/docs/Web/MathML/Reference/Element/mo#minsize",
           "status": [
             "StandardTrack"
           ],
@@ -766,7 +766,7 @@
           "doc": "A <a href=\"$MDN_URL$/Web/CSS/Reference/Values/length-percentage\"><code>&lt;length-percentage&gt;</code></a> indicating the minimum size of the operator when it is stretchy."
         },
         "movablelimits": {
-          "url": "$MDN_URL$/web/mathml/reference/element/mo#movablelimits",
+          "url": "https://developer.mozilla.org/docs/Web/MathML/Reference/Element/mo#movablelimits",
           "status": [
             "StandardTrack"
           ],
@@ -788,7 +788,7 @@
           "doc": "A <a href=\"$MDN_URL$/Web/MathML/Reference/Values#mathml-specific_types\"><code>&lt;boolean&gt;</code></a> indicating whether attached under- and overscripts move to sub- and superscript positions when <a href=\"$MDN_URL$/Web/CSS/Reference/Properties/math-style\"><code>math-style</code></a> is set to <code>compact</code>."
         },
         "rspace": {
-          "url": "$MDN_URL$/web/mathml/reference/element/mo#rspace",
+          "url": "https://developer.mozilla.org/docs/Web/MathML/Reference/Element/mo#rspace",
           "status": [
             "StandardTrack"
           ],
@@ -810,11 +810,11 @@
           "doc": "A <a href=\"$MDN_URL$/Web/CSS/Reference/Values/length-percentage\"><code>&lt;length-percentage&gt;</code></a> indicating the amount of space after the operator."
         },
         "separator": {
-          "url": "$MDN_URL$/web/mathml/reference/element/mo#separator",
+          "url": "https://developer.mozilla.org/docs/Web/MathML/Reference/Element/mo#separator",
           "doc": "A <a href=\"$MDN_URL$/Web/MathML/Reference/Values#mathml-specific_types\"><code>&lt;boolean&gt;</code></a> indicating whether the operator is a separator (such as commas). There is no visual effect for this attribute."
         },
         "stretchy": {
-          "url": "$MDN_URL$/web/mathml/reference/element/mo#stretchy",
+          "url": "https://developer.mozilla.org/docs/Web/MathML/Reference/Element/mo#stretchy",
           "status": [
             "StandardTrack"
           ],
@@ -836,7 +836,7 @@
           "doc": "A <a href=\"$MDN_URL$/Web/MathML/Reference/Values#mathml-specific_types\"><code>&lt;boolean&gt;</code></a> indicating whether the operator stretches to the size of the adjacent element."
         },
         "symmetric": {
-          "url": "$MDN_URL$/web/mathml/reference/element/mo#symmetric",
+          "url": "https://developer.mozilla.org/docs/Web/MathML/Reference/Element/mo#symmetric",
           "status": [
             "StandardTrack"
           ],
@@ -860,7 +860,7 @@
       }
     },
     "mover": {
-      "url": "$MDN_URL$/web/mathml/reference/element/mover",
+      "url": "https://developer.mozilla.org/docs/Web/MathML/Reference/Element/mover",
       "status": [
         "StandardTrack"
       ],
@@ -885,7 +885,7 @@
       },
       "attrs": {
         "accent": {
-          "url": "$MDN_URL$/web/mathml/reference/element/mover#accent",
+          "url": "https://developer.mozilla.org/docs/Web/MathML/Reference/Element/mover#accent",
           "status": [
             "StandardTrack"
           ],
@@ -909,7 +909,7 @@
       }
     },
     "mpadded": {
-      "url": "$MDN_URL$/web/mathml/reference/element/mpadded",
+      "url": "https://developer.mozilla.org/docs/Web/MathML/Reference/Element/mpadded",
       "status": [
         "StandardTrack"
       ],
@@ -934,7 +934,7 @@
       },
       "attrs": {
         "depth": {
-          "url": "$MDN_URL$/web/mathml/reference/element/mpadded#depth",
+          "url": "https://developer.mozilla.org/docs/Web/MathML/Reference/Element/mpadded#depth",
           "status": [
             "StandardTrack"
           ],
@@ -956,7 +956,7 @@
           "doc": "A <a href=\"$MDN_URL$/Web/CSS/Reference/Values/length-percentage\"><code>&lt;length-percentage&gt;</code></a> indicating the desired depth (below the baseline) of the <code>&lt;mpadded&gt;</code> element."
         },
         "height": {
-          "url": "$MDN_URL$/web/mathml/reference/element/mpadded#height",
+          "url": "https://developer.mozilla.org/docs/Web/MathML/Reference/Element/mpadded#height",
           "status": [
             "StandardTrack"
           ],
@@ -978,7 +978,7 @@
           "doc": "A <a href=\"$MDN_URL$/Web/CSS/Reference/Values/length-percentage\"><code>&lt;length-percentage&gt;</code></a> indicating the desired height (above the baseline) of the <code>&lt;mpadded&gt;</code> element."
         },
         "lspace": {
-          "url": "$MDN_URL$/web/mathml/reference/element/mpadded#lspace",
+          "url": "https://developer.mozilla.org/docs/Web/MathML/Reference/Element/mpadded#lspace",
           "status": [
             "StandardTrack"
           ],
@@ -1000,7 +1000,7 @@
           "doc": "A <a href=\"$MDN_URL$/Web/CSS/Reference/Values/length-percentage\"><code>&lt;length-percentage&gt;</code></a> indicating the horizontal location of the positioning point of the child content with respect to the positioning point of the <code>&lt;mpadded&gt;</code> element."
         },
         "voffset": {
-          "url": "$MDN_URL$/web/mathml/reference/element/mpadded#voffset",
+          "url": "https://developer.mozilla.org/docs/Web/MathML/Reference/Element/mpadded#voffset",
           "status": [
             "StandardTrack"
           ],
@@ -1022,7 +1022,7 @@
           "doc": "A <a href=\"$MDN_URL$/Web/CSS/Reference/Values/length-percentage\"><code>&lt;length-percentage&gt;</code></a> indicating the vertical location of the positioning point of the child content with respect to the positioning point of the <code>&lt;mpadded&gt;</code> element."
         },
         "width": {
-          "url": "$MDN_URL$/web/mathml/reference/element/mpadded#width",
+          "url": "https://developer.mozilla.org/docs/Web/MathML/Reference/Element/mpadded#width",
           "status": [
             "StandardTrack"
           ],
@@ -1046,7 +1046,7 @@
       }
     },
     "mphantom": {
-      "url": "$MDN_URL$/web/mathml/reference/element/mphantom",
+      "url": "https://developer.mozilla.org/docs/Web/MathML/Reference/Element/mphantom",
       "status": [
         "StandardTrack"
       ],
@@ -1071,7 +1071,7 @@
       }
     },
     "mprescripts": {
-      "url": "$MDN_URL$/web/mathml/reference/element/mprescripts",
+      "url": "https://developer.mozilla.org/docs/Web/MathML/Reference/Element/mprescripts",
       "status": [
         "StandardTrack"
       ],
@@ -1096,7 +1096,7 @@
       }
     },
     "mroot": {
-      "url": "$MDN_URL$/web/mathml/reference/element/mroot",
+      "url": "https://developer.mozilla.org/docs/Web/MathML/Reference/Element/mroot",
       "status": [
         "StandardTrack"
       ],
@@ -1121,7 +1121,7 @@
       }
     },
     "mrow": {
-      "url": "$MDN_URL$/web/mathml/reference/element/mrow",
+      "url": "https://developer.mozilla.org/docs/Web/MathML/Reference/Element/mrow",
       "status": [
         "StandardTrack"
       ],
@@ -1146,7 +1146,7 @@
       }
     },
     "ms": {
-      "url": "$MDN_URL$/web/mathml/reference/element/ms",
+      "url": "https://developer.mozilla.org/docs/Web/MathML/Reference/Element/ms",
       "status": [
         "StandardTrack"
       ],
@@ -1171,7 +1171,7 @@
       }
     },
     "mspace": {
-      "url": "$MDN_URL$/web/mathml/reference/element/mspace",
+      "url": "https://developer.mozilla.org/docs/Web/MathML/Reference/Element/mspace",
       "status": [
         "StandardTrack"
       ],
@@ -1196,7 +1196,7 @@
       },
       "attrs": {
         "depth": {
-          "url": "$MDN_URL$/web/mathml/reference/element/mspace#depth",
+          "url": "https://developer.mozilla.org/docs/Web/MathML/Reference/Element/mspace#depth",
           "status": [
             "StandardTrack"
           ],
@@ -1218,7 +1218,7 @@
           "doc": "A <a href=\"$MDN_URL$/Web/CSS/Reference/Values/length-percentage\"><code>&lt;length-percentage&gt;</code></a> indicating the desired depth (below the baseline) of the space."
         },
         "height": {
-          "url": "$MDN_URL$/web/mathml/reference/element/mspace#height",
+          "url": "https://developer.mozilla.org/docs/Web/MathML/Reference/Element/mspace#height",
           "status": [
             "StandardTrack"
           ],
@@ -1240,7 +1240,7 @@
           "doc": "A <a href=\"$MDN_URL$/Web/CSS/Reference/Values/length-percentage\"><code>&lt;length-percentage&gt;</code></a> indicating the desired height (above the baseline) of the space."
         },
         "width": {
-          "url": "$MDN_URL$/web/mathml/reference/element/mspace#width",
+          "url": "https://developer.mozilla.org/docs/Web/MathML/Reference/Element/mspace#width",
           "status": [
             "StandardTrack"
           ],
@@ -1264,7 +1264,7 @@
       }
     },
     "msqrt": {
-      "url": "$MDN_URL$/web/mathml/reference/element/msqrt",
+      "url": "https://developer.mozilla.org/docs/Web/MathML/Reference/Element/msqrt",
       "status": [
         "StandardTrack"
       ],
@@ -1289,7 +1289,7 @@
       }
     },
     "mstyle": {
-      "url": "$MDN_URL$/web/mathml/reference/element/mstyle",
+      "url": "https://developer.mozilla.org/docs/Web/MathML/Reference/Element/mstyle",
       "status": [
         "StandardTrack"
       ],
@@ -1314,7 +1314,7 @@
       },
       "attrs": {
         "background": {
-          "url": "$MDN_URL$/web/mathml/reference/element/mstyle#background",
+          "url": "https://developer.mozilla.org/docs/Web/MathML/Reference/Element/mstyle#background",
           "status": [
             "Deprecated"
           ],
@@ -1328,7 +1328,7 @@
           "doc": "Use CSS property <a href=\"$MDN_URL$/Web/CSS/Reference/Properties/background-color\"><code>background-color</code></a> instead."
         },
         "color": {
-          "url": "$MDN_URL$/web/mathml/reference/element/mstyle#color",
+          "url": "https://developer.mozilla.org/docs/Web/MathML/Reference/Element/mstyle#color",
           "status": [
             "Deprecated"
           ],
@@ -1342,7 +1342,7 @@
           "doc": "Use CSS property <a href=\"$MDN_URL$/Web/CSS/Reference/Properties/color\"><code>color</code></a> instead."
         },
         "fontsize": {
-          "url": "$MDN_URL$/web/mathml/reference/element/mstyle#fontsize",
+          "url": "https://developer.mozilla.org/docs/Web/MathML/Reference/Element/mstyle#fontsize",
           "status": [
             "Deprecated"
           ],
@@ -1356,7 +1356,7 @@
           "doc": "Use CSS property <a href=\"$MDN_URL$/Web/CSS/Reference/Properties/font-size\"><code>font-size</code></a> instead."
         },
         "fontstyle": {
-          "url": "$MDN_URL$/web/mathml/reference/element/mstyle#fontstyle",
+          "url": "https://developer.mozilla.org/docs/Web/MathML/Reference/Element/mstyle#fontstyle",
           "status": [
             "Deprecated"
           ],
@@ -1370,7 +1370,7 @@
           "doc": "Use CSS property <a href=\"$MDN_URL$/Web/CSS/Reference/Properties/font-style\"><code>font-style</code></a> instead."
         },
         "fontweight": {
-          "url": "$MDN_URL$/web/mathml/reference/element/mstyle#fontweight",
+          "url": "https://developer.mozilla.org/docs/Web/MathML/Reference/Element/mstyle#fontweight",
           "status": [
             "Deprecated"
           ],
@@ -1386,7 +1386,7 @@
       }
     },
     "msub": {
-      "url": "$MDN_URL$/web/mathml/reference/element/msub",
+      "url": "https://developer.mozilla.org/docs/Web/MathML/Reference/Element/msub",
       "status": [
         "StandardTrack"
       ],
@@ -1411,7 +1411,7 @@
       },
       "attrs": {
         "subscriptshift": {
-          "url": "$MDN_URL$/web/mathml/reference/element/msub#subscriptshift",
+          "url": "https://developer.mozilla.org/docs/Web/MathML/Reference/Element/msub#subscriptshift",
           "status": [
             "Deprecated"
           ],
@@ -1427,7 +1427,7 @@
       }
     },
     "msubsup": {
-      "url": "$MDN_URL$/web/mathml/reference/element/msubsup",
+      "url": "https://developer.mozilla.org/docs/Web/MathML/Reference/Element/msubsup",
       "status": [
         "StandardTrack"
       ],
@@ -1452,7 +1452,7 @@
       },
       "attrs": {
         "subscriptshift": {
-          "url": "$MDN_URL$/web/mathml/reference/element/msubsup#subscriptshift",
+          "url": "https://developer.mozilla.org/docs/Web/MathML/Reference/Element/msubsup#subscriptshift",
           "status": [
             "Deprecated"
           ],
@@ -1466,7 +1466,7 @@
           "doc": "A <a href=\"$MDN_URL$/Web/CSS/Reference/Values/length-percentage\"><code>&lt;length-percentage&gt;</code></a> indicating the minimum amount to shift the baseline of the subscript down."
         },
         "superscriptshift": {
-          "url": "$MDN_URL$/web/mathml/reference/element/msubsup#superscriptshift",
+          "url": "https://developer.mozilla.org/docs/Web/MathML/Reference/Element/msubsup#superscriptshift",
           "status": [
             "Deprecated"
           ],
@@ -1482,7 +1482,7 @@
       }
     },
     "msup": {
-      "url": "$MDN_URL$/web/mathml/reference/element/msup",
+      "url": "https://developer.mozilla.org/docs/Web/MathML/Reference/Element/msup",
       "status": [
         "StandardTrack"
       ],
@@ -1507,7 +1507,7 @@
       },
       "attrs": {
         "superscriptshift": {
-          "url": "$MDN_URL$/web/mathml/reference/element/msup#superscriptshift",
+          "url": "https://developer.mozilla.org/docs/Web/MathML/Reference/Element/msup#superscriptshift",
           "status": [
             "Deprecated"
           ],
@@ -1523,7 +1523,7 @@
       }
     },
     "mtable": {
-      "url": "$MDN_URL$/web/mathml/reference/element/mtable",
+      "url": "https://developer.mozilla.org/docs/Web/MathML/Reference/Element/mtable",
       "status": [
         "StandardTrack"
       ],
@@ -1548,7 +1548,7 @@
       },
       "attrs": {
         "align": {
-          "url": "$MDN_URL$/web/mathml/reference/element/mtable#align",
+          "url": "https://developer.mozilla.org/docs/Web/MathML/Reference/Element/mtable#align",
           "compatibility": {
             "Firefox": "1",
             "FirefoxAndroid": "4"
@@ -1559,7 +1559,7 @@
           "doc": "Specifies the <strong>vertical</strong> alignment of the table with respect to its environment.\nPossible values are:\n<ul>\n<li><code>axis</code> (default): The vertical center of the table aligns on the environment's axis (typically the minus sign).</li>\n<li><code>baseline</code>: The vertical center of the table aligns on the environment's baseline.</li>\n<li><code>bottom</code>: The bottom of the table aligns on the environments baseline.</li>\n<li><code>center</code>: See baseline.</li>\n<li><code>top</code>: The top of the table aligns on the environments baseline.</li>\n</ul>\n<p>In addition, values of the <code>align</code> attribute can end with a <em>row number</em> (e.g., <code>align=\"center 3\"</code>). This allows you to align the specified row of the table rather than the whole table. A negative Integer value counts rows from the bottom of the table."
         },
         "columnalign": {
-          "url": "$MDN_URL$/web/mathml/reference/element/mtable#columnalign",
+          "url": "https://developer.mozilla.org/docs/Web/MathML/Reference/Element/mtable#columnalign",
           "compatibility": {
             "Firefox": "1",
             "FirefoxAndroid": "4",
@@ -1572,7 +1572,7 @@
           "doc": "Specifies the horizontal alignment of the cells. Multiple values separated by space are allowed and apply to the corresponding columns (e.g., <code>columnalign=\"left right center\"</code>). Possible values are: <code>left</code>, <code>center</code> (default) and <code>right</code>."
         },
         "columnlines": {
-          "url": "$MDN_URL$/web/mathml/reference/element/mtable#columnlines",
+          "url": "https://developer.mozilla.org/docs/Web/MathML/Reference/Element/mtable#columnlines",
           "compatibility": {
             "Firefox": "1",
             "FirefoxAndroid": "4",
@@ -1585,7 +1585,7 @@
           "doc": "Specifies column borders. Multiple values separated by space are allowed and apply to the corresponding columns (e.g., <code>columnlines=\"none none solid\"</code>). Possible values are: <code>none</code> (default), <code>solid</code> and <code>dashed</code>."
         },
         "columnspacing": {
-          "url": "$MDN_URL$/web/mathml/reference/element/mtable#columnspacing",
+          "url": "https://developer.mozilla.org/docs/Web/MathML/Reference/Element/mtable#columnspacing",
           "compatibility": {
             "Firefox": "33",
             "FirefoxAndroid": "33"
@@ -1596,7 +1596,7 @@
           "doc": "Specifies the space between table columns. Multiple values separated by space are allowed and apply to the corresponding columns (e.g., <code>columnspacing=\"1em 2em\"</code>). Possible values are <a href=\"$MDN_URL$/Web/CSS/Reference/Values/length-percentage\"><code>&lt;length-percentage&gt;</code></a>."
         },
         "frame": {
-          "url": "$MDN_URL$/web/mathml/reference/element/mtable#frame",
+          "url": "https://developer.mozilla.org/docs/Web/MathML/Reference/Element/mtable#frame",
           "compatibility": {
             "Firefox": "1",
             "FirefoxAndroid": "4",
@@ -1609,7 +1609,7 @@
           "doc": "Specifies borders of the entire table. Possible values are: <code>none</code> (default), <code>solid</code> and <code>dashed</code>."
         },
         "framespacing": {
-          "url": "$MDN_URL$/web/mathml/reference/element/mtable#framespacing",
+          "url": "https://developer.mozilla.org/docs/Web/MathML/Reference/Element/mtable#framespacing",
           "compatibility": {
             "Firefox": "33",
             "FirefoxAndroid": "33"
@@ -1620,7 +1620,7 @@
           "doc": "Specifies additional space added between the table and frame. The first value specifies the spacing on the right and left; the second value specifies the spacing above and below. Possible values are <a href=\"$MDN_URL$/Web/CSS/Reference/Values/length-percentage\"><code>&lt;length-percentage&gt;</code></a>."
         },
         "rowalign": {
-          "url": "$MDN_URL$/web/mathml/reference/element/mtable#rowalign",
+          "url": "https://developer.mozilla.org/docs/Web/MathML/Reference/Element/mtable#rowalign",
           "compatibility": {
             "Firefox": "1",
             "FirefoxAndroid": "4",
@@ -1633,7 +1633,7 @@
           "doc": "Specifies the vertical alignment of the cells. Multiple values separated by space are allowed and apply to the corresponding rows (e.g., <code>rowalign=\"top bottom axis\"</code>). Possible values are: <code>axis</code>, <code>baseline</code> (default), <code>bottom</code>, <code>center</code> and <code>top</code>."
         },
         "rowlines": {
-          "url": "$MDN_URL$/web/mathml/reference/element/mtable#rowlines",
+          "url": "https://developer.mozilla.org/docs/Web/MathML/Reference/Element/mtable#rowlines",
           "compatibility": {
             "Firefox": "1",
             "FirefoxAndroid": "4",
@@ -1646,7 +1646,7 @@
           "doc": "Specifies row borders. Multiple values separated by space are allowed and apply to the corresponding rows (e.g., <code>rowlines=\"none none solid\"</code>). Possible values are: <code>none</code> (default), <code>solid</code> and <code>dashed</code>."
         },
         "rowspacing": {
-          "url": "$MDN_URL$/web/mathml/reference/element/mtable#rowspacing",
+          "url": "https://developer.mozilla.org/docs/Web/MathML/Reference/Element/mtable#rowspacing",
           "compatibility": {
             "Firefox": "33",
             "FirefoxAndroid": "33"
@@ -1657,7 +1657,7 @@
           "doc": "Specifies the space between table rows. Multiple values separated by space are allowed and apply to the corresponding rows (e.g., <code>rowspacing=\"1em 2em\"</code>). Possible values are <a href=\"$MDN_URL$/Web/CSS/Reference/Values/length-percentage\"><code>&lt;length-percentage&gt;</code></a>."
         },
         "width": {
-          "url": "$MDN_URL$/web/mathml/reference/element/mtable#width",
+          "url": "https://developer.mozilla.org/docs/Web/MathML/Reference/Element/mtable#width",
           "compatibility": {
             "Firefox": "13",
             "FirefoxAndroid": "14"
@@ -1670,7 +1670,7 @@
       }
     },
     "mtd": {
-      "url": "$MDN_URL$/web/mathml/reference/element/mtd",
+      "url": "https://developer.mozilla.org/docs/Web/MathML/Reference/Element/mtd",
       "status": [
         "StandardTrack"
       ],
@@ -1695,7 +1695,7 @@
       },
       "attrs": {
         "columnalign": {
-          "url": "$MDN_URL$/web/mathml/reference/element/mtd#columnalign",
+          "url": "https://developer.mozilla.org/docs/Web/MathML/Reference/Element/mtd#columnalign",
           "compatibility": {
             "Firefox": "1",
             "FirefoxAndroid": "4",
@@ -1708,7 +1708,7 @@
           "doc": "Specifies the horizontal alignment of this cell and overrides values specified by <a href=\"$MDN_URL$/Web/MathML/Reference/Element/mtable\" ><code>&lt;mtable&gt;</code></a> or <a href=\"$MDN_URL$/Web/MathML/Reference/Element/mtr\" ><code>&lt;mtr&gt;</code></a>.\nPossible values are: <code>left</code>, <code>center</code> and <code>right</code>."
         },
         "columnspan": {
-          "url": "$MDN_URL$/web/mathml/reference/element/mtd#columnspan",
+          "url": "https://developer.mozilla.org/docs/Web/MathML/Reference/Element/mtd#columnspan",
           "status": [
             "StandardTrack"
           ],
@@ -1729,7 +1729,7 @@
           "doc": "A non-negative integer value that indicates on how many columns does the cell extend."
         },
         "rowalign": {
-          "url": "$MDN_URL$/web/mathml/reference/element/mtd#rowalign",
+          "url": "https://developer.mozilla.org/docs/Web/MathML/Reference/Element/mtd#rowalign",
           "compatibility": {
             "Firefox": "1",
             "FirefoxAndroid": "4",
@@ -1742,7 +1742,7 @@
           "doc": "Specifies the vertical alignment of this cell and overrides values specified by <a href=\"$MDN_URL$/Web/MathML/Reference/Element/mtable\" ><code>&lt;mtable&gt;</code></a> or <a href=\"$MDN_URL$/Web/MathML/Reference/Element/mtr\" ><code>&lt;mtr&gt;</code></a>.\nPossible values are: <code>axis</code>, <code>baseline</code>, <code>bottom</code>, <code>center</code> and <code>top</code>."
         },
         "rowspan": {
-          "url": "$MDN_URL$/web/mathml/reference/element/mtd#rowspan",
+          "url": "https://developer.mozilla.org/docs/Web/MathML/Reference/Element/mtd#rowspan",
           "status": [
             "StandardTrack"
           ],
@@ -1765,7 +1765,7 @@
       }
     },
     "mtext": {
-      "url": "$MDN_URL$/web/mathml/reference/element/mtext",
+      "url": "https://developer.mozilla.org/docs/Web/MathML/Reference/Element/mtext",
       "status": [
         "StandardTrack"
       ],
@@ -1790,7 +1790,7 @@
       }
     },
     "mtr": {
-      "url": "$MDN_URL$/web/mathml/reference/element/mtr",
+      "url": "https://developer.mozilla.org/docs/Web/MathML/Reference/Element/mtr",
       "status": [
         "StandardTrack"
       ],
@@ -1815,7 +1815,7 @@
       },
       "attrs": {
         "columnalign": {
-          "url": "$MDN_URL$/web/mathml/reference/element/mtr#columnalign",
+          "url": "https://developer.mozilla.org/docs/Web/MathML/Reference/Element/mtr#columnalign",
           "compatibility": {
             "Firefox": "1",
             "FirefoxAndroid": "4",
@@ -1828,7 +1828,7 @@
           "doc": "Overrides the horizontal alignment of cells specified by <a href=\"$MDN_URL$/Web/MathML/Reference/Element/mtable\" ><code>&lt;mtable&gt;</code></a> for this row. Multiple values separated by space are allowed and apply to the corresponding columns (e.g., <code>columnalign=\"left center right\"</code>). Possible values are: <code>left</code>, <code>center</code> and <code>right</code>."
         },
         "rowalign": {
-          "url": "$MDN_URL$/web/mathml/reference/element/mtr#rowalign",
+          "url": "https://developer.mozilla.org/docs/Web/MathML/Reference/Element/mtr#rowalign",
           "compatibility": {
             "Firefox": "1",
             "FirefoxAndroid": "4",
@@ -1843,7 +1843,7 @@
       }
     },
     "munder": {
-      "url": "$MDN_URL$/web/mathml/reference/element/munder",
+      "url": "https://developer.mozilla.org/docs/Web/MathML/Reference/Element/munder",
       "status": [
         "StandardTrack"
       ],
@@ -1868,7 +1868,7 @@
       },
       "attrs": {
         "accentunder": {
-          "url": "$MDN_URL$/web/mathml/reference/element/munder#accentunder",
+          "url": "https://developer.mozilla.org/docs/Web/MathML/Reference/Element/munder#accentunder",
           "status": [
             "StandardTrack"
           ],
@@ -1892,7 +1892,7 @@
       }
     },
     "munderover": {
-      "url": "$MDN_URL$/web/mathml/reference/element/munderover",
+      "url": "https://developer.mozilla.org/docs/Web/MathML/Reference/Element/munderover",
       "status": [
         "StandardTrack"
       ],
@@ -1917,7 +1917,7 @@
       },
       "attrs": {
         "accent": {
-          "url": "$MDN_URL$/web/mathml/reference/element/munderover#accent",
+          "url": "https://developer.mozilla.org/docs/Web/MathML/Reference/Element/munderover#accent",
           "status": [
             "StandardTrack"
           ],
@@ -1939,7 +1939,7 @@
           "doc": "A <a href=\"$MDN_URL$/Web/MathML/Reference/Values#mathml-specific_types\"><code>&lt;boolean&gt;</code></a> indicating whether the over script should be treated as an accent (i.e., drawn bigger and closer to the base expression)."
         },
         "accentunder": {
-          "url": "$MDN_URL$/web/mathml/reference/element/munderover#accentunder",
+          "url": "https://developer.mozilla.org/docs/Web/MathML/Reference/Element/munderover#accentunder",
           "status": [
             "StandardTrack"
           ],
@@ -1963,7 +1963,7 @@
       }
     },
     "semantics": {
-      "url": "$MDN_URL$/web/mathml/reference/element/semantics",
+      "url": "https://developer.mozilla.org/docs/Web/MathML/Reference/Element/semantics",
       "status": [
         "StandardTrack"
       ],
