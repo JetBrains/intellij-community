@@ -340,6 +340,7 @@ internal class TerminalToolWindowTabsManagerImpl(
     val baseOptions = ShellStartupOptions.Builder()
       .shellCommand(builder.shellCommand)
       .workingDirectory(builder.workingDirectory)
+      .envVariables(builder.envVariables)
       .processType(builder.processType)
 
     return if (calculateSizeFromComponent) {
@@ -445,6 +446,8 @@ internal class TerminalToolWindowTabsManagerImpl(
       private set
     var shellCommand: List<String>? = null
       private set
+    var envVariables: Map<String, String> = emptyMap()
+      private set
     var processType: TerminalProcessType = TerminalProcessType.SHELL
       private set
     var tabName: String? = null
@@ -476,6 +479,11 @@ internal class TerminalToolWindowTabsManagerImpl(
 
     override fun shellCommand(command: List<String>?): TerminalToolWindowTabBuilder {
       shellCommand = command
+      return this
+    }
+
+    override fun envVariables(envs: Map<String, String>): TerminalToolWindowTabBuilder {
+      envVariables = envs
       return this
     }
 

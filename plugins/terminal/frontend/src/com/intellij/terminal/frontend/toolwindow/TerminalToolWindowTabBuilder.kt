@@ -32,6 +32,14 @@ interface TerminalToolWindowTabBuilder {
   fun shellCommand(command: List<String>?): TerminalToolWindowTabBuilder
 
   /**
+   * Specifies additional environment variables to set for the shell process.
+   * These variables are added on top of the base environment determined by the [processType].
+   *
+   * If not specified, no additional environment variables will be set.
+   */
+  fun envVariables(envs: Map<String, String>): TerminalToolWindowTabBuilder
+
+  /**
    * Specifies the type of the process that should be started in the terminal.
    * It directly affects what base set of environment variables is used to start the process.
    *

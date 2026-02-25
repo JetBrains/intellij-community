@@ -148,6 +148,61 @@ internal class LocalOptionsConfigurerTest : BasePlatformTestCase() {
     assertEquals(probeValue, actual.envVariables[probeName])
   }
 
+  fun testEnvVariableIsAddedToResultingEnv() {
+    setDefaultStartingDirectory(tempDirectory.pathString)
+
+    val actual = LocalOptionsConfigurer.configureStartupOptions(
+      ShellStartupOptions.Builder()
+        .shellCommand(listOf("some-shell"))
+        .envVariables(mapOf("MY_TEST_VAR" to "my_value"))
+        .build(),
+      project
+    )
+
+    assertThat(actual.envVariables).containsEntry("MY_TEST_VAR", "my_value")
+  }
+
+  fun testEnvVariableOverridesBaseEnvironment() {
+    setDefaultStartingDirectory(tempDirectory.pathString)
+
+    val probeName = "TERMINAL_ENV_OVERRIDE_PROBE_${System.nanoTime()}"
+    assertThat(System.getenv()).doesNotContainKey(probeName)
+    setEnvironmentMapForTest(EnvironmentUtil.getEnvironmentMap() + (probeName to "BASE_VALUE"))
+
+    val actual = LocalOptionsConfigurer.configureStartupOptions(
+      ShellStartupOptions.Builder()
+        .shellCommand(listOf("non-shell"))
+        .processType(TerminalProcessType.NON_SHELL)
+        .envVariables(mapOf(probeName to "OVERRIDE_VALUE"))
+        .build(),
+      project
+    )
+
+    assertThat(actual.envVariables).containsEntry(probeName, "OVERRIDE_VALUE")
+  }
+
+  fun testPlatformEnvVariablesCannotBeOverridden() {
+    setDefaultStartingDirectory(tempDirectory.pathString)
+
+    val actual = LocalOptionsConfigurer.configureStartupOptions(
+      ShellStartupOptions.Builder()
+        .shellCommand(listOf("some-shell"))
+        .envVariables(mapOf(
+          TERMINAL_EMULATOR to "custom-emulator",
+          TERM_SESSION_ID to "custom-session-id",
+          "TERM" to "custom-term",
+        ))
+        .build(),
+      project
+    )
+
+    assertThat(actual.envVariables[TERMINAL_EMULATOR]).isNotEqualTo("custom-emulator")
+    assertThat(actual.envVariables[TERM_SESSION_ID]).isNotEqualTo("custom-session-id")
+    if (OS.CURRENT != OS.Windows) {
+      assertThat(actual.envVariables["TERM"]).isNotEqualTo("custom-term")
+    }
+  }
+
   fun testWslEnvSetup() {
     doTestWslEnvSetup(
       listOf(),
