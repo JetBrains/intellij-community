@@ -10,18 +10,18 @@ import org.jetbrains.kotlin.assignment.plugin.AssignmentPluginNames.ANNOTATION_O
 import org.jetbrains.kotlin.assignment.plugin.AssignmentPluginNames.PLUGIN_ID
 import org.jetbrains.kotlin.idea.base.plugin.artifacts.KotlinArtifacts
 import org.jetbrains.kotlin.idea.compilerPlugin.CompilerPluginSetup.PluginOption
-import org.jetbrains.kotlin.idea.jps.toJpsVersionAgnosticKotlinBundledPath
 import org.jetbrains.kotlin.idea.maven.compilerPlugin.AbstractMavenImportHandler
+import java.nio.file.Path
 
 class AssignmentMavenProjectImportHandler : AbstractMavenImportHandler() {
     private companion object {
         const val ANNOTATION_PARAMETER_PREFIX = "assignment:$ANNOTATION_OPTION_NAME="
     }
 
-    override val compilerPluginId = PLUGIN_ID
-    override val pluginName = "assignment"
-    override val mavenPluginArtifactName = "kotlin-maven-assignment"
-    override val pluginJarFileFromIdea = KotlinArtifacts.assignmentCompilerPlugin.toJpsVersionAgnosticKotlinBundledPath()
+    override val compilerPluginId: String = PLUGIN_ID
+    override val pluginName: String = "assignment"
+    override val mavenPluginArtifactName: String = "kotlin-maven-assignment"
+    override val pluginJarFileFromIdea: Path = KotlinArtifacts.assignmentCompilerPluginPath
 
     override fun getOptions(
         mavenProject: MavenProject,

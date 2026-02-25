@@ -68,14 +68,31 @@ object KotlinPluginLayout {
      * with a compatible version.
      */
     @JvmStatic
-    val kotlinc: File
+    val kotlincPath: Path
         get() = kotlincProvider.value
+
+    @Suppress("IO_FILE_USAGE")
+    /**
+     * Directory with the bundled Kotlin compiler distribution. Includes the compiler itself and a set of compiler plugins
+     * with a compatible version.
+     */
+    @Deprecated("Use kotlincPath instead", ReplaceWith("kotlincPath"))
+    @JvmStatic
+    val kotlinc: File
+        get() = kotlincPath.toFile()
 
     /**
      * Location of the JPS plugin and all its dependency jars
      */
-    val jpsPluginClasspath: List<File>
+    val jpsPluginClasspathPath: List<Path>
         get() = jpsPluginClasspathProvider.value
+
+    /**
+     * Location of the JPS plugin and all its dependency jars
+     */
+    @Deprecated("Use jpsPluginClasspathPath instead", ReplaceWith("jpsPluginClasspathPath"))
+    val jpsPluginClasspath: List<File>
+        get() = jpsPluginClasspathPath.map(Path::toFile)
 
     val jsEngines: File? by lazy {
         kotlinc.resolve("lib").resolve("js.engines.jar").takeIf { it.exists() }
@@ -96,17 +113,17 @@ object KotlinPluginLayout {
     @JvmStatic
     val ideCompilerVersion: IdeKotlinVersion = IdeKotlinVersion.get(KotlinCompilerVersion.VERSION)
 
-    private val kotlincProvider: Lazy<File>
-    private val jpsPluginClasspathProvider: Lazy<List<File>>
+    private val kotlincProvider: Lazy<Path>
+    private val jpsPluginClasspathProvider: Lazy<List<Path>>
     private val standaloneCompilerVersionProvider: Lazy<IdeKotlinVersion>
 
     init {
         val standaloneCompilerVersionDefaultProvider = lazy {
-            val buildTxtFile = kotlinc.resolve("build.txt")
-            if (!buildTxtFile.exists()) {
+            val buildTxtPath = kotlincPath.resolve("build.txt")
+            if (!buildTxtPath.exists()) {
                 ideCompilerVersion
             } else {
-                val rawVersion = buildTxtFile.readText().trim()
+                val rawVersion = Files.readString(buildTxtPath).trim()
                 IdeKotlinVersion.get(rawVersion)
             }
         }
@@ -123,9 +140,9 @@ object KotlinPluginLayout {
                     kotlincProvider = lazy {
                         // NOTE: FromKotlinDistForIdeByNameFallbackBundledFirCompilerPluginProvider
                         // requires it should be under KotlinArtifactConstants.KOTLIN_DIST_LOCATION_PREFIX
-                        provider.getKotlincCompilerCli().toFile()
+                        provider.getKotlincCompilerCli()
                     }
-                    jpsPluginClasspathProvider = lazy { provider.getJpsPluginClasspath().map { it.toFile() } }
+                    jpsPluginClasspathProvider = lazy { provider.getJpsPluginClasspath() }
                     standaloneCompilerVersionProvider = standaloneCompilerVersionDefaultProvider
                 }
                 else {
@@ -140,8 +157,8 @@ object KotlinPluginLayout {
                             bundledJpsVersion
                         ) ?: error("Can't download dist")
                         val unpackedDistDir =
-                            KotlinArtifactConstants.KOTLIN_DIST_LOCATION_PREFIX.resolve("kotlinc-dist-for-ide-from-sources")
-                        LazyZipUnpacker(unpackedDistDir).lazyUnpack(distJar)
+                            KotlinArtifactConstants.KOTLIN_DIST_LOCATION_PREFIX_PATH.resolve("kotlinc-dist-for-ide-from-sources")
+                        LazyZipUnpacker(unpackedDistDir.toFile()).lazyUnpack(distJar)
                     }
 
                     jpsPluginClasspathProvider = lazy {
@@ -152,7 +169,7 @@ object KotlinPluginLayout {
                             bundledJpsVersion
                         )
 
-                        listOf(jpsPluginArtifact.toFile())
+                        listOf(jpsPluginArtifact)
                     }
                     standaloneCompilerVersionProvider = standaloneCompilerVersionDefaultProvider
                 }
@@ -162,7 +179,7 @@ object KotlinPluginLayout {
                 val kotlinPluginRoot = getPluginDistDirByClass(KotlinPluginLayout::class.java)
                     ?: error("Can't find jar file for ${KotlinPluginLayout::class.simpleName}")
 
-                fun resolve(path: String) = kotlinPluginRoot.resolve(path).also { check(it.exists()) { "$it doesn't exist" } }.toFile()
+                fun resolve(path: String) = kotlinPluginRoot.resolve(path).also { check(it.exists()) { "$it doesn't exist" } }
 
                 kotlincProvider = lazy { resolve("kotlinc") }
                 jpsPluginClasspathProvider = lazy { listOf(resolve("lib/jps/kotlin-jps-plugin.jar")) }

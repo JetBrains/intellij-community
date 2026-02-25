@@ -5,18 +5,18 @@ package org.jetbrains.kotlin.idea.compilerPlugin.noarg.maven
 import org.jetbrains.idea.maven.project.MavenProject
 import org.jetbrains.kotlin.idea.base.plugin.artifacts.KotlinArtifacts
 import org.jetbrains.kotlin.idea.compilerPlugin.CompilerPluginSetup.PluginOption
-import org.jetbrains.kotlin.idea.jps.toJpsVersionAgnosticKotlinBundledPath
 import org.jetbrains.kotlin.idea.maven.compilerPlugin.AbstractMavenImportHandler
 import org.jetbrains.kotlin.noarg.NoArgPluginNames.ANNOTATION_OPTION_NAME
 import org.jetbrains.kotlin.noarg.NoArgPluginNames.INVOKE_INITIALIZERS_OPTION_NAME
 import org.jetbrains.kotlin.noarg.NoArgPluginNames.PLUGIN_ID
 import org.jetbrains.kotlin.noarg.NoArgPluginNames.SUPPORTED_PRESETS
+import java.nio.file.Path
 
 class NoArgMavenProjectImportHandler : AbstractMavenImportHandler() {
-    override val compilerPluginId = PLUGIN_ID
-    override val pluginName = "noarg"
-    override val mavenPluginArtifactName = "kotlin-maven-noarg"
-    override val pluginJarFileFromIdea = KotlinArtifacts.noargCompilerPlugin.toJpsVersionAgnosticKotlinBundledPath()
+    override val compilerPluginId: String = PLUGIN_ID
+    override val pluginName: String = "noarg"
+    override val mavenPluginArtifactName: String = "kotlin-maven-noarg"
+    override val pluginJarFileFromIdea: Path = KotlinArtifacts.noargCompilerPluginPath
 
     override fun getOptions(
         mavenProject: MavenProject,

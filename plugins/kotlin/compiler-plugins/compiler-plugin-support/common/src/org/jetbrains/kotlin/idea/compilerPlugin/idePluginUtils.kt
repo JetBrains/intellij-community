@@ -10,6 +10,7 @@ import org.jetbrains.kotlin.idea.facet.KotlinFacet
 import org.jetbrains.kotlin.idea.facet.getInstance
 import org.jetbrains.kotlin.idea.serialization.updateCompilerArguments
 import java.io.File
+import java.nio.file.Path
 
 fun Module.getSpecialAnnotations(prefix: String): List<String> =
     KotlinCommonCompilerArgumentsHolder.getInstance(this).pluginOptions
@@ -17,7 +18,7 @@ fun Module.getSpecialAnnotations(prefix: String): List<String> =
         ?.map { it.substring(prefix.length) }
         ?: emptyList()
 
-class CompilerPluginSetup(val options: List<PluginOption>, val classpath: List<String>) {
+class CompilerPluginSetup(val options: List<PluginOption>, val classpath: List<Path>) {
     class PluginOption(val key: String, val value: String)
 }
 
@@ -26,7 +27,9 @@ fun modifyCompilerArgumentsForPlugin(
     setup: CompilerPluginSetup?,
     compilerPluginId: String,
     pluginName: String
-) = modifyCompilerArgumentsForPluginWithFacetSettings(facet.configuration.settings, setup, compilerPluginId, pluginName)
+) {
+    modifyCompilerArgumentsForPluginWithFacetSettings(facet.configuration.settings, setup, compilerPluginId, pluginName)
+}
 
 fun modifyCompilerArgumentsForPluginWithFacetSettings(
     facetSettings: IKotlinFacetSettings,
@@ -53,14 +56,14 @@ private fun getNewPluginClasspathsOrNull(
     commonArguments: CommonCompilerArguments,
     pluginName: String,
     setup: CompilerPluginSetup?
-): Array<String>? {
+): Array<Path>? {
     val oldPluginClasspaths = (commonArguments.pluginClasspaths ?: emptyArray()).filterTo(mutableListOf()) {
         val lastIndexOfFile = it.lastIndexOfAny(charArrayOf('/', File.separatorChar))
         if (lastIndexOfFile < 0) {
             return@filterTo true
         }
         !it.drop(lastIndexOfFile + 1).matches("(kotlin-)?(maven-)?$pluginName-.*\\.jar".toRegex())
-    }
+    }.map(Path::of)
 
     val newClasspath = setup?.classpath ?: emptyList()
     val newPluginClasspaths = (oldPluginClasspaths + newClasspath).toTypedArray()
@@ -86,21 +89,21 @@ private fun setupCompilerArguments(
     facetSettings: IKotlinFacetSettings,
     commonArguments: CommonCompilerArguments,
     newOptionsForPlugin: Array<String>?,
-    newClasspath: Array<String>?,
+    newClasspath: Array<Path>?,
 ) {
     newOptionsForPlugin?.also { commonArguments.pluginOptions = newOptionsForPlugin }
-    newClasspath?.also { commonArguments.pluginClasspaths = newClasspath }
+    newClasspath?.also { commonArguments.pluginClasspaths = newClasspath.map(Path::toString).toTypedArray() }
     facetSettings.compilerArguments = commonArguments
 }
 
 private fun updateCompilerArgumentsIfNeeded(
     facetSettings: IKotlinFacetSettings,
     newOptionsForPlugin: Array<String>?,
-    newClasspath: Array<String>?,
+    newClasspath: Array<Path>?,
 ) {
     if (newOptionsForPlugin == null && newClasspath == null) return
     facetSettings.updateCompilerArguments {
         newOptionsForPlugin?.also { pluginOptions = newOptionsForPlugin }
-        newClasspath?.also { pluginClasspaths = newClasspath }
+        newClasspath?.also { pluginClasspaths = newClasspath.map(Path::toString).toTypedArray() }
     }
 }

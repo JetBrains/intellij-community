@@ -14,6 +14,7 @@ import org.jetbrains.kotlin.idea.facet.KotlinFacet
 import org.jetbrains.kotlin.idea.gradleJava.configuration.GradleProjectImportHandler
 import org.jetbrains.kotlin.idea.gradleTooling.model.annotation.AnnotationBasedPluginModel
 import org.jetbrains.plugins.gradle.model.data.GradleSourceSetData
+import java.nio.file.Path
 
 abstract class AbstractAnnotationBasedCompilerPluginGradleImportHandler<T : AnnotationBasedPluginModel> : AbstractCompilerPluginGradleImportHandler<T>() {
     abstract val annotationOptionName: String
@@ -36,7 +37,13 @@ abstract class AbstractAnnotationBasedCompilerPluginGradleImportHandler<T : Anno
 abstract class AbstractCompilerPluginGradleImportHandler<T> : GradleProjectImportHandler {
     abstract val compilerPluginId: String
     abstract val pluginName: String
-    abstract val pluginJarFileFromIdea: String
+
+    open val pluginJarFromIdea: Path
+        get() = Path.of(pluginJarFileFromIdea)
+
+    @Deprecated("Use pluginJarFromIdea instead")
+    open val pluginJarFileFromIdea: String
+        get() = pluginJarFromIdea.toString()
     abstract val modelKey: Key<T>
 
     override fun importBySourceSet(facet: KotlinFacet, sourceSetNode: DataNode<GradleSourceSetData>) {
@@ -62,7 +69,7 @@ abstract class AbstractCompilerPluginGradleImportHandler<T> : GradleProjectImpor
 
         // For now we can't use plugins from Gradle cause they're shaded and may have an incompatible version.
         // So we use ones from the IDEA plugin.
-        val classpath = listOf(pluginJarFileFromIdea)
+        val classpath = listOf(pluginJarFromIdea)
 
         return CompilerPluginSetup(options, classpath)
     }

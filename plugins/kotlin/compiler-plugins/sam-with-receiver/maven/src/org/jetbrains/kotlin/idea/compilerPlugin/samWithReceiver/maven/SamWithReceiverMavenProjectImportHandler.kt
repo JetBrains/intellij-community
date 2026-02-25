@@ -5,15 +5,15 @@ package org.jetbrains.kotlin.idea.compilerPlugin.samWithReceiver.maven
 import org.jetbrains.idea.maven.project.MavenProject
 import org.jetbrains.kotlin.idea.base.plugin.artifacts.KotlinArtifacts
 import org.jetbrains.kotlin.idea.compilerPlugin.CompilerPluginSetup.PluginOption
-import org.jetbrains.kotlin.idea.jps.toJpsVersionAgnosticKotlinBundledPath
 import org.jetbrains.kotlin.idea.maven.compilerPlugin.AbstractMavenImportHandler
 import org.jetbrains.kotlin.samWithReceiver.SamWithReceiverPluginNames
+import java.nio.file.Path
 
 class SamWithReceiverMavenProjectImportHandler : AbstractMavenImportHandler() {
-    override val compilerPluginId = SamWithReceiverPluginNames.PLUGIN_ID
-    override val pluginName = "samWithReceiver"
-    override val mavenPluginArtifactName = "kotlin-maven-sam-with-receiver"
-    override val pluginJarFileFromIdea = KotlinArtifacts.samWithReceiverCompilerPlugin.toJpsVersionAgnosticKotlinBundledPath()
+    override val compilerPluginId: String = SamWithReceiverPluginNames.PLUGIN_ID
+    override val pluginName: String = "samWithReceiver"
+    override val mavenPluginArtifactName: String = "kotlin-maven-sam-with-receiver"
+    override val pluginJarFileFromIdea: Path = KotlinArtifacts.samWithReceiverCompilerPluginPath
 
     override fun getOptions(
         mavenProject: MavenProject,
