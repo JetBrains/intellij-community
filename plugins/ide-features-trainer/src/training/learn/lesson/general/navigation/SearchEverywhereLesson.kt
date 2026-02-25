@@ -2,7 +2,6 @@
 package training.learn.lesson.general.navigation
 
 import com.intellij.ide.actions.searcheverywhere.SearchEverywhereManagerImpl
-import com.intellij.ide.actions.searcheverywhere.SearchEverywhereUI
 import com.intellij.navigation.NavigationItem
 import com.intellij.openapi.actionSystem.impl.ActionButtonWithText
 import com.intellij.openapi.editor.impl.EditorComponentImpl
@@ -13,10 +12,10 @@ import com.intellij.psi.search.EverythingGlobalScope
 import com.intellij.psi.search.ProjectScope
 import com.intellij.ui.components.fields.ExtendableTextField
 import com.intellij.ui.searchComponents.ExtendableSearchTextField
-import com.intellij.util.ui.UIUtil
 import training.dsl.LessonContext
 import training.dsl.LessonUtil
 import training.dsl.LessonUtil.adjustPopupPosition
+import training.dsl.LessonUtil.checkInsideSearchEverywhere
 import training.dsl.LessonUtil.restorePopupPosition
 import training.dsl.TaskRuntimeContext
 import training.dsl.TaskTestContext
@@ -183,12 +182,8 @@ abstract class SearchEverywhereLesson : KLesson("Search everywhere", LessonsBund
 
   open fun LessonContext.epilogue() = Unit
 
-  private fun TaskRuntimeContext.checkWordInSearch(expected: String): Boolean =
+  protected fun TaskRuntimeContext.checkWordInSearch(expected: String): Boolean =
     (focusOwner as? ExtendableTextField)?.text?.equals(expected, ignoreCase = true) == true
-
-  private fun TaskRuntimeContext.checkInsideSearchEverywhere(): Boolean {
-    return UIUtil.getParentOfType(SearchEverywhereUI::class.java, focusOwner) != null
-  }
 
   override val helpLinks: Map<String, String> get() = mapOf(
     Pair(LessonsBundle.message("help.search.everywhere"),

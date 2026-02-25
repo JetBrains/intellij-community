@@ -13,6 +13,7 @@ import com.intellij.execution.ui.layout.impl.RunnerLayoutSettings
 import com.intellij.find.impl.FindPopupItem
 import com.intellij.ide.DataManager
 import com.intellij.ide.IdeBundle
+import com.intellij.ide.util.gotoByName.QuickSearchComponent
 import com.intellij.openapi.actionSystem.ActionPlaces
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.ex.ActionUtil
@@ -53,7 +54,6 @@ import com.intellij.ui.ComponentUtil
 import com.intellij.ui.ExperimentalUI
 import com.intellij.ui.ScreenUtil
 import com.intellij.ui.content.Content
-import com.intellij.ui.searchComponents.ExtendableSearchTextField
 import com.intellij.usageView.UsageViewContentManager
 import com.intellij.util.messages.Topic
 import com.intellij.util.ui.UIUtil
@@ -249,8 +249,16 @@ object LessonUtil {
     return change.replace(" ", "") == needChange
   }
 
+  /**
+   * The check is intended to cover two cases:
+   * 1. `com.intellij.ide.actions.searcheverywhere.SearchEverywhereUI`
+   * 2. `com.intellij.platform.searchEverywhere.frontend.ui.SePopupContentPane` (new Search Everywhere)
+   *
+   * Have to use `QuickSearchComponent` for matching here,
+   * because can't reference `SePopupContentPane` directly (it requires adding a dependency on SE frontend).
+   */
   fun TaskRuntimeContext.checkInsideSearchEverywhere(): Boolean {
-    return UIUtil.getParentOfType(ExtendableSearchTextField::class.java, focusOwner) != null
+    return UIUtil.getParentOfType(QuickSearchComponent::class.java, focusOwner) != null
   }
 
   fun isMainEditorComponent(component: Component?): Boolean {
