@@ -14,10 +14,12 @@ import com.intellij.ide.util.gotoByName.GotoClassSymbolConfiguration
 import com.intellij.ide.util.gotoByName.LanguageRef
 import com.intellij.ide.util.gotoByName.LanguageRef.Companion.forAllLanguages
 import com.intellij.lang.LanguageStructureViewBuilder
+import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.application.readAction
+import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
@@ -26,11 +28,13 @@ import com.intellij.platform.backend.navigation.NavigationRequest
 import com.intellij.pom.Navigatable
 import com.intellij.psi.PsiElement
 import com.intellij.psi.codeStyle.NameUtil
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.Nls
 import java.util.regex.Pattern
 
 private val patternToDetectMembers = Pattern.compile("(.+)(#)(.*)")
+private val LOG = logger<ClassSearchEverywhereContributor>()
 
 open class ClassSearchEverywhereContributor @Internal constructor(event: AnActionEvent, contributorModules: List<SearchEverywhereContributorModule>?)
   : AbstractGotoSEContributor(event, contributorModules), EssentialContributor, SearchEverywherePreviewProvider {
@@ -68,8 +72,18 @@ open class ClassSearchEverywhereContributor @Internal constructor(event: AnActio
 
   override fun getSortWeight(): Int = 100
 
+  @ApiStatus.Internal
+  override fun createModelWithOperationDisposable(project: Project, operationDisposable: Disposable?): FilteringGotoByModel<LanguageRef> {
+    val customModel = contributorModules?.firstNotNullOfOrNull { mod -> mod.createCustomModel(project, this, operationDisposable) }
+    if (customModel != null) return customModel
+
+    val model = GotoClassModel2(project)
+    model.setFilterItems(filter.selectedElements)
+    return model
+  }
+
   override fun createModel(project: Project): FilteringGotoByModel<LanguageRef> {
-    val customModel = contributorModules?.firstNotNullOfOrNull { mod -> mod.createCustomModel(project, this) }
+    val customModel = contributorModules?.firstNotNullOfOrNull { mod -> mod.createCustomModel(project, this, null) }
     if (customModel != null) return customModel
 
     val model = GotoClassModel2(project)

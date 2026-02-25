@@ -68,7 +68,7 @@ class SeTargetsProviderDelegate(private val contributorWrapper: SeAsyncContribut
     Disposer.register(parentDisposable, this)
   }
 
-  suspend fun <T> collectItems(params: SeParams, collector: SeItemsProvider.Collector) {
+  suspend fun <T> collectItems(params: SeParams, collector: SeItemsProvider.Collector, operationDisposable: Disposable? = null) {
     val inputQuery = params.inputQuery
     val defaultMatchers = createDefaultMatchers(inputQuery)
 
@@ -90,7 +90,7 @@ class SeTargetsProviderDelegate(private val contributorWrapper: SeAsyncContribut
 
         return collector.put(SeTargetItem(legacyItem, matchers, weight, contributor, contributor.getExtendedInfo(legacyItem), contributorWrapper.contributor.isMultiSelectionSupported))
       }
-    })
+    }, operationDisposable)
   }
 
   suspend fun itemSelected(item: SeItem, modifiers: Int, searchText: String): Boolean {
