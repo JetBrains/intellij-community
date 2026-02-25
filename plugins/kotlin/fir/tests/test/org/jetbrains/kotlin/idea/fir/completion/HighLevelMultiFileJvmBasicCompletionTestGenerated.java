@@ -210,6 +210,11 @@ public class HighLevelMultiFileJvmBasicCompletionTestGenerated extends AbstractH
         runTest("../../completion/testData/basic/multifile/FlexibleType/");
     }
 
+    @TestMetadata("FlexibleTypeEnum")
+    public void testFlexibleTypeEnum() throws Exception {
+        runTest("../../completion/testData/basic/multifile/FlexibleTypeEnum/");
+    }
+
     @TestMetadata("FlexibleTypeNotNull")
     public void testFlexibleTypeNotNull() throws Exception {
         runTest("../../completion/testData/basic/multifile/FlexibleTypeNotNull/");
