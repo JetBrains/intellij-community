@@ -129,7 +129,7 @@
     <editorSkeletonPolicy implementation="com.intellij.openapi.fileEditor.DefaultEditorSkeletonPolicy"/>
     <registryKey
       key="editor.skeleton.enabled"
-      defaultValue="true"
+      defaultValue="false"
       description="Enable editor skeleton when the editor is not shown for a long period"
     />
     <registryKey
