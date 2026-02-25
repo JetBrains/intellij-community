@@ -32,8 +32,8 @@ internal object GitAmendSpecificCommitSquasher {
    * If squash fails, the "amend!" commit is undone
    */
   fun squashAmendCommitIntoTarget(repository: GitRepository, target: Hash, newMessage: String) {
-    val amendCommit = GitLogUtil.collectMetadata(repository.project, repository.root, listOf(GitUtil.HEAD)).single()
-    val targetCommit = GitLogUtil.collectMetadata(repository.project, repository.root, listOf(target.asString())).single()
+    val amendCommit = GitLogUtil.collectMetadataForCommit(repository.project, repository.root, GitUtil.HEAD) ?: error("No HEAD commit")
+    val targetCommit = GitLogUtil.collectMetadataForCommit(repository.project, repository.root, target.asString()) ?: error("No target commit")
 
     check(GitSquashedCommitsMessage.canAutosquash(amendCommit.fullMessage, setOf(targetCommit.subject)))
 
