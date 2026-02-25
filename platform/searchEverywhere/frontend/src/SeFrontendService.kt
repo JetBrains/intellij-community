@@ -71,6 +71,7 @@ import java.util.concurrent.CompletableFuture
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicBoolean
 import javax.swing.SwingUtilities
+import kotlin.time.Duration.Companion.milliseconds
 
 @ApiStatus.Internal
 @Service(Service.Level.PROJECT, Service.Level.APP)
@@ -204,10 +205,10 @@ class SeFrontendService(val project: Project?, private val coroutineScope: Corou
       }
     }.map { (loadingTabId, tabLoadingProperty) ->
       popupScope.async {
-        withTimeoutOrNull(tabInitializationTimeoutMillis) {
+        withTimeoutOrNull(tabInitializationTimeoutMillis.milliseconds) {
           tabLoadingProperty.getValue()
         } ?: run {
-          if ((tabId + MAIN_TABS).contains(loadingTabId)) {
+          if (loadingTabId == tabId || loadingTabId in MAIN_TABS) {
             SeLog.warn("Tab $tabId initialization took too long (> ${tabInitializationTimeoutMillis}ms), waiting it's initialization anyway")
             // If we have to open this tab right after the popup is there, we wait until it gets initialized
             tabLoadingProperty.getValue()
