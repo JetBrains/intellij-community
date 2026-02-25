@@ -9,13 +9,15 @@ internal data class TerminalSessionPersistedTab(
   val name: String?,
   @Attribute
   val isUserDefinedName: Boolean,
-  @XCollection()
+  @XCollection
   val shellCommand: List<String>?,
   @Attribute
   val workingDirectory: String?,
+  @XCollection
+  val envVariables: Map<String, String>?,
   @Attribute
   val processType: TerminalProcessType?,
 ) {
   @Suppress("unused")  // It is used in deserialization
-  constructor() : this(null, false, null, null, null)
+  constructor() : this(null, false, null, null, null, null)
 }
