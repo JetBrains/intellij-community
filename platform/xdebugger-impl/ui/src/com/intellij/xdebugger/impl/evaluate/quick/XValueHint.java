@@ -28,7 +28,6 @@ import com.intellij.ui.SimpleColoredComponent;
 import com.intellij.ui.SimpleColoredComponentWithProgress;
 import com.intellij.ui.SimpleColoredText;
 import com.intellij.ui.SimpleTextAttributes;
-import com.intellij.ui.components.JBPanel;
 import com.intellij.util.concurrency.EdtExecutorService;
 import com.intellij.util.ui.components.BorderLayoutPanel;
 import com.intellij.xdebugger.XDebugSession;
@@ -59,10 +58,10 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.Icon;
 import javax.swing.JComponent;
-import javax.swing.JPanel;
 import java.awt.Point;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.function.Function;
 
 import static com.intellij.codeInsight.hint.HintUtil.installInformationProperties;
 
@@ -260,6 +259,7 @@ public class XValueHint extends AbstractValueHint {
         private boolean myShown = false;
         private SimpleColoredComponent mySimpleColoredComponent;
         private @Nullable HintPresentation myHintPresentation;
+        private @Nullable XDebuggerTreeNodeHyperlink myLink;
 
         @Override
         public void applyPresentation(@Nullable Icon icon,
@@ -326,6 +326,13 @@ public class XValueHint extends AbstractValueHint {
         @Override
         public void setFullValueEvaluator(@NotNull XFullValueEvaluator fullValueEvaluator) {
           myFullValueEvaluator = fullValueEvaluator;
+          updateDisplayedTooltip(oldPresentation -> new HintPresentation(
+            oldPresentation.icon(), oldPresentation.text(), oldPresentation.hasChildren(),
+            oldPresentation.valuePresentation(), fullValueEvaluator, oldPresentation.link()
+          ));
+        }
+
+        private void updateDisplayedTooltip(Function<HintPresentation, HintPresentation> buildNewPresentation) {
           if (!myShown || isHintHidden()) {
             return;
           }
@@ -333,19 +340,16 @@ public class XValueHint extends AbstractValueHint {
             return;
           }
 
-          HintPresentation presentation = new HintPresentation(
-            myHintPresentation.icon(), myHintPresentation.text(), myHintPresentation.hasChildren(),
-            myHintPresentation.valuePresentation(), fullValueEvaluator, myHintPresentation.link()
-          );
-          myHintPresentation = presentation;
+          HintPresentation newPresentation = buildNewPresentation.apply(myHintPresentation);
+          myHintPresentation = newPresentation;
 
-          if (!presentation.hasChildren()) {
-            showTooltipPopup(createHintComponent(presentation.icon(), presentation.text(),
-                                                 presentation.valuePresentation(), presentation.evaluator(), presentation.link()));
+          if (!newPresentation.hasChildren()) {
+            showTooltipPopup(createHintComponent(newPresentation.icon(), newPresentation.text(),
+                                                 newPresentation.valuePresentation(), newPresentation.evaluator(), newPresentation.link()));
             return;
           }
 
-          updateShownExpandableHint(presentation);
+          updateShownExpandableHint(newPresentation);
         }
 
         @Override
@@ -377,8 +381,6 @@ public class XValueHint extends AbstractValueHint {
           return true;
         }
 
-        private @Nullable XDebuggerTreeNodeHyperlink myLink;
-
         @Override
         public void clearAdditionalHyperlinks() {
           myLink = null;
@@ -386,7 +388,14 @@ public class XValueHint extends AbstractValueHint {
 
         @Override
         public void addAdditionalHyperlink(@NotNull XDebuggerTreeNodeHyperlink link) {
+          if (myLink != null) {
+            LOG.error("Replacing additional link with the new one. Only one can be displayed. Previous: `" + myLink.getLinkText() + "`, new: `" + link + "`");
+          }
           myLink = link;
+          updateDisplayedTooltip(oldPresentation -> new HintPresentation(
+            oldPresentation.icon(), oldPresentation.text(), oldPresentation.hasChildren(),
+            oldPresentation.valuePresentation(), oldPresentation.evaluator(), link
+          ));
         }
 
         @Override
