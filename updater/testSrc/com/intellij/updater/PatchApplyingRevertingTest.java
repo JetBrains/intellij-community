@@ -353,7 +353,7 @@ abstract class PatchApplyingRevertingTest {
     var dirs = prepareDirectories(tempDir, dataDir, true);
     var spec = createPatchSpec(dirs.oldDir, dirs.newDir)
       .setStrict(true)
-      .setCriticalFiles(Collections.singletonList("lib/annotations.jar"));
+      .setCriticalFiles(java.util.Collections.singletonList("lib/annotations.jar"));
     var patch = createPatch(spec);
 
     File file = dirs.oldDir.resolve("lib/annotations.jar").toFile();

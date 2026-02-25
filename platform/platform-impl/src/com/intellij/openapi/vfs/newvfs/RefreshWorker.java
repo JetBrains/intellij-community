@@ -88,7 +88,7 @@ final class RefreshWorker {
   private static final Logger LOG = Logger.getInstance(RefreshWorker.class);
 
   private static final int PARALLELISM =
-    Optional.ofNullable(System.getProperty("vfs.refresh.worker.parallelism.unrestricted"))
+    java.util.Optional.ofNullable(System.getProperty("vfs.refresh.worker.parallelism.unrestricted"))
       .flatMap(RefreshWorker::tryParseInt)
       .orElseGet(() ->
         MathUtil.clamp(
@@ -97,12 +97,12 @@ final class RefreshWorker {
         )
       );
 
-  private static Optional<Integer> tryParseInt(String s) {
+  private static java.util.Optional<Integer> tryParseInt(String s) {
     try {
-      return Optional.of(Integer.parseInt(s));
+      return java.util.Optional.of(Integer.parseInt(s));
     }
     catch (NumberFormatException e) {
-      return Optional.empty();
+      return java.util.Optional.empty();
     }
   }
 

@@ -193,7 +193,7 @@ public final class MissingReturnInspection extends GroovyLocalInspectionTool {
 
     // Android Studio: Don't report these errors in build.gradle files;
     // they're usually wrong
-    PsiFile containingFile = lastChild.getContainingFile();
+    com.intellij.psi.PsiFile containingFile = lastChild.getContainingFile();
     if (containingFile != null && containingFile.getName().endsWith(".gradle")) {
       return;
     }
