@@ -22,7 +22,7 @@ def main():
     assert workspace.joinpath('WORKSPACE').exists(), 'failed to find workspace root'
 
     # Set properties not currently exposed as flags.
-    args.kotlinc_version = '2.3.255-dev-255'  # Must match BOOTSTRAP_VERSION in project-model-updater.
+    args.kotlinc_version = '2.4.255-dev-255'  # Must match BOOTSTRAP_VERSION in project-model-updater.
     args.intellij_dir = workspace.joinpath('tools/idea')
     args.kotlinc_dir = workspace.joinpath('external/jetbrains/kotlin')
     args.gradlew = args.kotlinc_dir.joinpath('gradlew')

@@ -11,19 +11,18 @@ optional dependency on the module 'com.intellij.modules.androidstudio' declared 
   -->
   <incompatible-with>com.intellij.nativeDebug</incompatible-with>
   <!-- The following content is loosely based on IdeaPlugin.xml. -->
+  <xi:include href="/META-INF/PlatformLangPlugin.xml"/>
   <xi:include href="/META-INF/JavaIdePlugin.xml"/>
   <module value="com.intellij.modules.java-capable"/>
   <module value="com.intellij.modules.python-core-capable"/> <!-- Python plugin can be installed -->
   <module value="com.intellij.modules.python-in-non-pycharm-ide-capable"/> <!-- Enable Non-Pycharm-IDE support in Python plugin -->
   <content namespace="jetbrains">
     <module name="intellij.platform.customization.min"/>
-    <module name="intellij.debugger.streams.core"/>
-    <module name="intellij.debugger.streams.shared"/>
-    <module name="intellij.debugger.streams.backend"/>
     <module name="intellij.platform.coverage"/>
     <module name="intellij.platform.coverage.agent"/>
     <!-- From CLionPlugin.xml: -->
     <module name="intellij.rml.dfa.impl"/>
   </content>
   <xi:include href="/META-INF/intellij.moduleSets.ide.common.xml"/>
+  <xi:include href="/META-INF/intellij.moduleSets.debugger.streams.xml"/>
 </idea-plugin>

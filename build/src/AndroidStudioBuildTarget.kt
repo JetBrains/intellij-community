@@ -11,7 +11,7 @@ object AndroidStudioBuildTarget {
   fun main(args: Array<String>) {
     runBlocking {
       val home = BuildPaths.COMMUNITY_ROOT
-      val properties = AndroidStudioProperties(home.communityRoot)
+      val properties = AndroidStudioProperties()
       val buildContext = BuildContextImpl.createContext(home.communityRoot, properties)
       validateProductVersion(buildContext)
       val tasks = createBuildTasks(buildContext)

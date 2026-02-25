@@ -15,9 +15,8 @@ object TestModuleTarget {
   fun main(args: Array<String>) {
     runBlocking {
       val home = BuildPaths.COMMUNITY_ROOT
-      val properties = AndroidStudioProperties(home.communityRoot)
+      val properties = AndroidStudioProperties()
       val context = BuildContextImpl.createContext(home.communityRoot, properties)
-      val tasks = CompilationTasks.create(context)
 
       val moduleName = System.getProperty("idea.test.module")
       val outDir = context.paths.artifactDir.resolve("module-tests")
@@ -25,16 +24,15 @@ object TestModuleTarget {
 
       val modules = mutableListOf<String>()
       modules.add(moduleName)
-      tasks.compileModules(modules, includingTestsInModules = modules)
+      context.compileModules(modules, includingTestsInModules = modules)
 
 
       val workspace = Path.of(System.getenv("JPS_WORKSPACE"))
       val classPath = mutableListOf<String>()
       for (path in context.getModuleRuntimeClasspath(module, forTests = true)) {
-        val p = Path.of(path)
-        if (p.exists()) {
-          if (p.startsWith(workspace)) {
-              val rel = workspace.relativize(p)
+        if (path.exists()) {
+          if (path.startsWith(workspace)) {
+              val rel = workspace.relativize(path)
               classPath.add(rel.toString())
           } else {
             check(false) { "Class path entry ${path}, not recognized as any source." }
