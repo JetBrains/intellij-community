@@ -9,7 +9,8 @@
 
   <resource-bundle>messages.PyProjectTomlBundle</resource-bundle>
   <extensions defaultExtensionNs="com.intellij">
-    <registryKey defaultValue="true" description="Load project structure from pyproject.toml" key="intellij.python.pyproject.model"
+    <!-- "ask" means "ask user"-->
+    <registryKey defaultValue="[off*|on|ask]" description="Load project structure from pyproject.toml" key="intellij.python.pyproject.model"
                  restartRequired="true"/>
     <notificationGroup id="PyProject.toml" displayType="STICKY_BALLOON" isLogByDefault="true"
                        bundle="messages.PyProjectTomlBundle" key="pyproject.notification.title"/>

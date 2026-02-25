@@ -10,6 +10,10 @@ import com.intellij.openapi.components.Storage
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.registry.Registry
+import com.intellij.python.pyproject.model.PyProjectModelSettings.Companion.isEnabledByUserAndRegistry
+import com.intellij.python.pyproject.model.PyProjectModelSettings.FeatureState.ASK
+import com.intellij.python.pyproject.model.PyProjectModelSettings.FeatureState.OFF
+import com.intellij.python.pyproject.model.PyProjectModelSettings.FeatureState.ON
 import com.intellij.python.pyproject.model.internal.autoImportBridge.PyProjectAutoImportService
 
 
@@ -27,7 +31,10 @@ class PyProjectModelSettings(private val project: Project) :
 
 
   var usePyprojectToml: Boolean
-    get() = isFeatureEnabled && myState.usePyprojectToml
+    get() = when (featureStateInRegistry) {
+      ON, ASK -> myState.usePyprojectToml
+      OFF -> false
+    }
     set(value) {
       if (myState.usePyprojectToml != value) {
         myState.usePyprojectToml = value
@@ -59,10 +66,37 @@ class PyProjectModelSettings(private val project: Project) :
     fun getInstance(project: Project): PyProjectModelSettings = project.service()
 
     /**
-     * Hard setting: if disabled -> feature is disabled on the Registry.
-     * For user-defined setting, check [PyProjectModelSettings.usePyprojectToml].
-     * Be sure to check **both** except for UI for the aforementioned service.
+     * Auto-import (converting `pyproject.toml` to modules) enabled *both* in registry and on user level.
      */
-    val isFeatureEnabled: Boolean get() = Registry.`is`("intellij.python.pyproject.model")
+    fun isEnabledByUserAndRegistry(project: Project): Boolean =
+      when (featureStateInRegistry) {
+        ON -> true
+        OFF -> false
+        ASK -> getInstance(project).usePyprojectToml
+      }
+
+    /**
+     * Hard setting: if disabled -> feature is disabled on the Registry.
+     * For user-defined setting, check [isEnabledByUserAndRegistry] or (more low-level) [PyProjectModelSettings.usePyprojectToml].
+     * Be sure to check **both** (by means of [isEnabledByUserAndRegistry]) except for UI for the aforementioned service.
+     */
+    val featureStateInRegistry: FeatureState get() = Registry.get("intellij.python.pyproject.model").asEnum(FeatureState.entries)
+  }
+
+  enum class FeatureState {
+    /**
+     * Always convert `pyproject.toml` to modules
+     */
+    ON,
+
+    /**
+     * Never convert `pyproject.toml` to modules
+     */
+    OFF,
+
+    /**
+     * Look for `pyproject.toml` and, if any, ask user. Then, store the answer on project level. See [PyProjectModelSettings]
+     */
+    ASK
   }
 }

@@ -8,12 +8,15 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.ui.configuration.PlatformContentEntriesConfigurable
 import com.intellij.openapi.ui.DialogPanel
 import com.intellij.openapi.util.Key
+import com.intellij.python.pyproject.model.PyProjectModelSettings
+import com.intellij.python.pyproject.model.PyProjectModelSettings.FeatureState.ASK
+import com.intellij.python.pyproject.model.PyProjectModelSettings.FeatureState.OFF
+import com.intellij.python.pyproject.model.PyProjectModelSettings.FeatureState.ON
 import com.intellij.ui.dsl.builder.Align
 import com.intellij.ui.dsl.builder.bindSelected
 import com.intellij.ui.dsl.builder.panel
 import com.intellij.util.PlatformUtils
 import com.jetbrains.python.PyBundle
-import com.intellij.python.pyproject.model.PyProjectModelSettings
 import org.jetbrains.jps.model.java.JavaSourceRootType
 import javax.swing.JComponent
 
@@ -38,8 +41,11 @@ class PythonContentEntriesConfigurable(project: Project) : ModuleAwareProjectCon
   }
 
   override fun createComponent(): JComponent? {
-    if (!PyProjectModelSettings.isFeatureEnabled) {
-      return super.createComponent()
+    when (PyProjectModelSettings.featureStateInRegistry) {
+      ON, OFF -> {
+        return super.createComponent()
+      }
+      ASK -> Unit
     }
 
     val settings = PyProjectModelSettings.getInstance(project)

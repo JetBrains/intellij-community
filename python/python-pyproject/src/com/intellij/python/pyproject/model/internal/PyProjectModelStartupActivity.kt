@@ -13,12 +13,20 @@ import com.intellij.psi.search.FilenameIndex
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.python.pyproject.PY_PROJECT_TOML
 import com.intellij.python.pyproject.model.PyProjectModelSettings
+import com.intellij.python.pyproject.model.PyProjectModelSettings.FeatureState.ASK
+import com.intellij.python.pyproject.model.PyProjectModelSettings.FeatureState.OFF
+import com.intellij.python.pyproject.model.PyProjectModelSettings.FeatureState.ON
 import org.jetbrains.annotations.Nls
 
 private const val NOTIFICATION_GROUP_ID = "PyProject.toml"
 
 internal suspend fun askUserIfPyProjectMustBeEnabled(project: Project) {
-  if (!PyProjectModelSettings.isFeatureEnabled) return
+  when (PyProjectModelSettings.featureStateInRegistry) {
+    ON, OFF -> {
+      return
+    }
+    ASK -> Unit
+  }
 
   val settings = PyProjectModelSettings.getInstance(project)
   if (!settings.showConfigurationNotification) return
