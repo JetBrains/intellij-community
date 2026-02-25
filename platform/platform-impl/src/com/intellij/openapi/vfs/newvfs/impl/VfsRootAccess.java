@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vfs.newvfs.impl;
 
 import com.intellij.openapi.Disposable;
@@ -48,9 +48,6 @@ import java.util.Set;
 import java.util.function.Predicate;
 
 public final class VfsRootAccess {
-  private static final boolean SHOULD_PERFORM_ACCESS_CHECK =
-    System.getenv("NO_FS_ROOTS_ACCESS_CHECK") == null && System.getProperty("NO_FS_ROOTS_ACCESS_CHECK") == null;
-
   // we don't want test subclasses to accidentally remove allowed files added by base classes
   private static final Set<String> ourAdditionalRoots = CollectionFactory.createFilePathSet(); // guarded by `ourAdditionalRoots`
   private static boolean insideGettingRoots;
@@ -81,7 +78,8 @@ public final class VfsRootAccess {
   @TestOnly
   static void assertAccessInTests(@NotNull VirtualFile child, @NotNull NewVirtualFileSystem delegate) {
     ApplicationEx app = ApplicationManagerEx.getApplicationEx();
-    if (SHOULD_PERFORM_ACCESS_CHECK &&
+    if (System.getenv("NO_FS_ROOTS_ACCESS_CHECK") == null &&
+        System.getProperty("NO_FS_ROOTS_ACCESS_CHECK") == null &&
         app.isUnitTestMode() &&
         app.isComponentCreated() &&
         !ApplicationManagerEx.isInStressTest()) {
