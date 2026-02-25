@@ -34,6 +34,7 @@ object CompilerPluginRegistrarUtils {
 }
 
 private fun readFirstExistingFileContentFromJar(jarFile: Path, pathsInJar: List<String>): String? {
+    //  non-readable (non-existing or not enough permissions) files
     if (jarFile.extension != "jar" || !Files.isReadable(jarFile)) return null
 
     FileSystems.newFileSystem(jarFile).use { fileSystem ->

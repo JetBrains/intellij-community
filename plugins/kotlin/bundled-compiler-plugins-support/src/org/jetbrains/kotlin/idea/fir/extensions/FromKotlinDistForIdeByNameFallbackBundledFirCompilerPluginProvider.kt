@@ -35,7 +35,7 @@ internal class FromKotlinDistForIdeByNameFallbackBundledFirCompilerPluginProvide
         // this provider only handles files from 'kotlin-dist-for-ide' folder
         if (!userSuppliedPluginJar.startsWith(KotlinArtifactConstants.KOTLIN_DIST_LOCATION_PREFIX_PATH)) return null
 
-        // this provider should not react to non-existing files
+        // this provider should not react to non-readable (non-existing or not enough permissions) files
         if (Files.isReadable(userSuppliedPluginJar)) return null
 
         val suppliedJarName = userSuppliedPluginJar.name
