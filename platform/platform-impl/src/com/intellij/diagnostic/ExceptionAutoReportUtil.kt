@@ -35,6 +35,7 @@ object ExceptionAutoReportUtil {
   val isAutoReportEnabled: Boolean
     get() {
       if (!isAutoReportVisible) return false
+      if (AppMode.isRunningFromDevBuild() || PluginManagerCore.isRunningFromSources()) return false
       return isAutoReportAllowedByUser()
     }
 
@@ -48,6 +49,7 @@ object ExceptionAutoReportUtil {
   val isAutoReportEnabledOrUndecided: Boolean
     get() {
       if (!isAutoReportVisible) return false
+      if (AppMode.isRunningFromDevBuild() || PluginManagerCore.isRunningFromSources()) return false
       if (ConsentOptions.getInstance().isEAP && ExceptionEAPAutoReportManager.getInstance().enabledInEAP) return true
       val (consent, needsReconfirm) = getConsentAndNeedsReconfirm()
       return consent?.isAccepted == true || needsReconfirm
@@ -63,6 +65,7 @@ object ExceptionAutoReportUtil {
 
   fun shouldOfferEnablingAutoReport(): Boolean {
     if (!isAutoReportVisible || ConsentOptions.getInstance().isEAP) return false
+    if (AppMode.isRunningFromDevBuild() || PluginManagerCore.isRunningFromSources()) return false
     val (consent, needsReconfirm) = getConsentAndNeedsReconfirm()
     if (consent == null) return false
     // the feature is already enabled
