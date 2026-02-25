@@ -8,7 +8,7 @@
 from typing import TypeVar, Generic
 T = TypeVar("T", covariant=True)
 class C(Generic[T]):
-    def method(self, t: T): # at 'T': Incompatible variance: expected contravariant but was covariant
+    def method(self, t: T): # at 'T': A covariant type variable cannot be used in this contravariant position
         pass
 </code></pre>
 

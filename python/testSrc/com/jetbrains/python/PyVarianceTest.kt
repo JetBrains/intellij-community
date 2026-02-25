@@ -80,7 +80,7 @@ internal class PyVarianceTest : PyTestCase() {
       
       class Foo(Generic[T_co]):
           def __init__(self, x: T_co) -> None: ... # allowed in __init__
-          def do_smth(self, x: <warning descr="Incompatible variance: expected contravariant but was covariant">T_co</warning>) -> None: ...
+          def do_smth(self, x: <warning descr="A covariant type variable cannot be used in this contravariant position">T_co</warning>) -> None: ...
       """)
   }
 
@@ -109,7 +109,7 @@ internal class PyVarianceTest : PyTestCase() {
       def foo(x: T_contra) -> T_contra: ...
       
       class Foo(Generic[T_contra]):
-          def do_smth(self, x: T_contra) -> <warning descr="Incompatible variance: expected covariant but was contravariant">T_contra</warning>: ...
+          def do_smth(self, x: T_contra) -> <warning descr="A contravariant type variable cannot be used in this covariant position">T_contra</warning>: ...
       """)
   }
 
@@ -122,7 +122,7 @@ internal class PyVarianceTest : PyTestCase() {
       class Inv(Generic[T]):
           ...
       
-      class Class1(Inv[<warning descr="Incompatible variance: expected invariant but was covariant">T_co</warning>]):
+      class Class1(Inv[<warning descr="A covariant type variable cannot be used in this invariant position">T_co</warning>]):
           pass
       
       inv = Inv[T_co]() # there should be no issue about incompatible variance here
@@ -150,7 +150,7 @@ internal class PyVarianceTest : PyTestCase() {
           def __init__(self, x: T_contra):
               pass
       
-          def foo(self, x) -> <warning descr="Incompatible variance: expected covariant but was contravariant">T_contra</warning>: # False-negative
+          def foo(self, x) -> <warning descr="A contravariant type variable cannot be used in this covariant position">T_contra</warning>: # False-negative
               pass
       """)
   }
