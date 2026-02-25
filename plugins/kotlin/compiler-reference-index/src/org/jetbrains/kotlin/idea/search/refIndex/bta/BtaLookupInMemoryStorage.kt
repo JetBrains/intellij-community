@@ -11,6 +11,7 @@ import kotlin.io.path.exists
 import kotlin.io.path.readBytes
 
 internal class BtaLookupInMemoryStorage private constructor(
+    // TODO KTIJ-37735: use persistent hash map to avoid retaining all CRI data in memory
     private val lookups: Map<Int, Set<Int>>,
     private val fileIdsToPaths: Map<Int, String>,
     projectPath: String,
@@ -36,7 +37,7 @@ internal class BtaLookupInMemoryStorage private constructor(
             val toolchains = KotlinToolchains.loadImplementation(ClassLoader.getSystemClassLoader())
             val (lookupEntries, fileIdToPathEntries) = toolchains.createBuildSession().use { session ->
                 val criToolchain = session.kotlinToolchains.cri
-                // TODO use streaming deserialization to avoid reading whole files
+                // TODO KTIJ-37735: use streaming deserialization to avoid reading whole files
                 val lookupsOperation = criToolchain.createCriLookupDataDeserializationOperation(lookupsData)
                 val fileIdsToPathsOperation = criToolchain.createCriFileIdToPathDataDeserializationOperation(fileIdsToPathsData)
                 session.executeOperation(lookupsOperation) to session.executeOperation(fileIdsToPathsOperation)

@@ -12,6 +12,7 @@ import kotlin.io.path.exists
 import kotlin.io.path.readBytes
 
 internal class BtaSubtypeInMemoryStorage private constructor(
+    // TODO KTIJ-37735: use persistent hash map to avoid retaining all CRI data in memory
     private val subtypes: Map<Int, Collection<String>>,
 ) {
     operator fun get(key: FqName, deep: Boolean): Sequence<FqName> = getSubtypes(key, deep).map(::FqName)
