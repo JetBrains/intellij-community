@@ -4,6 +4,7 @@ import com.intellij.ide.starter.utils.FileSystem.deleteRecursivelyQuietly
 import com.intellij.ide.starter.utils.FileSystem.listDirectoryEntriesQuietly
 import com.intellij.ide.starter.utils.createInMemoryDirectory
 import com.intellij.tools.ide.util.common.logOutput
+import java.lang.ref.Cleaner
 import java.nio.file.Path
 import kotlin.io.path.createDirectories
 import kotlin.io.path.div
@@ -12,10 +13,12 @@ import kotlin.io.path.name
 
 open class IDEDataPaths(
   open val testHome: Path,
-  private val inMemoryRoot: Path?,
-) {
+  inMemoryRoot: Path?,
+) : AutoCloseable {
 
   companion object {
+    private val CLEANER = Cleaner.create()
+
     inline fun <reified T> createPaths(testName: String, testHome: Path, useInMemoryFs: Boolean): T where T : Any {
       val isTestHomeCleanupSuccessful = testHome.listDirectoryEntriesQuietly()
         ?.filterNot { it.name == "system" && it.isDirectory() }
@@ -44,7 +47,11 @@ open class IDEDataPaths(
   open val eventLogMetadataDir = (configDir / "event-log-metadata").createDirectories()
   open val eventLogDataDir = (systemDir / "event-log-data").createDirectories()
 
-  protected fun finalize() {
+  override fun close() {
+    cleanable.clean()
+  }
+
+  private val cleanable = CLEANER.register(this, Runnable {
     if (inMemoryRoot != null) {
       try {
         inMemoryRoot.deleteRecursivelyQuietly()
@@ -54,7 +61,7 @@ open class IDEDataPaths(
         e.stackTraceToString().lines().forEach { logOutput("    $it") }
       }
     }
-  }
+  })
 
   override fun toString(): String = "IDE Test Paths at $testHome"
 }
