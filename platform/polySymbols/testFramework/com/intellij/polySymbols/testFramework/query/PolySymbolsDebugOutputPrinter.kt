@@ -12,7 +12,7 @@ import com.intellij.polySymbols.completion.PolySymbolCodeCompletionItem
 import com.intellij.polySymbols.css.PROP_CSS_ARGUMENTS
 import com.intellij.polySymbols.documentation.PolySymbolDocumentationTarget
 import com.intellij.polySymbols.html.PolySymbolHtmlAttributeValue
-import com.intellij.polySymbols.html.htmlAttributeValue
+import com.intellij.polySymbols.html.getHtmlAttributeValue
 import com.intellij.polySymbols.js.JsSymbolKindProperty
 import com.intellij.polySymbols.query.PolySymbolMatch
 import com.intellij.polySymbols.query.PolySymbolWithPattern
@@ -99,7 +99,7 @@ open class PolySymbolsDebugOutputPrinter : DebugOutputPrinter() {
                     "${documentation?.library} ($framework)")
       printProperty(level, "source", (source as? PsiSourcedPolySymbol)?.source)
       printProperty(level, "type", source[TypeSupportProperty]?.typeProperty?.let { source[it] })
-      printProperty(level, "attrValue", source.htmlAttributeValue)
+      printProperty(level, "attrValue", source.getHtmlAttributeValue(null))
       printProperty(level, "complete", source.completeMatch)
       if (documentation != null && source !is PolySymbolMatch) {
         printProperty(level, "description", documentation.description?.ellipsis(45))

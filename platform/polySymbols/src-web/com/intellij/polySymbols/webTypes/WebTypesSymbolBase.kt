@@ -19,7 +19,7 @@ import com.intellij.polySymbols.documentation.PolySymbolDocumentationTarget
 import com.intellij.polySymbols.framework.framework
 import com.intellij.polySymbols.html.HtmlAttributeValueProperty
 import com.intellij.polySymbols.html.PolySymbolHtmlAttributeValue
-import com.intellij.polySymbols.html.htmlAttributeValue
+import com.intellij.polySymbols.html.getHtmlAttributeValue
 import com.intellij.polySymbols.patterns.PolySymbolPattern
 import com.intellij.polySymbols.query.PolySymbolCodeCompletionQueryParams
 import com.intellij.polySymbols.query.PolySymbolListSymbolsQueryParams
@@ -76,7 +76,7 @@ open class WebTypesSymbolBase : WebTypesSymbol {
   @PolySymbol.Property(HtmlAttributeValueProperty::class)
   private val attributeValue by lazy {
     (base.contribution.attributeValue?.let { sequenceOf(HtmlAttributeValueImpl(it)) } ?: emptySequence())
-      .plus(superContributions.asSequence().map { it.htmlAttributeValue })
+      .plus(superContributions.asSequence().map { it.getHtmlAttributeValue(null) })
       .merge()
   }
 
