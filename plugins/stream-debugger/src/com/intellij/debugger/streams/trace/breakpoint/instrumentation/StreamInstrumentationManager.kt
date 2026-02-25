@@ -77,10 +77,9 @@ internal class StreamInstrumentationManager private constructor(
   ): Value? {
     DebuggerManagerThreadImpl.assertIsManagerThread()
 
-    val handler = sourceHandler
     return transformIfObjectReference(value) { streamValue ->
       // Source handler processes the stream
-      val transformedValue = handler.afterCall(evaluationContext, streamValue)
+      val transformedValue = sourceHandler.afterCall(evaluationContext, streamValue)
 
       // Pass result to the next operation
       val nextHandler = getNextHandler(-1)

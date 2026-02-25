@@ -2,7 +2,6 @@
 package com.intellij.debugger.streams.trace.breakpoint
 
 import com.intellij.debugger.engine.DebuggerUtils
-import com.intellij.debugger.engine.SuspendContext
 import com.intellij.debugger.engine.SuspendContextImpl
 import com.intellij.debugger.engine.evaluation.EvaluateException
 import com.intellij.debugger.engine.evaluation.EvaluationContextImpl
@@ -42,7 +41,7 @@ internal class JdiBreakpointFactory {
                                   onMethodEntry: ArgumentsTransformer): MethodEntryRequest {
     val vmMethod = findVmMethod(evaluationContext, signature) ?: throw MethodNotFoundException(signature)
     // There is no need to request a hit because we just need to replace arguments on the fly
-    val requestor = MethodEntryRequestor(evaluationContext.project, vmMethod, false) { requestor, suspendContext, event ->
+    val requestor = MethodEntryRequestor(evaluationContext.project, vmMethod) { requestor, suspendContext, event ->
       event.request().disable()
       suspendContext.debugProcess.requestsManager.deleteRequest(requestor)
 
@@ -79,7 +78,7 @@ internal class JdiBreakpointFactory {
                                  signature: JvmMethodSignature,
                                  onMethodExit: ReturnValueTransformer): MethodExitRequest {
     val vmMethod = findVmMethod(evaluationContext, signature) ?: throw MethodNotFoundException(signature)
-    val requestor = MethodExitRequestor(evaluationContext.project, vmMethod, false) { requestor, suspendContext, event ->
+    val requestor = MethodExitRequestor(evaluationContext.project, vmMethod) { requestor, suspendContext, event ->
       event.request().disable()
       suspendContext.debugProcess.requestsManager.deleteRequest(requestor)
 

@@ -7,6 +7,7 @@ import com.intellij.debugger.settings.DebuggerSettings
 import com.intellij.debugger.ui.breakpoints.FilteredRequestor
 import com.intellij.debugger.ui.breakpoints.FilteredRequestorImpl
 import com.intellij.debugger.ui.breakpoints.SyntheticBreakpoint
+import com.intellij.openapi.diagnostic.getOrLogException
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
 import com.sun.jdi.Method
@@ -27,24 +28,20 @@ typealias ExceptionCallback = (requestor: FilteredRequestor, suspendContext: Sus
 internal abstract class MethodBreakpointRequestor(
   project: Project,
   private val method: Method,
-  private val requestHit: Boolean,
 ) : FilteredRequestorImpl(project), SyntheticBreakpoint {
   override fun processLocatableEvent(action: SuspendContextCommandImpl, event: LocatableEvent?): Boolean {
-    if (event == null) return false
+    event ?: return false
     val context = action.suspendContext ?: return false
 
     val currentExecutingMethod = event.location().method()
 
     if (context.thread?.isSuspended == true && currentExecutingMethod.equalBySignature(method)) {
-      try {
+      runCatching {
         invokeCallback(this, context, event)
-      }
-      catch (e: Throwable) {
-        LOG.warn(e)
-      }
+      }.getOrLogException(LOG)
     }
 
-    return requestHit
+    return false
   }
 
   abstract fun invokeCallback(requestor: MethodBreakpointRequestor, context: SuspendContextImpl, event: LocatableEvent)
@@ -55,9 +52,8 @@ internal abstract class MethodBreakpointRequestor(
 internal class MethodEntryRequestor(
   project: Project,
   method: Method,
-  requestHit: Boolean,
-  private val callback: MethodEntryCallback
-) : MethodBreakpointRequestor(project, method, requestHit) {
+  private val callback: MethodEntryCallback,
+) : MethodBreakpointRequestor(project, method) {
   override fun invokeCallback(requestor: MethodBreakpointRequestor, context: SuspendContextImpl, event: LocatableEvent) {
     if (event !is MethodEntryEvent) return
 
@@ -68,9 +64,8 @@ internal class MethodEntryRequestor(
 internal class MethodExitRequestor(
   project: Project,
   method: Method,
-  requestHit: Boolean,
-  private val callback: MethodExitCallback
-) : MethodBreakpointRequestor(project, method, requestHit) {
+  private val callback: MethodExitCallback,
+) : MethodBreakpointRequestor(project, method) {
   override fun invokeCallback(requestor: MethodBreakpointRequestor, context: SuspendContextImpl, event: LocatableEvent) {
     if (event !is MethodExitEvent) return
 
@@ -80,15 +75,12 @@ internal class MethodExitRequestor(
 
 internal class ExceptionBreakpointRequestor(project: Project, private val callback: ExceptionCallback) : FilteredRequestorImpl(project) {
   override fun processLocatableEvent(action: SuspendContextCommandImpl, event: LocatableEvent?): Boolean {
-    if (event == null || event !is ExceptionEvent) return false
+    if (event !is ExceptionEvent) return false
     val context = action.suspendContext ?: return false
     if (context.thread?.isSuspended == true) {
-      try {
-        return callback(this, context, event)
-      }
-      catch (e: Throwable) {
-        LOG.info(e)
-      }
+      runCatching {
+        callback(this, context, event)
+      }.getOrLogException(LOG)
     }
 
     return false

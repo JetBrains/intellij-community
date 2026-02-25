@@ -42,6 +42,7 @@ internal class StreamTracingManager(
   private lateinit var instrumentationManager: StreamInstrumentationManager
 
   suspend fun evaluateChain(debuggerContext: DebuggerContextImpl, breakpointPositions: BreakpointResolveResult.Found, chain: StreamChain): EvaluationResult {
+    val debugProcess = debuggerContext.debugProcess!!
     val evaluationFinished = createEvaluationFinishedFuture()
     withDebugContext(debuggerContext.managerThread!!) {
       val evaluationContextImpl = debuggerContext.createEvaluationContext()
@@ -54,7 +55,7 @@ internal class StreamTracingManager(
       }
 
       // TODO: I need to find a better solution because now we need to manually put a breakpoint on stream exit.
-      evaluationContextImpl.debugProcess.suspendManager.resume(evaluationContextImpl.suspendContext)
+      debugProcess.suspendManager.resume(evaluationContextImpl.suspendContext)
     }
 
     //evaluationFinished.await()
