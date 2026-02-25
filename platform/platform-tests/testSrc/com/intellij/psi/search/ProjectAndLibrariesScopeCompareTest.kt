@@ -5,7 +5,6 @@ import com.intellij.openapi.module.Module
 import com.intellij.openapi.roots.ModifiableRootModel
 import com.intellij.openapi.roots.ModuleRootModificationUtil
 import com.intellij.openapi.roots.OrderRootType
-import com.intellij.openapi.roots.ProjectRootManager
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.testFramework.junit5.RunInEdt
 import com.intellij.testFramework.junit5.TestApplication
@@ -196,12 +195,8 @@ class ProjectAndLibrariesScopeCompareTest {
       model.addLibraryEntry(projLib3)
     }
 
-    val fileIndex = ProjectRootManager.getInstance(projectModel.project).fileIndex
-    assertEquals(2, fileIndex.findContainingLibraries(file1).size, "file1 should be in 2 libraries")
-    assertEquals(1, fileIndex.findContainingLibraries(file2).size, "file2 should be in 1 library")
-
-    assertEquals(0, scope.compare(file1, file2),
-                 "entry count mismatch (2 vs 1) → 0")
+    assertEquals(1, scope.compare(file1, file2),
+                 "Root1 located before root2")
   }
 
 
@@ -219,8 +214,8 @@ class ProjectAndLibrariesScopeCompareTest {
     ModuleRootModificationUtil.addModuleLibrary(moduleB, "mlib2", listOf(root1.url), emptyList())
     ModuleRootModificationUtil.addModuleLibrary(moduleA, "mlib3", listOf(root2.url), emptyList())
 
-    assertEquals(0, scope.compare(file1, file2),
-                 "Different module counts → 0")
+    assertEquals(1, scope.compare(file1, file2),
+                 "Root1 located before root2")
   }
 
   @Test
@@ -245,10 +240,6 @@ class ProjectAndLibrariesScopeCompareTest {
       model.addLibraryEntry(projLib2)
     }
 
-    val fileIndex = ProjectRootManager.getInstance(projectModel.project).fileIndex
-    assertEquals(2, fileIndex.findContainingLibraries(file1).size, "file1 should be in 2 libraries")
-    assertEquals(2, fileIndex.findContainingLibraries(file2).size, "file2 should be in 2 libraries")
-
     assertEquals(0, scope.compare(file1, file2),
                  "Same library sets → same position → 0")
   }
@@ -262,7 +253,6 @@ class ProjectAndLibrariesScopeCompareTest {
 
     val projLib1 = projectModel.addProjectLevelLibrary("projLib1") { it.addRoot(root1, OrderRootType.CLASSES) }
     val projLib2 = projectModel.addProjectLevelLibrary("projLib2") {
-      it.addRoot(root1, OrderRootType.CLASSES)
       it.addRoot(root2, OrderRootType.CLASSES)
     }
 
@@ -272,11 +262,7 @@ class ProjectAndLibrariesScopeCompareTest {
       model.addLibraryEntry(projLib2)
     }
 
-    val fileIndex = ProjectRootManager.getInstance(projectModel.project).fileIndex
-    assertEquals(2, fileIndex.findContainingLibraries(file1).size, "file1 should be in 2 libraries (projLib1 + projLib2)")
-    assertEquals(1, fileIndex.findContainingLibraries(file2).size, "file2 should be in 1 library (projLib2)")
-
-    assertEquals(0, scope.compare(file1, file2),
+    assertEquals(1, scope.compare(file1, file2),
                  "entry count mismatch (2 vs 1) → 0")
   }
 
@@ -300,12 +286,8 @@ class ProjectAndLibrariesScopeCompareTest {
     // Add another module-level library with root2
     ModuleRootModificationUtil.addModuleLibrary(module, "modLib2", listOf(root2.url), emptyList())
 
-    val fileIndex = ProjectRootManager.getInstance(projectModel.project).fileIndex
-    assertTrue(fileIndex.findContainingLibraries(file1).size >= 2,
-               "file1 should be in at least 2 libraries (project + module)")
-
-    assertEquals(0, scope.compare(file1, file2),
-                 "entry count mismatch → 0")
+    assertEquals(1, scope.compare(file1, file2),
+                 "Root1 located before root2")
   }
 
 
@@ -317,29 +299,18 @@ class ProjectAndLibrariesScopeCompareTest {
     val file2 = projectModel.baseProjectDir.newVirtualFile("root2/B.class")
 
     val projLib1 = projectModel.addProjectLevelLibrary("projLib1") { it.addRoot(root1, OrderRootType.CLASSES) }
-    val projLib2 = projectModel.addProjectLevelLibrary("projLib2") { it.addRoot(root1, OrderRootType.CLASSES) }
-    val projLib3 = projectModel.addProjectLevelLibrary("projLib3") { it.addRoot(root2, OrderRootType.CLASSES) }
+    val projLib2 = projectModel.addProjectLevelLibrary("projLib2") { it.addRoot(root2, OrderRootType.CLASSES) }
 
     val moduleA = projectModel.createModule("moduleA")
-    val moduleB = projectModel.createModule("moduleB")
 
-    // Both modules have same order: projLib1, projLib2, projLib3
-    for (module in listOf(moduleA, moduleB)) {
-      ModuleRootModificationUtil.updateModel(module) { model ->
-        model.addLibraryEntry(projLib1)
-        model.addLibraryEntry(projLib2)
-        model.addLibraryEntry(projLib3)
-      }
+    ModuleRootModificationUtil.updateModel(moduleA) { model ->
+      model.addLibraryEntry(projLib2)
+      model.addLibraryEntry(projLib1)
     }
 
-    val fileIndex = ProjectRootManager.getInstance(projectModel.project).fileIndex
-    assertEquals(4, fileIndex.getOrderEntriesForFile(file1).size,
-                 "file1: 2 libs × 2 modules = 4 order entries")
-    assertEquals(2, fileIndex.getOrderEntriesForFile(file2).size,
-                 "file2: 1 lib × 2 modules = 2 order entries")
 
-    assertEquals(0, scope.compare(file1, file2),
-                 "entry count mismatch (4 vs 2) → 0")
+    assertEquals(-1, scope.compare(file1, file2),
+                 "Root2 before root1")
   }
 
   @Test

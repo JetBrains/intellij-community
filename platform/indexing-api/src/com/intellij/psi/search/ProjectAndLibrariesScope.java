@@ -46,34 +46,39 @@ public class ProjectAndLibrariesScope extends GlobalSearchScope {
     var result = 0;
     var sdks1 = myProjectFileIndex.findContainingSdks(file1);
     var sdks2 = myProjectFileIndex.findContainingSdks(file2);
-    if (!sdks1.isEmpty() && (sdks1.size() == sdks2.size())) {
-      result = compareItems(project, sdks1, sdks2);
+    if (!sdks1.isEmpty() && !sdks2.isEmpty()) {
+      result = compareFirstItems(project, sdks1, sdks2);
     }
 
     var libs1 = myProjectFileIndex.findContainingLibraries(file1);
     var libs2 = myProjectFileIndex.findContainingLibraries(file2);
-    if (!libs1.isEmpty() && (libs1.size() == libs2.size())) {
-      result = compareItems(project, libs1, libs2);
+    if (!libs1.isEmpty() && !libs2.isEmpty()) {
+      result = compareFirstItems(project, libs1, libs2);
     }
     return result;
   }
 
-  private static int compareItems(Project project,
-                                  Collection<? extends WorkspaceEntityWithSymbolicId> items1,
-                                  Collection<? extends WorkspaceEntityWithSymbolicId> items2) {
+  private static int compareFirstItems(Project project,
+                                       Collection<? extends WorkspaceEntityWithSymbolicId> items1,
+                                       Collection<? extends WorkspaceEntityWithSymbolicId> items2) {
     int result = 0;
     var item1 = ContainerUtil.getFirstItem(items1);
     var item2 = ContainerUtil.getFirstItem(items2);
     var dependenciesGraph = ModuleDependenciesGraphService.getInstance(project).getModuleDependenciesGraph();
     var item1Dependants = ContainerUtil.sorted(dependenciesGraph.getLibraryOrSdkDependants(item1.getSymbolicId()),
-                                              Comparator.comparing(dep -> dep.getDependent().getName()));
+                                               Comparator.comparing(dep -> dep.getDependent().getName()));
     var item2Dependants = ContainerUtil.sorted(dependenciesGraph.getLibraryOrSdkDependants(item2.getSymbolicId()),
-                                              Comparator.comparing(dep -> dep.getDependent().getName()));
+                                               Comparator.comparing(dep -> dep.getDependent().getName()));
 
     for (var pair : ContainerUtil.zip(item1Dependants, item2Dependants)) {
       var first = pair.getFirst();
       var second = pair.getSecond();
-      result = Integer.compare(second.getOrderNumber(), first.getOrderNumber());
+      if (first.getDependent().equals(second.getDependent())) {
+        result = Integer.compare(second.getOrderNumber(), first.getOrderNumber());
+        if (result != 0) {
+          return result;
+        }
+      }
     }
     return result;
   }
