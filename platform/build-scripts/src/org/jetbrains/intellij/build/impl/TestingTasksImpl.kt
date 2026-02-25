@@ -310,6 +310,7 @@ internal class TestingTasksImpl(context: CompilationContext, private val options
         envVariables = runConfigurationProperties.envVariables,
         remoteDebugging = false,
         searchForTestsAcrossModuleDependencies = runConfigurationProperties.testSearchScope == JUnitRunConfigurationProperties.TestSearchScope.MODULE_WITH_DEPENDENCIES,
+        rootExcludeCondition = null,
       )
     }
     catch (e: NoTestsFound) {
@@ -325,23 +326,6 @@ internal class TestingTasksImpl(context: CompilationContext, private val options
     rootExcludeCondition: ((Path) -> Boolean)?,
     systemProperties: MutableMap<String, String>,
   ) {
-    if (rootExcludeCondition != null) {
-      val excludedRootPaths = ArrayList<Path>(context.project.modules.size * 2)
-      for (module in context.project.modules) {
-        val contentRoots = module.contentRootsList.urls
-        if (!contentRoots.isEmpty() && rootExcludeCondition(Path.of(JpsPathUtil.urlToPath(contentRoots.first())))) {
-          excludedRootPaths.addAll(context.outputProvider.getModuleOutputRoots(module))
-          excludedRootPaths.addAll(context.outputProvider.getModuleOutputRoots(module, forTests = true))
-        }
-      }
-      val excludedRoots = excludedRootPaths.map(Path::toString)
-
-      val excludedRootsFile = context.paths.tempDir.resolve("excluded.classpath")
-      Files.createDirectories(excludedRootsFile.parent)
-      Files.writeString(excludedRootsFile, excludedRoots.joinToString(separator = "\n"))
-      systemProperties.put("exclude.tests.roots.file", excludedRootsFile.toString())
-    }
-
     try {
       runTestsProcess(
         mainModule = mainModule,
@@ -351,6 +335,7 @@ internal class TestingTasksImpl(context: CompilationContext, private val options
         systemProperties = systemProperties,
         remoteDebugging = false,
         searchForTestsAcrossModuleDependencies = options.searchScope == JUnitRunConfigurationProperties.TestSearchScope.MODULE_WITH_DEPENDENCIES.serialized,
+        rootExcludeCondition = rootExcludeCondition,
       )
     }
     catch (e: NoTestsFound) {
@@ -436,6 +421,7 @@ internal class TestingTasksImpl(context: CompilationContext, private val options
       systemProperties = emptyMap(),
       remoteDebugging = true,
       searchForTestsAcrossModuleDependencies = true,
+      rootExcludeCondition = null,
     )
   }
 
@@ -448,59 +434,56 @@ internal class TestingTasksImpl(context: CompilationContext, private val options
     envVariables: Map<String, String> = emptyMap(),
     remoteDebugging: Boolean,
     searchForTestsAcrossModuleDependencies: Boolean,
+    rootExcludeCondition: ((Path) -> Boolean)?,
   ) {
     val outputProvider = context.outputProvider
     val mainJpsModule = outputProvider.findRequiredModule(mainModule)
-    val testRoots = context.getModuleRuntimeClasspath(mainJpsModule, forTests = true)
-      .toMutableList()
 
-    if (isBootstrapSuiteDefault) {
-      //module with "com.intellij.TestAll" which output should be found in `testClasspath + modulePath`
-      val testFrameworkCoreModule = outputProvider.findRequiredModule("intellij.platform.testFramework.core")
-      val testFrameworkCoreModuleOutputRoots = outputProvider.getModuleOutputRoots(testFrameworkCoreModule)
-      for (testFrameworkOutput in testFrameworkCoreModuleOutputRoots) {
-        if (!testRoots.contains(testFrameworkOutput)) {
-          testRoots.addAll(context.getModuleRuntimeClasspath(testFrameworkCoreModule, false) )
-        }
-      }
-    }
-
-    val testClasspath: List<String>
     val modulePath: List<String>?
+    var testClasspath = buildList {
+      addAll(context.getModuleRuntimeClasspath(mainJpsModule, forTests = true))
+
+      if (isBootstrapSuiteDefault) {
+        //module with "com.intellij.TestAll" which output should be found in `testClasspath + modulePath`
+        val testFrameworkCoreModule = outputProvider.findRequiredModule("intellij.platform.testFramework.core")
+        addAll(context.getModuleRuntimeClasspath(testFrameworkCoreModule, false) )
+      }
+    }.distinct()
 
     val moduleInfoFile = JpsJavaExtensionService.getInstance().getJavaModuleIndex(context.project).getModuleInfoFile(mainJpsModule, true)
     val toExistingAbsolutePathConverter: (Path) -> String = { require(Files.exists(it)); it.toAbsolutePath().normalize().toString() }
     if (moduleInfoFile != null) {
       val outputDir = outputProvider.getModuleOutputRoots(mainJpsModule, forTests = true).single().let(Path::toFile)
-      val pair = ModulePathSplitter().splitPath(moduleInfoFile, mutableSetOf(outputDir), testRoots.map {
+      val pair = ModulePathSplitter().splitPath(moduleInfoFile, mutableSetOf(outputDir), testClasspath.map {
         @Suppress("IO_FILE_USAGE")
         it.toFile()
       })
       modulePath = pair.first.path.map { it.toPath() }.map(toExistingAbsolutePathConverter)
-      testClasspath = pair.second.map { it.toPath() }.map(toExistingAbsolutePathConverter)
+      testClasspath = pair.second.map { it.toPath() }
     }
     else {
       modulePath = null
-      testClasspath = testRoots.map(toExistingAbsolutePathConverter)
     }
 
-    if (!searchForTestsAcrossModuleDependencies) {  // don't modify testClasspath
-      testRoots.clear()
-      testRoots.addAll(context.outputProvider.getModuleOutputRoots(mainJpsModule, forTests = false))  // for tests in production source roots
-      testRoots.addAll(context.outputProvider.getModuleOutputRoots(mainJpsModule, forTests = true))
+    val testRoots = let {
+      if (searchForTestsAcrossModuleDependencies) JpsJavaExtensionService.dependencies(mainJpsModule).recursively().modules
+      else listOf(mainJpsModule)
+    }.flatMap {
+      if (rootExcludeCondition != null) {
+        val contentRoot = it.contentRootsList.urls.firstOrNull()?.let(JpsPathUtil::urlToNioPath)
+        if (contentRoot != null && rootExcludeCondition(contentRoot)) return@flatMap emptyList()  // root excluded
+      }
+
+      context.outputProvider.getModuleOutputRoots(it, forTests = true)
     }
 
     val devBuildServerSettings = DevBuildServerSettings.readDevBuildServerSettingsFromIntellijYaml(mainModule)
     val bootstrapClasspath = context.getModuleRuntimeClasspath(module = outputProvider.findRequiredModule("intellij.tools.testsBootstrap"), forTests = false)
       .mapTo(mutableListOf()) { it.toString() }
-    val classpathFile = context.paths.tempDir.resolve("junit.classpath")
-    Files.createDirectories(classpathFile.parent)
-    // this is required to collect tests both on class and module paths
-    Files.writeString(classpathFile, testRoots.joinToString(separator = "\n", transform = toExistingAbsolutePathConverter))
     @Suppress("NAME_SHADOWING")
     val systemProperties = systemProperties.toMutableMap()
     systemProperties.put("io.netty.allocator.type", "pooled")
-    systemProperties.putIfAbsent("classpath.file", classpathFile.toString())
+    systemProperties.put("test.roots", testRoots.joinToString(File.pathSeparator, transform = toExistingAbsolutePathConverter))
     testPatterns?.let { systemProperties.putIfAbsent("intellij.build.test.patterns", it) }
     testGroups?.let { systemProperties.putIfAbsent("intellij.build.test.groups", it) }
     systemProperties.putIfAbsent("intellij.build.test.sorter", System.getProperty("intellij.build.test.sorter"))
@@ -551,7 +534,7 @@ internal class TestingTasksImpl(context: CompilationContext, private val options
       envVariables = envVariables,
       bootstrapClasspath = bootstrapClasspath,
       modulePath = modulePath,
-      testClasspath = testClasspath,
+      testClasspath = testClasspath.map(toExistingAbsolutePathConverter),
       devBuildServerSettings = devBuildServerSettings,
     )
     notifySnapshotBuilt(allJvmArgs)

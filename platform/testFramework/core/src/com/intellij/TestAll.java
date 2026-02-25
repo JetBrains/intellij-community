@@ -151,7 +151,7 @@ public class TestAll implements Test {
     String jarsToRunTestsFrom = System.getProperty("jar.dependencies.to.tests");
     if (jarsToRunTestsFrom != null) {
       String[] jars = jarsToRunTestsFrom.split(";");
-      List<Path> classpath = Objects.requireNonNull(ExternalClasspathClassLoader.getRoots());
+      List<Path> classpath = ContainerUtil.map(Objects.requireNonNull(System.getProperty("java.class.path")).split(File.pathSeparator), Paths::get);
       List<Path> testPaths = Arrays.stream(jars)
         .map(jarName -> {
                List<? extends Path> resultJars = ContainerUtil.filter(classpath, path -> path.getFileName().toString().startsWith(jarName));
@@ -190,7 +190,7 @@ public class TestAll implements Test {
     String testRoots = System.getProperty("test.roots");
     if (testRoots != null) {
       System.out.println("Collecting tests from roots specified by test.roots system property");
-      return ContainerUtil.map(testRoots.split(";"), Paths::get);
+      return ContainerUtil.map(testRoots.split(File.pathSeparator), Paths::get);
     }
     List<Path> roots = ExternalClasspathClassLoader.getRoots();
     if (roots != null) {

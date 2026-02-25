@@ -267,15 +267,6 @@ private fun createCodexShim(tempDir: Path, configPath: Path): Path {
 }
 
 private fun resolveTestClasspath(): String {
-  val classpathFile = System.getProperty("classpath.file")
-  if (!classpathFile.isNullOrBlank()) {
-    val entries = Files.readAllLines(Path.of(classpathFile), StandardCharsets.UTF_8)
-      .map(String::trim)
-      .filter(String::isNotEmpty)
-    if (entries.isNotEmpty()) {
-      return absolutizeClasspathEntries(entries)
-    }
-  }
   val classpath = System.getProperty("java.class.path")
   val entries = classpath.split(File.pathSeparator)
     .map(String::trim)
