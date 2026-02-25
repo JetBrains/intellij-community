@@ -152,6 +152,7 @@ open class IdeaCommunityProperties(private val communityHomeDir: Path) : JetBrai
   override fun getOutputDirectoryName(appInfo: ApplicationInfoProperties): String = "idea-ce"
 }
 
+/* Android Studio: we define our own copy of AndroidStudioProperties. This one is a placeholder used only by JetBrains.
 @Suppress("unused")
 open class AndroidStudioProperties(communityHomeDir: Path) : IdeaCommunityProperties(communityHomeDir) {
   init {
@@ -177,6 +178,7 @@ open class AndroidStudioProperties(communityHomeDir: Path) : IdeaCommunityProper
     // no community extensions
   }
 }
+*/
 
 /**
  * Base IntelliJ Community content fragment.
