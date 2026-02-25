@@ -53,15 +53,18 @@ public class JUnit6EventsTest extends AbstractTestFrameworkCompilingIntegrationT
     assertEmpty(output.err);
 
     String tests = output.messages.stream().filter(m -> m instanceof BaseTestMessage)
-      .map(m -> normalizedTestOutput(m, Map.of("details", "##details##")))
+      .map(m -> normalizedTestOutput(m, Map.of("details", (value) -> {
+        int idx = value.indexOf("\n", 2);
+        return idx > 0 ? value.substring(0, idx).trim().replaceAll(":[0-9]+", ":<line>") : value;
+      })))
       .collect(Collectors.joining("\n"));
 
     assertEquals("""
                    ##TC[testStarted id='|[engine:junit-jupiter|]/|[class:com.intellij.junit6.testData.MyTestClass|]/|[method:test1(org.junit.jupiter.api.TestReporter)|]' name='test1(TestReporter)' nodeId='|[engine:junit-jupiter|]/|[class:com.intellij.junit6.testData.MyTestClass|]/|[method:test1(org.junit.jupiter.api.TestReporter)|]' parentNodeId='0' locationHint='java:test://com.intellij.junit6.testData.MyTestClass/test1' metainfo='org.junit.jupiter.api.TestReporter']
                    ##TC[testStdOut id='|[engine:junit-jupiter|]/|[class:com.intellij.junit6.testData.MyTestClass|]/|[method:test1(org.junit.jupiter.api.TestReporter)|]' name='test1(TestReporter)' nodeId='|[engine:junit-jupiter|]/|[class:com.intellij.junit6.testData.MyTestClass|]/|[method:test1(org.junit.jupiter.api.TestReporter)|]' parentNodeId='0' out='timestamp = ##timestamp##, key1 = value1, stdout = out1|n']
-                   ##TC[testFailed id='|[engine:junit-jupiter|]/|[class:com.intellij.junit6.testData.MyTestClass|]/|[method:test1(org.junit.jupiter.api.TestReporter)|]' name='test1(TestReporter)' nodeId='|[engine:junit-jupiter|]/|[class:com.intellij.junit6.testData.MyTestClass|]/|[method:test1(org.junit.jupiter.api.TestReporter)|]' parentNodeId='0' duration='##duration##' message='message1 ==> expected: <expected1> but was: <actual1>|nComparison Failure: ' expected='expected1' actual='actual1' details='##details##']
-                   ##TC[testFailed id='|[engine:junit-jupiter|]/|[class:com.intellij.junit6.testData.MyTestClass|]/|[method:test1(org.junit.jupiter.api.TestReporter)|]' name='test1(TestReporter)' nodeId='|[engine:junit-jupiter|]/|[class:com.intellij.junit6.testData.MyTestClass|]/|[method:test1(org.junit.jupiter.api.TestReporter)|]' parentNodeId='0' duration='##duration##' message='message2 ==> expected: <expected2> but was: <actual2>|nComparison Failure: ' expected='expected2' actual='actual2' details='##details##']
-                   ##TC[testFailed id='|[engine:junit-jupiter|]/|[class:com.intellij.junit6.testData.MyTestClass|]/|[method:test1(org.junit.jupiter.api.TestReporter)|]' name='test1(TestReporter)' nodeId='|[engine:junit-jupiter|]/|[class:com.intellij.junit6.testData.MyTestClass|]/|[method:test1(org.junit.jupiter.api.TestReporter)|]' parentNodeId='0' duration='##duration##' message='2 errors (2 failures)|n	org.opentest4j.AssertionFailedError: message1 ==> expected: <expected1> but was: <actual1>|n	org.opentest4j.AssertionFailedError: message2 ==> expected: <expected2> but was: <actual2>' details='##details##']
+                   ##TC[testFailed id='|[engine:junit-jupiter|]/|[class:com.intellij.junit6.testData.MyTestClass|]/|[method:test1(org.junit.jupiter.api.TestReporter)|]' name='test1(TestReporter)' nodeId='|[engine:junit-jupiter|]/|[class:com.intellij.junit6.testData.MyTestClass|]/|[method:test1(org.junit.jupiter.api.TestReporter)|]' parentNodeId='0' duration='##duration##' message='message1 ==> expected: <expected1> but was: <actual1>|nComparison Failure: ' expected='expected1' actual='actual1' details='org.opentest4j.AssertionFailedError: message1 ==> expected: <expected1> but was: <actual1>']
+                   ##TC[testFailed id='|[engine:junit-jupiter|]/|[class:com.intellij.junit6.testData.MyTestClass|]/|[method:test1(org.junit.jupiter.api.TestReporter)|]' name='test1(TestReporter)' nodeId='|[engine:junit-jupiter|]/|[class:com.intellij.junit6.testData.MyTestClass|]/|[method:test1(org.junit.jupiter.api.TestReporter)|]' parentNodeId='0' duration='##duration##' message='message2 ==> expected: <expected2> but was: <actual2>|nComparison Failure: ' expected='expected2' actual='actual2' details='org.opentest4j.AssertionFailedError: message2 ==> expected: <expected2> but was: <actual2>']
+                   ##TC[testFailed id='|[engine:junit-jupiter|]/|[class:com.intellij.junit6.testData.MyTestClass|]/|[method:test1(org.junit.jupiter.api.TestReporter)|]' name='test1(TestReporter)' nodeId='|[engine:junit-jupiter|]/|[class:com.intellij.junit6.testData.MyTestClass|]/|[method:test1(org.junit.jupiter.api.TestReporter)|]' parentNodeId='0' duration='##duration##' message='2 errors (2 failures)|n	org.opentest4j.AssertionFailedError: message1 ==> expected: <expected1> but was: <actual1>|n	org.opentest4j.AssertionFailedError: message2 ==> expected: <expected2> but was: <actual2>' details='org.opentest4j.MultipleFailuresError: 2 errors (2 failures)']
                    ##TC[testFinished id='|[engine:junit-jupiter|]/|[class:com.intellij.junit6.testData.MyTestClass|]/|[method:test1(org.junit.jupiter.api.TestReporter)|]' name='test1(TestReporter)' nodeId='|[engine:junit-jupiter|]/|[class:com.intellij.junit6.testData.MyTestClass|]/|[method:test1(org.junit.jupiter.api.TestReporter)|]' parentNodeId='0' duration='##duration##']""",
                  tests);
   }
@@ -74,11 +77,14 @@ public class JUnit6EventsTest extends AbstractTestFrameworkCompilingIntegrationT
     String test = output.messages.stream().filter(BaseTestMessage.class::isInstance)
       .map(BaseTestMessage.class::cast)
       .filter(m -> m.getTestName().equals("Class Configuration"))
-      .map(m -> normalizedTestOutput(m, Map.of("details", "##details##")))
+      .map(m -> normalizedTestOutput(m, Map.of("details", (value) -> {
+        int idx = value.indexOf("\n", 2);
+        return idx > 0 ? value.substring(0, idx).trim().replaceAll(":[0-9]+", ":<line>") : value;
+      })))
       .collect(Collectors.joining("\n"));
     assertEquals("""
                    ##TC[testStarted id='|[engine:junit-jupiter|]/|[class:com.intellij.junit6.testData.MyTestClass|]/|[test-factory:brokenStream()|]' name='Class Configuration' nodeId='|[engine:junit-jupiter|]/|[class:com.intellij.junit6.testData.MyTestClass|]/|[test-factory:brokenStream()|]' parentNodeId='0' locationHint='java:test://com.intellij.junit6.testData.MyTestClass/brokenStream' metainfo='']
-                   ##TC[testFailed id='|[engine:junit-jupiter|]/|[class:com.intellij.junit6.testData.MyTestClass|]/|[test-factory:brokenStream()|]' name='Class Configuration' nodeId='|[engine:junit-jupiter|]/|[class:com.intellij.junit6.testData.MyTestClass|]/|[test-factory:brokenStream()|]' parentNodeId='0' error='true' message='java.lang.IllegalStateException: broken' details='##details##']
+                   ##TC[testFailed id='|[engine:junit-jupiter|]/|[class:com.intellij.junit6.testData.MyTestClass|]/|[test-factory:brokenStream()|]' name='Class Configuration' nodeId='|[engine:junit-jupiter|]/|[class:com.intellij.junit6.testData.MyTestClass|]/|[test-factory:brokenStream()|]' parentNodeId='0' error='true' message='java.lang.IllegalStateException: broken' details='at com.intellij.junit6.testData.MyTestClass.brokenStream(MyTestClass.java:<line>)']
                    ##TC[testFinished id='|[engine:junit-jupiter|]/|[class:com.intellij.junit6.testData.MyTestClass|]/|[test-factory:brokenStream()|]' name='Class Configuration' nodeId='|[engine:junit-jupiter|]/|[class:com.intellij.junit6.testData.MyTestClass|]/|[test-factory:brokenStream()|]' parentNodeId='0']""",
                  test);
   }
@@ -89,8 +95,8 @@ public class JUnit6EventsTest extends AbstractTestFrameworkCompilingIntegrationT
 
     String tests = output.messages.stream().filter(m -> m instanceof BaseTestMessage)
       .map(m -> normalizedTestOutput(m, Map.of(
-        "message", "##message##",
-        "details", "##details##"
+        "message", (value) -> "##message##",
+        "details", (value) -> "##details##"
       )))
       .collect(Collectors.joining("\n"));
 
@@ -135,8 +141,8 @@ public class JUnit6EventsTest extends AbstractTestFrameworkCompilingIntegrationT
     }
     String tests = output.messages.stream().filter(m -> m instanceof BaseTestMessage)
       .map(m -> normalizedTestOutput(m, Map.of(
-        "message", "##message##",
-        "details", "##details##"
+        "message", (value) -> "##message##",
+        "details", (value) -> "##details##"
       ))).collect(Collectors.joining("\n"));
 
     assertEmpty(output.err);
@@ -180,6 +186,29 @@ public class JUnit6EventsTest extends AbstractTestFrameworkCompilingIntegrationT
       fail("tests not started - lock file path not received in time");
     }
     return lock;
+  }
+
+  public void testFailWithMessage() throws Exception {
+    ProcessOutput output = doStartTestsProcess(createRunClassConfiguration("com.intellij.junit6.testData.SimpleFailTest"));
+    assertEmpty(output.err);
+
+    assertEmpty(output.err);
+
+    String tests = output.messages.stream().filter(m -> m instanceof BaseTestMessage)
+      .map(m -> normalizedTestOutput(m, Map.of("details", (value) -> {
+        int idx = value.indexOf("\n", 2);
+        return idx > 0 ? value.substring(0, idx).trim().replaceAll(":[0-9]+", ":<line>") : value;
+      })))
+      .collect(Collectors.joining("\n"));
+
+    assertEquals("""
+                   ##TC[testStarted id='|[engine:junit-jupiter|]/|[class:com.intellij.junit6.testData.SimpleFailTest|]/|[method:test1()|]' name='test1()' nodeId='|[engine:junit-jupiter|]/|[class:com.intellij.junit6.testData.SimpleFailTest|]/|[method:test1()|]' parentNodeId='0' locationHint='java:test://com.intellij.junit6.testData.SimpleFailTest/test1' metainfo='']
+                   ##TC[testFailed id='|[engine:junit-jupiter|]/|[class:com.intellij.junit6.testData.SimpleFailTest|]/|[method:test1()|]' name='test1()' nodeId='|[engine:junit-jupiter|]/|[class:com.intellij.junit6.testData.SimpleFailTest|]/|[method:test1()|]' parentNodeId='0' duration='##duration##' message='org.opentest4j.AssertionFailedError: 123' details='at org.junit.jupiter.api.AssertionUtils.fail(AssertionUtils.java:<line>)']
+                   ##TC[testFinished id='|[engine:junit-jupiter|]/|[class:com.intellij.junit6.testData.SimpleFailTest|]/|[method:test1()|]' name='test1()' nodeId='|[engine:junit-jupiter|]/|[class:com.intellij.junit6.testData.SimpleFailTest|]/|[method:test1()|]' parentNodeId='0' duration='##duration##']
+                   ##TC[testStarted id='|[engine:junit-jupiter|]/|[class:com.intellij.junit6.testData.SimpleFailTest|]/|[method:test2()|]' name='test2()' nodeId='|[engine:junit-jupiter|]/|[class:com.intellij.junit6.testData.SimpleFailTest|]/|[method:test2()|]' parentNodeId='0' locationHint='java:test://com.intellij.junit6.testData.SimpleFailTest/test2' metainfo='']
+                   ##TC[testFailed id='|[engine:junit-jupiter|]/|[class:com.intellij.junit6.testData.SimpleFailTest|]/|[method:test2()|]' name='test2()' nodeId='|[engine:junit-jupiter|]/|[class:com.intellij.junit6.testData.SimpleFailTest|]/|[method:test2()|]' parentNodeId='0' duration='##duration##' message='expected: <123> but was: <321>|nComparison Failure: ' expected='123' actual='321' details='org.opentest4j.AssertionFailedError: expected: <123> but was: <321>']
+                   ##TC[testFinished id='|[engine:junit-jupiter|]/|[class:com.intellij.junit6.testData.SimpleFailTest|]/|[method:test2()|]' name='test2()' nodeId='|[engine:junit-jupiter|]/|[class:com.intellij.junit6.testData.SimpleFailTest|]/|[method:test2()|]' parentNodeId='0' duration='##duration##']""",
+                 tests);
   }
 
   public void testEscaping() throws Exception {

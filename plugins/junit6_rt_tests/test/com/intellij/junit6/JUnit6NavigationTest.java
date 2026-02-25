@@ -42,9 +42,7 @@ public class JUnit6NavigationTest extends AbstractTestFrameworkCompilingIntegrat
     assertEmpty(output.err);
 
     String messages = output.messages.stream().filter(m -> m.getAttributes().containsKey("locationHint"))
-      .map(m -> normalizedTestOutput(m, m.getAttributes().get("locationHint").startsWith("file://")
-                                          ? Map.of("locationHint", "file://##path##")
-                                          : Map.of()))
+      .map(m -> normalizedTestOutput(m, Map.of("locationHint", (value) -> value.startsWith("file://") ? "file://##path##" : value)))
       .collect(Collectors.joining("\n"));
 
     assertEquals("""
