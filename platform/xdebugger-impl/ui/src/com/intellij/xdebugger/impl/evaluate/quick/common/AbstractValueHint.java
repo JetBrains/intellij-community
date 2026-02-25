@@ -363,8 +363,11 @@ public abstract class AbstractValueHint {
     component.setIcon(icon);
     component.setCursor(hintCursor());
     text.appendToComponent(component);
-    appendAdditionalHyperlink(link, component);
-    appendEvaluatorLink(evaluator, component);
+    if (link != null) {
+      appendAdditionalHyperlink(link, component);
+    } else if (evaluator != null) {
+      appendEvaluatorLink(evaluator, component);
+    }
     return component;
   }
 
@@ -419,33 +422,29 @@ public abstract class AbstractValueHint {
     return component;
   }
 
-  protected final void appendEvaluatorLink(@Nullable XFullValueEvaluator evaluator, SimpleColoredComponent component) {
-    if (evaluator != null) {
-      component.append(
-        evaluator.getLinkText(),
-        XDebuggerTreeNodeHyperlink.TEXT_ATTRIBUTES,
-        (Consumer<MouseEvent>)event -> {
-          if (evaluator.isShowValuePopup()) {
-            DebuggerUIUtil.showValuePopup(evaluator, event, getProject(), getEditor());
-          }
-          else {
-            new HeadlessValueEvaluationCallbackBase(getProject()).startFetchingValue(evaluator);
-          }
+  protected final void appendEvaluatorLink(@NotNull XFullValueEvaluator evaluator, SimpleColoredComponent component) {
+    component.append(
+      evaluator.getLinkText(),
+      XDebuggerTreeNodeHyperlink.TEXT_ATTRIBUTES,
+      (Consumer<MouseEvent>)event -> {
+        if (evaluator.isShowValuePopup()) {
+          DebuggerUIUtil.showValuePopup(evaluator, event, getProject(), getEditor());
         }
-      );
-    }
+        else {
+          new HeadlessValueEvaluationCallbackBase(getProject()).startFetchingValue(evaluator);
+        }
+      }
+    );
   }
 
-  protected static void appendAdditionalHyperlink(@Nullable XDebuggerTreeNodeHyperlink link, SimpleColoredComponent component) {
-    if (link != null) {
-      component.append(
-        link.getLinkText(),
-        link.getTextAttributes(),
-        (Consumer<MouseEvent>)event -> {
-          link.onClick(event);
-        }
-      );
-    }
+  protected static void appendAdditionalHyperlink(@NotNull XDebuggerTreeNodeHyperlink link, SimpleColoredComponent component) {
+    component.append(
+      link.getLinkText(),
+      link.getTextAttributes(),
+      (Consumer<MouseEvent>)event -> {
+        link.onClick(event);
+      }
+    );
   }
 
   protected @Nullable TextRange getCurrentRange() {
