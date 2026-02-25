@@ -32,9 +32,6 @@
 *f:com.intellij.polySymbols.PolySymbol$HideFromCompletionProperty
 - com.intellij.polySymbols.PolySymbolProperty
 - sf:INSTANCE:com.intellij.polySymbols.PolySymbol$HideFromCompletionProperty
-*f:com.intellij.polySymbols.PolySymbol$IjTextAttributesKeyProperty
-- com.intellij.polySymbols.PolySymbolProperty
-- sf:INSTANCE:com.intellij.polySymbols.PolySymbol$IjTextAttributesKeyProperty
 *f:com.intellij.polySymbols.PolySymbol$InjectLanguageProperty
 - com.intellij.polySymbols.PolySymbolProperty
 - sf:INSTANCE:com.intellij.polySymbols.PolySymbol$InjectLanguageProperty
@@ -56,6 +53,9 @@
 *f:com.intellij.polySymbols.PolySymbol$ReadWriteAccessProperty
 - com.intellij.polySymbols.PolySymbolProperty
 - sf:INSTANCE:com.intellij.polySymbols.PolySymbol$ReadWriteAccessProperty
+*f:com.intellij.polySymbols.PolySymbol$TextAttributesKeyProperty
+- com.intellij.polySymbols.PolySymbolProperty
+- sf:INSTANCE:com.intellij.polySymbols.PolySymbol$TextAttributesKeyProperty
 *:com.intellij.polySymbols.PolySymbolApiStatus
 - *sf:Companion:com.intellij.polySymbols.PolySymbolApiStatus$Companion
 - sf:Deprecated:com.intellij.polySymbols.PolySymbolApiStatus$Deprecated

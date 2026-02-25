@@ -8,12 +8,12 @@ import com.intellij.find.usages.symbol.SearchTargetSymbol
 import com.intellij.model.Pointer
 import com.intellij.model.Symbol
 import com.intellij.navigation.NavigatableSymbol
+import com.intellij.openapi.editor.colors.TextAttributesKey
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.platform.backend.documentation.DocumentationTarget
 import com.intellij.platform.backend.navigation.NavigationTarget
 import com.intellij.platform.backend.presentation.TargetPresentation
-
 import com.intellij.polySymbols.context.PolyContext
 import com.intellij.polySymbols.documentation.PolySymbolDocumentationCustomizer
 import com.intellij.polySymbols.impl.PolySymbolPropertyGetter
@@ -39,7 +39,6 @@ import com.intellij.util.concurrency.annotations.RequiresReadLock
 import org.jetbrains.annotations.ApiStatus
 import java.util.Locale
 import javax.swing.Icon
-import kotlin.jvm.java
 import kotlin.reflect.KClass
 
 /**
@@ -347,7 +346,7 @@ interface PolySymbol : Symbol, NavigatableSymbol, PolySymbolPrioritizedScope {
   /**
    * Text attributes key of an IntelliJ ColorScheme.
    */
-  object IjTextAttributesKeyProperty : PolySymbolProperty<String>("ij-text-attributes-key", String::class.java)
+  object TextAttributesKeyProperty : PolySymbolProperty<TextAttributesKey>("ij-text-attributes-key", TextAttributesKey::class.java)
 
   /**
    * Read/write access information for the symbol.

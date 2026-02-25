@@ -3,6 +3,7 @@ package com.intellij.polySymbols.webTypes
 
 import com.intellij.model.Pointer
 import com.intellij.model.Symbol
+import com.intellij.openapi.editor.colors.TextAttributesKey
 import com.intellij.platform.backend.documentation.DocumentationTarget
 import com.intellij.polySymbols.PolySymbol
 import com.intellij.polySymbols.PolySymbol.DocHideIconProperty
@@ -49,6 +50,7 @@ import com.intellij.polySymbols.webTypes.json.toLangType
 import com.intellij.polySymbols.webTypes.json.type
 import com.intellij.polySymbols.webTypes.json.wrap
 import com.intellij.psi.PsiElement
+import com.intellij.util.asSafely
 import org.jetbrains.annotations.ApiStatus
 import javax.swing.Icon
 
@@ -98,6 +100,9 @@ open class WebTypesSymbolBase : WebTypesSymbol {
           ?: superContributions.firstNotNullOfOrNull { it[property] }
         )
       }
+      PolySymbol.TextAttributesKeyProperty -> contributionProperties[property.name]
+        ?.asSafely<String>()
+        ?.let { property.tryCast(TextAttributesKey.find(it)) }
       else -> property.tryCast(contributionProperties[property.name])
               ?: super[property]
 

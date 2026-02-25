@@ -23,8 +23,8 @@ import com.intellij.openapi.editor.colors.TextAttributesKey
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.TextRange
 import com.intellij.openapi.util.getOrCreateUserDataUnsafe
-import com.intellij.polySymbols.PolySymbol.IjTextAttributesKeyProperty
 import com.intellij.polySymbols.PolySymbol
+import com.intellij.polySymbols.PolySymbol.TextAttributesKeyProperty
 import com.intellij.polySymbols.PolySymbolKind
 import com.intellij.polySymbols.PolySymbolNameSegment
 import com.intellij.polySymbols.PolySymbolNameSegment.MatchProblem
@@ -130,8 +130,7 @@ internal class PolySymbolHighlightingAnnotator : Annotator {
             PolySymbolHighlightingCustomizer.getSymbolTextAttributes(host, symbol, depth)
               ?.let { return@mapNotNull it }
 
-            symbol[IjTextAttributesKeyProperty]
-              ?.let { TextAttributesKey.find(it) }
+            symbol[TextAttributesKeyProperty]
               ?.let { return@mapNotNull it }
 
             if (symbol.kind != parentKind)
@@ -245,7 +244,7 @@ internal class PolySymbolHighlightingAnnotator : Annotator {
   ): List<InspectionToolInfo> =
     symbolKinds
       .mapNotNull { symbolType ->
-        PolySymbolInspectionToolMappingEP.Companion.get(symbolType.namespace, symbolType.kindName, problemKind)?.toolShortName
+        PolySymbolInspectionToolMappingEP.get(symbolType.namespace, symbolType.kindName, problemKind)?.toolShortName
       }.map {
         map.computeIfAbsent(it) { createToolInfo(it, holder.currentAnnotationSession.file) }
       }
