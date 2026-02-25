@@ -31,6 +31,8 @@ import kotlinx.serialization.json.encodeToStream
 import org.slf4j.Logger
 import java.io.InputStream
 import java.nio.file.Path
+import java.time.LocalDate
+import java.time.ZoneOffset
 import java.util.zip.ZipEntry
 import java.util.zip.ZipFile
 import kotlin.collections.component1
@@ -211,16 +213,10 @@ suspend fun generatePluginDescriptor(
     version = pluginVersion,
     compatibleShipVersionRange = compatibleShipVersionRange,
     deps = dependencies,
-    meta = metadata + listOfNotNull(
+    meta = fillEmptyDateMetadata(metadata) + listOfNotNull(
       KnownMeta.PartsCoordinates to Json.encodeToString(Coordinates.serializer(), partsCoordinates),
-      iconCoordinates?.let {
-        KnownMeta.DefaultIconCoordinates to Json.encodeToString(Coordinates.serializer(),
-                                                                it)
-      },
-      iconDarkCoordinates?.let {
-        KnownMeta.DarkIconCoordinates to Json.encodeToString(Coordinates.serializer(),
-                                                             it)
-      },
+      iconCoordinates?.let { KnownMeta.DefaultIconCoordinates to Json.encodeToString(Coordinates.serializer(), it) },
+      iconDarkCoordinates?.let { KnownMeta.DarkIconCoordinates to Json.encodeToString(Coordinates.serializer(), it) },
       KnownMeta.SupportedProducts to supportedProducts.joinToString(","),
     ).toMap(),
     signature = null)
@@ -245,6 +241,25 @@ suspend fun generatePluginDescriptor(
   logger.info("Writing plugin descriptor to $pluginDescriptorFileOutput")
   pluginDescriptorFileOutput.outputStream().use { outputStream ->
     json.encodeToStream(PluginDescriptor.serializer(), signedPlugin, outputStream)
+  }
+}
+
+private fun fillEmptyDateMetadata(metadata: Map<String, String>): Map<String, String> {
+  if (metadata["buildDate"] != EMPTY_METADATA_VALUE && metadata["expirationDate"] != EMPTY_METADATA_VALUE) {
+    return metadata
+  }
+
+  val todayAtStartOfDay = LocalDate.now(ZoneOffset.UTC).atStartOfDay()
+  val buildDate = todayAtStartOfDay.toEpochSecond(ZoneOffset.UTC).toString()
+  val expirationDate = todayAtStartOfDay.plusDays(60).toEpochSecond(ZoneOffset.UTC).toString()
+
+  return metadata.toMutableMap().apply {
+    if (this["buildDate"] == EMPTY_METADATA_VALUE) {
+      this["buildDate"] = buildDate
+    }
+    if (this["expirationDate"] == EMPTY_METADATA_VALUE) {
+      this["expirationDate"] = expirationDate
+    }
   }
 }
 
@@ -329,6 +344,7 @@ private const val FLEET_KERNEL_PLUGIN_SERVICE: String = "fleet.kernel.plugins.Pl
  * There is a matching constant in `SchemaDocumentationWorker` in `fleet-schema-plugin`. Please keep them in sync.
  */
 const val JSON_DOCUMENTATION_FILENAME_EXTENSION: String = ".documentation.json"
+private const val EMPTY_METADATA_VALUE: String = "__EMPTY__"
 
 internal fun Set<Path>.unwrapJarFiles() = flatMap {
   when {
