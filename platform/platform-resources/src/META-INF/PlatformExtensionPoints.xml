@@ -721,6 +721,10 @@
                     interface="com.intellij.ide.plugins.PluginCategoryPromotionProvider"
                     dynamic="false"/>
 
+    <extensionPoint name="fileChooserCustomizer"
+                    interface="com.intellij.openapi.fileChooser.FileChooserCustomizer"
+                    dynamic="true"/>
+
 
     <extensionPoint name="openAnotherToolHandler" interface="com.intellij.openapi.updateSettings.impl.pluginsAdvertisement.OpenAnotherToolHandler" dynamic="true"/>
   </extensionPoints>
