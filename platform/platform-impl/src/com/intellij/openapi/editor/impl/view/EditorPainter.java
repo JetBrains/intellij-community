@@ -1652,9 +1652,12 @@ public final class EditorPainter implements TextDrawingCallback {
       if (myDocument.getTextLength() > 0 && caret != null &&
           !myView.getTextLayoutCache().getLineLayout(caret.getLogicalPosition().line).isLtr()) {
         GeneralPath triangle = new GeneralPath(Path2D.WIND_NON_ZERO, 3);
-        triangle.moveTo(isRtl ? x : x + w, y);
+        triangle.moveTo(isRtl ? x : x + w, y + CARET_DIRECTION_MARK_SIZE);
+        triangle.quadTo(
+          isRtl ? x : x + w, y,
+          x + w / 2, y
+        );
         triangle.lineTo(isRtl ? x - CARET_DIRECTION_MARK_SIZE : x + w + CARET_DIRECTION_MARK_SIZE, y);
-        triangle.lineTo(isRtl ? x : x + w, y + CARET_DIRECTION_MARK_SIZE);
         triangle.closePath();
         g.fill(triangle);
       }
