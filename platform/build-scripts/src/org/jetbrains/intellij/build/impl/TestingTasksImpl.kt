@@ -242,26 +242,44 @@ internal class TestingTasksImpl(context: CompilationContext, private val options
     if (options.testConfigurations != null) {
       val testConfigurationsOptionName = "intellij.build.test.configurations"
       if (options.testPatterns != null) {
-        warnOptionIgnored(testConfigurationsOptionName, "intellij.build.test.patterns")
+        errorOptionIgnored(testConfigurationsOptionName, "intellij.build.test.patterns")
       }
       if (options.testGroups != TestingOptions.ALL_EXCLUDE_DEFINED_GROUP) {
-        warnOptionIgnored(testConfigurationsOptionName, "intellij.build.test.groups")
+        errorOptionIgnored(testConfigurationsOptionName, "intellij.build.test.groups")
       }
       if (mainModule != null && !options.validateMainModule) {
-        warnOptionIgnored(testConfigurationsOptionName, "intellij.build.test.main.module")
+        errorOptionIgnored(testConfigurationsOptionName, "intellij.build.test.main.module")
+      }
+      if (options.searchScope != JUnitRunConfigurationProperties.TestSearchScope.MODULE_WITH_DEPENDENCIES.serialized) {
+        errorOptionIgnored(testConfigurationsOptionName, "intellij.build.test.search.scope")
       }
     }
     else if (options.testPatterns != null && options.testGroups != TestingOptions.ALL_EXCLUDE_DEFINED_GROUP) {
-      warnOptionIgnored("intellij.build.test.patterns", "intellij.build.test.groups")
+      errorOptionIgnored("intellij.build.test.patterns", "intellij.build.test.groups")
     }
 
     if (options.validateMainModule && mainModule.isNullOrEmpty()) {
       context.messages.logErrorAndThrow("'intellij.build.test.main.module.validate' option requires 'intellij.build.test.main.module' to be set")
     }
+
+    if (options.searchScope != JUnitRunConfigurationProperties.TestSearchScope.MODULE_WITH_DEPENDENCIES.serialized) {
+      if (TeamCityHelper.isUnderTeamCity) {
+        context.messages.logErrorAndThrow("'intellij.build.test.search.scope' option should be used only for local runs")
+      }
+      if (options.searchScope != JUnitRunConfigurationProperties.TestSearchScope.SINGLE_MODULE.serialized) {
+        context.messages.logErrorAndThrow("Unsupported 'intellij.build.test.search.scope' value: ${options.searchScope}")
+      }
+    }
+    if (options.repeatCount < 1) {
+      context.messages.logErrorAndThrow("'intellij.build.test.repeat.count' option should be greater than 0, actual: ${options.repeatCount}")
+    }
+    if (options.repeatCount > 1 && options.attemptCount > 1) {
+      context.messages.logErrorAndThrow("'intellij.build.test.repeat.count' and 'intellij.build.test.attempt.count' options cannot be used together")
+    }
   }
 
-  private fun warnOptionIgnored(specifiedOption: String, ignoredOption: String) {
-    context.messages.warning("'${specifiedOption}' option is specified, so '${ignoredOption}' will be ignored.")
+  private fun errorOptionIgnored(specifiedOption: String, ignoredOption: String) {
+    context.messages.logErrorAndThrow("'${specifiedOption}' option is specified, so '${ignoredOption}' will be ignored.")
   }
 
   private suspend fun runTestsFromRunConfigurations(
@@ -281,12 +299,6 @@ internal class TestingTasksImpl(context: CompilationContext, private val options
     additionalJvmOptions: List<String>,
     systemProperties: Map<String, String>,
   ) {
-    if (runConfigurationProperties.testSearchScope != JUnitRunConfigurationProperties.TestSearchScope.MODULE_WITH_DEPENDENCIES) {
-      context.messages.warning(
-        "Run configuration '${runConfigurationProperties.name}' uses test search scope '${runConfigurationProperties.testSearchScope.serialized}', " +
-        "while only '${JUnitRunConfigurationProperties.TestSearchScope.MODULE_WITH_DEPENDENCIES.serialized}' is supported. Scope will be ignored"
-      )
-    }
     try {
       runTestsProcess(
         mainModule = runConfigurationProperties.moduleName,
@@ -297,6 +309,8 @@ internal class TestingTasksImpl(context: CompilationContext, private val options
         systemProperties = systemProperties,
         envVariables = runConfigurationProperties.envVariables,
         remoteDebugging = false,
+        searchForTestsAcrossModuleDependencies = runConfigurationProperties.testSearchScope == JUnitRunConfigurationProperties.TestSearchScope.MODULE_WITH_DEPENDENCIES,
+        rootExcludeCondition = null,
       )
     }
     catch (e: NoTestsFound) {
@@ -312,23 +326,6 @@ internal class TestingTasksImpl(context: CompilationContext, private val options
     rootExcludeCondition: ((Path) -> Boolean)?,
     systemProperties: MutableMap<String, String>,
   ) {
-    if (rootExcludeCondition != null) {
-      val excludedRootPaths = ArrayList<Path>(context.project.modules.size * 2)
-      for (module in context.project.modules) {
-        val contentRoots = module.contentRootsList.urls
-        if (!contentRoots.isEmpty() && rootExcludeCondition(Path.of(JpsPathUtil.urlToPath(contentRoots.first())))) {
-          excludedRootPaths.addAll(context.outputProvider.getModuleOutputRoots(module))
-          excludedRootPaths.addAll(context.outputProvider.getModuleOutputRoots(module, forTests = true))
-        }
-      }
-      val excludedRoots = replaceAllWithArchivedIfNeeded(excludedRootPaths).filter(Files::exists).map(Path::toString)
-
-      val excludedRootsFile = context.paths.tempDir.resolve("excluded.classpath")
-      Files.createDirectories(excludedRootsFile.parent)
-      Files.writeString(excludedRootsFile, excludedRoots.joinToString(separator = "\n"))
-      systemProperties.put("exclude.tests.roots.file", excludedRootsFile.toString())
-    }
-
     try {
       runTestsProcess(
         mainModule = mainModule,
@@ -337,6 +334,8 @@ internal class TestingTasksImpl(context: CompilationContext, private val options
         jvmArgs = additionalJvmOptions,
         systemProperties = systemProperties,
         remoteDebugging = false,
+        searchForTestsAcrossModuleDependencies = options.searchScope == JUnitRunConfigurationProperties.TestSearchScope.MODULE_WITH_DEPENDENCIES.serialized,
+        rootExcludeCondition = rootExcludeCondition,
       )
     }
     catch (e: NoTestsFound) {
@@ -420,7 +419,9 @@ internal class TestingTasksImpl(context: CompilationContext, private val options
       testPatterns = junitClass,
       jvmArgs = removeStandardJvmOptions(StringUtilRt.splitHonorQuotes(remoteDebugJvmOptions, ' ')) + additionalJvmOptions,
       systemProperties = emptyMap(),
-      remoteDebugging = true
+      remoteDebugging = true,
+      searchForTestsAcrossModuleDependencies = true,
+      rootExcludeCondition = null,
     )
   }
 
@@ -432,62 +433,57 @@ internal class TestingTasksImpl(context: CompilationContext, private val options
     systemProperties: Map<String, String>,
     envVariables: Map<String, String> = emptyMap(),
     remoteDebugging: Boolean,
+    searchForTestsAcrossModuleDependencies: Boolean,
+    rootExcludeCondition: ((Path) -> Boolean)?,
   ) {
-    val useKotlinK2 = !System.getProperty("idea.kotlin.plugin.use.k1", "false").toBoolean() ||
-                      jvmArgs.contains("-Didea.kotlin.plugin.use.k1=false")
     val outputProvider = context.outputProvider
     val mainJpsModule = outputProvider.findRequiredModule(mainModule)
-    val testRoots = context.getModuleRuntimeClasspath(mainJpsModule, forTests = true)
-      .toMutableList()
-      .apply {
-        if (!useKotlinK2) {
-          val kotlinPluginK2Module = outputProvider.findRequiredModule("kotlin.plugin.k2")
-          removeAll(outputProvider.getModuleOutputRoots(kotlinPluginK2Module, forTests = false))
-          removeAll(outputProvider.getModuleOutputRoots(kotlinPluginK2Module, forTests = true))
-        }
-      }
 
-    if (isBootstrapSuiteDefault) {
-      //module with "com.intellij.TestAll" which output should be found in `testClasspath + modulePath`
-      val testFrameworkCoreModule = outputProvider.findRequiredModule("intellij.platform.testFramework.core")
-      val testFrameworkCoreModuleOutputRoots = outputProvider.getModuleOutputRoots(testFrameworkCoreModule)
-      for (testFrameworkOutput in testFrameworkCoreModuleOutputRoots) {
-        if (!testRoots.contains(testFrameworkOutput)) {
-          testRoots.addAll(context.getModuleRuntimeClasspath(testFrameworkCoreModule, false) )
-        }
-      }
-    }
-
-    val testClasspath: List<String>
     val modulePath: List<String>?
+    var testClasspath = buildList {
+      addAll(context.getModuleRuntimeClasspath(mainJpsModule, forTests = true))
+
+      if (isBootstrapSuiteDefault) {
+        //module with "com.intellij.TestAll" which output should be found in `testClasspath + modulePath`
+        val testFrameworkCoreModule = outputProvider.findRequiredModule("intellij.platform.testFramework.core")
+        addAll(context.getModuleRuntimeClasspath(testFrameworkCoreModule, false) )
+      }
+    }.distinct()
 
     val moduleInfoFile = JpsJavaExtensionService.getInstance().getJavaModuleIndex(context.project).getModuleInfoFile(mainJpsModule, true)
-    val toExistingAbsolutePathConverter: (Path) -> String? = { if (Files.exists(it)) it.toAbsolutePath().normalize().toString() else null }
+    val toExistingAbsolutePathConverter: (Path) -> String = { require(Files.exists(it)); it.toAbsolutePath().normalize().toString() }
     if (moduleInfoFile != null) {
-      val outputDir = ModuleBuildTarget(mainJpsModule, JavaModuleBuildTargetType.TEST).outputDir
-      val pair = ModulePathSplitter().splitPath(moduleInfoFile, mutableSetOf(outputDir), testRoots.map {
+      val outputDir = outputProvider.getModuleOutputRoots(mainJpsModule, forTests = true).single().let(Path::toFile)
+      val pair = ModulePathSplitter().splitPath(moduleInfoFile, mutableSetOf(outputDir), testClasspath.map {
         @Suppress("IO_FILE_USAGE")
         it.toFile()
       })
-      modulePath = replaceAllWithArchivedIfNeeded(pair.first.path.map { it.toPath() }).mapNotNull(toExistingAbsolutePathConverter)
-      testClasspath = replaceAllWithArchivedIfNeeded(pair.second.map { it.toPath() }).mapNotNull(toExistingAbsolutePathConverter)
+      modulePath = pair.first.path.map { it.toPath() }.map(toExistingAbsolutePathConverter)
+      testClasspath = pair.second.map { it.toPath() }
     }
     else {
       modulePath = null
-      testClasspath = replaceAllWithArchivedIfNeeded(testRoots).mapNotNull(toExistingAbsolutePathConverter)
+    }
+
+    val testRoots = let {
+      if (searchForTestsAcrossModuleDependencies) JpsJavaExtensionService.dependencies(mainJpsModule).recursively().modules
+      else listOf(mainJpsModule)
+    }.flatMap {
+      if (rootExcludeCondition != null) {
+        val contentRoot = it.contentRootsList.urls.firstOrNull()?.let(JpsPathUtil::urlToNioPath)
+        if (contentRoot != null && rootExcludeCondition(contentRoot)) return@flatMap emptyList()  // root excluded
+      }
+
+      context.outputProvider.getModuleOutputRoots(it, forTests = true)
     }
 
     val devBuildServerSettings = DevBuildServerSettings.readDevBuildServerSettingsFromIntellijYaml(mainModule)
     val bootstrapClasspath = context.getModuleRuntimeClasspath(module = outputProvider.findRequiredModule("intellij.tools.testsBootstrap"), forTests = false)
       .mapTo(mutableListOf()) { it.toString() }
-    val classpathFile = context.paths.tempDir.resolve("junit.classpath")
-    Files.createDirectories(classpathFile.parent)
-    // this is required to collect tests both on class and module paths
-    Files.writeString(classpathFile, replaceAllWithArchivedIfNeeded(testRoots).mapNotNull(toExistingAbsolutePathConverter).joinToString(separator = "\n"))
     @Suppress("NAME_SHADOWING")
     val systemProperties = systemProperties.toMutableMap()
     systemProperties.put("io.netty.allocator.type", "pooled")
-    systemProperties.putIfAbsent("classpath.file", classpathFile.toString())
+    systemProperties.put("test.roots", testRoots.joinToString(File.pathSeparator, transform = toExistingAbsolutePathConverter))
     testPatterns?.let { systemProperties.putIfAbsent("intellij.build.test.patterns", it) }
     testGroups?.let { systemProperties.putIfAbsent("intellij.build.test.groups", it) }
     systemProperties.putIfAbsent("intellij.build.test.sorter", System.getProperty("intellij.build.test.sorter"))
@@ -538,19 +534,10 @@ internal class TestingTasksImpl(context: CompilationContext, private val options
       envVariables = envVariables,
       bootstrapClasspath = bootstrapClasspath,
       modulePath = modulePath,
-      testClasspath = testClasspath,
+      testClasspath = testClasspath.map(toExistingAbsolutePathConverter),
       devBuildServerSettings = devBuildServerSettings,
     )
     notifySnapshotBuilt(allJvmArgs)
-  }
-
-  private suspend fun replaceAllWithArchivedIfNeeded(files: List<Path>, context: CompilationContext = this.context): List<Path> {
-    return when (context) {
-      is BuildContextImpl -> replaceAllWithArchivedIfNeeded(files, context.compilationContext)
-      is ArchivedCompilationContext -> context.replaceAllWithCompressedIfNeeded(files)
-      is BazelCompilationContext -> context.replaceAllWithCompressedIfNeeded(files)
-      else -> files
-    }
   }
 
   private suspend fun getRuntimeExecutablePath(): Path {
@@ -755,20 +742,16 @@ internal class TestingTasksImpl(context: CompilationContext, private val options
     return context.project.modules.mapConcurrent { module ->
       withContext(CoroutineName("loading tests annotated with @SkipInHeadlessEnvironment from the module '${module.name}'")) {
         val outputRoots = context.outputProvider.getModuleOutputRoots(module, forTests = true)
+        if (outputRoots.isEmpty()) return@withContext emptyList()
         val root = requireNotNull(outputRoots.singleOrNull()) { "More than one output root for module '${module.name}': ${outputRoots.joinToString()}" }
-        if (Files.exists(root)) {
-          ClassFinder(root, "", false).classes
-            .filter {
-              val testClass = classloader.loadClass(it)
-              !Modifier.isAbstract(testClass.modifiers) &&
-              !testClass.isAnnotationPresent(ignoreAnnotation) &&
-              testClass.isAnnotationPresent(testAnnotation)
-            }
-            .map { Pair(it, module.name) }
-        }
-        else {
-          emptyList()
-        }
+        ClassFinder(root, "", false).classes
+          .filter {
+            val testClass = classloader.loadClass(it)
+            !Modifier.isAbstract(testClass.modifiers) &&
+            !testClass.isAnnotationPresent(ignoreAnnotation) &&
+            testClass.isAnnotationPresent(testAnnotation)
+          }
+          .map { Pair(it, module.name) }
       }
     }.flatten()
   }
@@ -802,6 +785,7 @@ internal class TestingTasksImpl(context: CompilationContext, private val options
           systemProperties = systemProperties + listOf(
             "intellij.build.test.list.classes" to testClassesListFile.absolutePathString(),
             "intellij.build.test.engine.vintage" to "false",
+            "intellij.build.test.ignoreFirstAndLastTests" to "true",
           ),
           jvmArgs = jvmArgs,
           envVariables = envVariables,
@@ -827,6 +811,7 @@ internal class TestingTasksImpl(context: CompilationContext, private val options
           systemProperties = systemProperties + listOf(
             "intellij.build.test.list.classes" to testClassesListFile.absolutePathString(),
             "intellij.build.test.engine.vintage" to "only",
+            "intellij.build.test.ignoreFirstAndLastTests" to "true",
             ),
           jvmArgs = jvmArgs,
           envVariables = envVariables,
@@ -946,122 +931,140 @@ internal class TestingTasksImpl(context: CompilationContext, private val options
       }
     }
     else {
-      val failedClassesJUnit5List = Files.createTempFile("failed-classes-junit5-", ".list").apply { Files.delete(this) }
-      val failedClassesJUnit34List = Files.createTempFile("failed-classes-junit34-", ".list").apply { Files.delete(this) }
-      val additionalPropertiesJUnit5: Map<String, String> = failedClassesJUnit5List.let {
-        if (options.attemptCount > 1) mapOf("intellij.build.test.retries.failedClasses.file" to "$it", "intellij.build.test.list.file" to "$it")
-        else emptyMap()
+      if (options.repeatCount > 1) {
+        messages.info("Will run selected tests ${options.repeatCount} times")
       }
-      val additionalPropertiesJUnit34: Map<String, String> = failedClassesJUnit34List.let {
-        if (options.attemptCount > 1) mapOf("intellij.build.test.retries.failedClasses.file" to "$it", "intellij.build.test.list.file" to "$it")
-        else emptyMap()
-      }
-      var runJUnit5 = !options.shouldSkipJUnit5Tests
-      var runJUnit34 = !options.shouldSkipJUnit34Tests
-      var lastExitCode5 = 0
-      var lastExitCode34 = 0
-      for (attempt in 1..options.attemptCount) {
-        if (!runJUnit5 && !runJUnit34) break
-        val spanNameSuffix = if (options.attemptCount > 1) " (attempt $attempt)" else ""
-        val systemPath = systemProperties[PathManager.PROPERTY_SYSTEM_PATH]
+      var hadAnyFailures = false
 
-        val additionalProperties = mutableMapOf(PathManager.PROPERTY_LOG_PATH to "$systemPath${File.separator}log${File.separator}junit5")
-        if (attempt > 1) {
-          additionalProperties["intellij.build.test.ignoreFirstAndLastTests"] = "true"
+      for (runNumber in 1..options.repeatCount) {
+        val failedClassesJUnit5List = Files.createTempFile("failed-classes-junit5-", ".list").apply { Files.delete(this) }
+        val failedClassesJUnit34List = Files.createTempFile("failed-classes-junit34-", ".list").apply { Files.delete(this) }
+        val additionalPropertiesJUnit5: Map<String, String> = failedClassesJUnit5List.let {
+          if (options.attemptCount > 1) mapOf("intellij.build.test.retries.failedClasses.file" to "$it", "intellij.build.test.list.file" to "$it")
+          else emptyMap()
         }
+        val additionalPropertiesJUnit34: Map<String, String> = failedClassesJUnit34List.let {
+          if (options.attemptCount > 1) mapOf("intellij.build.test.retries.failedClasses.file" to "$it", "intellij.build.test.list.file" to "$it")
+          else emptyMap()
+        }
+        var runJUnit5 = !options.shouldSkipJUnit5Tests
+        var runJUnit34 = !options.shouldSkipJUnit34Tests
+        var lastExitCode5 = 0
+        var lastExitCode34 = 0
 
-        val exitCode5: Int = if (runJUnit5) {
-          block("run junit 5 tests${spanNameSuffix}") {
-            runJUnit5Engine(
-              mainModule = mainModule,
-              systemProperties = systemProperties + additionalProperties + additionalPropertiesJUnit5 + listOf(
-                "intellij.build.test.engine.vintage" to "false",
-              ),
-              jvmArgs = jvmArgs,
-              envVariables = envVariables,
-              bootstrapClasspath = bootstrapClasspath,
-              modulePath = modulePath,
-              testClasspath = testClasspath,
-              suiteName = "__classpathroot__",
-              methodName = null,
-              devBuildSettings = devBuildServerSettings,
-            )
+        for (attempt in 1..options.attemptCount) {
+          if (!runJUnit5 && !runJUnit34) break
+
+          val spanNameSuffix = buildString {
+            if (options.repeatCount > 1) {
+              append(" (run $runNumber/${options.repeatCount})")
+            }
+            if (options.attemptCount > 1) {
+              append(" (attempt $attempt)")
+            }
           }
-        }
-        else {
-          0
-        }
-        if (runJUnit5) lastExitCode5 = exitCode5
+          val systemPath = systemProperties[PathManager.PROPERTY_SYSTEM_PATH]
 
-        additionalProperties[PathManager.PROPERTY_LOG_PATH] = "$systemPath${File.separator}log${File.separator}junit3and4"
-        val exitCode34: Int = if (runJUnit34) {
-          block("run junit 3+4 tests${spanNameSuffix}") {
-            runJUnit5Engine(
-              mainModule = mainModule,
-              systemProperties = systemProperties + additionalProperties + additionalPropertiesJUnit34 + listOf(
-                "intellij.build.test.engine.vintage" to "only",
-              ),
-              jvmArgs = jvmArgs,
-              envVariables = envVariables,
-              bootstrapClasspath = bootstrapClasspath,
-              modulePath = modulePath,
-              testClasspath = testClasspath,
-              suiteName = "__classpathroot__",
-              methodName = null,
-              devBuildSettings = devBuildServerSettings,
-            )
+          val additionalProperties = mutableMapOf(PathManager.PROPERTY_LOG_PATH to "$systemPath${File.separator}log${File.separator}junit5")
+          if (attempt > 1) {
+            additionalProperties["intellij.build.test.ignoreFirstAndLastTests"] = "true"
           }
-        }
-        else {
-          0
-        }
-        if (runJUnit34) lastExitCode34 = exitCode34
 
-        if (exitCode5 == NO_TESTS_ERROR && exitCode34 == NO_TESTS_ERROR &&
-            // only check on the first (full) attempt
-            attempt == 1 &&
-            // a bucket might be empty for run configurations with too few tests due to imperfect tests balancing
-            options.bucketsCount < 2) {
-          throw NoTestsFound()
-        }
-        if (exitCode5 != 0 && exitCode5 != 1 && exitCode5 != NO_TESTS_ERROR) {
-          throw RuntimeException("Unexpected exit code $exitCode5 when running JUnit 5 tests")
-        }
-        if (exitCode34 != 0 && exitCode34 != 1 && exitCode34 != NO_TESTS_ERROR) {
-          throw RuntimeException("Unexpected exit code $exitCode34 when running JUnit 3+4 tests")
-        }
-
-        if (runJUnit5) {
-          val failedClassesJUnit5 = failedClassesJUnit5List.let { if (Files.exists(it)) it.readLines() else emptyList() }
-          if (failedClassesJUnit5.isNotEmpty()) {
-            messages.warning("Will rerun JUnit 5 tests: $failedClassesJUnit5")
+          val exitCode5: Int = if (runJUnit5) {
+            block("run junit 5 tests${spanNameSuffix}") {
+              runJUnit5Engine(
+                mainModule = mainModule,
+                systemProperties = systemProperties + additionalProperties + additionalPropertiesJUnit5 + listOf(
+                  "intellij.build.test.engine.vintage" to "false",
+                ),
+                jvmArgs = jvmArgs,
+                envVariables = envVariables,
+                bootstrapClasspath = bootstrapClasspath,
+                modulePath = modulePath,
+                testClasspath = testClasspath,
+                suiteName = "__classpathroot__",
+                methodName = null,
+                devBuildSettings = devBuildServerSettings,
+              )
+            }
           }
           else {
-            runJUnit5 = false
+            0
+          }
+          if (runJUnit5) lastExitCode5 = exitCode5
+
+          additionalProperties[PathManager.PROPERTY_LOG_PATH] = "$systemPath${File.separator}log${File.separator}junit3and4"
+          val exitCode34: Int = if (runJUnit34) {
+            block("run junit 3+4 tests${spanNameSuffix}") {
+              runJUnit5Engine(
+                mainModule = mainModule,
+                systemProperties = systemProperties + additionalProperties + additionalPropertiesJUnit34 + listOf(
+                  "intellij.build.test.engine.vintage" to "only",
+                ),
+                jvmArgs = jvmArgs,
+                envVariables = envVariables,
+                bootstrapClasspath = bootstrapClasspath,
+                modulePath = modulePath,
+                testClasspath = testClasspath,
+                suiteName = "__classpathroot__",
+                methodName = null,
+                devBuildSettings = devBuildServerSettings,
+              )
+            }
+          }
+          else {
+            0
+          }
+          if (runJUnit34) lastExitCode34 = exitCode34
+
+          if (exitCode5 == NO_TESTS_ERROR && exitCode34 == NO_TESTS_ERROR &&
+              // only check on the first full run
+              attempt == 1 &&
+              runNumber == 1 &&
+              // a bucket might be empty for run configurations with too few tests due to imperfect tests balancing
+              options.bucketsCount < 2) {
+            throw NoTestsFound()
+          }
+          if (exitCode5 != 0 && exitCode5 != 1 && exitCode5 != NO_TESTS_ERROR) {
+            throw RuntimeException("Unexpected exit code $exitCode5 when running JUnit 5 tests")
+          }
+          if (exitCode34 != 0 && exitCode34 != 1 && exitCode34 != NO_TESTS_ERROR) {
+            throw RuntimeException("Unexpected exit code $exitCode34 when running JUnit 3+4 tests")
+          }
+
+          if (runJUnit5) {
+            val failedClassesJUnit5 = failedClassesJUnit5List.let { if (Files.exists(it)) it.readLines() else emptyList() }
+            if (failedClassesJUnit5.isNotEmpty()) {
+              messages.warning("Will rerun JUnit 5 tests: $failedClassesJUnit5")
+            }
+            else {
+              runJUnit5 = false
+            }
+          }
+
+          if (runJUnit34) {
+            val failedClassesJUnit34 = failedClassesJUnit34List.let { if (Files.exists(it)) it.readLines() else emptyList() }
+            if (failedClassesJUnit34.isNotEmpty()) {
+              messages.warning("Will rerun JUnit 3+4 tests: $failedClassesJUnit34")
+            }
+            else {
+              runJUnit34 = false
+            }
           }
         }
 
-        if (runJUnit34) {
-          val failedClassesJUnit34 = failedClassesJUnit34List.let { if (Files.exists(it)) it.readLines() else emptyList() }
-          if (failedClassesJUnit34.isNotEmpty()) {
-            messages.warning("Will rerun JUnit 3+4 tests: $failedClassesJUnit34")
-          }
-          else {
-            runJUnit34 = false
-          }
+        val hadRunFailures = lastExitCode5 == 1 || lastExitCode34 == 1
+        hadAnyFailures = hadAnyFailures || hadRunFailures
+
+        // On TeamCity test failures themselves control the build status, no need to report them as additional errors
+        if (hadRunFailures && !TeamCityHelper.isUnderTeamCity) {
+          val runSuffix = if (options.repeatCount > 1) " on run $runNumber/${options.repeatCount}" else ""
+          throw RuntimeException("Tests failed$runSuffix (JUnit5 exit code: $lastExitCode5, JUnit3+4 exit code: $lastExitCode34, $NO_TESTS_ERROR means no test for this test framework)")
         }
       }
 
-      // Check if tests failed after all retry attempts are exhausted
-      val hadTestFailures = lastExitCode5 == 1 || lastExitCode34 == 1
-      // On TeamCity test failures themselves control the build status, no need to report them as additional errors
-      if (!TeamCityHelper.isUnderTeamCity) {
-        if (hadTestFailures) {
-          throw RuntimeException("Tests failed (JUnit5 exit code: $lastExitCode5, JUnit3+4 exit code: $lastExitCode34, $NO_TESTS_ERROR means no test for this test framework)")
-        }
-        else {
-          println("*** All tests passed ***")
-        }
+      if (!TeamCityHelper.isUnderTeamCity && !hadAnyFailures) {
+        println("*** All tests passed ***")
       }
     }
   }
