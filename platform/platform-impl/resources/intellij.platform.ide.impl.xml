@@ -72,7 +72,7 @@
     />
     <registryKey
       key="ide.windows.main.menu.focus.on.alt"
-      defaultValue="false"
+      defaultValue="true"
       description="Enable Alt key to focus the main menu bar on Windows"
       restartRequired="true"
     />
