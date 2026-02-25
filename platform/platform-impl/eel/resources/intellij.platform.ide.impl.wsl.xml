@@ -5,5 +5,6 @@
     <applicationService serviceInterface="com.intellij.execution.wsl.WslIjentManager"
                         serviceImplementation="com.intellij.platform.ide.impl.wsl.ProductionWslIjentManager"/>
     <multiRoutingFileSystemBackend implementation="com.intellij.platform.ide.impl.wsl.EelWslMrfsBackend" os="windows"/>
+    <fileChooserCustomizer os="windows" implementation="com.intellij.platform.ide.impl.wsl.fileChooser.WslFileChooserCustomizer"/>
   </extensions>
 </idea-plugin>
