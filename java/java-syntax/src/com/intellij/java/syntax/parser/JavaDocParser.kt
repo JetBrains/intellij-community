@@ -369,18 +369,31 @@ class JavaDocParser(
     }
     moduleMarker?.done(JavaDocSyntaxElementType.DOC_TAG_VALUE_ELEMENT)
     val refStart = builder.mark()
-
+    var isMethodFieldOrRef = false
     if (!referenceEnded && getTokenType() !== JavaDocSyntaxTokenType.DOC_SHARP && getTokenType() !== JavaDocSyntaxTokenType.DOC_DOUBLE_SHARP) {
-      builder.remapCurrentToken(JavaDocSyntaxElementType.DOC_REFERENCE_HOLDER)
-      builder.advanceLexer()
+      // Javadoc methods references may not have the # token if it is alone, rely on the existence of () to assign the proper type.
+      // In practice, () is not mandatory, and fields have the same issue but cannot be separated from class names on parsing
+      if (builder.lookAhead(1) == JavaDocSyntaxTokenType.DOC_LPAREN) {
+        isMethodFieldOrRef = true
+      }
+      else {
+        builder.remapCurrentToken(JavaDocSyntaxElementType.DOC_REFERENCE_HOLDER)
+        builder.advanceLexer()
+      }
     }
 
-    if (!referenceEnded && getTokenType() === JavaDocSyntaxTokenType.DOC_SHARP) {
-      // Existing integration require this token for auto completion
-      builder.remapCurrentToken(JavaDocSyntaxTokenType.DOC_TAG_VALUE_SHARP_TOKEN)
+    if (!referenceEnded && !isMethodFieldOrRef) {
+      isMethodFieldOrRef = getTokenType() === JavaDocSyntaxTokenType.DOC_SHARP
+      if (isMethodFieldOrRef) {
+        // Existing integration require this token for auto completion
+        builder.remapCurrentToken(JavaDocSyntaxTokenType.DOC_TAG_VALUE_SHARP_TOKEN)
 
+        builder.advanceLexer()
+      }
+    }
+
+    if (!referenceEnded && isMethodFieldOrRef) {
       // method/variable name
-      builder.advanceLexer()
       builder.remapCurrentToken(JavaDocSyntaxTokenType.DOC_TAG_VALUE_TOKEN)
 
       // A method only has parenthesis, comment data which may be the type, the optional argument name and commas  
@@ -403,7 +416,7 @@ class JavaDocParser(
           else if (type !== JavaDocSyntaxTokenType.DOC_COMMA) {
             break
           } else {
-            dataSinceComma = false;
+            dataSinceComma = false
           }
           builder.advanceLexer()
         }
@@ -627,6 +640,10 @@ class JavaDocParser(
     attribute.done(JavaDocSyntaxElementType.DOC_SNIPPET_ATTRIBUTE)
   }
 
+  /**
+   * Parse the reference inside a tag (like `@link` and `@see`)
+   * @param allowBareFieldReference Whether bare references are **always** considered method/field refs
+   */
   private fun parseSeeTagValue(allowBareFieldReference: Boolean) {
     val moduleMarker = parseModuleRef(builder.mark())
 
@@ -648,7 +665,9 @@ class JavaDocParser(
       else if (getTokenType() === JavaDocSyntaxTokenType.DOC_TAG_VALUE_DOUBLE_SHARP_TOKEN) {
         parseFragmentRef(refStart)
       }
-      else if (allowBareFieldReference) {
+      // Javadoc methods references may not have the # token if it is alone, rely on the existence of () to assign the proper type.
+      // In practice, () is not mandatory, and fields have the same issue but cannot be separated from class names on parsing
+      else if (allowBareFieldReference || getTokenType() == JavaDocSyntaxTokenType.DOC_TAG_VALUE_LPAREN) {
         refStart.rollbackTo()
         builder.remapCurrentToken(JavaDocSyntaxTokenType.DOC_TAG_VALUE_TOKEN)
         parseMethodRef(builder.mark())

@@ -253,6 +253,7 @@ public class JavaDocInfoGeneratorTest extends JavaCodeInsightTestCase {
   public void testPackageInfoMarkdown() { doTestPackageInfo(); }
   public void testListInTags() { doTestMethod(); }
   public void testParagraphInTagsMarkdown() { doTestMethod(); }
+  public void testBareMethodReferences() { doTestClass(); }
   public void testPreTagInJavadocTag() { doTestClass();}
   public void testLinkTagMalformed() { doTestClass(); }
   public void testCursedCodeBlock() { doTestClass(); }

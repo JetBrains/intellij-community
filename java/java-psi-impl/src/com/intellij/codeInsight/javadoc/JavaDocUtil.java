@@ -138,24 +138,25 @@ public final class JavaDocUtil {
 
     int poundIndex = refTextCorrected.indexOf('#');
     if (poundIndex < 0) {
-      return findClassOrPackage(manager, context, useNavigationElement, facade, refTextCorrected);
+      PsiElement maybeClass = findClassOrPackage(manager, context, useNavigationElement, facade, refTextCorrected);
+      if (maybeClass != null) return maybeClass;
     }
-    else {
-      int fragmentIndex = refTextCorrected.indexOf("##");
-      String classRef = refTextCorrected.substring(0, poundIndex).trim();
-      PsiClass aClass = classRef.isEmpty()
-                        ? PsiTreeUtil.getParentOfType(context, PsiClass.class, false)
-                        : findClassFromRef(manager, facade, classRef, context);
-      while (aClass != null){
-        PsiElement reference = fragmentIndex >= 0
-          ? findFragmentOwner(aClass, useNavigationElement, refTextCorrected, fragmentIndex, manager)
-          : findReference(aClass, context, useNavigationElement, refTextCorrected, poundIndex);
-          if (reference != null) return reference;
 
-          aClass = PsiTreeUtil.getParentOfType(aClass, PsiClass.class, true);
-      }
-      return null;
+    int fragmentIndex = refTextCorrected.indexOf("##");
+    String classRef = refTextCorrected.substring(0, Math.max(poundIndex, 0)).trim();
+    PsiClass aClass = classRef.isEmpty()
+                      ? PsiTreeUtil.getParentOfType(context, PsiClass.class, false)
+                      : findClassFromRef(manager, facade, classRef, context);
+    while (aClass != null) {
+      PsiElement reference = fragmentIndex >= 0
+                             ? findFragmentOwner(aClass, useNavigationElement, refTextCorrected, fragmentIndex, manager)
+                             : findReference(aClass, context, useNavigationElement, refTextCorrected, poundIndex);
+      if (reference != null) return reference;
+
+      aClass = PsiTreeUtil.getParentOfType(aClass, PsiClass.class, true);
     }
+    return null;
+
   }
 
   private static @Nullable PsiElement findClassOrPackage(@NotNull PsiManager manager,

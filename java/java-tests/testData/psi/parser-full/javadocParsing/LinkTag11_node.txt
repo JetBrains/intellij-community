@@ -2,12 +2,26 @@ java.FILE
   IMPORT_LIST
     <empty list>
   CLASS
-    DOC_MARKDOWN_COMMENT
-      DOC_COMMENT_LEADING_ASTERISKS
+    DOC_COMMENT
+      DOC_COMMENT_START
       WHITE_SPACE
       DOC_COMMENT_LEADING_ASTERISKS
       DOC_COMMENT_DATA
-      DOC_TAG
+      DOC_INLINE_TAG
+        DOC_INLINE_TAG_START
+        DOC_TAG_NAME
+        WHITE_SPACE
+        DOC_REFERENCE_HOLDER
+          JAVA_CODE_REFERENCE
+            IDENTIFIER
+            REFERENCE_PARAMETER_LIST
+              <empty list>
+        DOC_INLINE_TAG_END
+      WHITE_SPACE
+      DOC_COMMENT_LEADING_ASTERISKS
+      DOC_COMMENT_DATA
+      DOC_INLINE_TAG
+        DOC_INLINE_TAG_START
         DOC_TAG_NAME
         WHITE_SPACE
         DOC_METHOD_OR_FIELD_REF
@@ -16,18 +30,18 @@ java.FILE
           DOC_TAG_VALUE_ELEMENT
             DOC_TYPE_HOLDER
               TYPE
-                LONG_KEYWORD
-            DOC_TAG_VALUE_COMMA
-            WHITE_SPACE
-            DOC_TYPE_HOLDER
-              TYPE
-                LONG_KEYWORD
+                JAVA_CODE_REFERENCE
+                  IDENTIFIER
+                  REFERENCE_PARAMETER_LIST
+                    <empty list>
           DOC_TAG_VALUE_RPAREN
+        DOC_INLINE_TAG_END
       WHITE_SPACE
-      DOC_COMMENT_LEADING_ASTERISKS
+      DOC_COMMENT_END
     WHITE_SPACE
     MODIFIER_LIST
-      <empty list>
+      PUBLIC_KEYWORD
+    WHITE_SPACE
     CLASS_KEYWORD
     WHITE_SPACE
     IDENTIFIER
@@ -37,5 +51,6 @@ java.FILE
       <empty list>
     IMPLEMENTS_LIST
       <empty list>
+    WHITE_SPACE
     LBRACE
     RBRACE

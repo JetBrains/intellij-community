@@ -2,6 +2,7 @@
 package com.intellij.psi;
 
 import com.intellij.psi.javadoc.PsiDocComment;
+import com.intellij.psi.javadoc.PsiDocReferenceHolder;
 import com.intellij.psi.javadoc.PsiDocTag;
 import com.intellij.psi.javadoc.PsiDocTagValue;
 import com.intellij.psi.javadoc.PsiDocToken;
@@ -120,6 +121,10 @@ public abstract class JavaElementVisitor extends PsiElementVisitor {
 
   public void visitDocComment(@NotNull PsiDocComment comment) {
     visitComment(comment);
+  }
+
+  public void visitDocReferenceHolder(PsiDocReferenceHolder refHolder) {
+    visitElement(refHolder);
   }
 
   public void visitDocTag(@NotNull PsiDocTag tag) {

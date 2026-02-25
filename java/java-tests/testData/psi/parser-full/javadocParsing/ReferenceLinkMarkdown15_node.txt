@@ -5,26 +5,33 @@ java.FILE
     DOC_MARKDOWN_COMMENT
       DOC_COMMENT_LEADING_ASTERISKS
       WHITE_SPACE
+      DOC_REFERENCE_LINK
+        DOC_LBRACKET
+        DOC_REFERENCE_HOLDER
+          JAVA_CODE_REFERENCE
+            IDENTIFIER
+            REFERENCE_PARAMETER_LIST
+              <empty list>
+        DOC_RBRACKET
+      DOC_COMMENT_DATA
+      WHITE_SPACE
       DOC_COMMENT_LEADING_ASTERISKS
       DOC_COMMENT_DATA
-      DOC_TAG
-        DOC_TAG_NAME
-        WHITE_SPACE
+      DOC_REFERENCE_LINK
+        DOC_LBRACKET
         DOC_METHOD_OR_FIELD_REF
           DOC_TAG_VALUE_TOKEN
-          DOC_TAG_VALUE_LPAREN
+          DOC_LPAREN
           DOC_TAG_VALUE_ELEMENT
             DOC_TYPE_HOLDER
               TYPE
-                LONG_KEYWORD
-            DOC_TAG_VALUE_COMMA
-            WHITE_SPACE
-            DOC_TYPE_HOLDER
-              TYPE
-                LONG_KEYWORD
-          DOC_TAG_VALUE_RPAREN
-      WHITE_SPACE
-      DOC_COMMENT_LEADING_ASTERISKS
+                JAVA_CODE_REFERENCE
+                  IDENTIFIER
+                  REFERENCE_PARAMETER_LIST
+                    <empty list>
+          DOC_RPAREN
+        DOC_RBRACKET
+      DOC_COMMENT_DATA
     WHITE_SPACE
     MODIFIER_LIST
       <empty list>
@@ -37,5 +44,6 @@ java.FILE
       <empty list>
     IMPLEMENTS_LIST
       <empty list>
+    WHITE_SPACE
     LBRACE
     RBRACE

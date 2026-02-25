@@ -51,6 +51,7 @@ import com.intellij.psi.PsiParameter;
 import com.intellij.psi.PsiPolyVariantReference;
 import com.intellij.psi.PsiReference;
 import com.intellij.psi.PsiResolveHelper;
+import com.intellij.psi.PsiTypeElement;
 import com.intellij.psi.ResolveResult;
 import com.intellij.psi.SmartPointerManager;
 import com.intellij.psi.SmartPsiElementPointer;
@@ -60,6 +61,7 @@ import com.intellij.psi.javadoc.JavadocManager;
 import com.intellij.psi.javadoc.JavadocTagInfo;
 import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.javadoc.PsiDocFragmentRef;
+import com.intellij.psi.javadoc.PsiDocReferenceHolder;
 import com.intellij.psi.javadoc.PsiDocTag;
 import com.intellij.psi.javadoc.PsiDocTagValue;
 import com.intellij.psi.javadoc.PsiDocToken;
@@ -155,9 +157,28 @@ public final class JavaDocReferenceInspection extends LocalInspectionTool {
 
     JavadocManager javadocManager = JavadocManager.getInstance(holder.getProject());
     comment.accept(new JavaRecursiveElementWalkingVisitor() {
+
       @Override
-      public void visitReferenceElement(@NotNull PsiJavaCodeReferenceElement reference) {
-        visitRefElement(reference, context, isOnTheFly, holder);
+      public void visitTypeElement(@NotNull PsiTypeElement type) {
+        PsiJavaCodeReferenceElement ref = type.getInnermostComponentReferenceElement();
+        if (ref == null) return;
+
+        visitRefElement(ref, context, isOnTheFly, holder);
+      }
+
+      @Override
+      public void visitDocReferenceHolder(PsiDocReferenceHolder refHolder) {
+        PsiReference ref = refHolder.getReference();
+        if (ref == null) return;
+        PsiElement resolved = ref.resolve();
+
+        if (resolved == null) {
+          PsiElement element = refHolder.getFirstChild();
+          if (element instanceof PsiJavaCodeReferenceElement) {
+            // Since we don't know whether a method or a class is the intended element, treat it as a potentially missing class reference
+            visitRefElement((PsiJavaCodeReferenceElement)element, context, isOnTheFly, holder);
+          }
+        }
       }
 
       @Override
@@ -239,13 +260,19 @@ public final class JavaDocReferenceInspection extends LocalInspectionTool {
         element, message, fix, ProblemHighlightType.LIKE_UNKNOWN_SYMBOL, isOnTheFly));
     }
   }
-  
+
   private void visitMarkdownReference(PsiMarkdownReferenceLink referenceLink, PsiElement context, ProblemsHolder holder, boolean isOnTheFly) {
     PsiElement linkElement = referenceLink.getLinkElement();
     if (linkElement == null) return;
     PsiReference reference = linkElement.getReference();
     if (reference == null) return;
     PsiElement element = reference.resolve();
+
+    if (element == null && linkElement instanceof PsiDocReferenceHolder) {
+      linkElement = linkElement.getFirstChild();
+      reference = linkElement.getReference();
+      element = reference.resolve();
+    }
 
     String linkText = linkElement.getText();
     String message = element == null && reference instanceof PsiPolyVariantReference ?
@@ -263,6 +290,12 @@ public final class JavaDocReferenceInspection extends LocalInspectionTool {
 
     holder.registerProblem(holder.getManager().createProblemDescriptor(
       linkElement, reference.getRangeInElement(), message, ProblemHighlightType.LIKE_UNKNOWN_SYMBOL, isOnTheFly, fixes.toArray(LocalQuickFix.EMPTY_ARRAY)));
+  }
+
+  private boolean visitDocRefHolder(PsiDocReferenceHolder refHolder, PsiElement context, ProblemsHolder holder, boolean isOnTheFly) {
+
+
+    return true;
   }
 
   private void visitRefInDocTag(PsiDocTag tag, JavadocManager manager, PsiElement context, ProblemsHolder holder, boolean isOnTheFly) {

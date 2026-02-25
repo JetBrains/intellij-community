@@ -1,0 +1,56 @@
+PsiJavaFile:LinkTag11.java
+  PsiImportList
+    <empty list>
+  PsiClass:C
+    PsiDocComment
+      PsiDocToken:DOC_COMMENT_START('/**')
+      PsiWhiteSpace('\n ')
+      PsiDocToken:DOC_COMMENT_LEADING_ASTERISKS('*')
+      PsiDocToken:DOC_COMMENT_DATA(' ')
+      PsiInlineDocTag:@link
+        PsiDocToken:DOC_INLINE_TAG_START('{')
+        PsiDocToken:DOC_TAG_NAME('@link')
+        PsiWhiteSpace(' ')
+        PsiElement(DOC_REFERENCE_HOLDER)
+          PsiJavaCodeReferenceElement:equals
+            PsiIdentifier:equals('equals')
+            PsiReferenceParameterList
+              <empty list>
+        PsiDocToken:DOC_INLINE_TAG_END('}')
+      PsiWhiteSpace('\n ')
+      PsiDocToken:DOC_COMMENT_LEADING_ASTERISKS('*')
+      PsiDocToken:DOC_COMMENT_DATA(' ')
+      PsiInlineDocTag:@link
+        PsiDocToken:DOC_INLINE_TAG_START('{')
+        PsiDocToken:DOC_TAG_NAME('@link')
+        PsiWhiteSpace(' ')
+        PsiElement(DOC_METHOD_OR_FIELD_REF)
+          PsiDocToken:DOC_TAG_VALUE_TOKEN('equals')
+          PsiDocToken:DOC_TAG_VALUE_LPAREN('(')
+          PsiElement(DOC_TAG_VALUE_ELEMENT)
+            PsiElement(DOC_TYPE_HOLDER)
+              PsiTypeElement:Object
+                PsiJavaCodeReferenceElement:Object
+                  PsiIdentifier:Object('Object')
+                  PsiReferenceParameterList
+                    <empty list>
+          PsiDocToken:DOC_TAG_VALUE_RPAREN(')')
+        PsiDocToken:DOC_INLINE_TAG_END('}')
+      PsiWhiteSpace('\n ')
+      PsiDocToken:DOC_COMMENT_END('*/')
+    PsiWhiteSpace('\n')
+    PsiModifierList:public
+      PsiKeyword:public('public')
+    PsiWhiteSpace(' ')
+    PsiKeyword:class('class')
+    PsiWhiteSpace(' ')
+    PsiIdentifier:C('C')
+    PsiTypeParameterList
+      <empty list>
+    PsiReferenceList
+      <empty list>
+    PsiReferenceList
+      <empty list>
+    PsiWhiteSpace(' ')
+    PsiJavaToken:LBRACE('{')
+    PsiJavaToken:RBRACE('}')

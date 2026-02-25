@@ -10,21 +10,18 @@ PsiJavaFile:SeeTag9.java
       PsiDocTag:@see
         PsiDocToken:DOC_TAG_NAME('@see')
         PsiWhiteSpace(' ')
-        PsiElement(DOC_REFERENCE_HOLDER)
-          PsiJavaCodeReferenceElement:equals
-            PsiIdentifier:equals('equals')
-            PsiReferenceParameterList
-              <empty list>
-        PsiElement(DOC_TAG_VALUE_ELEMENT)
+        PsiElement(DOC_METHOD_OR_FIELD_REF)
+          PsiDocToken:DOC_TAG_VALUE_TOKEN('equals')
           PsiDocToken:DOC_TAG_VALUE_LPAREN('(')
-        PsiElement(DOC_REFERENCE_HOLDER)
-          PsiKeyword:long('long')
-        PsiElement(DOC_TAG_VALUE_ELEMENT)
-          PsiDocToken:DOC_TAG_VALUE_COMMA(',')
-        PsiWhiteSpace(' ')
-        PsiElement(DOC_REFERENCE_HOLDER)
-          PsiKeyword:long('long')
-        PsiElement(DOC_TAG_VALUE_ELEMENT)
+          PsiElement(DOC_TAG_VALUE_ELEMENT)
+            PsiElement(DOC_TYPE_HOLDER)
+              PsiTypeElement:long
+                PsiKeyword:long('long')
+            PsiDocToken:DOC_TAG_VALUE_COMMA(',')
+            PsiWhiteSpace(' ')
+            PsiElement(DOC_TYPE_HOLDER)
+              PsiTypeElement:long
+                PsiKeyword:long('long')
           PsiDocToken:DOC_TAG_VALUE_RPAREN(')')
       PsiWhiteSpace('\n ')
       PsiDocToken:DOC_COMMENT_END('*/')

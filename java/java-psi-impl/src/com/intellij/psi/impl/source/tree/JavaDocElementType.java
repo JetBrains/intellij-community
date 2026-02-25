@@ -20,6 +20,7 @@ import com.intellij.psi.impl.source.javadoc.PsiDocFragmentNameImpl;
 import com.intellij.psi.impl.source.javadoc.PsiDocFragmentRefImpl;
 import com.intellij.psi.impl.source.javadoc.PsiDocMethodOrFieldRef;
 import com.intellij.psi.impl.source.javadoc.PsiDocParamRef;
+import com.intellij.psi.impl.source.javadoc.PsiDocReferenceHolderImpl;
 import com.intellij.psi.impl.source.javadoc.PsiDocTagImpl;
 import com.intellij.psi.impl.source.javadoc.PsiInlineDocTagImpl;
 import com.intellij.psi.impl.source.javadoc.PsiMarkdownCodeBlockImpl;
@@ -138,6 +139,11 @@ public interface JavaDocElementType {
         },
         false,
         LanguageLevel.JDK_1_3);
+    }
+
+    @Override
+    public ASTNode createNode(CharSequence text) {
+      return new PsiDocReferenceHolderImpl(text);
     }
   }
 
