@@ -877,7 +877,7 @@ internal abstract class K2AbstractCallableCompletionContributor<P : KotlinNameRe
         shadowedCallablesFilter: ShadowedCallablesFilter,
     ) {
         if (context.positionContext.explicitReceiver != null) return
-        val expectedType = context.weighingContext.expectedType ?: return
+        val expectedType = context.weighingContext.expectedType?.withNullability(false) ?: return
         val symbol = expectedType.symbol as? KaNamedClassSymbol ?: return
         if (isPositionInsideClass(symbol)) {
             // We are already in a scope that should have the companion object values available
@@ -894,8 +894,10 @@ internal abstract class K2AbstractCallableCompletionContributor<P : KotlinNameRe
             visibilityChecker = context.visibilityChecker,
             scopeNameFilter = context.completionContext.scopeNameFilter,
             symbolFilter = { filter(it) },
-        ).filter { it.returnType.semanticallyEquals(expectedType) }
-            .map { signature -> signature.symbol }
+        ).filter {
+            // Check that the return type is correct, ignoring nullability
+            it.returnType.withNullability(false).semanticallyEquals(expectedType)
+        }.map { signature -> signature.symbol }
 
         createAndFilterMetadataForMemberCallables(availableCompanionObjectValues)
             .createFilteredLookupElements(shadowedCallablesFilter)
