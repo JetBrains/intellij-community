@@ -73,6 +73,7 @@ internal class ShellNameTest {
       shellCommand = listOf(executablePath),
       workingDirectory = "",
       envVariables = emptyMap(),
+      pid = null,
     )
     assertThat(options.guessShellName()).isEqualTo(expectedName)
   }

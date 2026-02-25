@@ -102,7 +102,8 @@ internal class TerminalCompletionPowerShellEscapingTest : BasePlatformTestCase()
     val startupOptions = TerminalStartupOptionsImpl(
       shellCommand = listOf("powershell.exe"),
       workingDirectory = System.getProperty("user.home"),
-      envVariables = emptyMap()
+      envVariables = emptyMap(),
+      pid = null,
     )
     val session = EchoingTerminalSession(startupOptions, fixtureScope.childScope("EchoingTerminalSession"))
     doWithCompletionFixture(project, session, fixtureScope) { fixture ->

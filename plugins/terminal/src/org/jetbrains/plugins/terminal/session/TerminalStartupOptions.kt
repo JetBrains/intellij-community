@@ -26,6 +26,14 @@ interface TerminalStartupOptions {
    * Map of initial environment variables used to start the shell process.
    */
   val envVariables: Map<String, String>
+
+  /**
+   * ID of the started process.
+   *
+   * Can be null if the terminal process is started remotely,
+   * for example, inside WSL or Dev Container.
+   */
+  val pid: Long?
 }
 
 /**
