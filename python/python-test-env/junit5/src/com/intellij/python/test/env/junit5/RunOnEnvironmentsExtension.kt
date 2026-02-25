@@ -79,10 +79,13 @@ class RunOnEnvironmentsExtension : TestTemplateInvocationContextProvider, ClassT
         factory.createEnvironment(envSpec)
       }
 
-      // Configure poetry, pipenv, and uv (only for non-conda environments)
+      // Configure poetry, pipenv, and uv.
+      // Only detect tool paths from this environment if not already configured
+      // by other extensions (e.g. @RequiresPoetry), to avoid overwriting a valid
+      // path with a potentially broken one from an environment that doesn't ship the tool.
       val pythonBinary = env.pythonPath
-      PropertiesComponent.getInstance().poetryPath = checkAndGetToolPath(pythonBinary, "poetry", false)
-      PropertiesComponent.getInstance().pipenvPath = checkAndGetToolPath(pythonBinary, "pipenv", false)
+      checkAndGetToolPath(pythonBinary, "poetry", false)?.let { PropertiesComponent.getInstance().poetryPath = it }
+      checkAndGetToolPath(pythonBinary, "pipenv", false)?.let { PropertiesComponent.getInstance().pipenvPath = it }
 
       val uv = pythonBinary.resolvePythonHome().resolvePythonTool("uv")
       PropertiesComponent.getInstance().setValue("PyCharm.Uv.Path", uv.toString())
