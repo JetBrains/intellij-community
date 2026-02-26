@@ -2,7 +2,7 @@ load("@rules_jvm//:jvm.bzl", "jvm_library", "kt_kotlinc_options")
 
 kt_kotlinc_options(
   name = "kt_compile_options",
-  x_context_receivers = True,
+  x_context_parameters = True,
 )
 
 jvm_library(
