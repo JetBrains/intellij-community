@@ -4,10 +4,8 @@ package com.intellij.java.ift.lesson.essential
 import com.intellij.execution.ui.UIExperiment
 import com.intellij.icons.AllIcons
 import com.intellij.ide.actions.searcheverywhere.SearchEverywhereManagerImpl
-import com.intellij.ide.actions.searcheverywhere.SearchEverywhereUI
 import com.intellij.ide.ui.UISettings
 import com.intellij.ide.util.PropertiesComponent
-import com.intellij.ide.util.gotoByName.GotoActionModel
 import com.intellij.idea.ActionsBundle
 import com.intellij.java.ift.JavaLessonsBundle
 import com.intellij.java.ift.JavaProjectUtil
@@ -15,7 +13,6 @@ import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.actionSystem.impl.ActionButton
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.editor.LogicalPosition
-import com.intellij.openapi.editor.actions.ToggleCaseAction
 import com.intellij.openapi.module.LanguageLevelUtil
 import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.progress.runBackgroundableTask
@@ -47,6 +44,7 @@ import training.dsl.LessonSample
 import training.dsl.LessonUtil
 import training.dsl.LessonUtil.adjustSearchEverywherePosition
 import training.dsl.LessonUtil.checkEditorModification
+import training.dsl.LessonUtil.checkInsideSearchEverywhere
 import training.dsl.LessonUtil.restoreIfModified
 import training.dsl.LessonUtil.restoreIfModifiedOrMoved
 import training.dsl.LessonUtil.restorePopupPosition
@@ -311,7 +309,7 @@ abstract class CommonLogicForOnboardingTours(id: String, @Nls lessonName: String
       text(JavaLessonsBundle.message("java.onboarding.invoke.search.everywhere.2",
                                      LessonUtil.rawKeyStroke(KeyEvent.VK_SHIFT), LessonUtil.actionName(it)))
       triggerAndBorderHighlight().component { ui: ExtendableTextField ->
-        UIUtil.getParentOfType(SearchEverywhereUI::class.java, ui) != null
+        checkInsideSearchEverywhere(ui)
       }
       restoreIfModifiedOrMoved()
     }
@@ -329,9 +327,9 @@ abstract class CommonLogicForOnboardingTours(id: String, @Nls lessonName: String
       }
       text(JavaLessonsBundle.message("java.onboarding.search.everywhere.description",
                                      code("AVERAGE"), code(JavaLessonsBundle.message("toggle.case.part"))))
+      val actionText = ActionManager.getInstance().getAction("EditorToggleCase").toString()
       triggerAndBorderHighlight().listItem { item ->
-        val value = (item as? GotoActionModel.MatchedValue)?.value
-        (value as? GotoActionModel.ActionWrapper)?.action is ToggleCaseAction
+        item.isToStringContains(actionText)
       }
       restoreByUi()
       restoreIfModifiedOrMoved()

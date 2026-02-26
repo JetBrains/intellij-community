@@ -81,8 +81,7 @@ class GotoActionLesson(private val sample: LessonSample,
       task {
         val prefix = LearnBundle.message("show.line.number.prefix.to.show.first")
         text(LessonsBundle.message("goto.action.show.line.numbers.request", strong(prefix), strong(showLineNumbersName)))
-        val actionPresentation = ActionManager.getInstance().getAction("EditorGutterToggleGlobalLineNumbers").templatePresentation
-        val actionText = "${actionPresentation.text} (${actionPresentation.description})"
+        val actionText = ActionManager.getInstance().getAction("EditorGutterToggleGlobalLineNumbers").toString()
         triggerAndBorderHighlight().listItem { item ->
           item.isToStringContains(actionText)
         }

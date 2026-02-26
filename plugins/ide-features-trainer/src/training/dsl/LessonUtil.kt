@@ -257,8 +257,8 @@ object LessonUtil {
    * Have to use `QuickSearchComponent` for matching here,
    * because can't reference `SePopupContentPane` directly (it requires adding a dependency on SE frontend).
    */
-  fun TaskRuntimeContext.checkInsideSearchEverywhere(): Boolean {
-    return UIUtil.getParentOfType(QuickSearchComponent::class.java, focusOwner) != null
+  fun TaskRuntimeContext.checkInsideSearchEverywhere(component: Component? = focusOwner): Boolean {
+    return UIUtil.getParentOfType(QuickSearchComponent::class.java, component) != null
   }
 
   fun isMainEditorComponent(component: Component?): Boolean {
