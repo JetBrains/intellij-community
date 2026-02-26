@@ -603,7 +603,7 @@ public final class SoftWrapModelImpl extends InlayModel.SimpleAdapter
 
   @Override
   public void onBatchModeFinish(@NotNull Editor editor) {
-    if (this.editor.getDocument().isInBulkUpdate()) return;
+    if (document.isInBulkUpdate()) return;
     if (myInlayChangedInBatchMode) {
       myInlayChangedInBatchMode = false;
       recalculate();
