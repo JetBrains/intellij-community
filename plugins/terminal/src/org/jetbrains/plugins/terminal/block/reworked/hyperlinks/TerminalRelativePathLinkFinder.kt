@@ -52,13 +52,10 @@ internal class TerminalRelativePathLinkFinder(
     }
     val oneBasedLine = position?.oneBasedLine ?: 1
     val oneBasedColumn = position?.oneBasedColumn ?: 1
-    foundLinkSink(Filter.ResultItem(
+    foundLinkSink(createInvisibleLink(
       indexOffset + pathStartIndex,
       indexOffset + linkEndExclusiveIndex,
       TerminalOpenFileHyperlinkInfo(project, child, oneBasedLine - 1, oneBasedColumn - 1),
-      EMPTY_ATTRS,
-      null,
-      HOVERED_ATTRS,
     ))
     return true
   }

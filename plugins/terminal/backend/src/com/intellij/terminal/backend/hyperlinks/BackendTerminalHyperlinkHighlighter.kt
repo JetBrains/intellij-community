@@ -498,6 +498,7 @@ private class HyperlinkProcessor(
         style = highlightAttributes?.toDto(),
         followedStyle = resultItem.followedHyperlinkAttributes?.toDto(),
         hoveredStyle = resultItem.hoveredHyperlinkAttributes?.toDto(),
+        isInvisibleLink = resultItem.isInvisibleLink,
         layer = resultItem.highlighterLayer,
       )
       highlightAttributes != null -> TerminalHighlightingInfoDto(

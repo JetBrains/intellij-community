@@ -2,20 +2,17 @@ package org.jetbrains.plugins.terminal.block.reworked.hyperlinks
 
 import com.intellij.execution.filters.ConsoleFilterProviderEx
 import com.intellij.execution.filters.Filter
+import com.intellij.execution.filters.HyperlinkInfo
 import com.intellij.execution.filters.OpenFileHyperlinkInfo
-import com.intellij.openapi.editor.markup.EffectType
-import com.intellij.openapi.editor.markup.TextAttributes
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.search.GlobalSearchScope
-import com.intellij.ui.JBColor
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.plugins.terminal.block.hyperlinks.TerminalHyperlinkFilterContext
 import org.jetbrains.plugins.terminal.hyperlinks.TerminalFilterScope
-import java.awt.Font
 
 internal enum class ParsingState {
   NORMAL, PATH, CANCELED_PATH
@@ -99,13 +96,10 @@ class TerminalGenericFileFilter(
         null
       }
       return if (file != null) {
-        Filter.ResultItem(
+        createInvisibleLink(
           indexOffset + pathStartIndex,
           indexOffset + i,
           TerminalOpenFileHyperlinkInfo(project, file, lineNumber, columnNumber),
-          EMPTY_ATTRS,
-          null,
-          HOVERED_ATTRS,
         )
       }
       else {
@@ -239,9 +233,15 @@ private fun String.takeWhileFromIndex(index: Int, predicate: (Char) -> Boolean):
   return null
 }
 
-internal val EMPTY_ATTRS: TextAttributes = TextAttributes(null, null, null, null, Font.PLAIN)
-
-internal val HOVERED_ATTRS: TextAttributes = TextAttributes(null, null, JBColor.BLACK, EffectType.LINE_UNDERSCORE, Font.PLAIN)
+internal fun createInvisibleLink(
+  highlightStartOffset: Int,
+  highlightEndOffset: Int,
+  hyperlinkInfo: HyperlinkInfo,
+): Filter.ResultItem = Filter.ResultItem(
+  highlightStartOffset,
+  highlightEndOffset,
+  hyperlinkInfo,
+).also { it.isInvisibleLink = true }
 
 internal class TerminalGenericFileFilterProvider : ConsoleFilterProviderEx {
   override fun getDefaultFilters(project: Project, scope: GlobalSearchScope): Array<out Filter> {
