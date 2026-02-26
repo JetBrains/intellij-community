@@ -2,6 +2,7 @@
 package com.intellij.tools.ide.performanceTesting.commands
 
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
+import com.intellij.openapi.util.registry.Registry
 import com.intellij.tools.ide.performanceTesting.commands.dto.BuildToolsAutoReloadType
 import com.intellij.tools.ide.performanceTesting.commands.dto.BuildType
 import com.intellij.tools.ide.performanceTesting.commands.dto.GradleTaskInfoDto
@@ -634,7 +635,12 @@ fun <T : CommandChain> T.selectText(startLine: Int, startColumn: Int, endLine: I
 }
 
 fun <T : CommandChain> T.showFileStructureDialog(): T = apply {
-  addCommand("${CMD_PREFIX}showFileStructureDialog")
+  if (!Registry.`is`("frontend.structure.popup")) {
+    addCommand("${CMD_PREFIX}showFileStructureDialogClassic")
+  }
+  else {
+    addCommand("${CMD_PREFIX}showFileStructureDialogNew")
+  }
 }
 
 fun <T : CommandChain> T.importMavenProject(): T = apply {

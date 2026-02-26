@@ -2,13 +2,13 @@
 package com.intellij.performanceTesting.frontend.commands
 
 import com.intellij.ide.actions.ViewStructureAction
-import com.intellij.ide.util.FileStructurePopup
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.ui.playback.PlaybackContext
 import com.intellij.openapi.ui.playback.commands.AbstractCommand
 import com.intellij.openapi.util.ActionCallback
+import com.intellij.platform.structureView.frontend.FileStructurePopup
 import com.intellij.platform.structureView.impl.StructureViewScopeHolder
 import com.intellij.platform.util.coroutines.childScope
 import com.jetbrains.performancePlugin.PerformanceTestSpan
@@ -40,35 +40,17 @@ class ShowFileStructurePopupCommand(text: String, line: Int) : AbstractCommand(t
       if (fileEditor != null) {
         val span = PerformanceTestSpan.TRACER.spanBuilder(SPAN_NAME).startSpan()
         span.makeCurrent().use {
-          val popup = ViewStructureAction.createPopupForTest(project, fileEditor)
-          when (popup) {
-            is FileStructurePopup -> {
-              val spanShow = PerformanceTestSpan.TRACER.spanBuilder("$SPAN_NAME#Show").startSpan()
-              val spanFill = PerformanceTestSpan.TRACER.spanBuilder("$SPAN_NAME#Fill").startSpan()
-              popup.showWithResult().onProcessed(Consumer { path: TreePath? ->
-                actionCallback.setDone()
-                spanFill.end()
-                span.end()
-              })
-              spanShow.end()
-            }
-            is com.intellij.platform.structureView.frontend.FileStructurePopup -> {
-              val cs = StructureViewScopeHolder.getInstance(project).cs.childScope("$this scope")
-              val spanShow = PerformanceTestSpan.TRACER.spanBuilder("$SPAN_NAME#Show").startSpan()
-              val spanFill = PerformanceTestSpan.TRACER.spanBuilder("$SPAN_NAME#Fill").startSpan()
-              popup.show()
-              spanShow.end()
-              cs.launch(Dispatchers.Default) {
-                popup.waitUpdateFinished()
-                spanFill.end()
-                span.end()
-                actionCallback.setDone()
-              }
-            }
-            else -> {
-              span.setStatus(StatusCode.ERROR, "File structure popup is null")
-              actionCallback.reject("File structure popup is null")
-            }
+          val popup = ViewStructureAction.createPopupForTest(project, fileEditor) as FileStructurePopup
+          val cs = StructureViewScopeHolder.getInstance(project).cs.childScope("$this scope")
+          val spanShow = PerformanceTestSpan.TRACER.spanBuilder("$SPAN_NAME#Show").startSpan()
+          val spanFill = PerformanceTestSpan.TRACER.spanBuilder("$SPAN_NAME#Fill").startSpan()
+          popup.show()
+          spanShow.end()
+          cs.launch(Dispatchers.Default) {
+            popup.waitUpdateFinished()
+            spanFill.end()
+            span.end()
+            actionCallback.setDone()
           }
         }
       }
@@ -84,7 +66,7 @@ class ShowFileStructurePopupCommand(text: String, line: Int) : AbstractCommand(t
 
   companion object {
     @JvmField
-    val PREFIX: String = CMD_PREFIX + "showFileStructureDialog"
+    val PREFIX: String = CMD_PREFIX + "showFileStructureDialogNew"
     const val SPAN_NAME: String = "FileStructurePopup"
   }
 }

@@ -109,6 +109,7 @@ import com.jetbrains.performancePlugin.commands.SetupInlineCompletionListenerCom
 import com.jetbrains.performancePlugin.commands.SetupProjectSdkCommand;
 import com.jetbrains.performancePlugin.commands.ShowAltEnter;
 import com.jetbrains.performancePlugin.commands.ShowEvaluateExpressionCommand;
+import com.jetbrains.performancePlugin.commands.ShowFileStructurePopupCommand;
 import com.jetbrains.performancePlugin.commands.SingleInspectionCommand;
 import com.jetbrains.performancePlugin.commands.SleepCommand;
 import com.jetbrains.performancePlugin.commands.StartInlineRenameCommand;
@@ -207,6 +208,7 @@ public final class BaseCommandProvider implements CommandProvider {
       Map.entry(GoToNextPsiElement.PREFIX, GoToNextPsiElement::new),
       Map.entry(GoToNamedElementCommand.PREFIX, GoToNamedElementCommand::new),
       Map.entry(MeasureVFSUpdateCommand.PREFIX, MeasureVFSUpdateCommand::new),
+      Map.entry(ShowFileStructurePopupCommand.PREFIX, ShowFileStructurePopupCommand::new),
       Map.entry(StartInlineRenameCommand.PREFIX, StartInlineRenameCommand::new),
       Map.entry(FinishInlineRename.PREFIX, FinishInlineRename::new),
       Map.entry(AssertOpenedFileInSpecificRoot.PREFIX, AssertOpenedFileInSpecificRoot::new),
