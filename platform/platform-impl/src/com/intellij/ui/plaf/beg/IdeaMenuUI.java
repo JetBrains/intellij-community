@@ -71,23 +71,23 @@ public class IdeaMenuUI extends BasicMenuUI {
 
   public static void paintRoundSelection(Graphics g, Component c, int width, int height) {
     GraphicsConfig config = GraphicsUtil.setupAAPainting(g);
-    int radius;
+    int diameter;
     JBInsets outerInsets;
     if (IdeaPopupMenuUI.isPartOfPopupMenu(c)) {
-      radius = JBUI.CurrentTheme.PopupMenu.Selection.ARC.get();
+      diameter = JBUI.CurrentTheme.PopupMenu.Selection.ARC.get();
       outerInsets = JBUI.CurrentTheme.PopupMenu.Selection.outerInsets();
     }
     else if (IdeaPopupMenuUI.isMenuBarItem(c)) {
       outerInsets = DarculaMenuItemBorder.menuBarItemOuterInsets(height);
-      radius = JBUI.CurrentTheme.MainToolbar.Dropdown.hoverArc().get();
+      diameter = JBUI.CurrentTheme.MainToolbar.Dropdown.hoverArc().get();
     }
     else {
-      radius = JBUI.CurrentTheme.Menu.Selection.ARC.get();
+      diameter = JBUI.CurrentTheme.Menu.Selection.ARC.get();
       outerInsets = JBUI.CurrentTheme.Menu.Selection.outerInsets();
     }
 
     g.fillRoundRect(outerInsets.left, outerInsets.top, width - outerInsets.width(),
-                    height - outerInsets.height(), radius, radius);
+                    height - outerInsets.height(), diameter, diameter);
     config.restore();
   }
 
