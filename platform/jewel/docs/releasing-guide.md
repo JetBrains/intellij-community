@@ -14,19 +14,22 @@ High-level steps:
 2. Run the [Jewel version updater script](../scripts/jewel-version-updater.main.kts), then ktfmt
 3. Run the Gradle checks to make sure everything is ok:
    ```shell
-   ./gradlew check detekt detektMain detektTest --continue
+   ../gradlew check detekt detektMain detektTest --continue
    ```
 4. In all Metalava baseline files (`metalava/{moduleName}-baseline[-stable]-current.txt`), remove all findings, only
    leaving the baseline version header on the first line. This lets you see all issues accumulated over this release in
    the following steps
+   ```shell
+   ../scripts/metalava-signatures.main.kts clean-baselines
+   ```
 5. Run the Metalava validator against the previous release on the `master` branch, and fix any issues you find:
    ```shell
-   ./scripts/metalava-signatures.main.kts validate --release <previous-release>
+   ../scripts/metalava-signatures.main.kts validate --release <previous-release>
    ```
    * If there are "fake" issues, such as APIs that have been hidden but not removed, or former deprecated APIs that were
      removed by the IJP deprecation removal processes, you can generate new baselines:
      ```shell
-     ./scripts/metalava-signatures.main.kts validate --release <previous-release> --update-baselines
+     ../scripts/metalava-signatures.main.kts validate --release <previous-release> --update-baselines
      ```
    * Please make **absolutely sure** that all and every issue you're adding to the baselines does not cause breakages!
    * If you're hiding-via-deprecation an API, it maintains binary compatibility but might break source compatibility
@@ -39,11 +42,11 @@ High-level steps:
      * When not using named arguments in client code, source compatibility is not mandatory — and is often not possible
 6. Generate the new Metalava signatures for the new release:
    ```shell
-   ./scripts/metalava-signatures.main.kts update --release <new-release>
+   ../scripts/metalava-signatures.main.kts update --release <new-release>
    ```
 7. Write the release notes for the release — use the script to get the draft:
    ```shell
-   ./scripts/extract-release-notes.main.kts --since [yyyy-mm-dd]
+   ../scripts/extract-release-notes.main.kts --since [yyyy-mm-dd]
    ```
     * The script collects the release notes from the PRs merged since the specified date (the actual date might not be
       aligned with the previous release's date, it might be earlier!)
@@ -68,7 +71,7 @@ High-level steps:
    9. Verify that the publishing works locally (including POMs, especially for newly added/changed modules — see below)
    10. Verify that the Metalava signatures are matching the ones on `master`:
        ```shell
-       ./scripts/metalava-signatures.sh --validate --release <new-release>
+       ../scripts/metalava-signatures.sh --validate --release <new-release>
        ```
    11. Open a merge request for each cherry-pick branch on Space
 10. When both MRs are approved and merged:
