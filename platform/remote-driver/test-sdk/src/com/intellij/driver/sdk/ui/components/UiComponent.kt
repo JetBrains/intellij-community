@@ -391,6 +391,11 @@ open class UiComponent(private val data: ComponentData) : Finder, WithKeyboard {
     return withComponent { it.isEnabled() }
   }
 
+  fun isVisible(): Boolean {
+    return withComponent { it.isShowing() }
+  }
+
+
   fun hasVisibleComponent(component: UiComponent): Boolean {
     return hasComponent(component, Component::isShowing)
   }
