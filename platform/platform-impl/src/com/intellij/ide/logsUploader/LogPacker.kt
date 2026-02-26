@@ -68,7 +68,11 @@ object LogPacker {
           logProvider.getAdditionalLogFiles(project).forEach { entry ->
             for (dir in entry.files) {
               if (dir.exists()) {
-                val dirPrefix = if (entry.entryName.isNotEmpty()) "${entry.entryName}/${dir.name}" else ""
+                val dirPrefix = when {
+                  entry.entryName.isEmpty() -> ""
+                  entry.createSubdirectories -> "${entry.entryName}/${dir.name}"
+                  else -> entry.entryName
+                }
                 zip.addDirectory(dirPrefix, dir)
               }
             }

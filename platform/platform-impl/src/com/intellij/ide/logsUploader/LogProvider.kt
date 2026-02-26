@@ -21,8 +21,15 @@ interface LogProvider {
   /**
    * Class defines the folder name and the files added to it
    */
-  data class LogsEntry(
+  data class LogsEntry @JvmOverloads constructor(
     val entryName: String,
-    val files: List<Path>
+    val files: List<Path>,
+
+    /**
+     * If true and entryName is not empty, files will be added to the "entryName/file.name/" folder,
+     * If false and entryName is not empty, files will be added to the "entryName/" folder,
+     * If entryName is empty, files will be added to the root folder
+     */
+    val createSubdirectories: Boolean = true,
   )
 }
