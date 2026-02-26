@@ -53,6 +53,7 @@ import org.jetbrains.jewel.ui.component.styling.LocalSelectableLazyColumnStyle
 import org.jetbrains.jewel.ui.component.styling.LocalSimpleListItemStyleStyle
 import org.jetbrains.jewel.ui.component.styling.LocalSliderStyle
 import org.jetbrains.jewel.ui.component.styling.LocalSpeedSearchStyle
+import org.jetbrains.jewel.ui.component.styling.LocalTableStyle
 import org.jetbrains.jewel.ui.component.styling.LocalTextAreaStyle
 import org.jetbrains.jewel.ui.component.styling.LocalTextFieldStyle
 import org.jetbrains.jewel.ui.component.styling.LocalTooltipStyle
@@ -72,12 +73,14 @@ import org.jetbrains.jewel.ui.component.styling.SliderStyle
 import org.jetbrains.jewel.ui.component.styling.SpeedSearchStyle
 import org.jetbrains.jewel.ui.component.styling.SplitButtonStyle
 import org.jetbrains.jewel.ui.component.styling.TabStyle
+import org.jetbrains.jewel.ui.component.styling.TableStyle
 import org.jetbrains.jewel.ui.component.styling.TextAreaStyle
 import org.jetbrains.jewel.ui.component.styling.TextFieldStyle
 import org.jetbrains.jewel.ui.component.styling.TooltipStyle
 import org.jetbrains.jewel.ui.component.styling.fallbackPopupAdStyle
 import org.jetbrains.jewel.ui.component.styling.fallbackSearchMatchStyle
 import org.jetbrains.jewel.ui.component.styling.fallbackSpeedSearchStyle
+import org.jetbrains.jewel.ui.component.styling.fallbackTableStyle
 
 @Stable
 @GenerateDataFunctions
@@ -118,8 +121,9 @@ public class DefaultComponentStyling(
     public val speedSearchStyle: SpeedSearchStyle,
     public val searchMatchStyle: SearchMatchStyle,
     public val popupAdStyle: PopupAdStyle,
+    public val tableStyle: TableStyle,
 ) : ComponentStyling {
-    @Deprecated("Use the variant with popupAdStyle.", level = DeprecationLevel.HIDDEN)
+    @Deprecated("Use the variant with popupAdStyle and tableStyle.", level = DeprecationLevel.HIDDEN)
     public constructor(
         checkboxStyle: CheckboxStyle,
         chipStyle: ChipStyle,
@@ -193,6 +197,7 @@ public class DefaultComponentStyling(
         speedSearchStyle,
         searchMatchStyle,
         fallbackPopupAdStyle(),
+        fallbackTableStyle(),
     )
 
     @Deprecated("Use the variant with speedSearchStyle.", level = DeprecationLevel.HIDDEN)
@@ -267,6 +272,7 @@ public class DefaultComponentStyling(
         fallbackSpeedSearchStyle(),
         fallbackSearchMatchStyle(),
         fallbackPopupAdStyle(),
+        fallbackTableStyle(),
     )
 
     @Deprecated("Use the variant with transparentIconButtonStyle.", level = DeprecationLevel.HIDDEN)
@@ -340,6 +346,7 @@ public class DefaultComponentStyling(
         fallbackSpeedSearchStyle(),
         fallbackSearchMatchStyle(),
         fallbackPopupAdStyle(),
+        fallbackTableStyle(),
     )
 
     @Composable
@@ -383,6 +390,7 @@ public class DefaultComponentStyling(
             LocalSpeedSearchStyle provides speedSearchStyle,
             LocalSearchMatchStyle provides searchMatchStyle,
             LocalPopupAdStyle provides popupAdStyle,
+            LocalTableStyle provides tableStyle,
         )
 
     override fun equals(other: Any?): Boolean {
@@ -427,6 +435,7 @@ public class DefaultComponentStyling(
         if (speedSearchStyle != other.speedSearchStyle) return false
         if (searchMatchStyle != other.searchMatchStyle) return false
         if (popupAdStyle != other.popupAdStyle) return false
+        if (tableStyle != other.tableStyle) return false
 
         return true
     }
@@ -468,6 +477,7 @@ public class DefaultComponentStyling(
         result = 31 * result + speedSearchStyle.hashCode()
         result = 31 * result + searchMatchStyle.hashCode()
         result = 31 * result + popupAdStyle.hashCode()
+        result = 31 * result + tableStyle.hashCode()
         return result
     }
 
@@ -507,7 +517,8 @@ public class DefaultComponentStyling(
             "tooltipStyle=$tooltipStyle, " +
             "undecoratedDropdownStyle=$undecoratedDropdownStyle, " +
             "speedSearchStyle=$speedSearchStyle, " +
-            "searchMatchStyle=$searchMatchStyle," +
-            "popupAdStyle=$popupAdStyle" +
+            "searchMatchStyle=$searchMatchStyle, " +
+            "popupAdStyle=$popupAdStyle, " +
+            "tableStyle=$tableStyle" +
             ")"
 }
