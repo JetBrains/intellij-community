@@ -1411,6 +1411,21 @@
       "description": "Selection foreground color for main menu items"
     },
     {
+      "key": "MainMenu.Selection.fullScreenArc",
+      "description": "Selection arc diameter for the main menu in full screen (in the normal mode MainToolbar.Dropdown.arc is used)",
+      "since": "2026.1"
+    },
+    {
+      "key": "MainMenu.Selection.outerInsets",
+      "description": "Insets around main menu selection",
+      "since": "2026.1"
+    },
+    {
+      "key": "MainMenu.Selection.fullScreenOuterInsets",
+      "description": "Insets around main menu selection in full screen",
+      "since": "2026.1"
+    },
+    {
       "key": "MemoryIndicator.usedBackground",
       "description": "Memory indicator color for used memory rectangle",
       "since": "2019.2"

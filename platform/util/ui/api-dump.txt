@@ -4443,6 +4443,11 @@ f:com.intellij.util.ui.JBUI$CurrentTheme$List$Selection
 com.intellij.util.ui.JBUI$CurrentTheme$List$Tag
 - sf:BACKGROUND:java.awt.Color
 - sf:FOREGROUND:java.awt.Color
+f:com.intellij.util.ui.JBUI$CurrentTheme$MainMenu
+f:com.intellij.util.ui.JBUI$CurrentTheme$MainMenu$Selection
+- s:fullScreenArc():com.intellij.util.ui.JBValue
+- s:fullScreenOuterInsets():com.intellij.util.ui.JBInsets
+- s:outerInsets():com.intellij.util.ui.JBInsets
 f:com.intellij.util.ui.JBUI$CurrentTheme$MainToolbar
 - <init>():V
 - s:borderColor():java.awt.Color

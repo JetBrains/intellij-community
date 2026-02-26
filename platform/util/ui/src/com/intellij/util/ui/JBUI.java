@@ -1680,6 +1680,26 @@ public final class JBUI {
       }
     }
 
+    public static final class MainMenu {
+      private MainMenu() { }
+
+      public static final class Selection {
+        private Selection() { }
+
+        public static @NotNull JBInsets outerInsets() {
+          return insets("MainMenu.Selection.outerInsets", insets(5, 0));
+        }
+
+        public static @NotNull JBInsets fullScreenOuterInsets() {
+          return insets("MainMenu.Selection.fullScreenOuterInsets", insets(2, 0));
+        }
+
+        public static @NotNull JBValue fullScreenArc() {
+          return new JBValue.UIInteger("MainToolbar.Selection.fullScreenArc", 8);
+        }
+      }
+    }
+
     public static final class Separator {
       private Separator() { }
       public static @NotNull Color color() {

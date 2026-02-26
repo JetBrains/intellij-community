@@ -78,8 +78,8 @@ public class IdeaMenuUI extends BasicMenuUI {
       outerInsets = JBUI.CurrentTheme.PopupMenu.Selection.outerInsets();
     }
     else if (IdeaPopupMenuUI.isMenuBarItem(c)) {
-      outerInsets = DarculaMenuItemBorder.menuBarItemOuterInsets(height);
-      diameter = JBUI.CurrentTheme.MainToolbar.Dropdown.hoverArc().get();
+      outerInsets = DarculaMenuItemBorder.menuBarItemOuterInsets(c);
+      diameter = DarculaMenuItemBorder.menuBarItemSelectionArc(c);
     }
     else {
       diameter = JBUI.CurrentTheme.Menu.Selection.ARC.get();

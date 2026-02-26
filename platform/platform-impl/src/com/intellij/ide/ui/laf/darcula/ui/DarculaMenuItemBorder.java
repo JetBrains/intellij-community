@@ -2,9 +2,10 @@
 package com.intellij.ide.ui.laf.darcula.ui;
 
 import com.intellij.ide.ui.laf.intellij.IdeaPopupMenuUI;
+import com.intellij.openapi.wm.IdeFrame;
 import com.intellij.openapi.wm.impl.customFrameDecorations.header.toolbar.ShowMode;
+import com.intellij.ui.ComponentUtil;
 import com.intellij.ui.ExperimentalUI;
-import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.ui.JBInsets;
 import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.ApiStatus;
@@ -27,8 +28,22 @@ public class DarculaMenuItemBorder implements Border, UIResource {
   }
 
   @ApiStatus.Internal
-  public static @NotNull JBInsets menuBarItemOuterInsets(int height) {
-    return JBUI.insets(height / JBUIScale.scale(8), 0);
+  public static @NotNull JBInsets menuBarItemOuterInsets(@NotNull Component c) {
+    return isInFullScreen(c)
+           ? JBUI.CurrentTheme.MainMenu.Selection.fullScreenOuterInsets()
+           : JBUI.CurrentTheme.MainMenu.Selection.outerInsets();
+  }
+
+  @ApiStatus.Internal
+  public static int menuBarItemSelectionArc(@NotNull Component c) {
+    return isInFullScreen(c)
+           ? JBUI.CurrentTheme.MainMenu.Selection.fullScreenArc().get()
+           : JBUI.CurrentTheme.MainToolbar.Dropdown.hoverArc().get();
+  }
+
+  private static boolean isInFullScreen(@NotNull Component c) {
+    var frame = ComponentUtil.getParentOfType(IdeFrame.class, c);
+    return frame != null && frame.isInFullScreen();
   }
 
   @Override
