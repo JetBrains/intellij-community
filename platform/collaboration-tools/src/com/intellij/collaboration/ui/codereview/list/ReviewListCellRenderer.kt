@@ -9,6 +9,7 @@ import com.intellij.collaboration.ui.codereview.avatar.CodeReviewAvatarUtils
 import com.intellij.ide.IdeTooltip
 import com.intellij.ide.IdeTooltipManager
 import com.intellij.openapi.ui.popup.Balloon
+import com.intellij.ui.AncestorListenerAdapter
 import com.intellij.ui.ExperimentalUI
 import com.intellij.ui.OverlaidOffsetIconsIcon
 import com.intellij.ui.SimpleListCellRenderer
@@ -37,14 +38,13 @@ import java.awt.Container
 import java.awt.Dimension
 import java.awt.Point
 import java.awt.Rectangle
-import java.awt.event.ComponentAdapter
-import java.awt.event.ComponentEvent
 import javax.swing.JComponent
 import javax.swing.JLabel
 import javax.swing.JList
 import javax.swing.JPanel
 import javax.swing.ListCellRenderer
 import javax.swing.SwingConstants
+import javax.swing.event.AncestorEvent
 import kotlin.math.max
 import kotlin.math.min
 import kotlin.properties.Delegates
@@ -72,6 +72,7 @@ internal class ReviewListCellRenderer<T>(
   }
   private val title = JLabel().apply {
     minimumSize = JBDimension(30, 0)
+    addTruncationListener()
   }
   private val info = JLabel().apply {
     font = JBFont.create(font, false).let(FontUtil::minusOne)
@@ -158,7 +159,6 @@ internal class ReviewListCellRenderer<T>(
     title.apply {
       text = presentation.title
       foreground = primaryTextColor
-      addTruncationListener()
     }
 
     info.apply {
@@ -281,25 +281,17 @@ internal class ReviewListCellRenderer<T>(
     }
   }
 
-  private fun isLabelTruncated(label: JLabel): Boolean {
-    val fm = label.getFontMetrics(label.font)
-    val text = label.text
-    return fm.stringWidth(text) > label.width
-  }
-
   private fun JLabel.addTruncationListener() {
-    val label = this
-    this.addComponentListener(object : ComponentAdapter() {
-      override fun componentResized(e: ComponentEvent?) {
-        if (isLabelTruncated(label)) {
-          label.toolTipText = label.text
-        }
-        else {
-          label.toolTipText = null
-        }
+    addAncestorListener(object : AncestorListenerAdapter() {
+      override fun ancestorAdded(event: AncestorEvent) {
+        toolTipText = if (isTextTruncated()) text else null
       }
     })
   }
+
+  private fun JLabel.isTextTruncated(): Boolean =
+    getFontMetrics(font).stringWidth(text) > width
+
 
   companion object {
     private const val MAX_PARTICIPANT_ICONS = 2
