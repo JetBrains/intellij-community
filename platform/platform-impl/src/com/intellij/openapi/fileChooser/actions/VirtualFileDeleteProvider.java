@@ -9,13 +9,14 @@ import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.application.ApplicationBundle;
-import com.intellij.openapi.application.WriteAction;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.NlsContexts;
+import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.UIBundle;
 import com.intellij.util.containers.ContainerUtil;
@@ -23,6 +24,7 @@ import com.intellij.util.io.TrashBin;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
+import java.io.UncheckedIOException;
 import java.util.Arrays;
 import java.util.Comparator;
 import java.util.LinkedList;
@@ -62,23 +64,47 @@ public final class VirtualFileDeleteProvider implements DeleteProvider {
 
     var problems = new LinkedList<String>();
     CommandProcessor.getInstance().executeCommand(project, () -> new Task.Modal(project, IdeBundle.message("progress.deleting"), true) {
+      private int counter = 0;
+
       @Override
+      @SuppressWarnings("DuplicatedCode")
       public void run(@NotNull ProgressIndicator indicator) {
-        indicator.setIndeterminate(false);
-        var i = 0;
+        indicator.setIndeterminate(true);
+        var app = ApplicationManager.getApplication();
+
         for (var file : files) {
-          if (indicator.isCanceled()) break;
-          indicator.setText(file.getPresentableUrl());
-          indicator.setFraction((double)i++ / files.length);
-          try {
-            if (toBin && TrashBin.canMoveToTrash(file)) {
-              TrashBin.moveToTrash(file.toNioPath());
-            }
-            WriteAction.runAndWait(() -> file.delete(this));
+          indicator.checkCanceled();
+          indicator.setText(IdeBundle.message("progress.already.deleted", counter));
+
+          if (toBin && TrashBin.canMoveToTrash(file)) {
+            LocalFileSystem.MOVE_TO_TRASH.set(file, Boolean.TRUE);
+            counter++;
           }
-          catch (IOException e) {
+          else {
+            LocalFileSystem.DELETE_CALLBACK.set(file, p -> {
+              indicator.checkCanceled();
+              indicator.setText(IdeBundle.message("progress.already.deleted", counter));
+              counter++;
+            });
+          }
+
+          try {
+            app.runWriteAction(() -> {
+              try {
+                file.delete(this);
+              }
+              catch (IOException e) {
+                throw new UncheckedIOException(e);
+              }
+            });
+          }
+          catch (UncheckedIOException e) {
             LOG.info("Error when deleting " + file, e);
             problems.add(file.getName());
+          }
+          finally {
+            LocalFileSystem.MOVE_TO_TRASH.set(file, null);
+            LocalFileSystem.DELETE_CALLBACK.set(file, null);
           }
         }
       }

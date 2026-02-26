@@ -13,7 +13,6 @@ import com.intellij.psi.PsiManager;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 import java.util.function.Consumer;
@@ -39,14 +38,6 @@ public final class PsiFileImplUtil {
   @ApiStatus.Experimental
   public static void setNonPhysicalFileDeleteHandler(@NotNull PsiFile file, @NotNull Consumer<@NotNull PsiFile> handler) {
     if (file.isPhysical()) {
-      throw new IllegalArgumentException();
-    }
-    file.putUserData(FILE_DELETE_HANDLER, handler);
-  }
-
-  @ApiStatus.Internal
-  public static void setCustomFileDeleteHandler(@NotNull PsiFile file, @Nullable Consumer<@NotNull PsiFile> handler) {
-    if (!file.isPhysical()) {
       throw new IllegalArgumentException();
     }
     file.putUserData(FILE_DELETE_HANDLER, handler);
@@ -82,16 +73,11 @@ public final class PsiFileImplUtil {
   }
 
   public static void doDelete(@NotNull PsiFile file) throws IncorrectOperationException {
-    Consumer<PsiFile> handler = file.getUserData(FILE_DELETE_HANDLER);
-
     if (!file.isPhysical()) {
+      Consumer<PsiFile> handler = file.getUserData(FILE_DELETE_HANDLER);
       if (handler == null) throw new IncorrectOperationException("handler missing: " + file);
       handler.accept(file);
       return;
-    }
-
-    if (handler != null) {
-      handler.accept(file);
     }
 
     PsiManager manager = file.getManager();

@@ -40,6 +40,7 @@ import com.intellij.util.ThrowableConsumer;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.io.PreemptiveSafeFileOutputStream;
 import com.intellij.util.io.SafeFileOutputStream;
+import com.intellij.util.io.TrashBin;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -403,7 +404,19 @@ public abstract class LocalFileSystemBase extends LocalFileSystem {
     }
     if (!auxDelete(file)) {
       var nioFile = convertToNioFileAndCheck(file, false);
-      NioFiles.deleteRecursively(nioFile);
+      if (MOVE_TO_TRASH.get(file) == Boolean.TRUE) {
+        TrashBin.moveToTrash(nioFile);
+      }
+      else {
+        var callback = DELETE_CALLBACK.get(file);
+        if (callback != null) {
+          NioFiles.deleteRecursively(nioFile, callback);
+        }
+        else {
+          //noinspection UseOptimizedEelFunctions
+          NioFiles.deleteRecursively(nioFile);
+        }
+      }
     }
     auxNotifyCompleted(handler -> handler.delete(file));
   }
