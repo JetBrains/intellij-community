@@ -8,6 +8,7 @@ import com.intellij.polySymbols.PolySymbolProperty
 import com.intellij.util.asSafely
 import com.intellij.util.containers.ContainerUtil
 import java.lang.reflect.Field
+import java.lang.reflect.InvocationTargetException
 import java.lang.reflect.Method
 
 object PolySymbolPropertyGetter {
@@ -95,7 +96,14 @@ object PolySymbolPropertyGetter {
     }
     else if (property.type.objectType.isAssignableFrom(actualMethod.returnType.objectType)) {
       actualMethod.isAccessible = true
-      result[property] = { actualMethod.invoke(it) }
+      result[property] = {
+        try {
+          actualMethod.invoke(it)
+        }
+        catch (e: InvocationTargetException) {
+          throw e.cause ?: e
+        }
+      }
     }
     else {
       thisLogger().error("PolySymbol property ${property.name} of type ${property.type} is not assignable from return type ${actualMethod.returnType} of ${clazz.name}.${actualMethod.name}()")
