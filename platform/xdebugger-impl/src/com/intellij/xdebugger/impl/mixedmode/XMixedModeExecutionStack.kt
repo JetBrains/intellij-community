@@ -82,6 +82,11 @@ class XMixedModeExecutionStack(
     return if (!computedFramesMap.isCompleted) lowLevelExecutionStack.topFrame else getCalculatedTopFrame()
   }
 
+  override fun getTopFrameAsync(): CompletableFuture<XStackFrame?> = coroutineScope.future {
+    computedFramesMap.await()
+    getCalculatedTopFrame()
+  }
+
   @OptIn(ExperimentalCoroutinesApi::class)
   private fun getCalculatedTopFrame(): XStackFrame? {
     assert(computedFramesMap.isCompleted)
