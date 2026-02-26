@@ -2,10 +2,17 @@
 package com.intellij.debugger.streams.trace.breakpoint
 
 import com.intellij.debugger.engine.DebuggerUtils
+import com.intellij.debugger.engine.InstrumentedTechnicalBreakpoint
+import com.intellij.debugger.engine.RequestHint
 import com.intellij.debugger.engine.SuspendContextImpl
 import com.intellij.debugger.engine.evaluation.EvaluateException
 import com.intellij.debugger.engine.evaluation.EvaluationContextImpl
+import com.intellij.debugger.engine.events.SuspendContextCommandImpl
+import com.intellij.debugger.jdi.ThreadReferenceProxyImpl
+import com.intellij.debugger.settings.DebuggerSettings
 import com.intellij.debugger.streams.trace.breakpoint.ex.MethodNotFoundException
+import com.intellij.debugger.ui.breakpoints.FilteredRequestorImpl
+import com.intellij.debugger.ui.breakpoints.SyntheticBreakpoint
 import com.intellij.openapi.diagnostic.logger
 import com.sun.jdi.ClassNotLoadedException
 import com.sun.jdi.IncompatibleThreadStateException
@@ -15,9 +22,12 @@ import com.sun.jdi.Method
 import com.sun.jdi.ObjectReference
 import com.sun.jdi.ReferenceType
 import com.sun.jdi.Value
+import com.sun.jdi.event.LocatableEvent
+import com.sun.jdi.request.BreakpointRequest
 import com.sun.jdi.request.ExceptionRequest
 import com.sun.jdi.request.MethodEntryRequest
 import com.sun.jdi.request.MethodExitRequest
+import com.sun.jdi.request.StepRequest
 
 private val LOG = logger<JdiBreakpointFactory>()
 
@@ -186,5 +196,53 @@ internal class JdiBreakpointFactory {
     return methodParameters.zip(argumentsList).all { (param, arg) ->
       DebuggerUtils.instanceOf(arg?.type(), param.typeName())
     }
+  }
+
+  /**
+   * Performs a step-out from the current frame. [onComplete] is called when the step finishes
+   * and the VM is suspended at the new location.
+   */
+  fun stepOut(evaluationContext: EvaluationContextImpl, onComplete: (EvaluationContextImpl) -> Unit) {
+    val suspendContext = evaluationContext.suspendContext
+    val thread = suspendContext.thread ?: return
+    suspendContext.debugProcess.doStep(
+      suspendContext, thread, StepRequest.STEP_MIN, StepRequest.STEP_OUT,
+      StepOutRequestHint(thread, suspendContext, onComplete), null,
+    )
+  }
+
+  /**
+   * Creates a one-shot breakpoint at the given [location].
+   * The breakpoint suspends the event thread, calls [onHit] with the resulting [SuspendContextImpl],
+   * and then deletes itself. The returned request is disabled by default — caller must enable it.
+   */
+  fun createOneShotBreakpoint(
+    suspendContext: SuspendContextImpl,
+    location: Location,
+    onHit: (SuspendContextImpl) -> Unit,
+  ): BreakpointRequest {
+    val requestor = object : FilteredRequestorImpl(suspendContext.debugProcess.project), SyntheticBreakpoint, InstrumentedTechnicalBreakpoint {
+      override fun processLocatableEvent(action: SuspendContextCommandImpl, event: LocatableEvent?): Boolean {
+        event?.request()?.let {
+          suspendContext.debugProcess.requestsManager.deleteRequest(this)
+        }
+        action.suspendContext?.let { onHit(it) }
+        return true  // suspend VM at call site
+      }
+
+      override fun getSuspendPolicy(): String = DebuggerSettings.SUSPEND_THREAD
+    }
+    return suspendContext.debugProcess.requestsManager.createBreakpointRequest(requestor, location)
+  }
+}
+
+private class StepOutRequestHint(
+  thread: ThreadReferenceProxyImpl,
+  suspendContext: SuspendContextImpl,
+  private val onComplete: (EvaluationContextImpl) -> Unit,
+) : RequestHint(thread, suspendContext, StepRequest.STEP_OUT) {
+  override fun getNextStepDepth(context: SuspendContextImpl): Int {
+    onComplete(EvaluationContextImpl(context, context.frameProxy))
+    return STOP
   }
 }

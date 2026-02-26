@@ -1,9 +1,6 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.debugger.streams.trace.breakpoint
 
-import com.intellij.debugger.engine.DebugProcessListener
-import com.intellij.debugger.engine.SuspendContext
-import com.intellij.debugger.engine.SuspendContextImpl
 import com.intellij.debugger.engine.evaluation.EvaluateException
 import com.intellij.debugger.engine.evaluation.EvaluationContextImpl
 import com.intellij.debugger.engine.withDebugContext
@@ -21,8 +18,6 @@ import com.sun.jdi.request.EventRequest
 import com.sun.jdi.request.MethodEntryRequest
 import com.sun.jdi.request.MethodExitRequest
 import kotlinx.coroutines.CompletableDeferred
-import kotlinx.coroutines.Job
-import kotlinx.coroutines.currentCoroutineContext
 import org.jetbrains.annotations.Nls
 
 sealed class EvaluationResult {
@@ -41,37 +36,32 @@ internal class StreamTracingManager(
 
   private lateinit var instrumentationManager: StreamInstrumentationManager
 
+  private val evaluationFinished = CompletableDeferred<EvaluationContextImpl>()
+
   suspend fun evaluateChain(debuggerContext: DebuggerContextImpl, breakpointPositions: BreakpointResolveResult.Found, chain: StreamChain): EvaluationResult {
     val debugProcess = debuggerContext.debugProcess!!
-    val evaluationFinished = createEvaluationFinishedFuture()
+
     withDebugContext(debuggerContext.managerThread!!) {
       val evaluationContextImpl = debuggerContext.createEvaluationContext()
                                   ?: return@withDebugContext EvaluationResult.Error(StreamDebuggerBundle.message("program.is.not.suspended"))
 
       withDebugContext(evaluationContextImpl.suspendContext) {
         instrumentationManager = StreamInstrumentationManager.create(handlerFactory, objectStorage, chain, evaluationContextImpl)
-        val firstRequestor = createRequestors(evaluationContextImpl, chain, breakpointPositions, evaluationFinished)
+        val firstRequestor = createRequestors(evaluationContextImpl, chain, breakpointPositions)
         firstRequestor.enable()
       }
 
-      // TODO: I need to find a better solution because now we need to manually put a breakpoint on stream exit.
       debugProcess.suspendManager.resume(evaluationContextImpl.suspendContext)
     }
 
-    //evaluationFinished.await()
+    // Evaluation is finished when the execution returns from the terminal operation
+    val evalCtx = evaluationFinished.await()
 
     // Collect results from instrumentation
-    val result = withDebugContext(debuggerContext.managerThread!!) {
-      val ctx =
-        THIS_IS_JUST_TEMPORARY_REMOVE_ME_LATER_OR_I_WILL_BE_DISSAPOINTED_awaitForBreakpoint(debuggerContext) as SuspendContextImpl
-
-      val evaluationContextImpl = EvaluationContextImpl(ctx, ctx.frameProxy)
-
+    val result = withDebugContext(evalCtx.suspendContext) {
       try {
-        withDebugContext(ctx) {
-          instrumentationManager.restoreQualifierVariableIfReplaced(evaluationContextImpl)
-          instrumentationManager.collectResults(evaluationContextImpl)
-        }
+        instrumentationManager.restoreQualifierVariableIfReplaced(evalCtx)
+        instrumentationManager.collectResults(evalCtx)
       } catch (e: EvaluateException) {
         val cause = e.cause as? InvocationException
         if (cause != null) {
@@ -90,30 +80,11 @@ internal class StreamTracingManager(
     }
   }
 
-  private suspend fun THIS_IS_JUST_TEMPORARY_REMOVE_ME_LATER_OR_I_WILL_BE_DISSAPOINTED_awaitForBreakpoint(debuggerContext: DebuggerContextImpl): SuspendContext {
-    val deferred = CompletableDeferred<SuspendContext>()
-    debuggerContext.debugProcess!!.addDebugProcessListener(object : DebugProcessListener {
-      override fun paused(suspendContext: SuspendContext) {
-        if ((suspendContext as? SuspendContextImpl)?.isResumed == false) {
-          deferred.complete(suspendContext)
-        }
-      }
-    })
-    return deferred.await()
-  }
-
-  private suspend fun createEvaluationFinishedFuture(): CompletableDeferred<Unit> {
-    val currentJob = currentCoroutineContext()[Job]
-    val evaluationFinished = CompletableDeferred<Unit>(currentJob)
-    return evaluationFinished
-  }
-
   // returns first breakpoint request for stream chain
   private fun createRequestors(
     evaluationContext: EvaluationContextImpl,
     chain: StreamChain,
     positions: BreakpointResolveResult.Found,
-    evaluationFinished: CompletableDeferred<Unit>,
   ): EventRequest {
     val qualifierExpressionBreakpoint = if (positions.qualifierExpressionMethod == null) {
       // if qualifier expression is variable we need to replace it in current stack frame
@@ -136,7 +107,6 @@ internal class StreamTracingManager(
       evaluationContext,
       chain.terminationCall,
       positions.terminationOperationMethod,
-      evaluationFinished
     )
 
     return qualifierExpressionBreakpoint
@@ -176,12 +146,13 @@ internal class StreamTracingManager(
     evaluationContext: EvaluationContextImpl,
     @Suppress("UNUSED_PARAMETER") call: TerminatorStreamCall,
     methodSignature: JvmMethodSignature,
-    evaluationFinished: CompletableDeferred<Unit>,
   ): StreamCallRuntimeInfo {
     val exitRequest = breakpointFactory.createMethodExitBreakpoint(evaluationContext, methodSignature) { evalContext, _, value ->
       instrumentationManager.onTerminalOperationExit(evalContext, value)
-      evaluationFinished.complete(Unit)
-      // TODO: step out or run to position to exit from the stream
+
+      // Step out of the terminal method so VM lands on the next statement in user code.
+      breakpointFactory.stepOut(evalContext, evaluationFinished::complete)
+
       value
     }
     val entryRequest = breakpointFactory.createMethodEntryBreakpoint(evaluationContext, methodSignature) { evalContext, method, args ->
