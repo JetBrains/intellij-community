@@ -199,12 +199,13 @@ fun TestFixture<Project>.moduleFixture(
 fun TestFixture<Project>.moduleFixture(
   pathFixture: TestFixture<Path>,
   addPathToSourceRoot: Boolean = false,
+  moduleTypeId: String = ""
 ): TestFixture<Module> = testFixture { _ ->
   val project = this@moduleFixture.init()
   val path = pathFixture.init()
   val manager = ModuleManager.getInstance(project)
   val module = edtWriteAction {
-    manager.newModule(path, "")
+    manager.newModule(path, moduleTypeId)
   }
   if (addPathToSourceRoot) {
     val pathVfs = withContext(Dispatchers.IO) {
