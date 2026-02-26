@@ -3,12 +3,10 @@ package com.intellij.xdebugger.impl.frame
 
 import com.intellij.ide.dnd.DnDNativeTarget
 import com.intellij.openapi.application.EDT
-import com.intellij.openapi.util.Disposer
 import com.intellij.platform.debugger.impl.rpc.XMixedModeApi
 import com.intellij.platform.debugger.impl.shared.proxy.XDebugManagerProxy
 import com.intellij.platform.debugger.impl.shared.proxy.XDebugSessionProxy
 import com.intellij.ui.OnePixelSplitter
-import com.intellij.util.asDisposable
 import com.intellij.util.ui.components.BorderLayoutPanel
 import com.intellij.xdebugger.XDebugSessionListener
 import com.intellij.xdebugger.impl.ui.SessionTabComponentProvider
@@ -62,7 +60,11 @@ class XSplitterWatchesViewImpl(
       updateRequests
         .debounce(100.milliseconds)
         .collectLatest {
+          try {
             withContext(Dispatchers.EDT) { updateView() }
+          }
+          catch (_: Throwable) {
+          }
         }
     }
   }
