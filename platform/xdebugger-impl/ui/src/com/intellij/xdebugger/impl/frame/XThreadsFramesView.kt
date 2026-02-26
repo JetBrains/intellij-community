@@ -267,12 +267,12 @@ class XThreadsFramesView(tabDisposable: Disposable, private val sessionProxy: XD
       return
     }
 
-    if (!session.hasSuspendContext()) {
-      requestClear()
-      return
-    }
-
     UIUtil.invokeLaterIfNeeded {
+      if (!session.hasSuspendContext()) {
+        requestClear()
+        return@invokeLaterIfNeeded
+      }
+
       if (event == SessionEvent.PAUSED || event == SessionEvent.SETTINGS_CHANGED && session.isSuspended) {
         // clear immediately
         cancelClear()
