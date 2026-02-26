@@ -10,7 +10,6 @@ import com.intellij.openapi.project.PossiblyDumbAware;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.psi.PsiElement;
 import com.intellij.util.IncorrectOperationException;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -87,12 +86,10 @@ public interface TestFramework extends PossiblyDumbAware {
     return null;
   }
 
-  @ApiStatus.Experimental
   default @Nullable PsiElement findBeforeSuiteMethod(@NotNull PsiElement clazz) {
     return null;
   }
 
-  @ApiStatus.Experimental
   default @Nullable PsiElement findAfterSuiteMethod(@NotNull PsiElement clazz) {
     return null;
   }

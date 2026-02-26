@@ -2471,6 +2471,6 @@ abstract class KotlinJUnitMalformedDeclarationInspectionTest : KotlinJUnitMalfor
 
       @Suite(failIfNoTests = false)
       class MySuite
-    """.trimIndent(), "Set failIfNoTests = false", testPreview = true)
+    """.trimIndent(), "Set 'failIfNoTests' to 'false'", testPreview = true)
   }
 }
