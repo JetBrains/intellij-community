@@ -53,6 +53,16 @@ public interface PyCallableType extends PyType {
   }
 
   /**
+   * Returns the list of parameter types with keyword containers carrying {@code Unpack[TypedDict]}
+   * expanded into individual keyword parameters derived from the TypedDict fields.
+   *
+   * @see PyCallableParameterListType#getUnpackedParameters
+   */
+  default @Nullable List<PyCallableParameter> getUnpackedParameters(@NotNull TypeEvalContext context) {
+    return getParameters(context);
+  }
+
+  /**
    * Returns the parameters type as a variadic type.
    * This method provides a unified way to handle different forms of callable parameters:
    * <ul>

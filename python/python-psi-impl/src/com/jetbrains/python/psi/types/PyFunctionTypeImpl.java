@@ -25,6 +25,8 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
+import static com.jetbrains.python.psi.PyUtil.as;
+
 /**
  * Type of particular function that is represented as a {@link PyCallable} in the PSI tree.
  */
@@ -66,6 +68,15 @@ public class PyFunctionTypeImpl implements PyFunctionType {
   @Override
   public @Nullable List<@NotNull PyCallableParameter> getParameters(@NotNull TypeEvalContext context) {
     return myParameters;
+  }
+
+  @Override
+  public @Nullable List<PyCallableParameter> getUnpackedParameters(@NotNull TypeEvalContext context) {
+    PyCallableParameterListType callableParameterListType = as(getParametersType(context), PyCallableParameterListType.class);
+    if (callableParameterListType != null) {
+      return callableParameterListType.getUnpackedParameters(context);
+    }
+    return getParameters(context);
   }
 
   @Override

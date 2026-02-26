@@ -334,9 +334,8 @@ public final class PyParameterInfoUtils {
     final TypeEvalContext typeEvalContext = TypeEvalContext.codeAnalysis(callExpression.getProject(), callExpression.getContainingFile());
     final PyCallableType callableType = callAndCallee.getSecond();
 
-    List<PyCallableParameter> parameters = callableType.getParameters(typeEvalContext);
+    List<PyCallableParameter> parameters = callableType.getUnpackedParameters(typeEvalContext);
     if (parameters == null) return null;
-    parameters = ParamHelper.unpackKeywordContainerParameters(parameters, typeEvalContext);
 
     final PyCallExpression.PyArgumentsMapping mapping = PyCallExpressionHelper.mapArguments(callExpression, callableType, typeEvalContext);
     if (mapping.getCallableType() == null) return null;
