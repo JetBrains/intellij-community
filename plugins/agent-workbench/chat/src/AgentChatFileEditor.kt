@@ -12,10 +12,10 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.UserDataHolderBase
 import com.intellij.terminal.frontend.toolwindow.TerminalToolWindowTab
 import com.intellij.terminal.frontend.toolwindow.TerminalToolWindowTabsManager
-import kotlinx.coroutines.cancel
 import org.jetbrains.plugins.terminal.startup.TerminalProcessType
 import java.awt.BorderLayout
 import java.beans.PropertyChangeListener
+import java.util.concurrent.CancellationException
 import javax.swing.JComponent
 import javax.swing.JPanel
 
@@ -63,7 +63,9 @@ internal class AgentChatFileEditor(
 
   override fun dispose() {
     disposed = true
-    tab?.view?.coroutineScope?.cancel()
+    tab?.let { terminalTab ->
+      TerminalToolWindowTabsManager.getInstance(project).closeTab(terminalTab)
+    }
     tab = null
     component.removeAll()
   }
@@ -87,6 +89,9 @@ internal class AgentChatFileEditor(
       component.add(createdTab.content.component, BorderLayout.CENTER)
       component.revalidate()
       component.repaint()
+    }
+    catch (e: CancellationException) {
+      throw e
     }
     catch (t: Throwable) {
       AgentChatRestoreNotificationService.reportTerminalInitializationFailure(project, file, t)

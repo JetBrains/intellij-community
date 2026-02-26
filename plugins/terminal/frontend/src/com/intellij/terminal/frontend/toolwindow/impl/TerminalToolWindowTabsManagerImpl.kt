@@ -7,7 +7,6 @@ import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.UI
 import com.intellij.openapi.application.asContextElement
-import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.Key
@@ -100,7 +99,7 @@ internal class TerminalToolWindowTabsManagerImpl(
 
   override fun closeTab(tab: TerminalToolWindowTab) {
     val manager = tab.content.manager ?: return
-    manager.removeContent(tab.content, true, true, true)
+    manager.removeContent(/* content = */ tab.content, /* dispose = */ true, /* requestFocus = */ true, /* forcedFocus = */ true)
   }
 
   override fun detachTab(tab: TerminalToolWindowTab): TerminalView {
@@ -550,7 +549,5 @@ internal class TerminalToolWindowTabsManagerImpl(
 
   companion object {
     val TAB_DETACHED_KEY = Key.create<Unit>("TerminalTabsManager.TabWasDetached")
-
-    private val LOG = logger<TerminalToolWindowTabsManagerImpl>()
   }
 }
