@@ -7,7 +7,6 @@ import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.Presentation
 import com.intellij.openapi.actionSystem.impl.ActionButton
 import com.intellij.openapi.actionSystem.impl.IdeaActionButtonLook
-import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.wm.impl.customFrameDecorations.header.CustomWindowHeaderUtil
 import com.intellij.openapi.wm.impl.customFrameDecorations.header.DialogHeader
 import com.intellij.ui.ComponentUtil
@@ -91,7 +90,6 @@ private fun createButtonsPanel(): JPanel {
 }
 
 private fun createMaximizeButton(): WindowsDialogHeaderButton? {
-  if (ApplicationManager.getApplication() == null) return null
   val maximizeAction = ActionManager.getInstance().getAction("MaximizeActiveDialog")
   if (maximizeAction == null) return null
   val maximizeButton = WindowsDialogHeaderButton(maximizeAction) {

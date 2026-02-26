@@ -3,6 +3,7 @@ package com.intellij.openapi.wm.impl.customFrameDecorations.header
 
 import com.intellij.ide.ui.UISettings
 import com.intellij.ide.ui.toggleMaximized
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.wm.impl.customFrameDecorations.frameButtons.CustomFrameButtons
 import com.intellij.openapi.wm.impl.customFrameDecorations.frameButtons.LinuxCustomFrameButtons
@@ -111,7 +112,7 @@ internal class DialogHeader(window: Window) : CustomHeader(window) {
 
   private fun createButtonsPane(): CustomFrameButtons? {
     return when (OS.CURRENT) {
-      OS.Windows -> WindowsDialogButtons()
+      OS.Windows -> if (ApplicationManager.getApplication() != null) WindowsDialogButtons() else null
       OS.Linux -> if (hideNativeLinuxTitle(UISettings.shadowInstance)) LinuxCustomFrameButtons.create(createCloseAction(this)) else null
       else -> null
     }
