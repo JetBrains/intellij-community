@@ -449,19 +449,10 @@ internal class TestingTasksImpl(context: CompilationContext, private val options
     remoteDebugging: Boolean,
     searchForTestsAcrossModuleDependencies: Boolean,
   ) {
-    val useKotlinK2 = !System.getProperty("idea.kotlin.plugin.use.k1", "false").toBoolean() ||
-                      jvmArgs.contains("-Didea.kotlin.plugin.use.k1=false")
     val outputProvider = context.outputProvider
     val mainJpsModule = outputProvider.findRequiredModule(mainModule)
     val testRoots = context.getModuleRuntimeClasspath(mainJpsModule, forTests = true)
       .toMutableList()
-      .apply {
-        if (!useKotlinK2) {
-          val kotlinPluginK2Module = outputProvider.findRequiredModule("kotlin.plugin.k2")
-          removeAll(outputProvider.getModuleOutputRoots(kotlinPluginK2Module, forTests = false))
-          removeAll(outputProvider.getModuleOutputRoots(kotlinPluginK2Module, forTests = true))
-        }
-      }
 
     if (isBootstrapSuiteDefault) {
       //module with "com.intellij.TestAll" which output should be found in `testClasspath + modulePath`
