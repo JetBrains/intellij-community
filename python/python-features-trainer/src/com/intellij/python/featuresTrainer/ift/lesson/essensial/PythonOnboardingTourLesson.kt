@@ -6,9 +6,7 @@ import com.intellij.execution.RunManager
 import com.intellij.execution.ui.UIExperiment
 import com.intellij.icons.AllIcons
 import com.intellij.ide.actions.searcheverywhere.SearchEverywhereManagerImpl
-import com.intellij.ide.actions.searcheverywhere.SearchEverywhereUI
 import com.intellij.ide.ui.UISettings
-import com.intellij.ide.util.gotoByName.GotoActionModel
 import com.intellij.idea.ActionsBundle
 import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.actionSystem.impl.ActionButton
@@ -16,7 +14,6 @@ import com.intellij.openapi.application.invokeLater
 import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.editor.LogicalPosition
-import com.intellij.openapi.editor.actions.ToggleCaseAction
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.popup.Balloon
@@ -44,6 +41,7 @@ import training.dsl.LessonSample
 import training.dsl.LessonUtil
 import training.dsl.LessonUtil.adjustSearchEverywherePosition
 import training.dsl.LessonUtil.checkEditorModification
+import training.dsl.LessonUtil.checkInsideSearchEverywhere
 import training.dsl.LessonUtil.restoreIfModified
 import training.dsl.LessonUtil.restoreIfModifiedOrMoved
 import training.dsl.LessonUtil.restorePopupPosition
@@ -530,7 +528,7 @@ class PythonOnboardingTourLesson :
       text(PythonLessonsBundle.message("python.onboarding.invoke.search.everywhere.2",
                                        LessonUtil.rawKeyStroke(KeyEvent.VK_SHIFT), LessonUtil.actionName(it)))
       triggerAndBorderHighlight().component { ui: ExtendableTextField ->
-        UIUtil.getParentOfType(SearchEverywhereUI::class.java, ui) != null
+        checkInsideSearchEverywhere(ui)
       }
       restoreIfModifiedOrMoved()
     }
@@ -548,9 +546,9 @@ class PythonOnboardingTourLesson :
       }
       text(PythonLessonsBundle.message("python.onboarding.search.everywhere.description",
                                        code("AVERAGE"), code(PythonLessonsBundle.message("toggle.case.part"))))
+      val actionText = ActionManager.getInstance().getAction("EditorToggleCase").toString()
       triggerAndBorderHighlight().listItem { item ->
-        val value = (item as? GotoActionModel.MatchedValue)?.value
-        (value as? GotoActionModel.ActionWrapper)?.action is ToggleCaseAction
+        item.isToStringContains(actionText)
       }
       restoreByUi()
       restoreIfModifiedOrMoved()
