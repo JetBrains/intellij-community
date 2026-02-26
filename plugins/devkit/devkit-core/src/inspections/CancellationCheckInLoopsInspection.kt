@@ -41,11 +41,17 @@ private val javaLoopMethods: CallMatcher = CallMatcher.anyOf(
 )
 
 private val kotlinLoopMethods: CallMatcher = CallMatcher.anyOf(
+  // for calls from java
   CallMatcher.staticCall("kotlin.collections.ArraysKt___ArraysKt", "forEach", "forEachIndexed"),
   CallMatcher.staticCall("kotlin.collections.CollectionsKt___CollectionsKt", "forEach", "forEachIndexed"),
   CallMatcher.staticCall("kotlin.collections.CollectionsKt__IteratorsKt", "forEach"),
   CallMatcher.staticCall("kotlin.collections.MapsKt___MapsKt", "forEach"),
-  CallMatcher.staticCall("kotlin.sequences.SequencesKt___SequencesKt", "forEach", "forEachIndexed")
+  CallMatcher.staticCall("kotlin.sequences.SequencesKt___SequencesKt", "forEach", "forEachIndexed"),
+  // for calls from kotlin
+  CallMatcher.staticCall("kotlin.collections.ArraysKt", "forEach", "forEachIndexed"),
+  CallMatcher.staticCall("kotlin.collections.CollectionsKt", "forEach", "forEachIndexed"),
+  CallMatcher.staticCall("kotlin.collections.MapsKt", "forEach"),
+  CallMatcher.staticCall("kotlin.sequences.SequencesKt", "forEach", "forEachIndexed")
 )
 
 internal class CancellationCheckInLoopsInspection : DevKitUastInspectionBase() {
