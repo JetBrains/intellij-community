@@ -16,6 +16,7 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.JBInsets;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.dialog.VcsDialogUtils;
+import kotlin.Unit;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.JComponent;
@@ -67,7 +68,10 @@ public final class StartUseVcsDialog extends DialogWrapper {
 
     ++gb.gridx;
 
-    mainPanel.add(VcsDialogUtils.getMorePluginsLink(mainPanel), gb);
+    mainPanel.add(VcsDialogUtils.getMorePluginsLink(mainPanel, () -> {
+      close(CANCEL_EXIT_CODE);
+      return Unit.INSTANCE;
+    }), gb);
 
     JPanel wrapper = new JPanel(new GridBagLayout());
     GridBagConstraints gbc = new GridBagConstraints(0, 0, 1, 1, 1, 1, GridBagConstraints.NORTHWEST, GridBagConstraints.NONE,
