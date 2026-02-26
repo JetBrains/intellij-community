@@ -11,8 +11,8 @@ import com.intellij.execution.testframework.AbstractTestProxy;
 import com.intellij.execution.testframework.JavaTestLocator;
 import com.intellij.execution.testframework.sm.FileUrlProvider;
 import com.intellij.execution.testframework.sm.runner.SMTestProxy;
-import com.intellij.junit.testFramework.JUnitLibrary;
 import com.intellij.junit.testFramework.JUnitProjectDescriptor;
+import com.intellij.junit.testFramework.MavenTestLib;
 import com.intellij.openapi.actionSystem.ActionPlaces;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.pom.java.LanguageLevel;
@@ -27,7 +27,7 @@ import org.jetbrains.annotations.NotNull;
 public class JUnitUniqueIdTest extends LightJavaCodeInsightFixtureTestCase {
   @Override
   protected @NotNull LightProjectDescriptor getProjectDescriptor() {
-    return new JUnitProjectDescriptor(LanguageLevel.HIGHEST, JUnitLibrary.JUNIT5);
+    return new JUnitProjectDescriptor(LanguageLevel.HIGHEST, MavenTestLib.JUNIT5);
   }
 
   public void testValidateUniqueId() {

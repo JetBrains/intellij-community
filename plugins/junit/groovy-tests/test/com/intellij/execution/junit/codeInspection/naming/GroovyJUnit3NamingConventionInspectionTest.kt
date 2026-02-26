@@ -1,8 +1,8 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.junit.codeInspection.naming
 
-import com.intellij.junit.testFramework.JUnitLibrary
 import com.intellij.junit.testFramework.JUnitProjectDescriptor
+import com.intellij.junit.testFramework.MavenTestLib
 import com.intellij.jvm.analysis.testFramework.JvmInspectionTestBase
 import com.intellij.jvm.analysis.testFramework.JvmLanguage
 import com.intellij.pom.java.LanguageLevel
@@ -17,7 +17,7 @@ class GroovyJUnit3NamingConventionInspectionTest : JvmInspectionTestBase() {
     }
   }
 
-  override fun getProjectDescriptor(): LightProjectDescriptor = JUnitProjectDescriptor(LanguageLevel.HIGHEST, JUnitLibrary.JUNIT3)
+  override fun getProjectDescriptor(): LightProjectDescriptor = JUnitProjectDescriptor(LanguageLevel.HIGHEST, MavenTestLib.JUNIT3)
 
   fun testTestCaseConvention() {
     myFixture.testHighlighting(JvmLanguage.GROOVY, """

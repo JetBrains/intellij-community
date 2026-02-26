@@ -1,8 +1,9 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.junit.codeInspection
 
-import com.intellij.junit.testFramework.JUnitLibrary
 import com.intellij.junit.testFramework.JUnitProjectDescriptor
+import com.intellij.junit.testFramework.MavenTestLib.JUNIT4
+import com.intellij.junit.testFramework.MavenTestLib.JUNIT5
 import com.intellij.jvm.analysis.testFramework.JvmInspectionTestBase
 import com.intellij.jvm.analysis.testFramework.JvmLanguage
 import com.intellij.pom.java.LanguageLevel
@@ -10,8 +11,7 @@ import com.intellij.testFramework.LightProjectDescriptor
 
 class JavaJUnit3StyleTestMethodInJUnit4ClassInspectionTest : JvmInspectionTestBase() {
   override val inspection = JUnit3StyleTestMethodInJUnit4ClassInspection()
-  override fun getProjectDescriptor(): LightProjectDescriptor = JUnitProjectDescriptor(LanguageLevel.HIGHEST,
-                                                                                       JUnitLibrary.JUNIT4, JUnitLibrary.JUNIT5)
+  override fun getProjectDescriptor(): LightProjectDescriptor = JUnitProjectDescriptor(LanguageLevel.HIGHEST, JUNIT4, JUNIT5)
 
   fun testJUnit3StyleTestMethodInJUnit4Class() {
     myFixture.testHighlighting(JvmLanguage.JAVA, """

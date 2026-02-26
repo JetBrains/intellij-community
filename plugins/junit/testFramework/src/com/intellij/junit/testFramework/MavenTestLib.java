@@ -1,7 +1,7 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.junit.testFramework;
 
-public enum JUnitLibrary {
+public enum MavenTestLib {
   JUNIT3(""),
   JUNIT4(""),
   HAMCREST(""),
@@ -11,7 +11,7 @@ public enum JUnitLibrary {
   PIONEER("2.3.0");
 
   private final String version;
-  JUnitLibrary(String version) {
+  MavenTestLib(String version) {
     this.version = version;
   }
 

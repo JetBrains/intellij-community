@@ -8,7 +8,7 @@ import com.intellij.testFramework.LightProjectDescriptor
 
 abstract class JUnitAssertEqualsMayBeAssertSameInspectionTestBase : JvmInspectionTestBase() {
   override val inspection: JUnitAssertEqualsMayBeAssertSameInspection = JUnitAssertEqualsMayBeAssertSameInspection()
-  override fun getProjectDescriptor(): LightProjectDescriptor = JUnitProjectDescriptor(LanguageLevel.HIGHEST, JUnitLibrary.JUNIT4)
+  override fun getProjectDescriptor(): LightProjectDescriptor = JUnitProjectDescriptor(LanguageLevel.HIGHEST, MavenTestLib.JUNIT4)
 
   override fun setUp() {
     super.setUp()

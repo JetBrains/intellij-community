@@ -5,8 +5,8 @@ import com.intellij.codeInsight.daemon.GutterMark;
 import com.intellij.execution.RunManager;
 import com.intellij.execution.RunnerAndConfigurationSettings;
 import com.intellij.execution.configurations.RunConfiguration;
-import com.intellij.junit.testFramework.JUnitLibrary;
 import com.intellij.junit.testFramework.JUnitProjectDescriptor;
+import com.intellij.junit.testFramework.MavenTestLib;
 import com.intellij.openapi.actionSystem.ActionGroup;
 import com.intellij.openapi.actionSystem.ActionPlaces;
 import com.intellij.openapi.actionSystem.ActionUiKind;
@@ -47,7 +47,7 @@ public class JUnitNestedClassLineMarkerTest extends LightJavaCodeInsightFixtureT
 
   @Override
   protected @NotNull LightProjectDescriptor getProjectDescriptor() {
-    return new JUnitProjectDescriptor(LanguageLevel.HIGHEST, JUnitLibrary.JUNIT5);
+    return new JUnitProjectDescriptor(LanguageLevel.HIGHEST, MavenTestLib.JUNIT5);
   }
 
   public void testNestedClassInAbstractOuter() {

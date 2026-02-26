@@ -1,9 +1,9 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.junit.kotlin.codeInspection
 
-import com.intellij.junit.testFramework.JUnitLibrary
 import com.intellij.junit.testFramework.JUnitParameterizedSourceGoToRelatedTestBase
 import com.intellij.junit.testFramework.JUnitProjectDescriptor
+import com.intellij.junit.testFramework.MavenTestLib.JUNIT5
 import com.intellij.jvm.analysis.testFramework.JvmLanguage
 import com.intellij.pom.java.LanguageLevel
 import com.intellij.psi.PsiField
@@ -20,7 +20,7 @@ abstract class KotlinJUnitParameterizedSourceGoToRelatedTest : JUnitParameterize
     ConfigLibraryUtil.configureKotlinRuntime(module)
   }
 
-  override fun getProjectDescriptor(): LightProjectDescriptor = JUnitProjectDescriptor(LanguageLevel.HIGHEST, JUnitLibrary.JUNIT5)
+  override fun getProjectDescriptor(): LightProjectDescriptor = JUnitProjectDescriptor(LanguageLevel.HIGHEST, JUNIT5)
 
   fun `test go to method source with explicit name`() {
     myFixture.testGoToRelatedAction(

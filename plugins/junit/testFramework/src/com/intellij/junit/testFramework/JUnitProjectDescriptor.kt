@@ -1,13 +1,13 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.junit.testFramework
 
-import com.intellij.junit.testFramework.JUnitLibrary.HAMCREST
-import com.intellij.junit.testFramework.JUnitLibrary.JUNIT3
-import com.intellij.junit.testFramework.JUnitLibrary.JUNIT4
-import com.intellij.junit.testFramework.JUnitLibrary.JUNIT5
-import com.intellij.junit.testFramework.JUnitLibrary.JUNIT5_7_0
-import com.intellij.junit.testFramework.JUnitLibrary.JUNIT6
-import com.intellij.junit.testFramework.JUnitLibrary.PIONEER
+import com.intellij.junit.testFramework.MavenTestLib.HAMCREST
+import com.intellij.junit.testFramework.MavenTestLib.JUNIT3
+import com.intellij.junit.testFramework.MavenTestLib.JUNIT4
+import com.intellij.junit.testFramework.MavenTestLib.JUNIT5
+import com.intellij.junit.testFramework.MavenTestLib.JUNIT5_7_0
+import com.intellij.junit.testFramework.MavenTestLib.JUNIT6
+import com.intellij.junit.testFramework.MavenTestLib.PIONEER
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.Sdk
@@ -21,7 +21,7 @@ import com.intellij.testFramework.fixtures.DefaultLightProjectDescriptor
 
 open class JUnitProjectDescriptor(
   private val languageLevel: LanguageLevel,
-  private vararg val libraries: JUnitLibrary = arrayOf(JUNIT3, JUNIT4, JUNIT5)
+  private vararg val libraries: MavenTestLib = arrayOf(JUNIT3, JUNIT4, JUNIT5)
 ) : DefaultLightProjectDescriptor() {
   @Throws(Exception::class)
   override fun setUpProject(project: Project, handler: SetupHandler) {

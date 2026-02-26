@@ -16,7 +16,7 @@ import com.intellij.testFramework.utils.vfs.createFile
 import com.siyeh.ig.junit.JUnitCommonClassNames
 import org.jetbrains.jps.model.java.JavaResourceRootType
 
-abstract class JUnitMalformedDeclarationInspectionTestBase(protected vararg val versions: JUnitLibrary) : JvmInspectionTestBase() {
+abstract class JUnitMalformedDeclarationInspectionTestBase(protected vararg val versions: MavenTestLib) : JvmInspectionTestBase() {
   override val inspection: InspectionProfileEntry = JUnitMalformedDeclarationInspection()
   override fun getProjectDescriptor(): LightProjectDescriptor = JUnitProjectDescriptor(LanguageLevel.HIGHEST, *versions)
 

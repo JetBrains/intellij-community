@@ -2,8 +2,8 @@
 package com.intellij.execution.junit;
 
 import com.intellij.codeInspection.deadCode.UnusedDeclarationInspection;
-import com.intellij.junit.testFramework.JUnitLibrary;
 import com.intellij.junit.testFramework.JUnitProjectDescriptor;
+import com.intellij.junit.testFramework.MavenTestLib;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.testFramework.LightProjectDescriptor;
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
@@ -19,7 +19,7 @@ public class JUnitUnusedMethodsTest extends LightJavaCodeInsightFixtureTestCase 
 
   @Override
   protected @NotNull LightProjectDescriptor getProjectDescriptor() {
-    return new JUnitProjectDescriptor(LanguageLevel.HIGHEST, JUnitLibrary.JUNIT4, JUnitLibrary.JUNIT5);
+    return new JUnitProjectDescriptor(LanguageLevel.HIGHEST, MavenTestLib.JUNIT4, MavenTestLib.JUNIT5);
   }
 
 

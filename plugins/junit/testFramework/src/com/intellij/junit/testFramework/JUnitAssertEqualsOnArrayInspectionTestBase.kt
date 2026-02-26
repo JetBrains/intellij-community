@@ -2,7 +2,7 @@
 package com.intellij.junit.testFramework
 
 import com.intellij.execution.junit.codeInspection.JUnitAssertEqualsOnArrayInspection
-import com.intellij.junit.testFramework.JUnitLibrary.JUNIT5
+import com.intellij.junit.testFramework.MavenTestLib.JUNIT5
 import com.intellij.jvm.analysis.testFramework.JvmInspectionTestBase
 import com.intellij.pom.java.LanguageLevel
 import com.intellij.testFramework.LightProjectDescriptor

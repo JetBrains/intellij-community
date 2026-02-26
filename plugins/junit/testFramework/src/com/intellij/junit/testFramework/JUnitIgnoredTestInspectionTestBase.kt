@@ -2,8 +2,8 @@
 package com.intellij.junit.testFramework
 
 import com.intellij.execution.junit.codeInspection.JUnitIgnoredTestInspection
-import com.intellij.junit.testFramework.JUnitLibrary.JUNIT4
-import com.intellij.junit.testFramework.JUnitLibrary.JUNIT5
+import com.intellij.junit.testFramework.MavenTestLib.JUNIT4
+import com.intellij.junit.testFramework.MavenTestLib.JUNIT5
 import com.intellij.jvm.analysis.testFramework.JvmInspectionTestBase
 import com.intellij.pom.java.LanguageLevel
 import com.intellij.testFramework.LightProjectDescriptor

@@ -8,5 +8,5 @@ import com.intellij.testFramework.LightProjectDescriptor
 
 abstract class TestCaseWithMultipleRunnersInspectionTestBase : JvmInspectionTestBase() {
   override val inspection: TestCaseWithMultipleRunnersInspection = TestCaseWithMultipleRunnersInspection()
-  override fun getProjectDescriptor(): LightProjectDescriptor = JUnitProjectDescriptor(LanguageLevel.HIGHEST, JUnitLibrary.JUNIT4)
+  override fun getProjectDescriptor(): LightProjectDescriptor = JUnitProjectDescriptor(LanguageLevel.HIGHEST, MavenTestLib.JUNIT4)
 }
