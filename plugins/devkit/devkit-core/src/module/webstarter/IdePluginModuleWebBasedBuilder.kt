@@ -24,6 +24,7 @@ import com.intellij.ide.starters.shared.StarterLanguage
 import com.intellij.ide.starters.shared.StarterProjectType
 import com.intellij.ide.starters.shared.hyperLink
 import com.intellij.internal.statistic.eventLog.fus.MachineIdManager
+import com.intellij.internal.statistic.utils.StatisticsUploadAssistant
 import com.intellij.openapi.application.ApplicationInfo
 import com.intellij.openapi.application.ApplicationNamesInfo
 import com.intellij.openapi.diagnostic.thisLogger
@@ -164,7 +165,11 @@ internal open class IdePluginModuleWebBasedBuilder : WebStarterModuleBuilder() {
       .post(url.toExternalForm(), HttpRequests.JSON_CONTENT_TYPE)
       .tuner {
         MachineIdManager.getAnonymizedMachineId("ij-plugin-generator")?.let { userId ->
-          it.setRequestProperty("X-Machine-ID", userId)
+          if (StatisticsUploadAssistant.isCollectAllowed()) {
+            MachineIdManager.getAnonymizedMachineId("ij-plugin-generator")?.let { userId ->
+              it.setRequestProperty("X-Machine-ID", userId)
+            }
+          }
         }
       }
       .userAgent(fullProductNameAndBuildVersion())
