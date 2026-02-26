@@ -17,6 +17,7 @@ import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.encodeToStream
 import org.slf4j.Logger
 import java.io.InputStream
+import java.lang.module.ModuleFinder
 import java.nio.file.Path
 import java.util.zip.ZipFile
 import kotlin.collections.component1
@@ -28,6 +29,7 @@ import kotlin.io.path.copyTo
 import kotlin.io.path.createDirectories
 import kotlin.io.path.createTempDirectory
 import kotlin.io.path.deleteRecursively
+import kotlin.io.path.inputStream
 import kotlin.io.path.isDirectory
 import kotlin.io.path.listDirectoryEntries
 import kotlin.io.path.name
@@ -54,6 +56,7 @@ suspend fun generatePluginDescriptor(
 
   runtimeClasspathByLayer: Map<LayerSelector, Set<Path>>,
   alreadyIncludedJarsByLayer: Map<LayerSelector, Set<Path>>,
+  documentationDepsByModuleName: Map<String, Path>,
   resources: List<FleetResource>,
 
   shouldPackModuleJars: Boolean,
@@ -127,13 +130,7 @@ suspend fun generatePluginDescriptor(
     it.deleteRecursively()
     it.createDirectories()
   }
-  val documentationResources = outputModuleJarsByLayer.mapNotNull { (layerSelector, jars) ->
-    readDocumentationResourcesContent(jars)?.let { docs ->
-      packResourcesToZip(docs.asSequence().map { (name, bytes) -> name to bytes.inputStream() },
-                         documentationZipsDirectory,
-                         layerSelector.selector)
-    }
-  }
+  val documentationResources = extractDocumentationResources(outputModuleJarsByLayer, documentationDepsByModuleName, logger, documentationZipsDirectory)
   val resources = resources + documentationResources
 
   val resourceFiles = resources.flatMap { it.files }
@@ -194,34 +191,6 @@ suspend fun generatePluginDescriptor(
   }
 }
 
-
-private fun packResourcesToZip(
-  resources: Sequence<Pair<String, InputStream>>,
-  zipsDirectory: Path,
-  layer: String,
-): FleetResource {
-  val zipFileName = zipsDirectory.resolve("${layer}.zip")
-  zip(zipFileName, resources)
-  resources.forEach { (_, stream) -> stream.close() }
-  return FleetResource(setOf(zipFileName), layer, null)
-}
-
-private fun readDocumentationResourcesContent(jars: Collection<Path>): List<Pair<String, ByteArray>>? = jars.flatMap { jar ->
-  // TODO: this is a hack, in theory we should not pack the documentation json files in the jars, but we don't want to repack for performance reasons, instead this resource zip building should ideally be moved at module packaging level and exposes to other subprojects via consumable configuration
-  ZipFile(jar.toFile()).use { zip ->
-    zip.entries().asSequence()
-      .filter { it.name.endsWith(JSON_DOCUMENTATION_FILENAME_EXTENSION) }
-      // Zip entries are required to have '/' as a file separator on any platform (see. 4.4.17.1 in a spec: https://pkware.cachefly.net/webdocs/casestudies/APPNOTE.TXT)
-      .onEach { require(!it.name.contains('/')) { "Documentation should be located in a root of a module" } }
-      .map { entry -> entry.name to zip.getInputStream(entry).readBytes() }
-      .toList()
-  }
-}.takeIf { it.isNotEmpty() }
-
-/**
- * There is a matching constant in `SchemaDocumentationWorker` in `fleet-schema-plugin`. Please keep them in sync.
- */
-const val JSON_DOCUMENTATION_FILENAME_EXTENSION: String = ".documentation.json"
 
 internal fun Set<Path>.unwrapJarFiles() = flatMap {
   when {
