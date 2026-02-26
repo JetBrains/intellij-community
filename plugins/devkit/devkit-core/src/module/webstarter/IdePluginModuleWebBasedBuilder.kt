@@ -160,18 +160,14 @@ internal open class IdePluginModuleWebBasedBuilder : WebStarterModuleBuilder() {
     val url = composeGeneratorUrl(starterContext.serverUrl, starterContext)
     thisLogger().info("Loading project from ${url}")
 
-    val userAgent = getUserAgent()
     return HttpRequests
       .post(url.toExternalForm(), HttpRequests.JSON_CONTENT_TYPE)
       .tuner {
-        it.setRequestProperty("Client-Name", userAgent)
-        it.setRequestProperty("X-Product-Name", ApplicationNamesInfo.getInstance().fullProductName)
-        it.setRequestProperty("X-Product-Version", ApplicationInfo.getInstance().fullVersion)
         MachineIdManager.getAnonymizedMachineId("ij-plugin-generator")?.let { userId ->
-          it.setRequestProperty("X-User-ID", userId)
+          it.setRequestProperty("X-Machine-ID", userId)
         }
       }
-      .userAgent(userAgent)
+      .userAgent(fullProductNameAndBuildVersion())
       .connectTimeout(10000)
       .isReadResponseOnError(true)
       .connect { request ->
@@ -194,6 +190,9 @@ internal open class IdePluginModuleWebBasedBuilder : WebStarterModuleBuilder() {
       }
     }
   }
+
+  private fun fullProductNameAndBuildVersion() =
+    "${ApplicationNamesInfo.getInstance().fullProductName}/${ApplicationInfo.getInstance().build.asStringWithoutProductCode()}"
 
   override fun composeGeneratorUrl(serverUrl: String, starterContext: WebStarterContext): Url {
     return Urls.newFromEncoded(starterContext.serverUrl + "/api/generate/download")
