@@ -6,9 +6,11 @@ import com.intellij.junit.testFramework.MavenTestLib.HAMCREST
 import com.intellij.junit.testFramework.MavenTestLib.JUNIT4
 import com.intellij.junit.testFramework.MavenTestLib.JUNIT5
 import com.intellij.jvm.analysis.testFramework.JvmInspectionTestBase
-import com.intellij.pom.java.LanguageLevel
+import com.intellij.pom.java.LanguageLevel.Companion.HIGHEST
+
+private val descriptor = JUnitProjectDescriptor(HIGHEST, JUNIT4, JUNIT5, HAMCREST)
 
 abstract class JUnit5AssertionsConverterInspectionTestBase : JvmInspectionTestBase() {
   override val inspection: JUnit5AssertionsConverterInspection = JUnit5AssertionsConverterInspection()
-  override fun getProjectDescriptor(): JUnitProjectDescriptor = JUnitProjectDescriptor(LanguageLevel.HIGHEST, JUNIT4, JUNIT5, HAMCREST)
+  override fun getProjectDescriptor(): JUnitProjectDescriptor = descriptor
 }

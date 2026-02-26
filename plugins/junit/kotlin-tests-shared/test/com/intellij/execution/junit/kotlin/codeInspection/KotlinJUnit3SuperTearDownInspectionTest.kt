@@ -29,7 +29,11 @@ abstract class KotlinJUnit3SuperTearDownInspectionTest : JUnit3SuperTearDownInsp
     }
   }
 
-  override fun getProjectDescriptor(): LightProjectDescriptor = KotlinJUnitProjectDescriptor()
+  companion object {
+    private val descriptor = KotlinJUnitProjectDescriptor()
+  }
+
+  override fun getProjectDescriptor(): LightProjectDescriptor = descriptor
 
   override fun setUp() {
     setUpWithKotlinPlugin(testRootDisposable) { super.setUp() }

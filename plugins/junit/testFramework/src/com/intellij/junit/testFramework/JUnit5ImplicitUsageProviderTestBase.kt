@@ -3,9 +3,11 @@ package com.intellij.junit.testFramework
 
 import com.intellij.junit.testFramework.MavenTestLib.JUNIT5
 import com.intellij.jvm.analysis.testFramework.JvmImplicitUsageProviderTestBase
-import com.intellij.pom.java.LanguageLevel
+import com.intellij.pom.java.LanguageLevel.Companion.HIGHEST
 import com.intellij.testFramework.LightProjectDescriptor
 
+private val descriptor = JUnitProjectDescriptor(HIGHEST, JUNIT5)
+
 abstract class JUnit5ImplicitUsageProviderTestBase : JvmImplicitUsageProviderTestBase() {
-  override fun getProjectDescriptor(): LightProjectDescriptor = JUnitProjectDescriptor(LanguageLevel.HIGHEST, JUNIT5)
+  override fun getProjectDescriptor(): LightProjectDescriptor = descriptor
 }

@@ -9,6 +9,8 @@ import com.intellij.pom.java.LanguageLevel
 import com.intellij.testFramework.LightProjectDescriptor
 import com.siyeh.ig.naming.NewMethodNamingConventionInspection
 
+private val descriptor = JUnitProjectDescriptor(LanguageLevel.HIGHEST, JUNIT3)
+
 class JavaJUnit3MethodNamingConventionInspectionTest : JvmInspectionTestBase() {
   override val inspection by lazy {
     NewMethodNamingConventionInspection().apply {
@@ -16,8 +18,7 @@ class JavaJUnit3MethodNamingConventionInspectionTest : JvmInspectionTestBase() {
     }
   }
 
-  override fun getProjectDescriptor(): LightProjectDescriptor = JUnitProjectDescriptor(LanguageLevel.HIGHEST, JUNIT3)
-
+  override fun getProjectDescriptor(): LightProjectDescriptor = descriptor
 
   fun testJUnit3MethodNamingConvention() {
     myFixture.testHighlighting(JvmLanguage.JAVA, """

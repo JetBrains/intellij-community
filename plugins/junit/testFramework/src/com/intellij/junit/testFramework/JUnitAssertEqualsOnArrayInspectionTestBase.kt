@@ -4,10 +4,12 @@ package com.intellij.junit.testFramework
 import com.intellij.execution.junit.codeInspection.JUnitAssertEqualsOnArrayInspection
 import com.intellij.junit.testFramework.MavenTestLib.JUNIT5
 import com.intellij.jvm.analysis.testFramework.JvmInspectionTestBase
-import com.intellij.pom.java.LanguageLevel
+import com.intellij.pom.java.LanguageLevel.Companion.HIGHEST
 import com.intellij.testFramework.LightProjectDescriptor
+
+private val descriptor = JUnitProjectDescriptor(HIGHEST, JUNIT5)
 
 abstract class JUnitAssertEqualsOnArrayInspectionTestBase : JvmInspectionTestBase() {
   override val inspection: JUnitAssertEqualsOnArrayInspection = JUnitAssertEqualsOnArrayInspection()
-  override fun getProjectDescriptor(): LightProjectDescriptor = JUnitProjectDescriptor(LanguageLevel.HIGHEST, JUNIT5)
+  override fun getProjectDescriptor(): LightProjectDescriptor = descriptor
 }

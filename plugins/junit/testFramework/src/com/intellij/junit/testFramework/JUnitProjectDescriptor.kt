@@ -21,8 +21,12 @@ import com.intellij.testFramework.fixtures.DefaultLightProjectDescriptor
 
 open class JUnitProjectDescriptor(
   private val languageLevel: LanguageLevel,
-  private vararg val libraries: MavenTestLib = arrayOf(JUNIT3, JUNIT4, JUNIT5)
+  private val libraries: Set<MavenTestLib>,
 ) : DefaultLightProjectDescriptor() {
+
+  constructor(languageLevel: LanguageLevel, vararg libraries: MavenTestLib = arrayOf(JUNIT3, JUNIT4, JUNIT5))
+    : this(languageLevel, libraries.toSet())
+
   @Throws(Exception::class)
   override fun setUpProject(project: Project, handler: SetupHandler) {
     if (languageLevel.isPreview || languageLevel == LanguageLevel.JDK_X) {
@@ -56,4 +60,15 @@ open class JUnitProjectDescriptor(
       }
     }
   }
+
+  override fun equals(other: Any?): Boolean {
+    if (this === other) return true
+    if (javaClass != other?.javaClass) return false
+
+    other as JUnitProjectDescriptor
+
+    return languageLevel == other.languageLevel && libraries == other.libraries
+  }
+
+  override fun hashCode(): Int = 31 * languageLevel.hashCode() + libraries.hashCode()
 }

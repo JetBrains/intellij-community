@@ -2,11 +2,14 @@
 package com.intellij.junit.testFramework
 
 import com.intellij.execution.junit.codeInspection.JUnit3SuperTearDownInspection
+import com.intellij.junit.testFramework.MavenTestLib.JUNIT3
 import com.intellij.jvm.analysis.testFramework.JvmInspectionTestBase
-import com.intellij.pom.java.LanguageLevel
+import com.intellij.pom.java.LanguageLevel.Companion.HIGHEST
 import com.intellij.testFramework.LightProjectDescriptor
+
+private val descriptor = JUnitProjectDescriptor(HIGHEST, JUNIT3)
 
 abstract class JUnit3SuperTearDownInspectionTestBase : JvmInspectionTestBase() {
   override val inspection: JUnit3SuperTearDownInspection = JUnit3SuperTearDownInspection()
-  override fun getProjectDescriptor(): LightProjectDescriptor = JUnitProjectDescriptor(LanguageLevel.HIGHEST, MavenTestLib.JUNIT3)
+  override fun getProjectDescriptor(): LightProjectDescriptor = descriptor
 }

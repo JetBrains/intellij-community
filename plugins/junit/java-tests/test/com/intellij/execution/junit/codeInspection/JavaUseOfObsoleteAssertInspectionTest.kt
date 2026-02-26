@@ -8,9 +8,11 @@ import com.intellij.jvm.analysis.testFramework.JvmLanguage
 import com.intellij.pom.java.LanguageLevel
 import com.intellij.testFramework.LightProjectDescriptor
 
+private val descriptor = JUnitProjectDescriptor(LanguageLevel.HIGHEST, JUNIT3)
+
 class JavaUseOfObsoleteAssertInspectionTest : JvmInspectionTestBase() {
   override val inspection = UseOfObsoleteAssertInspection()
-  override fun getProjectDescriptor(): LightProjectDescriptor = JUnitProjectDescriptor(LanguageLevel.HIGHEST, JUNIT3)
+  override fun getProjectDescriptor(): LightProjectDescriptor = descriptor
   fun testObsoleteAssert() {
     myFixture.testHighlighting(JvmLanguage.JAVA, """
       public class ObsoleteAssert {

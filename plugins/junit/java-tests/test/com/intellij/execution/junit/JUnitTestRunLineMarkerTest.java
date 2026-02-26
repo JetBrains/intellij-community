@@ -47,9 +47,11 @@ import static com.intellij.junit.testFramework.MavenTestLib.PIONEER;
 import static com.intellij.pom.java.LanguageLevel.HIGHEST;
 
 public class JUnitTestRunLineMarkerTest extends LineMarkerTestCase {
+  public static final LightProjectDescriptor descriptor = new JUnitProjectDescriptor(HIGHEST, JUNIT3, JUNIT4, JUNIT5, PIONEER);
+
   @Override
   protected @NotNull LightProjectDescriptor getProjectDescriptor() {
-    return new JUnitProjectDescriptor(HIGHEST, JUNIT3, JUNIT4, JUNIT5, PIONEER);
+    return descriptor;
   }
 
   public void testAbstractTestClassMethods() {

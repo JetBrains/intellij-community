@@ -10,10 +10,11 @@ import com.intellij.jvm.analysis.testFramework.JvmLanguage
 import com.intellij.pom.java.LanguageLevel
 import com.intellij.testFramework.LightProjectDescriptor
 
+private val descriptor = JUnitProjectDescriptor(LanguageLevel.HIGHEST, JUNIT4, JUNIT5)
+
 class JavaParameterizedParametersStaticCollectionInspectionTest : JvmInspectionTestBase() {
   override val inspection = ParameterizedParametersStaticCollectionInspection()
-  override fun getProjectDescriptor(): LightProjectDescriptor =
-    JUnitProjectDescriptor(LanguageLevel.HIGHEST, JUNIT4, JUNIT5)
+  override fun getProjectDescriptor(): LightProjectDescriptor = descriptor
 
   fun testCreateMethod() {
     myFixture.testHighlighting(JvmLanguage.JAVA, """

@@ -28,6 +28,7 @@ import java.util.Set;
 
 public class JUnitNestedClassLineMarkerTest extends LightJavaCodeInsightFixtureTestCase {
   private final Set<RunnerAndConfigurationSettings> myTempSettings = new HashSet<>();
+  private static final LightProjectDescriptor descriptor = new JUnitProjectDescriptor(LanguageLevel.HIGHEST, MavenTestLib.JUNIT5);
 
   @Override
   protected void tearDown() throws Exception {
@@ -47,7 +48,7 @@ public class JUnitNestedClassLineMarkerTest extends LightJavaCodeInsightFixtureT
 
   @Override
   protected @NotNull LightProjectDescriptor getProjectDescriptor() {
-    return new JUnitProjectDescriptor(LanguageLevel.HIGHEST, MavenTestLib.JUNIT5);
+    return descriptor;
   }
 
   public void testNestedClassInAbstractOuter() {

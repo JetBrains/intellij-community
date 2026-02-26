@@ -9,6 +9,8 @@ import com.intellij.pom.java.LanguageLevel
 import com.intellij.testFramework.LightProjectDescriptor
 import org.jetbrains.plugins.groovy.codeInspection.naming.NewGroovyClassNamingConventionInspection
 
+private val descriptor = JUnitProjectDescriptor(LanguageLevel.HIGHEST, MavenTestLib.JUNIT3)
+
 class GroovyJUnit3NamingConventionInspectionTest : JvmInspectionTestBase() {
   override val inspection by lazy {
     NewGroovyClassNamingConventionInspection().apply {
@@ -17,7 +19,7 @@ class GroovyJUnit3NamingConventionInspectionTest : JvmInspectionTestBase() {
     }
   }
 
-  override fun getProjectDescriptor(): LightProjectDescriptor = JUnitProjectDescriptor(LanguageLevel.HIGHEST, MavenTestLib.JUNIT3)
+  override fun getProjectDescriptor(): LightProjectDescriptor = descriptor
 
   fun testTestCaseConvention() {
     myFixture.testHighlighting(JvmLanguage.GROOVY, """
@@ -34,5 +36,4 @@ class GroovyJUnit3NamingConventionInspectionTest : JvmInspectionTestBase() {
       abstract class SpecialAbstractTestCase extends TestCase { }
     """.trimIndent())
   }
-
 }

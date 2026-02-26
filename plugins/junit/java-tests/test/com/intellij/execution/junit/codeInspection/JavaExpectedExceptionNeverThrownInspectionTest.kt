@@ -8,10 +8,11 @@ import com.intellij.jvm.analysis.testFramework.JvmLanguage
 import com.intellij.pom.java.LanguageLevel
 import com.intellij.testFramework.LightProjectDescriptor
 
+private val descriptor = JUnitProjectDescriptor(LanguageLevel.HIGHEST, JUNIT4)
+
 class JavaExpectedExceptionNeverThrownInspectionTest : JvmInspectionTestBase() {
   override val inspection = ExpectedExceptionNeverThrownInspection()
-  override fun getProjectDescriptor(): LightProjectDescriptor = JUnitProjectDescriptor(LanguageLevel.HIGHEST, JUNIT4)
-
+  override fun getProjectDescriptor(): LightProjectDescriptor = descriptor
   fun testSimple() {
     myFixture.testHighlighting(JvmLanguage.JAVA, """
       class X {

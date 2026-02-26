@@ -5,7 +5,7 @@ import com.intellij.junit.testFramework.JUnitParameterizedSourceGoToRelatedTestB
 import com.intellij.junit.testFramework.JUnitProjectDescriptor
 import com.intellij.junit.testFramework.MavenTestLib.JUNIT5
 import com.intellij.jvm.analysis.testFramework.JvmLanguage
-import com.intellij.pom.java.LanguageLevel
+import com.intellij.pom.java.LanguageLevel.Companion.HIGHEST
 import com.intellij.psi.PsiField
 import com.intellij.psi.PsiMethod
 import com.intellij.psi.PsiModifier
@@ -14,13 +14,15 @@ import org.jetbrains.kotlin.idea.test.ConfigLibraryUtil
 import org.jetbrains.kotlin.idea.test.ExpectedPluginModeProvider
 import org.jetbrains.kotlin.idea.test.setUpWithKotlinPlugin
 
+private val descriptor = JUnitProjectDescriptor(HIGHEST, JUNIT5)
+
 abstract class KotlinJUnitParameterizedSourceGoToRelatedTest : JUnitParameterizedSourceGoToRelatedTestBase(), ExpectedPluginModeProvider {
   override fun setUp() {
     setUpWithKotlinPlugin(testRootDisposable) { super.setUp() }
     ConfigLibraryUtil.configureKotlinRuntime(module)
   }
 
-  override fun getProjectDescriptor(): LightProjectDescriptor = JUnitProjectDescriptor(LanguageLevel.HIGHEST, JUNIT5)
+  override fun getProjectDescriptor(): LightProjectDescriptor = descriptor
 
   fun `test go to method source with explicit name`() {
     myFixture.testGoToRelatedAction(

@@ -19,6 +19,8 @@ import static com.intellij.junit.testFramework.MavenTestLib.JUNIT4;
 import static com.intellij.junit.testFramework.MavenTestLib.JUNIT5;
 
 public class JUnitConfigurationFromEditorTest extends LightJavaCodeInsightFixtureTestCase {
+  private static final LightProjectDescriptor descriptor = new JUnitProjectDescriptor(LanguageLevel.HIGHEST, JUNIT4, JUNIT5);
+
   @Override
   public void setUp() throws Exception {
     super.setUp();
@@ -26,7 +28,7 @@ public class JUnitConfigurationFromEditorTest extends LightJavaCodeInsightFixtur
 
   @Override
   protected @NotNull LightProjectDescriptor getProjectDescriptor() {
-    return new JUnitProjectDescriptor(LanguageLevel.HIGHEST, JUNIT4, JUNIT5);
+    return descriptor;
   }
 
   private <T> T setupConfigurationContext(final String fileText) {

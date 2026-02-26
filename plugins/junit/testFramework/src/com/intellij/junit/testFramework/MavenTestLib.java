@@ -11,6 +11,7 @@ public enum MavenTestLib {
   PIONEER("2.3.0");
 
   private final String version;
+
   MavenTestLib(String version) {
     this.version = version;
   }
