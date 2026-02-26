@@ -243,6 +243,9 @@ abstract class KotlinPluginBuilder(val kind : KotlinPluginKind = System.getPrope
       "kotlinc.low-level-api-fir",
       "kotlinc.symbol-light-classes",
       "kotlin-metadata",
+      "kotlinc.kotlin-build-tools-api",
+      "kotlinc.kotlin-build-tools-impl",
+      "kotlinc.kotlin-build-tools-cri-impl",
     ) + KOTLIN_SCRIPTING_LIBRARIES
 
     private val LIBRARIES = java.util.List.of(
