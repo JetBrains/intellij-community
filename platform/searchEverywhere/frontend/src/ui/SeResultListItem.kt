@@ -10,7 +10,7 @@ sealed interface SeResultListRow
 @Internal
 class SeResultListItemRow(val item: SeItemData) : SeResultListRow {
   override fun toString(): String {
-    return item.fetchItemIfExists()?.rawObject?.toString() ?: "SeResultListItemRow(item=$item)"
+    return "SeResultListItemRow(presentation=${item.presentation})"
   }
 }
 

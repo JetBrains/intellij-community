@@ -4,7 +4,6 @@ package training.learn.lesson.general
 import com.intellij.ide.IdeBundle
 import com.intellij.ide.actions.searcheverywhere.SearchEverywhereUI
 import com.intellij.idea.ActionsBundle
-import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.application.ApplicationNamesInfo
 import com.intellij.openapi.client.ClientSystemInfo
 import com.intellij.openapi.editor.impl.EditorComponentImpl
@@ -81,10 +80,13 @@ class GotoActionLesson(private val sample: LessonSample,
       task {
         val prefix = LearnBundle.message("show.line.number.prefix.to.show.first")
         text(LessonsBundle.message("goto.action.show.line.numbers.request", strong(prefix), strong(showLineNumbersName)))
-        val actionText = ActionManager.getInstance().getAction("EditorGutterToggleGlobalLineNumbers").toString()
+
+        val localActionDescription = ActionsBundle.actionDescription("EditorToggleShowLineNumbers")
+        val globalActionText = ActionsBundle.actionText("EditorGutterToggleGlobalLineNumbers")
         triggerAndBorderHighlight().listItem { item ->
-          item.isToStringContains(actionText)
+          item.isToStringContains(globalActionText) && !item.isToStringContains(localActionDescription)
         }
+
         restoreState { !checkInsideSearchEverywhere() }
         test {
           waitComponent(SearchEverywhereUI::class.java)

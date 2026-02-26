@@ -173,7 +173,7 @@ class SeTargetItemPresentationBuilder {
 
 @Serializable
 @ApiStatus.Internal
-class SeTargetItemPresentationImpl internal constructor(
+data class SeTargetItemPresentationImpl(
   private val backgroundColorId: ColorId? = null,
   private val iconId: IconId? = null,
   val iconOriginalWidth: Int? = null,

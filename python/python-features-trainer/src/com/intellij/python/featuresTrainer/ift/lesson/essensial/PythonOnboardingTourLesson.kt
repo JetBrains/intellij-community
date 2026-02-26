@@ -546,7 +546,7 @@ class PythonOnboardingTourLesson :
       }
       text(PythonLessonsBundle.message("python.onboarding.search.everywhere.description",
                                        code("AVERAGE"), code(PythonLessonsBundle.message("toggle.case.part"))))
-      val actionText = ActionManager.getInstance().getAction("EditorToggleCase").toString()
+      val actionText = ActionsBundle.actionText("EditorToggleCase")
       triggerAndBorderHighlight().listItem { item ->
         item.isToStringContains(actionText)
       }

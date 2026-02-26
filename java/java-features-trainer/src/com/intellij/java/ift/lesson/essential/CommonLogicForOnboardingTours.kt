@@ -327,7 +327,7 @@ abstract class CommonLogicForOnboardingTours(id: String, @Nls lessonName: String
       }
       text(JavaLessonsBundle.message("java.onboarding.search.everywhere.description",
                                      code("AVERAGE"), code(JavaLessonsBundle.message("toggle.case.part"))))
-      val actionText = ActionManager.getInstance().getAction("EditorToggleCase").toString()
+      val actionText = ActionsBundle.actionText("EditorToggleCase")
       triggerAndBorderHighlight().listItem { item ->
         item.isToStringContains(actionText)
       }
