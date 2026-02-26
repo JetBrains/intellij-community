@@ -93,14 +93,9 @@ class XMixedModeExecutionStack(
 
   override fun computeStackFrames(firstFrameIndex: Int, container: XStackFrameContainer) {
     if (computedFramesMap.isCompleted) {
+      container as XStackFrameContainerEx
       val combinedFrames = filterIfNeeded(computedFramesMap.getCompleted().map { /*High frame*/it.value ?: /*Low frame*/it.key })
-      if (container is XStackFrameContainerEx)
-        container.addStackFrames(combinedFrames, currentFrame, true)
-      else {
-        // Split debugger case, we have to set the frame manually since the XStackFrameContainerEx unavailable
-        container.addStackFrames(combinedFrames, true)
-        currentFrame?.let { frame -> session.setCurrentStackFrame(this, frame) }
-      }
+      container.addStackFrames(combinedFrames, currentFrame, true)
       return
     }
 
@@ -168,17 +163,11 @@ class XMixedModeExecutionStack(
       }
       else {
         val builtResult = mixFramesResult.getOrThrow()
+        container as XStackFrameContainerEx
 
         val combinedFrames = builtResult.lowLevelToHighLevelFrameMap.map { /*High frame*/it.value ?: /*Low frame*/it.key }
         val filterIfNeededCombinedFrames = filterIfNeeded(combinedFrames)
-        if (container is XStackFrameContainerEx)
-          container.addStackFrames(filterIfNeededCombinedFrames, builtResult.highestHighLevelFrame, true)
-        else {
-          // Split debugger case, we have to set the frame manually since the XStackFrameContainerEx unavailable
-          container.addStackFrames(filterIfNeededCombinedFrames, true)
-          // TODO: it is not correct for mono
-          filterIfNeededCombinedFrames.firstOrNull()?.let { frame -> session.setCurrentStackFrame(this, frame) }
-        }
+        container.addStackFrames(filterIfNeededCombinedFrames, builtResult.highestHighLevelFrame, true)
         computedFramesMap.complete(builtResult.lowLevelToHighLevelFrameMap)
       }
     }

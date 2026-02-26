@@ -28,6 +28,7 @@ import com.intellij.xdebugger.impl.util.SequentialDisposables
 import com.intellij.xdebugger.impl.util.isNotAlive
 import com.intellij.xdebugger.impl.util.onTermination
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import org.jetbrains.annotations.ApiStatus.Internal
 import java.awt.BorderLayout
@@ -223,7 +224,7 @@ class XThreadsFramesView(tabDisposable: Disposable, private val sessionProxy: XD
     myFramesList.addListSelectionListener {
       if (it.valueIsAdjusting || !myListenersEnabled) return@addListSelectionListener
 
-      val session = getSession(it) ?: return@addListSelectionListener
+      val session = getSessionProxy(it) ?: return@addListSelectionListener
       val stack = myThreadsList.selectedValue?.stack ?: return@addListSelectionListener
       val frame = myFramesList.selectedValue as? XStackFrame ?: return@addListSelectionListener
 
