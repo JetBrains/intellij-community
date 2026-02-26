@@ -13,6 +13,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.platform.execution.dashboard.splitApi.CustomLinkDto
 import com.intellij.platform.execution.dashboard.splitApi.NavigateToServiceEvent
 import com.intellij.platform.execution.dashboard.splitApi.RunDashboardAdditionalServiceDto
+import com.intellij.platform.execution.dashboard.splitApi.RunDashboardConfigurationDto
 import com.intellij.platform.execution.dashboard.splitApi.RunDashboardMainServiceDto
 import com.intellij.platform.execution.dashboard.splitApi.RunDashboardServiceDto
 import com.intellij.platform.execution.dashboard.splitApi.RunDashboardSettingsDto
@@ -37,6 +38,7 @@ internal class BackendRunDashboardManagerState(private val project: Project) {
   private val sharedStatuses = MutableSharedFlow<ServiceStatusDto>(1, 100, BufferOverflow.DROP_OLDEST)
   private val sharedConfigurationTypes = MutableStateFlow<Set<String>>(emptySet())
 
+  private val sharedAvailableConfigurations = MutableStateFlow<List<RunDashboardConfigurationDto>>(emptyList())
   private val sharedExcludedTypes = MutableStateFlow(emptySet<String>())
 
   private val sharedStateUpdatesQueue = BackendRunDashboardUpdatesQueue(
@@ -76,6 +78,16 @@ internal class BackendRunDashboardManagerState(private val project: Project) {
     scheduleSharedStateUpdate {
       sharedSettings.value = RunDashboardSettingsDto(openRunningConfigInTab)
     }
+  }
+
+  fun fireAvailableConfigurationsUpdated(availableConfigurations: List<RunDashboardConfigurationDto>) {
+    scheduleSharedStateUpdate {
+      sharedAvailableConfigurations.value = availableConfigurations
+    }
+  }
+
+  fun getAvailableConfigurations(): Flow<List<RunDashboardConfigurationDto>> {
+    return sharedAvailableConfigurations.asStateFlow()
   }
 
   fun fireExcludedTypesUpdated(excludedTypes: Set<String>) {

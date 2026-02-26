@@ -43,6 +43,9 @@ import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Condition;
 import com.intellij.platform.execution.dashboard.splitApi.NavigateToServiceEvent;
+import com.intellij.platform.execution.dashboard.splitApi.RunDashboardConfigurationDto;
+import com.intellij.platform.execution.dashboard.splitApi.RunDashboardConfigurationId;
+import com.intellij.platform.execution.dashboard.splitApi.RunDashboardConfigurationIdKt;
 import com.intellij.platform.execution.dashboard.splitApi.RunDashboardServiceDto;
 import com.intellij.platform.execution.dashboard.splitApi.RunDashboardSettingsDto;
 import com.intellij.platform.execution.dashboard.splitApi.ServiceCustomizationDto;
@@ -199,6 +202,7 @@ public final class RunDashboardManagerImpl implements RunDashboardManager, Persi
           myShownConfigurations.add(settings.getConfiguration());
         }
         synchronizationScheduler.submit(() -> {
+          fireAvailableConfigurationsUpdated();
           syncConfigurations();
           updateDashboardIfNeeded(settings);
         });
@@ -211,6 +215,7 @@ public final class RunDashboardManagerImpl implements RunDashboardManager, Persi
         myShownConfigurations.remove(configuration);
         myConfigurationStatuses.remove(configuration);
         synchronizationScheduler.submit(() -> {
+          fireAvailableConfigurationsUpdated();
           syncConfigurations();
           updateDashboardIfNeeded(settings);
         });
@@ -219,6 +224,7 @@ public final class RunDashboardManagerImpl implements RunDashboardManager, Persi
       @Override
       public void runConfigurationChanged(@NotNull RunnerAndConfigurationSettings settings) {
         synchronizationScheduler.submit(() -> {
+          fireAvailableConfigurationsUpdated();
           RunConfiguration configuration = settings.getConfiguration();
           if (isShowInDashboard(configuration) ||
               !filterByContent(getConfigurationDescriptors(configuration)).isEmpty()) {
@@ -234,6 +240,7 @@ public final class RunDashboardManagerImpl implements RunDashboardManager, Persi
       @Override
       public void endUpdate() {
         synchronizationScheduler.submit(() -> {
+          fireAvailableConfigurationsUpdated();
           syncConfigurations();
           updateDashboard(true);
         });
@@ -313,6 +320,10 @@ public final class RunDashboardManagerImpl implements RunDashboardManager, Persi
 
   public Flow<ServiceCustomizationDto> getCustomizationsDto() {
     return mySharedState.getCustomizations();
+  }
+
+  public Flow<List<RunDashboardConfigurationDto>> getAvailableConfigurations() {
+    return mySharedState.getAvailableConfigurations();
   }
 
   public Flow<Set<String>> getExcludedTypesDto() {
@@ -550,6 +561,23 @@ public final class RunDashboardManagerImpl implements RunDashboardManager, Persi
 
       mySharedState.fireCustomizationUpdated(backendService, applicableCustomizers);
     }
+  }
+
+  private void fireAvailableConfigurationsUpdated() {
+    List<RunDashboardConfigurationDto> availableConfigurations =
+      ContainerUtil.map(RunManager.getInstance(myProject).getAllSettings(), configurationSettings -> {
+        RunDashboardConfigurationId configurationId =
+          RunDashboardConfigurationIdKt.storeGlobally(configurationSettings.getConfiguration(),
+                                                      RunDashboardCoroutineScopeProvider.getInstance(myProject).getCs());
+
+        return new RunDashboardConfigurationDto(
+          configurationSettings.getType().getId(),
+          configurationSettings.getName(),
+          configurationSettings.getFolderName(),
+          configurationId
+        );
+      });
+    mySharedState.fireAvailableConfigurationsUpdated(availableConfigurations);
   }
 
   private void syncConfigurations() {
@@ -927,6 +955,7 @@ public final class RunDashboardManagerImpl implements RunDashboardManager, Persi
   }
 
   private void initTypes() {
+    fireAvailableConfigurationsUpdated();
     syncConfigurations();
     initServiceContentListeners();
     ApplicationManager.getApplication().executeOnPooledThread(() -> {
