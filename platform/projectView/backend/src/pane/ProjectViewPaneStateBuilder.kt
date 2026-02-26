@@ -32,10 +32,7 @@ interface ProjectViewPaneStateBuilder {
 private class ProjectViewPaneStateBuilderImpl : ProjectViewPaneStateBuilder {
   private val state = object : MutableStateWithIncrementalUpdates<ProjectViewPaneStateEvent> {
     private val optionStates = EnumMap<ProjectViewOption, ProjectViewOptionState>(ProjectViewOption::class.java)
-    private val superRoot = Node(
-      SuperRootModel,
-      mutableListOf()
-    )
+    private val superRoot = Node(SuperRootModel)
     private val nodeById = hashMapOf<Long, Node>().also { it[SUPER_ROOT_ID] = superRoot }
     
     override suspend fun applyUpdate(update: ProjectViewPaneStateEvent): ProjectViewPaneStateEvent? {
@@ -43,8 +40,8 @@ private class ProjectViewPaneStateBuilderImpl : ProjectViewPaneStateBuilder {
       when (update) {
         is ProjectViewChildrenLoaded -> {
           val parent = nodeById[update.parentId] ?: return null
-          val children = update.children.map { Node(it, mutableListOf()) }
-          parent.children.addAll(children)
+          val children = update.children.mapTo(mutableListOf()) { Node(it) }
+          parent.children = children
           for (child in children) {
             nodeById[child.model.id] = child
           }
@@ -52,20 +49,20 @@ private class ProjectViewPaneStateBuilderImpl : ProjectViewPaneStateBuilder {
         is ProjectViewNodeAdded -> {
           val parent = nodeById[update.parentId] ?: return null
           val newNode = Node(update.model, mutableListOf())
-          parent.children.add(update.index, newNode)
+          parent.children?.add(update.index, newNode)
           nodeById[newNode.model.id] = newNode
         }
         is ProjectViewChildRemoved -> {
           val parent = nodeById[update.parentId] ?: return null
-          val removedNode = parent.children.removeAt(update.index)
+          val removedNode = parent.children?.removeAt(update.index) ?: return null
           nodeById.remove(removedNode.model.id)
         }
         is ProjectViewChildrenRemoved -> {
           val parent = nodeById[update.parentId] ?: return null
-          for (child in parent.children) {
-            nodeById.remove(child.model.id)
+          parent.children?.forEach { child ->
+              nodeById.remove(child.model.id)
           }
-          parent.children.clear()
+          parent.children?.clear()
         }
         is ProjectViewNodeUpdated -> {
           val node = nodeById[update.model.id] ?: return null
@@ -91,19 +88,20 @@ private class ProjectViewPaneStateBuilderImpl : ProjectViewPaneStateBuilder {
     }
 
     private fun addTreeSnapshot(result: ArrayList<ProjectViewPaneStateEvent>) {
-      val bfsQueue = ArrayDeque<ProjectViewNodeAdded>()
-      bfsQueue.addLast(ProjectViewNodeAdded(-1L, 0, SuperRootModel))
+      val bfsQueue = ArrayDeque<Long>()
+      bfsQueue.addLast(SUPER_ROOT_ID)
       while (true) {
-        val next = bfsQueue.removeFirstOrNull() ?: break
-        if (next.model.id != SUPER_ROOT_ID) result.add(next)
-        for ((index, child) in nodeById.getValue(next.model.id).children.withIndex()) {
-          bfsQueue.addLast(ProjectViewNodeAdded(next.model.id, index, child.model))
+        val parentId = bfsQueue.removeFirstOrNull() ?: break
+        val children = nodeById.getValue(parentId).children ?: continue
+        result.add(ProjectViewChildrenLoaded(parentId, children.map { it.model }))
+        for (child in children) {
+          bfsQueue.addLast(child.model.id)
         }
       }
     }
   }
 
-  private data class Node(var model: ProjectViewNodeModel, val children: MutableList<Node>)
+  private data class Node(var model: ProjectViewNodeModel, var children: MutableList<Node>? = null)
 
   private val flowProducer = IncrementalUpdateFlowProducer(state)
 
