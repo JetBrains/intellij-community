@@ -37,6 +37,7 @@ private val AGENT_WORKBENCH_FRAME_CAPABILITIES = EnumSet.of(
   ProjectFrameCapability.SUPPRESS_VCS_UI,
   ProjectFrameCapability.SUPPRESS_PROJECT_VIEW,
   ProjectFrameCapability.SUPPRESS_BACKGROUND_ACTIVITIES,
+  ProjectFrameCapability.EXCLUDE_FROM_PROJECT_WINDOW_SWITCH_ORDER,
 )
 
 private val AGENT_WORKBENCH_FRAME_UI_POLICY = ProjectFrameUiPolicy(

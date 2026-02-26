@@ -35,6 +35,10 @@ Define dedicated-frame mode behavior for Agent chat routing. This spec owns fram
 - Sessions gear menu must expose `AgentWorkbenchSessions.ToggleDedicatedFrame` and update the same advanced setting.
   [@test] ../sessions/testSrc/AgentSessionsGearActionsTest.kt
 
+- Sessions plugin must expose `AgentWorkbenchSessions.OpenDedicatedFrame` so users can explicitly reopen/focus dedicated frame.
+  [@test] ../sessions/testSrc/AgentSessionsOpenDedicatedFrameActionTest.kt
+  [@test] ../sessions/testSrc/AgentSessionsGearActionsTest.kt
+
 - In dedicated mode (`true`):
   - thread/sub-agent open requests must route to dedicated frame project,
   - dedicated frame project must be created/opened on demand and then reused,
@@ -59,6 +63,11 @@ Define dedicated-frame mode behavior for Agent chat routing. This spec owns fram
 - Dedicated-frame project must be excluded from Sessions project registry for both open and recent project enumeration.
   [@test] ../sessions/testSrc/AgentSessionsProjectCatalogTest.kt
 
+- Dedicated-frame project switching and header navigation affordances must follow `spec/agent-dedicated-frame-project-switching.spec.md`.
+  [@test] ../sessions/testSrc/AgentWorkbenchProjectFrameCapabilitiesProviderTest.kt
+  [@test] ../sessions/testSrc/AgentSessionsGearActionsTest.kt
+  [@test] ../sessions/testSrc/AgentSessionsEditorTabActionsTest.kt
+
 - Chat terminal `cwd` must remain source project path regardless of frame mode.
   [@test] ../sessions/testSrc/AgentSessionsOpenModeRoutingTest.kt
 
@@ -76,6 +85,7 @@ Define dedicated-frame mode behavior for Agent chat routing. This spec owns fram
 - Default click behavior opens chat in dedicated frame.
 - Toggling dedicated-frame setting affects subsequent opens immediately.
 - Dedicated frame receives focus when chat opens there.
+- Dedicated frame can be reopened from explicit action entry points.
 - Sessions tree never shows dedicated frame as a project node.
 
 ## Data & Backend
@@ -100,5 +110,6 @@ Define dedicated-frame mode behavior for Agent chat routing. This spec owns fram
 - `spec/agent-core-contracts.spec.md`
 - `spec/agent-chat-editor.spec.md`
 - `spec/agent-sessions.spec.md`
+- `spec/agent-dedicated-frame-project-switching.spec.md`
 - `spec/actions/new-thread.spec.md`
 - `community/platform/platform-impl/src/com/intellij/openapi/wm/ex/WelcomeScreenProjectProvider.kt`

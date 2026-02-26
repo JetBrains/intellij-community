@@ -1,7 +1,12 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide;
 
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.SystemInfoRt;
+import com.intellij.openapi.wm.ex.ProjectFrameCapabilitiesService;
+import com.intellij.openapi.wm.ex.ProjectFrameCapability;
+import com.intellij.openapi.wm.impl.ProjectFrameHelper;
 import com.intellij.ui.AppUIUtil;
 import com.intellij.ui.ComponentUtil;
 import com.intellij.ui.mac.foundation.Foundation;
@@ -83,12 +88,31 @@ public final class ActiveWindowsWatcher {
   }
 
   private static Window @NotNull [] getWindows(@NotNull Window w) {
-    if (SystemInfo.isMac && SystemInfo.isJetBrainsJvm && activatedWindows.size() > 1) {
+    if (SystemInfoRt.isMac && SystemInfo.isJetBrainsJvm && activatedWindows.size() > 1) {
       return activatedWindows.stream()
+        .filter(window -> window == w || isIncludedInWindowSwitchOrder(window))
         .filter(window -> window == w || Foundation.invoke(MacUtil.getWindowFromJavaWindow(window), "isOnActiveSpace").booleanValue())
         .toArray(Window[]::new);
     }
 
-    return activatedWindows.toArray(new Window[0]);
+    return activatedWindows.stream()
+      .filter(window -> window == w || isIncludedInWindowSwitchOrder(window))
+      .toArray(Window[]::new);
+  }
+
+  private static boolean isIncludedInWindowSwitchOrder(@NotNull Window window) {
+    ProjectFrameHelper frameHelper = ProjectFrameHelper.getFrameHelper(window);
+    if (frameHelper == null) {
+      return true;
+    }
+
+    Project project = frameHelper.getProject();
+    if (project == null || project.isDisposed()) {
+      return true;
+    }
+
+    @SuppressWarnings("deprecation")
+    ProjectFrameCapabilitiesService capabilitiesService = ProjectFrameCapabilitiesService.Companion.getInstanceSync();
+    return !capabilitiesService.has(project, ProjectFrameCapability.EXCLUDE_FROM_WINDOW_SWITCH_ORDER);
   }
 }

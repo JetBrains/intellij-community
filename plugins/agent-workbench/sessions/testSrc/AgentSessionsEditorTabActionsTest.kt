@@ -138,6 +138,39 @@ class AgentSessionsEditorTabActionsTest {
   }
 
   @Test
+  fun goToSourceProjectActionOpensSourceProjectInDedicatedFrame() {
+    val context = editorContext(threadId = "thread-42")
+    var openedPath: String? = null
+
+    val action = AgentSessionsGoToSourceProjectFromEditorTabAction(
+      resolveContext = { context },
+      isDedicatedProject = { true },
+      openProject = { path -> openedPath = path },
+    )
+    val event = TestActionEvent.createTestEvent(action)
+
+    action.update(event)
+    assertThat(event.presentation.isEnabledAndVisible).isTrue()
+
+    action.actionPerformed(event)
+    assertThat(openedPath).isEqualTo(context.path)
+  }
+
+  @Test
+  fun goToSourceProjectActionHiddenOutsideDedicatedFrame() {
+    val action = AgentSessionsGoToSourceProjectFromEditorTabAction(
+      resolveContext = { editorContext(threadId = "thread-42") },
+      isDedicatedProject = { false },
+      openProject = { _ -> error("should not open project when not in dedicated frame") },
+    )
+    val event = TestActionEvent.createTestEvent(action)
+
+    action.update(event)
+
+    assertThat(event.presentation.isEnabledAndVisible).isFalse()
+  }
+
+  @Test
   fun copyThreadIdActionCopiesThreadId() {
     val context = editorContext(threadId = "thread-42")
     var copiedThreadId: String? = null

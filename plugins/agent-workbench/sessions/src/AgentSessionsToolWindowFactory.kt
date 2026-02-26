@@ -20,6 +20,7 @@ internal class AgentSessionsToolWindowFactory : ToolWindowFactory, DumbAware {
     val content = contentFactory.createContent(panel, null, false)
     content.setDisposer(panel)
     toolWindow.contentManager.addContent(content)
+    toolWindow.setTitleActions(listOfNotNull(ActionUtil.getAction("AgentWorkbenchSessions.OpenDedicatedFrame")))
     toolWindow.setAdditionalGearActions(ActionUtil.getActionGroup("AgentWorkbenchSessions.ToolWindow.GearActions"))
   }
 }

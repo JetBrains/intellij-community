@@ -193,7 +193,6 @@ c:com.intellij.ide.RecentProjectListActionProvider
 - bs:getActions$default(com.intellij.ide.RecentProjectListActionProvider,Z,Z,Z,I,java.lang.Object):java.util.List
 - recentProjectsInDocSupported():Z
 c:com.intellij.ide.RecentProjectsManagerBase
-- f:addRecentPath(java.nio.file.Path,com.intellij.ide.RecentProjectMetaInfo):V
 - f:getDisplayName(java.nio.file.Path):java.lang.String
 - f:getProjectIcon(java.nio.file.Path,Z):javax.swing.Icon
 - f:getProjectIcon(java.nio.file.Path,Z,I,java.lang.String):javax.swing.Icon

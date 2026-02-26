@@ -1558,52 +1558,6 @@ c:com.intellij.ide.RecentProjectListActionProvider
 - sf:getInstance():com.intellij.ide.RecentProjectListActionProvider
 f:com.intellij.ide.RecentProjectListActionProvider$Companion
 - f:getInstance():com.intellij.ide.RecentProjectListActionProvider
-f:com.intellij.ide.RecentProjectManagerState
-- com.intellij.openapi.components.BaseState
-- <init>():V
-- f:getAdditionalInfo():java.util.Map
-- f:getForceReopenProjects():Z
-- f:getGroups():java.util.List
-- f:getLastOpenedProject():java.lang.String
-- f:getLastProjectLocation():java.lang.String
-- f:getPid():java.lang.String
-- f:getRecentPaths():java.util.List
-- f:setForceReopenProjects(Z):V
-- f:setLastOpenedProject(java.lang.String):V
-- f:setLastProjectLocation(java.lang.String):V
-- f:setPid(java.lang.String):V
-f:com.intellij.ide.RecentProjectMetaInfo
-- com.intellij.openapi.components.BaseState
-- <init>():V
-- f:getActivationTimestamp():J
-- f:getBinFolder():java.lang.String
-- f:getBuild():java.lang.String
-- f:getBuildTimestamp():J
-- f:getColorInfo():com.intellij.ide.RecentProjectColorInfo
-- f:getDisplayName():java.lang.String
-- f:getEap():Z
-- f:getFrameTitle():java.lang.String
-- f:getHidden():Z
-- f:getMetadata():java.lang.String
-- f:getOpened():Z
-- f:getProductionCode():java.lang.String
-- f:getProjectOpenTimestamp():J
-- f:getProjectWorkspaceId():java.lang.String
-- f:getWindowBounds():java.awt.Rectangle
-- f:setActivationTimestamp(J):V
-- f:setBinFolder(java.lang.String):V
-- f:setBuild(java.lang.String):V
-- f:setBuildTimestamp(J):V
-- f:setColorInfo(com.intellij.ide.RecentProjectColorInfo):V
-- f:setDisplayName(java.lang.String):V
-- f:setEap(Z):V
-- f:setFrameTitle(java.lang.String):V
-- f:setHidden(Z):V
-- f:setMetadata(java.lang.String):V
-- f:setOpened(Z):V
-- f:setProductionCode(java.lang.String):V
-- f:setProjectOpenTimestamp(J):V
-- f:setProjectWorkspaceId(java.lang.String):V
 c:com.intellij.ide.RecentProjectsManagerBase
 - com.intellij.ide.RecentProjectsManager
 - com.intellij.openapi.components.PersistentStateComponent
@@ -1612,7 +1566,6 @@ c:com.intellij.ide.RecentProjectsManagerBase
 - sf:MAX_PROJECTS_IN_MAIN_MENU:I
 - <init>(kotlinx.coroutines.CoroutineScope):V
 - addGroup(com.intellij.ide.ProjectGroup):V
-- f:addRecentPath(java.lang.String,com.intellij.ide.RecentProjectMetaInfo):V
 - f:findGroup(java.lang.String):com.intellij.ide.ProjectGroup
 - f:forceReopenProjects():V
 - f:getActivationTimestamp(java.lang.String):java.lang.Long
@@ -1632,10 +1585,8 @@ c:com.intellij.ide.RecentProjectsManagerBase
 - f:getRecentPaths():java.util.List
 - p:getRecentProjectMetadata(java.lang.String,com.intellij.openapi.project.Project):java.lang.String
 - getRecentProjectsActions(Z):com.intellij.openapi.actionSystem.AnAction[]
-- f:getState():com.intellij.ide.RecentProjectManagerState
 - hasPath(java.lang.String):Z
 - p:isOpenProjectsOneByOneRequired():Z
-- f:loadState(com.intellij.ide.RecentProjectManagerState):V
 - moveProjectToGroup(java.lang.String,com.intellij.ide.ProjectGroup):V
 - openProject(java.nio.file.Path,com.intellij.ide.impl.OpenProjectTask,kotlin.coroutines.Continuation):java.lang.Object
 - f:patchRecentPaths(kotlin.jvm.functions.Function1):V
@@ -1648,7 +1599,6 @@ c:com.intellij.ide.RecentProjectsManagerBase
 - f:setProjectHidden(com.intellij.openapi.project.Project,Z):V
 - suggestNewProjectLocation():java.lang.String
 - updateLastProjectPath():V
-- f:updateRecentMetadata(com.intellij.openapi.project.Project,kotlin.jvm.functions.Function1):V
 f:com.intellij.ide.RecentProjectsManagerBase$Companion
 - f:getInstanceEx():com.intellij.ide.RecentProjectsManagerBase
 c:com.intellij.ide.ReopenProjectAction

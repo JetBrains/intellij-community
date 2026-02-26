@@ -123,6 +123,10 @@ Shared contracts remain in `spec/agent-core-contracts.spec.md`.
 - Thread and sub-agent open routing must follow mode policy defined in `spec/agent-dedicated-frame.spec.md`.
   [@test] ../sessions/testSrc/AgentSessionsOpenModeRoutingTest.kt
 
+- Dedicated-frame project switching controls and window-order policy must follow `spec/agent-dedicated-frame-project-switching.spec.md`.
+  [@test] ../sessions/testSrc/AgentSessionsGearActionsTest.kt
+  [@test] ../sessions/testSrc/AgentSessionsEditorTabActionsTest.kt
+
 - Tree/chat tab selection synchronization must resolve project/worktree/thread/sub-agent identities to stable tree IDs.
   [@test] ../sessions/testSrc/SessionTreeSelectionSyncTest.kt
 
@@ -152,7 +156,7 @@ Shared contracts remain in `spec/agent-core-contracts.spec.md`.
 - Unarchive flow for previously archived Codex targets must restore thread visibility on refresh without requiring tool-window recreation.
   [@test] ../sessions/testSrc/AgentSessionsServiceArchiveIntegrationTest.kt
 
-- Tool window factory must create Swing panel content and register tool-window gear actions.
+- Tool window factory must create Swing panel content and register tool-window title and gear actions.
   [@test] ../sessions/testSrc/AgentSessionsToolWindowFactorySwingTest.kt
   [@test] ../sessions/testSrc/AgentSessionsGearActionsTest.kt
 
@@ -200,6 +204,7 @@ Shared contracts remain in `spec/agent-core-contracts.spec.md`.
 - `spec/agent-core-contracts.spec.md`
 - `spec/agent-sessions-thread-visibility.spec.md`
 - `spec/agent-dedicated-frame.spec.md`
+- `spec/agent-dedicated-frame-project-switching.spec.md`
 - `spec/agent-chat-editor.spec.md`
 - `spec/actions/new-thread.spec.md`
 - `spec/agent-sessions-codex-rollout-source.spec.md`

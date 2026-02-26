@@ -2,7 +2,10 @@
 <idea-plugin>
   <id>com.intellij.agent.workbench</id>
   <name>Agent Workbench</name>
-  <description>Agent Workbench - AI-based developement for IntelliJ</description>
+  <description><![CDATA[
+    Experimental, alpha-quality plugin for AI-assisted development workflows in IntelliJ.
+    Includes agent-thread and chat workbench capabilities; features are under active development and may be unstable or change without notice.
+  ]]></description>
   <vendor>JetBrains</vendor>
   <content namespace="jetbrains">
     <module name="intellij.agent.workbench.common"/>

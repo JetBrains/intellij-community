@@ -66,7 +66,7 @@ This file does not redefine runtime behavior; it maps each contract area to requ
   [@test] ../sessions/testSrc/AgentSessionsLoadingCoordinatorTest.kt
   [@test] ../chat/testSrc/AgentChatEditorServiceTest.kt
 
-- Tool-window factory coverage must include Swing factory registration and gear action registration.
+- Tool-window factory coverage must include Swing factory registration and title/gear action registration.
   [@test] ../sessions/testSrc/AgentSessionsToolWindowFactorySwingTest.kt
   [@test] ../sessions/testSrc/AgentSessionsGearActionsTest.kt
 

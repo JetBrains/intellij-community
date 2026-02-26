@@ -41,6 +41,16 @@ enum class ProjectFrameCapability {
    * Suppresses non-essential background activities for the frame.
    */
   SUPPRESS_BACKGROUND_ACTIVITIES,
+
+  /**
+   * Excludes the frame from global window traversal order.
+   */
+  EXCLUDE_FROM_WINDOW_SWITCH_ORDER,
+
+  /**
+   * Excludes the frame from project-window traversal order and project-window list entries.
+   */
+  EXCLUDE_FROM_PROJECT_WINDOW_SWITCH_ORDER,
 }
 
 /**

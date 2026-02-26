@@ -54,6 +54,7 @@ private val LOG = logger<AgentSessionsService>()
 
 private const val SUPPRESS_BRANCH_MISMATCH_DIALOG_KEY = "agent.workbench.suppress.branch.mismatch.dialog"
 private const val OPEN_PROJECT_ACTION_KEY_PREFIX = "project-open"
+private const val OPEN_DEDICATED_FRAME_ACTION_KEY_PREFIX = "dedicated-frame-open"
 private const val CREATE_SESSION_ACTION_KEY_PREFIX = "session-create"
 private const val OPEN_THREAD_ACTION_KEY_PREFIX = "thread-open"
 private const val OPEN_SUB_AGENT_ACTION_KEY_PREFIX = "subagent-open"
@@ -195,6 +196,16 @@ internal class AgentSessionsService private constructor(
       droppedActionMessage = "Dropped duplicate open project action for $normalizedPath",
     ) {
       openOrFocusProjectInternal(normalizedPath)
+    }
+  }
+
+  fun openOrFocusDedicatedFrame(currentProject: Project? = null) {
+    launchDropAction(
+      key = OPEN_DEDICATED_FRAME_ACTION_KEY_PREFIX,
+      droppedActionMessage = "Dropped duplicate open dedicated frame action",
+      progress = dedicatedFrameOpenProgressRequest(currentProject),
+    ) {
+      openOrFocusDedicatedFrameInternal()
     }
   }
 
@@ -517,6 +528,31 @@ private suspend fun openOrFocusProjectInternal(normalizedPath: String) {
   }
 }
 
+private suspend fun openOrFocusDedicatedFrameInternal() {
+  val dedicatedProjectPath = AgentWorkbenchDedicatedFrameProjectManager.dedicatedProjectPath()
+  val openProject = findOpenProject(dedicatedProjectPath)
+  if (openProject != null) {
+    AgentWorkbenchDedicatedFrameProjectManager.configureProject(openProject)
+    focusProjectWindowAndActivateSessions(openProject)
+    return
+  }
+
+  val dedicatedProjectDir = try {
+    AgentWorkbenchDedicatedFrameProjectManager.ensureProjectPath()
+  }
+  catch (e: CancellationException) {
+    throw e
+  }
+  catch (e: Throwable) {
+    LOG.warn("Failed to prepare dedicated chat frame project", e)
+    return
+  }
+
+  val dedicatedProject = openDedicatedFrameProject(dedicatedProjectDir) ?: return
+  AgentWorkbenchDedicatedFrameProjectManager.configureProject(dedicatedProject)
+  focusProjectWindowAndActivateSessions(dedicatedProject)
+}
+
 private suspend fun openChat(
   normalizedPath: String,
   thread: AgentSessionThread,
@@ -644,9 +680,7 @@ private suspend fun openNewChatInProject(
     subAgentId = null,
     threadActivity = AgentThreadActivity.READY,
   )
-  withContext(Dispatchers.UI) {
-    project.serviceAsync<ProjectUtilService>().focusProjectWindow()
-  }
+  focusProjectWindow(project)
 }
 
 private suspend fun openChatInDedicatedFrame(
@@ -696,7 +730,24 @@ private suspend fun openChatInProject(
       subAgentId = subAgent?.id,
       threadActivity = thread.activity,
     )
-    ProjectUtilService.getInstance(project).focusProjectWindow()
+    focusProjectWindowSync(project)
+  }
+}
+
+private suspend fun focusProjectWindow(project: Project) {
+  withContext(Dispatchers.UI) {
+    project.serviceAsync<ProjectUtilService>().focusProjectWindow()
+  }
+}
+
+private fun focusProjectWindowSync(project: Project) {
+  ProjectUtilService.getInstance(project).focusProjectWindow()
+}
+
+private suspend fun focusProjectWindowAndActivateSessions(project: Project) {
+  withContext(Dispatchers.UI) {
+    project.serviceAsync<ProjectUtilService>().focusProjectWindow()
+    ToolWindowManager.getInstance(project).getToolWindow(AGENT_SESSIONS_TOOL_WINDOW_ID)?.activate(null)
   }
 }
 
@@ -711,6 +762,7 @@ private suspend fun openDedicatedFrameProject(dedicatedProjectDir: Path): Projec
       preventIprLookup = true
       showWelcomeScreen = false
       createModule = false
+      projectFrameTypeId = AGENT_WORKBENCH_DEDICATED_FRAME_TYPE_ID
     },
   )
 }

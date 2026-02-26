@@ -74,8 +74,9 @@ Define the single source of truth for cross-feature behavior that must stay cons
   [@test] ../sessions/testSrc/AgentSessionsGearActionsTest.kt
 
 - `Archive Thread` default shortcuts must be:
-  - Win/Linux keymaps: `Ctrl+Alt+F4`
-  - macOS (`Mac OS X 10.5+`) keymap: `Cmd+Alt+W`
+  - Windows (`$default`) keymap: `Ctrl+Alt+Delete`
+  - Linux (`Default for XWin`, `Default for GNOME`, `Default for KDE`) keymaps: `Alt+Shift+F4`
+  - macOS (`Mac OS X 10.5+`) keymap: `Cmd+Alt+Delete`
   [@test] ../sessions/testSrc/AgentSessionsGearActionsTest.kt
 
 - `Archive Thread` visibility/enablement must be gated by provider archive capability consistently for both tree-row and editor-tab entry points.

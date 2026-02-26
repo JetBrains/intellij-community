@@ -1,6 +1,11 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.agent.workbench.sessions
 
+import com.intellij.icons.AllIcons
+import com.intellij.openapi.actionSystem.ActionGroup
+import com.intellij.openapi.actionSystem.ActionManager
+import com.intellij.openapi.actionSystem.AnAction
+import com.intellij.openapi.actionSystem.Separator
 import com.intellij.testFramework.TestActionEvent
 import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.testFramework.runInEdtAndWait
@@ -11,19 +16,30 @@ import org.junit.jupiter.api.Test
 class AgentSessionsGearActionsTest {
   @Test
   fun gearActionsContainOpenFileToggleAndRefresh() {
-    val descriptor = checkNotNull(javaClass.classLoader.getResource("intellij.agent.workbench.sessions.xml")) {
-      "Module descriptor intellij.agent.workbench.sessions.xml is missing"
-    }.readText()
+    val actionManager = ActionManager.getInstance()
 
-    assertThat(descriptor)
-      .contains("<group id=\"AgentWorkbenchSessions.ToolWindow.GearActions\">")
-      .contains("<reference ref=\"OpenFile\"/>")
-      .contains("<action id=\"AgentWorkbenchSessions.ToggleDedicatedFrame\"")
-      .contains("<action id=\"AgentWorkbenchSessions.Refresh\"")
+    assertThat(actionManager.childActionIds("AgentWorkbenchSessions.ToolWindow.GearActions"))
+      .contains("OpenFile")
+      .contains("AgentWorkbenchSessions.ToggleDedicatedFrame")
+      .contains("AgentWorkbenchSessions.ToggleClaudeQuotaWidget")
+      .contains("AgentWorkbenchSessions.Refresh")
+      .doesNotContain("AgentWorkbenchSessions.OpenDedicatedFrame")
+  }
+
+  @Test
+  fun titleActionRegistersOpenDedicatedFrameWithWindowIcon() {
+    val actionManager = ActionManager.getInstance()
+    val action = actionManager.getAction("AgentWorkbenchSessions.OpenDedicatedFrame")
+
+    assertThat(action)
+      .isNotNull
+      .isInstanceOf(AgentSessionsOpenDedicatedFrameAction::class.java)
+    assertThat(action?.templatePresentation?.icon).isEqualTo(AllIcons.Actions.MoveToWindow)
   }
 
   @Test
   fun toggleActionUpdatesAdvancedSetting() {
+    val actionManager = ActionManager.getInstance()
     val descriptor = checkNotNull(javaClass.classLoader.getResource("intellij.agent.workbench.sessions.xml")) {
       "Module descriptor intellij.agent.workbench.sessions.xml is missing"
     }.readText()
@@ -31,58 +47,112 @@ class AgentSessionsGearActionsTest {
     assertThat(descriptor)
       .contains("<advancedSetting")
       .contains("id=\"agent.workbench.chat.open.in.dedicated.frame\"")
-      .contains("<action id=\"AgentWorkbenchSessions.ToggleDedicatedFrame\"")
+    assertThat(actionManager.getAction("AgentWorkbenchSessions.ToggleDedicatedFrame"))
+      .isNotNull
+      .isInstanceOf(AgentSessionsDedicatedFrameToggleAction::class.java)
   }
 
   @Test
   fun dedicatedFrameRegistersProjectShortcutAliasAction() {
+    val actionManager = ActionManager.getInstance()
+    val shortcutAliasAction = actionManager.getAction("AgentWorkbenchSessions.ActivateWithProjectShortcut")
+    val platformAction = actionManager.getAction("ActivateProjectToolWindow")
+
+    assertThat(shortcutAliasAction)
+      .isNotNull
+      .isInstanceOf(AgentSessionsActivateWithProjectShortcutAction::class.java)
+    if (platformAction != null) {
+      assertThat(platformAction).isNotSameAs(shortcutAliasAction)
+    }
+  }
+
+  @Test
+  fun dedicatedFrameRegistersOpenDedicatedFrameAction() {
+    val actionManager = ActionManager.getInstance()
+    val openDedicatedFrameAction = actionManager.getAction("AgentWorkbenchSessions.OpenDedicatedFrame")
+
+    assertThat(openDedicatedFrameAction)
+      .isNotNull
+      .isInstanceOf(AgentSessionsOpenDedicatedFrameAction::class.java)
+    assertThat(actionManager.childActionIds("OpenProjectWindows")).contains("AgentWorkbenchSessions.OpenDedicatedFrame")
+  }
+
+  @Test
+  fun dedicatedFrameRegistersMainToolbarExclusions() {
     val descriptor = checkNotNull(javaClass.classLoader.getResource("intellij.agent.workbench.sessions.xml")) {
       "Module descriptor intellij.agent.workbench.sessions.xml is missing"
     }.readText()
 
     assertThat(descriptor)
-      .contains("<action")
-      .contains("id=\"AgentWorkbenchSessions.ActivateWithProjectShortcut\"")
-      .contains("use-shortcut-of=\"ActivateProjectToolWindow\"")
-      .contains("class=\"com.intellij.agent.workbench.sessions.AgentSessionsActivateWithProjectShortcutAction\"")
-      .doesNotContain("id=\"ActivateProjectToolWindow\"")
+      .contains("<projectFrameActionExclusion frameType=\"AGENT_DEDICATED\" place=\"MainToolbar\" id=\"MainToolbarVCSGroup\"/>")
+      .contains("<projectFrameActionExclusion frameType=\"AGENT_DEDICATED\" place=\"MainToolbar\" id=\"ExecutionTargetsToolbarGroup\"/>")
+      .contains("<projectFrameActionExclusion frameType=\"AGENT_DEDICATED\" place=\"MainToolbar\" id=\"NewUiRunWidget\"/>")
+      .doesNotContain("actionConfigurationCustomizer")
   }
 
   @Test
   fun editorTabActionsAreRegisteredInEditorTabPopupMenu() {
+    val actionManager = ActionManager.getInstance()
+
+    assertThat(actionManager.getAction("AgentWorkbenchSessions.SelectThreadInAgentThreads"))
+      .isNotNull
+      .isInstanceOf(AgentSessionsSelectThreadInToolWindowAction::class.java)
+    assertThat(actionManager.getAction("AgentWorkbenchSessions.ArchiveThreadFromEditorTab"))
+      .isNotNull
+      .isInstanceOf(AgentSessionsArchiveThreadAction::class.java)
+    assertThat(actionManager.getAction("AgentWorkbenchSessions.GoToSourceProjectFromEditorTab"))
+      .isNotNull
+      .isInstanceOf(AgentSessionsGoToSourceProjectFromEditorTabAction::class.java)
+    assertThat(actionManager.getAction("AgentWorkbenchSessions.CopyThreadIdFromEditorTab"))
+      .isNotNull
+      .isInstanceOf(AgentSessionsCopyThreadIdFromEditorTabAction::class.java)
+
+    val entries = actionManager.editorTabPopupEntries()
+
+    val archiveIndex = entries.requiredIndex("AgentWorkbenchSessions.ArchiveThreadFromEditorTab")
+    val goToSourceIndex = entries.requiredIndex("AgentWorkbenchSessions.GoToSourceProjectFromEditorTab")
+    val closeEditorsGroupIndex = entries.requiredIndex("CloseEditorsGroup")
+    val copyThreadIdIndex = entries.requiredIndex("AgentWorkbenchSessions.CopyThreadIdFromEditorTab")
+    val selectInThreadsIndex = entries.requiredIndex("AgentWorkbenchSessions.SelectThreadInAgentThreads")
+    val copyPathsIndex = entries.requiredIndex("CopyPaths")
+
+    assertThat(archiveIndex).isLessThan(goToSourceIndex)
+    assertThat(goToSourceIndex).isLessThan(closeEditorsGroupIndex)
+    assertThat(closeEditorsGroupIndex).isLessThan(copyThreadIdIndex)
+    assertThat(copyThreadIdIndex).isLessThan(selectInThreadsIndex)
+    assertThat(selectInThreadsIndex).isLessThan(copyPathsIndex)
+    assertThat(entries[closeEditorsGroupIndex - 1]).isEqualTo(SEPARATOR_MARKER)
+    assertThat(entries[closeEditorsGroupIndex + 1]).isEqualTo(SEPARATOR_MARKER)
+    assertThat(entries.subList(selectInThreadsIndex + 1, copyPathsIndex)).doesNotContain(SEPARATOR_MARKER)
+  }
+
+  @Test
+  fun archiveThreadFromEditorTabShortcutsMatchPlatformDefaults() {
     val descriptor = checkNotNull(javaClass.classLoader.getResource("intellij.agent.workbench.sessions.xml")) {
       "Module descriptor intellij.agent.workbench.sessions.xml is missing"
     }.readText()
+    val defaultKeymapShortcut = "<keyboard-shortcut keymap=\"" + '$' + "default\" first-keystroke=\"control alt DELETE\"/>"
 
     assertThat(descriptor)
-      .contains("id=\"AgentWorkbenchSessions.SelectThreadInAgentThreads\"")
-      .contains("id=\"AgentWorkbenchSessions.ArchiveThreadFromEditorTab\"")
-      .contains("id=\"AgentWorkbenchSessions.CopyThreadIdFromEditorTab\"")
-      .contains("class=\"com.intellij.agent.workbench.sessions.AgentSessionsArchiveThreadAction\"")
-      .contains("group-id=\"EditorTabPopupMenu\"")
-      .contains("anchor=\"before\" relative-to-action=\"CloseEditorsGroup\"")
-      .contains("anchor=\"after\" relative-to-action=\"CloseEditorsGroup\"")
-      .contains("anchor=\"after\" relative-to-action=\"AgentWorkbenchSessions.SelectThreadInAgentThreads\"")
-      .contains("keymap=\"" + '$' + "default\" first-keystroke=\"control alt F4\"")
-      .contains("keymap=\"Mac OS X 10.5+\" first-keystroke=\"meta alt W\"")
+      .contains(defaultKeymapShortcut)
+      .contains("<keyboard-shortcut keymap=\"Default for XWin\" first-keystroke=\"control alt DELETE\" remove=\"true\"/>")
+      .contains("<keyboard-shortcut keymap=\"Default for XWin\" first-keystroke=\"alt shift F4\"/>")
+      .contains("<keyboard-shortcut keymap=\"Default for GNOME\" first-keystroke=\"control alt DELETE\" remove=\"true\"/>")
+      .contains("<keyboard-shortcut keymap=\"Default for GNOME\" first-keystroke=\"alt shift F4\"/>")
+      .contains("<keyboard-shortcut keymap=\"Default for KDE\" first-keystroke=\"control alt DELETE\" remove=\"true\"/>")
+      .contains("<keyboard-shortcut keymap=\"Default for KDE\" first-keystroke=\"alt shift F4\"/>")
+      .contains("<keyboard-shortcut keymap=\"Mac OS X 10.5+\" first-keystroke=\"meta alt DELETE\"/>")
   }
 
   @Test
   fun treePopupActionsAreRegisteredInActionSystem() {
-    val descriptor = checkNotNull(javaClass.classLoader.getResource("intellij.agent.workbench.sessions.xml")) {
-      "Module descriptor intellij.agent.workbench.sessions.xml is missing"
-    }.readText()
+    val actionManager = ActionManager.getInstance()
 
-    assertThat(descriptor)
-      .contains("<group id=\"AgentWorkbenchSessions.TreePopup\">")
-      .contains("<reference ref=\"AgentWorkbenchSessions.TreePopup.Open\"/>")
-      .contains("<reference ref=\"AgentWorkbenchSessions.TreePopup.More\"/>")
-      .contains("<reference ref=\"AgentWorkbenchSessions.TreePopup.NewThread\"/>")
-      .contains("<reference ref=\"AgentWorkbenchSessions.TreePopup.Archive\"/>")
-      .contains("id=\"AgentWorkbenchSessions.TreePopup.Open\"")
-      .contains("id=\"AgentWorkbenchSessions.TreePopup.More\"")
-      .contains("id=\"AgentWorkbenchSessions.TreePopup.NewThread\"")
-      .contains("id=\"AgentWorkbenchSessions.TreePopup.Archive\"")
+    assertThat(actionManager.childActionIds("AgentWorkbenchSessions.TreePopup"))
+      .contains("AgentWorkbenchSessions.TreePopup.Open")
+      .contains("AgentWorkbenchSessions.TreePopup.More")
+      .contains("AgentWorkbenchSessions.TreePopup.NewThread")
+      .contains("AgentWorkbenchSessions.TreePopup.Archive")
   }
 
   @Test
@@ -100,5 +170,45 @@ class AgentSessionsGearActionsTest {
     assertThat(refreshInvocations)
       .withFailMessage("Refresh action didn't trigger sessions refresh callback.")
       .isEqualTo(1)
+  }
+
+  private fun ActionManager.childActionIds(groupId: String): List<String> {
+    val group = getAction(groupId) as? ActionGroup
+    assertThat(group).withFailMessage("Action group '%s' is not registered", groupId).isNotNull
+    return checkNotNull(group).getChildren(TestActionEvent.createTestEvent()).mapNotNull { getId(it) }
+  }
+
+  private fun ActionManager.editorTabPopupEntries(): List<String> {
+    val group = getAction("EditorTabPopupMenu") as? ActionGroup
+    assertThat(group).withFailMessage("Action group '%s' is not registered", "EditorTabPopupMenu").isNotNull
+    return flattenEditorTabPopupEntries(checkNotNull(group).getChildren(TestActionEvent.createTestEvent()))
+  }
+
+  private fun ActionManager.flattenEditorTabPopupEntries(actions: Array<AnAction>): List<String> {
+    return actions.flatMap { action ->
+      when (action) {
+        is Separator -> listOf(SEPARATOR_MARKER)
+        is ActionGroup -> {
+          if (getId(action) == INLINE_EDITOR_TAB_SEPARATOR_GROUP_ID) {
+            flattenEditorTabPopupEntries(action.getChildren(TestActionEvent.createTestEvent()))
+          }
+          else {
+            getId(action)?.let(::listOf).orEmpty()
+          }
+        }
+        else -> getId(action)?.let(::listOf).orEmpty()
+      }
+    }
+  }
+
+  private fun List<String>.requiredIndex(entry: String): Int {
+    val index = indexOf(entry)
+    assertThat(index).withFailMessage("Entry '%s' was not found in: %s", entry, this).isNotEqualTo(-1)
+    return index
+  }
+
+  companion object {
+    private const val SEPARATOR_MARKER = "<separator>"
+    private const val INLINE_EDITOR_TAB_SEPARATOR_GROUP_ID = "AgentWorkbenchSessions.EditorTabPopup.SeparatorBeforeCloseActions"
   }
 }

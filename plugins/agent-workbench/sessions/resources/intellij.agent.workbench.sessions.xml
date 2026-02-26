@@ -25,6 +25,9 @@
       groupKey="advanced.settings.agent.workbench"/>
     <projectFrameCapabilitiesProvider implementation="com.intellij.agent.workbench.sessions.AgentWorkbenchProjectFrameCapabilitiesProvider"/>
     <toolWindowLayoutProfileProvider implementation="com.intellij.agent.workbench.sessions.AgentWorkbenchToolWindowLayoutProfileProvider"/>
+    <projectFrameActionExclusion frameType="AGENT_DEDICATED" place="MainToolbar" id="MainToolbarVCSGroup"/>
+    <projectFrameActionExclusion frameType="AGENT_DEDICATED" place="MainToolbar" id="ExecutionTargetsToolbarGroup"/>
+    <projectFrameActionExclusion frameType="AGENT_DEDICATED" place="MainToolbar" id="NewUiRunWidget"/>
     <statusBarWidgetFactory
       id="claude.quota"
       implementation="com.intellij.agent.workbench.sessions.claude.ClaudeQuotaStatusBarWidgetFactory"/>
@@ -34,6 +37,12 @@
   </extensions>
 
   <actions resource-bundle="messages.AgentSessionsBundle">
+    <action
+      id="AgentWorkbenchSessions.OpenDedicatedFrame"
+      icon="AllIcons.Actions.MoveToWindow"
+      class="com.intellij.agent.workbench.sessions.AgentSessionsOpenDedicatedFrameAction">
+      <add-to-group group-id="OpenProjectWindows" anchor="after" relative-to-action="PreviousProjectWindow"/>
+    </action>
     <group id="AgentWorkbenchSessions.ToolWindow.GearActions">
       <reference ref="OpenFile"/>
       <separator/>
@@ -65,18 +74,33 @@
       id="AgentWorkbenchSessions.ArchiveThreadFromEditorTab"
       class="com.intellij.agent.workbench.sessions.AgentSessionsArchiveThreadAction">
       <add-to-group group-id="EditorTabPopupMenu" anchor="before" relative-to-action="CloseEditorsGroup"/>
-      <keyboard-shortcut keymap="$default" first-keystroke="control alt F4"/>
-      <keyboard-shortcut keymap="Mac OS X 10.5+" first-keystroke="meta alt W"/>
+      <keyboard-shortcut keymap="$default" first-keystroke="control alt DELETE"/>
+      <keyboard-shortcut keymap="Default for XWin" first-keystroke="control alt DELETE" remove="true"/>
+      <keyboard-shortcut keymap="Default for XWin" first-keystroke="alt shift F4"/>
+      <keyboard-shortcut keymap="Default for GNOME" first-keystroke="control alt DELETE" remove="true"/>
+      <keyboard-shortcut keymap="Default for GNOME" first-keystroke="alt shift F4"/>
+      <keyboard-shortcut keymap="Default for KDE" first-keystroke="control alt DELETE" remove="true"/>
+      <keyboard-shortcut keymap="Default for KDE" first-keystroke="alt shift F4"/>
+      <keyboard-shortcut keymap="Mac OS X 10.5+" first-keystroke="meta alt DELETE"/>
+    </action>
+    <action
+      id="AgentWorkbenchSessions.GoToSourceProjectFromEditorTab"
+      class="com.intellij.agent.workbench.sessions.AgentSessionsGoToSourceProjectFromEditorTabAction">
+      <add-to-group group-id="EditorTabPopupMenu" anchor="after" relative-to-action="AgentWorkbenchSessions.ArchiveThreadFromEditorTab"/>
+    </action>
+    <group id="AgentWorkbenchSessions.EditorTabPopup.SeparatorBeforeCloseActions">
+      <separator/>
+      <add-to-group group-id="EditorTabPopupMenu" anchor="after" relative-to-action="AgentWorkbenchSessions.GoToSourceProjectFromEditorTab"/>
+    </group>
+    <action
+      id="AgentWorkbenchSessions.CopyThreadIdFromEditorTab"
+      class="com.intellij.agent.workbench.sessions.AgentSessionsCopyThreadIdFromEditorTabAction">
+      <add-to-group group-id="EditorTabPopupMenu" anchor="before" relative-to-action="CopyPaths"/>
     </action>
     <action
       id="AgentWorkbenchSessions.SelectThreadInAgentThreads"
       class="com.intellij.agent.workbench.sessions.AgentSessionsSelectThreadInToolWindowAction">
-      <add-to-group group-id="EditorTabPopupMenu" anchor="before" relative-to-action="CloseEditorsGroup"/>
-    </action>
-    <action
-      id="AgentWorkbenchSessions.CopyThreadIdFromEditorTab"
-      class="com.intellij.agent.workbench.sessions.AgentSessionsCopyThreadIdFromEditorTabAction">
-      <add-to-group group-id="EditorTabPopupMenu" anchor="after" relative-to-action="AgentWorkbenchSessions.SelectThreadInAgentThreads"/>
+      <add-to-group group-id="EditorTabPopupMenu" anchor="after" relative-to-action="AgentWorkbenchSessions.CopyThreadIdFromEditorTab"/>
     </action>
     <action
       id="AgentWorkbenchSessions.ActivateWithProjectShortcut"

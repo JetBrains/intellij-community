@@ -58,7 +58,11 @@ internal object AgentWorkbenchDedicatedFrameProjectManager {
   }
 
   suspend fun configureProject(project: Project) {
-    (serviceAsync<RecentProjectsManager>() as RecentProjectsManagerBase).setProjectHidden(project, true)
+    val recentProjectsManager = serviceAsync<RecentProjectsManager>() as RecentProjectsManagerBase
+    recentProjectsManager.setProjectHidden(project, true)
+    recentProjectsManager.updateRecentMetadata(project) {
+      projectFrameTypeId = AGENT_WORKBENCH_DEDICATED_FRAME_TYPE_ID
+    }
     TrustedProjects.setProjectTrusted(project, true)
     TipAndTrickManager.DISABLE_TIPS_FOR_PROJECT.set(project, true)
   }

@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("LiftReturnOrAssignment")
 
 package com.intellij.openapi.wm.impl
@@ -100,9 +100,10 @@ private val LOG: Logger
 abstract class ProjectFrameHelper internal constructor(
   val frame: IdeFrameImpl,
   loadingState: FrameLoadingState? = null,
+  internal val projectFrameTypeId: String? = null,
 ) : IdeFrameEx, AccessibleContextAccessor, UiDataProvider {
   @Internal
-  constructor(frame: IdeFrameImpl) : this(frame = frame, loadingState = null)
+  constructor(frame: IdeFrameImpl) : this(frame = frame, loadingState = null, projectFrameTypeId = null)
 
   @Suppress("SSBasedInspection")
   @Internal
@@ -137,6 +138,7 @@ abstract class ProjectFrameHelper internal constructor(
     frame.addWindowListener(WindowCloseListener)
 
     val rootPane = IdeRootPane()
+    rootPane.setProjectFrameTypeId(projectFrameTypeId)
     centerComponent = createCenterComponent()
     contentPane = createContentPane()
     rootPane.contentPane = contentPane
