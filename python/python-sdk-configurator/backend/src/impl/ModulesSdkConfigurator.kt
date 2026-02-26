@@ -19,6 +19,7 @@ import com.intellij.python.sdkConfigurator.common.impl.ModuleDTO
 import com.intellij.python.sdkConfigurator.common.impl.ModuleName
 import com.jetbrains.python.PathShortener
 import com.jetbrains.python.Result
+import com.jetbrains.python.module.PyModuleService
 import com.jetbrains.python.sdk.configuration.CreateSdkInfo
 import com.jetbrains.python.sdk.configuration.PyProjectSdkConfigurationExtension
 import com.jetbrains.python.sdk.configuration.createSdk
@@ -187,7 +188,8 @@ internal class ModulesSdkConfigurator private constructor(
  */
 @ApiStatus.Internal // Opened for tests only: we can't put tests here because configurators are in communuty.impl
 suspend fun configureSdkAutomatically(project: Project): Unit = withContext(Dispatchers.Default) {
-  val modules = project.modules
+  val moduleService = PyModuleService.getInstance()
+  val modules = project.modules.filter { moduleService.isPythonModule(it) }
 
   when (modules.size) {
     0 -> return@withContext
