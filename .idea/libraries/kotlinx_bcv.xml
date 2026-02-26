@@ -1,0 +1,22 @@
+<component name="libraryTable">
+  <library name="kotlinx-bcv" type="repository">
+    <properties maven-id="org.jetbrains.kotlinx:binary-compatibility-validator:0.17.0">
+      <verification>
+        <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/kotlinx/binary-compatibility-validator/0.17.0/binary-compatibility-validator-0.17.0.jar">
+          <sha256sum>0c8d35914a9094ab7071001c5b789e20d5f80d284c70a915a1ecb8fcecf92031</sha256sum>
+        </artifact>
+      </verification>
+      <exclude>
+        <dependency maven-id="org.jetbrains.kotlin:kotlin-stdlib" />
+        <dependency maven-id="io.github.java-diff-utils:java-diff-utils" />
+      </exclude>
+    </properties>
+    <CLASSES>
+      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlinx/binary-compatibility-validator/0.17.0/binary-compatibility-validator-0.17.0.jar!/" />
+    </CLASSES>
+    <JAVADOC />
+    <SOURCES>
+      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlinx/binary-compatibility-validator/0.17.0/binary-compatibility-validator-0.17.0-sources.jar!/" />
+    </SOURCES>
+  </library>
+</component>

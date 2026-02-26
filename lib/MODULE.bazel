@@ -301,6 +301,48 @@ http_file(
 )
 
 http_file(
+  name = "org_ow2_asm-asm-analysis-9_8_http",
+  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/ow2/asm/asm-analysis/9.8/asm-analysis-9.8.jar",
+  sha256 = "e640732fbcd3c6271925a504f125e38384688f4dfbbf92c8622dfcee0d09edb9",
+  downloaded_file_path = "asm-analysis-9.8.jar"
+)
+
+http_file(
+  name = "org_ow2_asm-asm-tree-9_8_http",
+  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/ow2/asm/asm-tree/9.8/asm-tree-9.8.jar",
+  sha256 = "14b7880cb7c85eed101e2710432fc3ffb83275532a6a894dc4c4095d49ad59f1",
+  downloaded_file_path = "asm-tree-9.8.jar"
+)
+
+http_file(
+  name = "org_ow2_asm-asm-9_8_http",
+  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/ow2/asm/asm/9.8/asm-9.8.jar",
+  sha256 = "876eab6a83daecad5ca67eb9fcabb063c97b5aeb8cf1fca7a989ecde17522051",
+  downloaded_file_path = "asm-9.8.jar"
+)
+
+http_file(
+  name = "org_ow2_asm-asm-analysis-9_8-sources_http",
+  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/ow2/asm/asm-analysis/9.8/asm-analysis-9.8-sources.jar",
+  sha256 = "ff731d401ea2407759ea19b4b025800d32495a51a912f2553d987cddda424773",
+  downloaded_file_path = "asm-analysis-9.8-sources.jar"
+)
+
+http_file(
+  name = "org_ow2_asm-asm-tree-9_8-sources_http",
+  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/ow2/asm/asm-tree/9.8/asm-tree-9.8-sources.jar",
+  sha256 = "442d32be6106a41b61c2edf05f8ae496c4c54cca6e73d9d59d38e9cb54820c44",
+  downloaded_file_path = "asm-tree-9.8-sources.jar"
+)
+
+http_file(
+  name = "org_ow2_asm-asm-9_8-sources_http",
+  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/ow2/asm/asm/9.8/asm-9.8-sources.jar",
+  sha256 = "c6294794f956f21e2b252a9bf65a96ce0489fb4c0f978447d85c8a75e485b633",
+  downloaded_file_path = "asm-9.8-sources.jar"
+)
+
+http_file(
   name = "org_assertj-assertj-core-4_0_0-M1_http",
   url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/assertj/assertj-core/4.0.0-M1/assertj-core-4.0.0-M1.jar",
   sha256 = "03852ab5b4419c1b0b3689930cdc1ac4f0c437a0c8094a900370dcb170cfbb46",
@@ -7931,6 +7973,20 @@ http_file(
 )
 
 http_file(
+  name = "org_jetbrains_kotlinx-binary-compatibility-validator-0_17_0_http",
+  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/jetbrains/kotlinx/binary-compatibility-validator/0.17.0/binary-compatibility-validator-0.17.0.jar",
+  sha256 = "0c8d35914a9094ab7071001c5b789e20d5f80d284c70a915a1ecb8fcecf92031",
+  downloaded_file_path = "binary-compatibility-validator-0.17.0.jar"
+)
+
+http_file(
+  name = "org_jetbrains_kotlinx-binary-compatibility-validator-0_17_0-sources_http",
+  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/jetbrains/kotlinx/binary-compatibility-validator/0.17.0/binary-compatibility-validator-0.17.0-sources.jar",
+  sha256 = "5257cdca3d1e7ad4b47fdb5b928a364710b792fe134d3feea58ec17813ac5f63",
+  downloaded_file_path = "binary-compatibility-validator-0.17.0-sources.jar"
+)
+
+http_file(
   name = "org_jetbrains_kotlinx-kotlinx-collections-immutable-jvm-0_4_0_http",
   url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/jetbrains/kotlinx/kotlinx-collections-immutable-jvm/0.4.0/kotlinx-collections-immutable-jvm-0.4.0.jar",
   sha256 = "d767014ad0c9a27d27d26fd38e7afa030aee0d141338f108781ff02ecf2fdab5",
@@ -8264,48 +8320,6 @@ http_file(
   url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/intellij/deps/asm-all/9.6.1/asm-all-9.6.1-sources.jar",
   sha256 = "a880ed438e15111a8ef4cdd450fa529cf80541da515261d24241520dbc4b220b",
   downloaded_file_path = "asm-all-9.6.1-sources.jar"
-)
-
-http_file(
-  name = "org_ow2_asm-asm-analysis-9_8_http",
-  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/ow2/asm/asm-analysis/9.8/asm-analysis-9.8.jar",
-  sha256 = "e640732fbcd3c6271925a504f125e38384688f4dfbbf92c8622dfcee0d09edb9",
-  downloaded_file_path = "asm-analysis-9.8.jar"
-)
-
-http_file(
-  name = "org_ow2_asm-asm-tree-9_8_http",
-  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/ow2/asm/asm-tree/9.8/asm-tree-9.8.jar",
-  sha256 = "14b7880cb7c85eed101e2710432fc3ffb83275532a6a894dc4c4095d49ad59f1",
-  downloaded_file_path = "asm-tree-9.8.jar"
-)
-
-http_file(
-  name = "org_ow2_asm-asm-9_8_http",
-  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/ow2/asm/asm/9.8/asm-9.8.jar",
-  sha256 = "876eab6a83daecad5ca67eb9fcabb063c97b5aeb8cf1fca7a989ecde17522051",
-  downloaded_file_path = "asm-9.8.jar"
-)
-
-http_file(
-  name = "org_ow2_asm-asm-analysis-9_8-sources_http",
-  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/ow2/asm/asm-analysis/9.8/asm-analysis-9.8-sources.jar",
-  sha256 = "ff731d401ea2407759ea19b4b025800d32495a51a912f2553d987cddda424773",
-  downloaded_file_path = "asm-analysis-9.8-sources.jar"
-)
-
-http_file(
-  name = "org_ow2_asm-asm-tree-9_8-sources_http",
-  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/ow2/asm/asm-tree/9.8/asm-tree-9.8-sources.jar",
-  sha256 = "442d32be6106a41b61c2edf05f8ae496c4c54cca6e73d9d59d38e9cb54820c44",
-  downloaded_file_path = "asm-tree-9.8-sources.jar"
-)
-
-http_file(
-  name = "org_ow2_asm-asm-9_8-sources_http",
-  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/ow2/asm/asm/9.8/asm-9.8-sources.jar",
-  sha256 = "c6294794f956f21e2b252a9bf65a96ce0489fb4c0f978447d85c8a75e485b633",
-  downloaded_file_path = "asm-9.8-sources.jar"
 )
 
 http_file(
@@ -15929,20 +15943,6 @@ http_file(
   url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/com/jetbrains/intellij/documentation/tips-pycharm-community/241.74/tips-pycharm-community-241.74.jar",
   sha256 = "7f9fd8e37ec4dfdef7bfc3bc6a687fa5a322976fc588432fa46d2feb1fefc966",
   downloaded_file_path = "tips-pycharm-community-241.74.jar"
-)
-
-http_file(
-  name = "org_jetbrains_kotlinx-binary-compatibility-validator-0_17_0_http",
-  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/jetbrains/kotlinx/binary-compatibility-validator/0.17.0/binary-compatibility-validator-0.17.0.jar",
-  sha256 = "0c8d35914a9094ab7071001c5b789e20d5f80d284c70a915a1ecb8fcecf92031",
-  downloaded_file_path = "binary-compatibility-validator-0.17.0.jar"
-)
-
-http_file(
-  name = "org_jetbrains_kotlinx-binary-compatibility-validator-0_17_0-sources_http",
-  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/jetbrains/kotlinx/binary-compatibility-validator/0.17.0/binary-compatibility-validator-0.17.0-sources.jar",
-  sha256 = "5257cdca3d1e7ad4b47fdb5b928a364710b792fe134d3feea58ec17813ac5f63",
-  downloaded_file_path = "binary-compatibility-validator-0.17.0-sources.jar"
 )
 
 http_file(

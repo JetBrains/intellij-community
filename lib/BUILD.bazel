@@ -663,6 +663,58 @@ jvm_import(
 )
 
 copy_file(
+  name = "org.ow2.asm/asm-analysis-9.8.jar_copy",
+  src = "@org_ow2_asm-asm-analysis-9_8_http//file",
+  out = "org.ow2.asm/asm-analysis-9.8.jar",
+  allow_symlink = True,
+  visibility = ["//visibility:public"]
+)
+
+copy_file(
+  name = "org.ow2.asm/asm-tree-9.8.jar_copy",
+  src = "@org_ow2_asm-asm-tree-9_8_http//file",
+  out = "org.ow2.asm/asm-tree-9.8.jar",
+  allow_symlink = True,
+  visibility = ["//visibility:public"]
+)
+
+copy_file(
+  name = "org.ow2.asm/asm-9.8.jar_copy",
+  src = "@org_ow2_asm-asm-9_8_http//file",
+  out = "org.ow2.asm/asm-9.8.jar",
+  allow_symlink = True,
+  visibility = ["//visibility:public"]
+)
+
+java_library(
+  name = "asm-tools",
+  exports = [
+    ":org_ow2_asm-asm-analysis-9_8_http_import",
+    ":org_ow2_asm-asm-tree-9_8_http_import",
+    ":org_ow2_asm-asm-9_8_http_import",
+  ],
+  visibility = ["//visibility:public"]
+)
+
+jvm_import(
+  name = "org_ow2_asm-asm-analysis-9_8_http_import",
+  jar = "@org_ow2_asm-asm-analysis-9_8_http//file",
+  source_jar = "@org_ow2_asm-asm-analysis-9_8-sources_http//file"
+)
+
+jvm_import(
+  name = "org_ow2_asm-asm-tree-9_8_http_import",
+  jar = "@org_ow2_asm-asm-tree-9_8_http//file",
+  source_jar = "@org_ow2_asm-asm-tree-9_8-sources_http//file"
+)
+
+jvm_import(
+  name = "org_ow2_asm-asm-9_8_http_import",
+  jar = "@org_ow2_asm-asm-9_8_http//file",
+  source_jar = "@org_ow2_asm-asm-9_8-sources_http//file"
+)
+
+copy_file(
   name = "org.assertj/assertj-core-4.0.0-M1.jar_copy",
   src = "@org_assertj-assertj-core-4_0_0-M1_http//file",
   out = "org.assertj/assertj-core-4.0.0-M1.jar",
@@ -10077,6 +10129,21 @@ java_library(
 )
 
 copy_file(
+  name = "org.jetbrains.kotlinx/binary-compatibility-validator-0.17.0.jar_copy",
+  src = "@org_jetbrains_kotlinx-binary-compatibility-validator-0_17_0_http//file",
+  out = "org.jetbrains.kotlinx/binary-compatibility-validator-0.17.0.jar",
+  allow_symlink = True,
+  visibility = ["//visibility:public"]
+)
+
+jvm_import(
+  name = "kotlinx-bcv",
+  jar = "@org_jetbrains_kotlinx-binary-compatibility-validator-0_17_0_http//file",
+  source_jar = "@org_jetbrains_kotlinx-binary-compatibility-validator-0_17_0-sources_http//file",
+  visibility = ["//visibility:public"]
+)
+
+copy_file(
   name = "org.jetbrains.kotlinx/kotlinx-collections-immutable-jvm-0.4.0.jar_copy",
   src = "@org_jetbrains_kotlinx-kotlinx-collections-immutable-jvm-0_4_0_http//file",
   out = "org.jetbrains.kotlinx/kotlinx-collections-immutable-jvm-0.4.0.jar",
@@ -10678,58 +10745,6 @@ jvm_import(
   jar = "@org_jetbrains_intellij_deps-asm-all-9_6_1_http//file",
   source_jar = "@org_jetbrains_intellij_deps-asm-all-9_6_1-sources_http//file",
   visibility = ["//visibility:public"]
-)
-
-copy_file(
-  name = "org.ow2.asm/asm-analysis-9.8.jar_copy",
-  src = "@org_ow2_asm-asm-analysis-9_8_http//file",
-  out = "org.ow2.asm/asm-analysis-9.8.jar",
-  allow_symlink = True,
-  visibility = ["//visibility:public"]
-)
-
-copy_file(
-  name = "org.ow2.asm/asm-tree-9.8.jar_copy",
-  src = "@org_ow2_asm-asm-tree-9_8_http//file",
-  out = "org.ow2.asm/asm-tree-9.8.jar",
-  allow_symlink = True,
-  visibility = ["//visibility:public"]
-)
-
-copy_file(
-  name = "org.ow2.asm/asm-9.8.jar_copy",
-  src = "@org_ow2_asm-asm-9_8_http//file",
-  out = "org.ow2.asm/asm-9.8.jar",
-  allow_symlink = True,
-  visibility = ["//visibility:public"]
-)
-
-java_library(
-  name = "libraries-asm-tools-asm-tools",
-  exports = [
-    ":org_ow2_asm-asm-analysis-9_8_http_import",
-    ":org_ow2_asm-asm-tree-9_8_http_import",
-    ":org_ow2_asm-asm-9_8_http_import",
-  ],
-  visibility = ["//visibility:public"]
-)
-
-jvm_import(
-  name = "org_ow2_asm-asm-analysis-9_8_http_import",
-  jar = "@org_ow2_asm-asm-analysis-9_8_http//file",
-  source_jar = "@org_ow2_asm-asm-analysis-9_8-sources_http//file"
-)
-
-jvm_import(
-  name = "org_ow2_asm-asm-tree-9_8_http_import",
-  jar = "@org_ow2_asm-asm-tree-9_8_http//file",
-  source_jar = "@org_ow2_asm-asm-tree-9_8-sources_http//file"
-)
-
-jvm_import(
-  name = "org_ow2_asm-asm-9_8_http_import",
-  jar = "@org_ow2_asm-asm-9_8_http//file",
-  source_jar = "@org_ow2_asm-asm-9_8-sources_http//file"
 )
 
 copy_file(
@@ -20221,21 +20236,6 @@ copy_file(
 jvm_import(
   name = "tips-pycharm-community",
   jar = "@com_jetbrains_intellij_documentation-tips-pycharm-community-241_74_http//file",
-  visibility = ["//visibility:public"]
-)
-
-copy_file(
-  name = "org.jetbrains.kotlinx/binary-compatibility-validator-0.17.0.jar_copy",
-  src = "@org_jetbrains_kotlinx-binary-compatibility-validator-0_17_0_http//file",
-  out = "org.jetbrains.kotlinx/binary-compatibility-validator-0.17.0.jar",
-  allow_symlink = True,
-  visibility = ["//visibility:public"]
-)
-
-jvm_import(
-  name = "tools-api_dump-kotlinx-bcv",
-  jar = "@org_jetbrains_kotlinx-binary-compatibility-validator-0_17_0_http//file",
-  source_jar = "@org_jetbrains_kotlinx-binary-compatibility-validator-0_17_0-sources_http//file",
   visibility = ["//visibility:public"]
 )
 
