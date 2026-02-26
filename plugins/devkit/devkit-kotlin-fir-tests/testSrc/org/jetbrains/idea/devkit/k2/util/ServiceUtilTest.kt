@@ -1,16 +1,14 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-@file:OptIn(IntellijInternalApi::class)
-
-package org.jetbrains.idea.devkit.kotlin.util
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package org.jetbrains.idea.devkit.k2.util
 
 import com.intellij.openapi.components.Service
-import com.intellij.openapi.util.IntellijInternalApi
 import com.intellij.testFramework.TestDataPath
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase
 import org.jetbrains.idea.devkit.inspections.LevelType
 import org.jetbrains.idea.devkit.inspections.getLevelType
 import org.jetbrains.idea.devkit.kotlin.DevkitKtTestsUtil
 import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginMode
+import org.jetbrains.kotlin.idea.test.ConfigLibraryUtil
 import org.jetbrains.kotlin.idea.test.ExpectedPluginModeProvider
 import org.jetbrains.kotlin.idea.test.setUpWithKotlinPlugin
 import org.jetbrains.uast.UClass
@@ -20,18 +18,18 @@ import org.jetbrains.uast.toUElement
 import java.io.File
 import kotlin.io.path.Path
 
-
 private const val SERVICE_DECLARATIONS_DIR = "serviceDeclarations"
 private const val SERVICE_USAGES_DIR = "serviceUsages"
 
 @TestDataPath("\$CONTENT_ROOT/testData/util/serviceUtil")
 class ServiceUtilTest : LightJavaCodeInsightFixtureTestCase(), ExpectedPluginModeProvider {
-  override val pluginMode: KotlinPluginMode = KotlinPluginMode.K1
+  override val pluginMode: KotlinPluginMode = KotlinPluginMode.K2
 
   override fun getBasePath(): String = DevkitKtTestsUtil.TESTDATA_PATH + "util/serviceUtil"
 
   override fun setUp() {
     setUpWithKotlinPlugin { super.setUp() }
+    ConfigLibraryUtil.configureKotlinRuntime(module)
     addPlatformClasses()
     myFixture.configureByFile("plugin.xml")
   }

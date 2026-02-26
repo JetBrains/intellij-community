@@ -1,5 +1,5 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package org.jetbrains.idea.devkit.kotlin.inspections
+package org.jetbrains.idea.devkit.k2.inspections
 
 import com.intellij.codeInsight.daemon.QuickFixBundle
 import com.intellij.testFramework.TestDataPath
@@ -11,7 +11,7 @@ import org.jetbrains.kotlin.idea.test.setUpWithKotlinPlugin
 
 @TestDataPath("\$CONTENT_ROOT/testData/inspections/mismatchedLightServiceLevelAndCtor")
 internal class KtMismatchedLightServiceLevelAndCtorInspectionTest : MismatchedLightServiceLevelAndCtorInspectionTestBase(), ExpectedPluginModeProvider {
-  override val pluginMode: KotlinPluginMode = KotlinPluginMode.K1
+  override val pluginMode: KotlinPluginMode = KotlinPluginMode.K2
   override fun setUp() {
     setUpWithKotlinPlugin { super.setUp() }
   }
