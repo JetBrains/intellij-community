@@ -72,6 +72,64 @@ class AgentSessionsServiceRefreshIntegrationTest {
   }
 
   @Test
+  fun refreshKeepsProjectLoadingUntilAllProvidersFinish() = runBlocking {
+    val codexStarted = CompletableDeferred<Unit>()
+    val claudeStarted = CompletableDeferred<Unit>()
+    val releaseClaude = CompletableDeferred<Unit>()
+
+    withService(
+      sessionSourcesProvider = {
+        listOf(
+          ScriptedSessionSource(
+            provider = AgentSessionProvider.CODEX,
+            listFromOpenProject = { path, _ ->
+              if (path != PROJECT_PATH) {
+                emptyList()
+              }
+              else {
+                codexStarted.complete(Unit)
+                listOf(thread(id = "codex-1", updatedAt = 200, provider = AgentSessionProvider.CODEX))
+              }
+            },
+          ),
+          ScriptedSessionSource(
+            provider = AgentSessionProvider.CLAUDE,
+            listFromOpenProject = { path, _ ->
+              if (path != PROJECT_PATH) {
+                emptyList()
+              }
+              else {
+                claudeStarted.complete(Unit)
+                releaseClaude.await()
+                listOf(thread(id = "claude-1", updatedAt = 100, provider = AgentSessionProvider.CLAUDE))
+              }
+            },
+          ),
+        )
+      },
+      projectEntriesProvider = {
+        listOf(openProjectEntry(PROJECT_PATH, "Project A"))
+      },
+    ) { service ->
+      service.refresh()
+      codexStarted.await()
+      claudeStarted.await()
+
+      waitForCondition {
+        val project = service.state.value.projects.firstOrNull { it.path == PROJECT_PATH } ?: return@waitForCondition false
+        project.isLoading && project.threads.map { it.id } == listOf("codex-1")
+      }
+
+      releaseClaude.complete(Unit)
+
+      waitForCondition {
+        val project = service.state.value.projects.firstOrNull { it.path == PROJECT_PATH } ?: return@waitForCondition false
+        !project.isLoading && project.threads.map { it.id } == listOf("codex-1", "claude-1")
+      }
+    }
+  }
+
+  @Test
   fun refreshIgnoresPersistedVisibleThreadCountForKnownPath() = runBlocking {
     val treeUiState = InMemorySessionsTreeUiState()
     treeUiState.incrementVisibleThreadCount(PROJECT_PATH, delta = 6)

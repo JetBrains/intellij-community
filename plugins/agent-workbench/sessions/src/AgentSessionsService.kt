@@ -221,8 +221,8 @@ internal class AgentSessionsService private constructor(
     stateStore.ensureThreadVisible(path, provider, threadId)
   }
 
-  fun canArchiveThread(thread: AgentSessionThread): Boolean {
-    val bridge = AgentSessionProviderBridges.find(thread.provider) ?: return false
+  fun canArchiveProvider(provider: AgentSessionProvider): Boolean {
+    val bridge = AgentSessionProviderBridges.find(provider) ?: return false
     return bridge.supportsArchiveThread
   }
 
@@ -294,8 +294,8 @@ internal class AgentSessionsService private constructor(
     }
   }
 
-  fun archiveThread(path: String, thread: AgentSessionThread) {
-    archiveThreads(listOf(ArchiveThreadTarget(path = path, thread = thread)))
+  fun archiveThread(path: String, provider: AgentSessionProvider, threadId: String) {
+    archiveThreads(listOf(ArchiveThreadTarget(path = path, provider = provider, threadId = threadId)))
   }
 
   fun archiveThreads(targets: List<ArchiveThreadTarget>) {
@@ -331,7 +331,7 @@ internal class AgentSessionsService private constructor(
       var anyUnarchived = false
       var requiresCodexRefreshDelay = false
       normalizedTargets.forEach { target ->
-        val provider = target.thread.provider
+        val provider = target.provider
         val bridge = AgentSessionProviderBridges.find(provider)
         if (bridge == null) {
           logMissingProviderBridge(provider)
@@ -342,13 +342,13 @@ internal class AgentSessionsService private constructor(
         }
 
         val unarchived = try {
-          bridge.unarchiveThread(path = target.path, threadId = target.thread.id)
+          bridge.unarchiveThread(path = target.path, threadId = target.threadId)
         }
         catch (t: Throwable) {
           if (t is CancellationException) {
             throw t
           }
-          LOG.warn("Failed to unarchive thread ${provider}:${target.thread.id}", t)
+          LOG.warn("Failed to unarchive thread ${provider}:${target.threadId}", t)
           false
         }
         if (!unarchived) {
@@ -357,7 +357,7 @@ internal class AgentSessionsService private constructor(
 
         anyUnarchived = true
         if (provider == AgentSessionProvider.CODEX) {
-          loadingCoordinator.unsuppressArchivedThread(path = target.path, provider = provider, threadId = target.thread.id)
+          loadingCoordinator.unsuppressArchivedThread(path = target.path, provider = provider, threadId = target.threadId)
           requiresCodexRefreshDelay = true
         }
       }
@@ -377,7 +377,7 @@ internal class AgentSessionsService private constructor(
     var requiresCodexRefreshDelay = false
 
     targets.forEach { target ->
-      val provider = target.thread.provider
+      val provider = target.provider
       val bridge = AgentSessionProviderBridges.find(provider)
       if (bridge == null) {
         logMissingProviderBridge(provider)
@@ -389,13 +389,13 @@ internal class AgentSessionsService private constructor(
       }
 
       val archived = try {
-        bridge.archiveThread(path = target.path, threadId = target.thread.id)
+        bridge.archiveThread(path = target.path, threadId = target.threadId)
       }
       catch (t: Throwable) {
         if (t is CancellationException) {
           throw t
         }
-        LOG.warn("Failed to archive thread ${provider}:${target.thread.id}", t)
+        LOG.warn("Failed to archive thread ${provider}:${target.threadId}", t)
         loadingCoordinator.appendProviderUnavailableWarning(target.path, provider)
         return@forEach
       }
@@ -406,12 +406,12 @@ internal class AgentSessionsService private constructor(
       }
 
       if (provider == AgentSessionProvider.CODEX) {
-        loadingCoordinator.suppressArchivedThread(path = target.path, provider = provider, threadId = target.thread.id)
+        loadingCoordinator.suppressArchivedThread(path = target.path, provider = provider, threadId = target.threadId)
         requiresCodexRefreshDelay = true
       }
-      stateStore.removeThread(target.path, provider, target.thread.id)
+      stateStore.removeThread(target.path, provider, target.threadId)
 
-      val threadIdentity = buildAgentSessionIdentity(provider, target.thread.id)
+      val threadIdentity = buildAgentSessionIdentity(provider, target.threadId)
       try {
         archiveChatCleanup(target.path, threadIdentity)
       }
@@ -421,7 +421,7 @@ internal class AgentSessionsService private constructor(
         }
         // Archive is already successful at provider level; cleanup is best-effort and must not
         // resurrect the thread in UI by short-circuiting state update/refresh.
-        LOG.warn("Failed to clean archived thread chat metadata for ${provider}:${target.thread.id}", t)
+        LOG.warn("Failed to clean archived thread chat metadata for ${provider}:${target.threadId}", t)
       }
 
       archivedTargets.add(target)
@@ -606,7 +606,7 @@ private fun buildUnarchiveThreadsActionKey(targets: List<ArchiveThreadTarget>): 
 }
 
 private fun archiveTargetKey(target: ArchiveThreadTarget): String {
-  return "${target.path}:${target.thread.provider}:${target.thread.id}"
+  return "${target.path}:${target.provider}:${target.threadId}"
 }
 
 private fun logMissingProviderBridge(provider: AgentSessionProvider) {

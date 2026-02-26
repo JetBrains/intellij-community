@@ -33,10 +33,12 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.util.text.StringUtil
+import com.intellij.ui.AnimatedIcon
 import com.intellij.ui.ColoredTreeCellRenderer
 import com.intellij.ui.ExperimentalUI
 import com.intellij.ui.IconManager
 import com.intellij.ui.JBColor
+import com.intellij.ui.LayeredIcon
 import com.intellij.ui.ScrollPaneFactory
 import com.intellij.ui.SimpleColoredComponent.FragmentTextClipper
 import com.intellij.ui.SimpleTextAttributes
@@ -158,6 +160,7 @@ internal class AgentSessionsToolWindowPanel(
       rowActionsProvider = { row, treeNode, selected -> rowActionPresentation(row, treeNode, selected) },
       nodeResolver = { treeId -> sessionTreeModel.entriesById[treeId]?.node },
     )
+    tree.putClientProperty(AnimatedIcon.ANIMATION_IN_RENDERER_ALLOWED, true)
 
     TreeUtil.installActions(tree)
     TreeUIHelper.getInstance().installTreeSpeedSearch(tree)
@@ -248,20 +251,28 @@ internal class AgentSessionsToolWindowPanel(
     val rowActions = resolveNewSessionRowActions(treeNode, lastUsedProvider) ?: return null
     val isHovered = TreeHoverListener.getHoveredRow(tree) == row
     val isPinned = popupPinnedRow == row
-    if (!selected && !isHovered && !isPinned) return null
+    val showInteractiveActions = selected || isHovered || isPinned
+    val showLoadingAction = when (treeNode) {
+      is SessionTreeNode.Project -> treeNode.project.isLoading
+      is SessionTreeNode.Worktree -> treeNode.worktree.isLoading
+      else -> false
+    }
+    if (!showInteractiveActions && !showLoadingAction) return null
 
     val quickIcon = rowActions.quickProvider?.let { provider ->
       providerIcon(provider) ?: AllIcons.General.Add
     }
     val hoveredKind = hoveredRowAction?.takeIf { it.row == row }?.kind
     return SessionTreeRowActionPresentation(
+      showLoadingAction = showLoadingAction,
       quickIcon = quickIcon,
-      showQuickAction = rowActions.quickProvider != null,
+      showQuickAction = showInteractiveActions && rowActions.quickProvider != null,
+      showPopupAction = showInteractiveActions,
       hoveredKind = hoveredKind,
     )
   }
 
-  private fun rowActionRects(row: Int, showQuickAction: Boolean): RowActionRects? {
+  private fun rowActionRects(row: Int, presentation: SessionTreeRowActionPresentation): RowActionRects? {
     val bounds = tree.getRowBounds(row) ?: return null
     if (!tree.visibleRect.intersects(bounds)) return null
 
@@ -272,10 +283,22 @@ internal class AgentSessionsToolWindowPanel(
     val y = bounds.y + (bounds.height - slot) / 2
 
     var right = helper.width - helper.rightMargin - rightGap
-    val popupRect = Rectangle(right - slot, y, slot, slot)
-    right = popupRect.x - gap
-    val quickRect = if (showQuickAction) Rectangle(right - slot, y, slot, slot) else null
-    return RowActionRects(quickRect = quickRect, popupRect = popupRect)
+
+    fun consumeSlot(show: Boolean): Rectangle? {
+      if (!show) return null
+      val rect = Rectangle(right - slot, y, slot, slot)
+      right = rect.x - gap
+      return rect
+    }
+
+    val popupRect = consumeSlot(show = presentation.showPopupAction)
+    val quickRect = consumeSlot(show = presentation.showQuickAction)
+    val loadingRect = consumeSlot(show = presentation.showLoadingAction)
+    return RowActionRects(
+      loadingRect = loadingRect,
+      quickRect = quickRect,
+      popupRect = popupRect,
+    )
   }
 
   private fun rowActionAtPoint(point: Point): RowActionHit? {
@@ -287,12 +310,18 @@ internal class AgentSessionsToolWindowPanel(
     val path = tree.getPathForRow(row) ?: return null
     val treeNode = treeNodeFromPath(path) ?: return null
     val rowActions = resolveNewSessionRowActions(treeNode, lastUsedProvider) ?: return null
-    val rects = rowActionRects(row, showQuickAction = rowActions.quickProvider != null) ?: return null
+    val presentation = rowActionPresentation(
+      row = row,
+      treeNode = treeNode,
+      selected = tree.selectionModel.isRowSelected(row),
+    ) ?: return null
+    val rects = rowActionRects(row = row, presentation = presentation) ?: return null
     val quickRect = rects.quickRect
     if (quickRect != null && quickRect.contains(point)) {
       return RowActionHit(row = row, kind = RowActionKind.QuickCreate, actions = rowActions, rects = rects)
     }
-    if (rects.popupRect.contains(point)) {
+    val popupRect = rects.popupRect
+    if (popupRect != null && popupRect.contains(point)) {
       return RowActionHit(row = row, kind = RowActionKind.ShowPopup, actions = rowActions, rects = rects)
     }
     return null
@@ -316,7 +345,8 @@ internal class AgentSessionsToolWindowPanel(
       }
 
       RowActionKind.ShowPopup -> {
-        showNewSessionActionPopup(path = hit.actions.path, anchorRect = hit.rects.popupRect, row = hit.row)
+        val popupRect = hit.rects.popupRect ?: return false
+        showNewSessionActionPopup(path = hit.actions.path, anchorRect = popupRect, row = hit.row)
       }
     }
     return true
@@ -494,7 +524,7 @@ internal class AgentSessionsToolWindowPanel(
     selectedTreeIds().forEach { id ->
       val threadNode = sessionTreeNode(id) as? SessionTreeNode.Thread ?: return@forEach
       val target = archiveTargetFromThreadNode(id, threadNode)
-      val key = "${target.path}:${target.thread.provider}:${target.thread.id}"
+      val key = "${target.path}:${target.provider}:${target.threadId}"
       targetsByKey.putIfAbsent(key, target)
     }
     return targetsByKey.values.toList()
@@ -580,7 +610,12 @@ internal class AgentSessionsToolWindowPanel(
           treeNode = treeNode,
           selected = tree.selectionModel.isRowSelected(row),
         ) ?: continue
-        val rects = rowActionRects(row = row, showQuickAction = presentation.showQuickAction) ?: continue
+        val rects = rowActionRects(row = row, presentation = presentation) ?: continue
+
+        val loadingRect = rects.loadingRect
+        if (loadingRect != null) {
+          paintIconCentered(AnimatedIcon.Default.INSTANCE, loadingRect, g2)
+        }
 
         val quickRect = rects.quickRect
         if (quickRect != null && presentation.quickIcon != null) {
@@ -588,8 +623,11 @@ internal class AgentSessionsToolWindowPanel(
           paintIconCentered(presentation.quickIcon, quickRect, g2)
         }
 
-        paintRowActionSlot(g2, rects.popupRect, hover = presentation.hoveredKind == RowActionKind.ShowPopup)
-        paintIconCentered(AllIcons.General.Add, rects.popupRect, g2)
+        val popupRect = rects.popupRect
+        if (popupRect != null) {
+          paintRowActionSlot(g2, popupRect, hover = presentation.hoveredKind == RowActionKind.ShowPopup)
+          paintIconCentered(LayeredIcon.ADD_WITH_DROPDOWN, popupRect, g2)
+        }
       }
     }
     finally {
@@ -825,8 +863,9 @@ internal fun resolveArchiveActionContext(
 }
 
 private data class RowActionRects(
+  val loadingRect: Rectangle?,
   val quickRect: Rectangle?,
-  val popupRect: Rectangle,
+  val popupRect: Rectangle?,
 )
 
 private data class RowActionHit(
@@ -837,10 +876,18 @@ private data class RowActionHit(
 )
 
 internal data class SessionTreeRowActionPresentation(
+  val showLoadingAction: Boolean,
   val quickIcon: Icon?,
   val showQuickAction: Boolean,
+  val showPopupAction: Boolean,
   val hoveredKind: RowActionKind?,
-)
+) {
+  val actionSlots: Int
+    get() =
+      (if (showLoadingAction) 1 else 0) +
+      (if (showQuickAction) 1 else 0) +
+      (if (showPopupAction) 1 else 0)
+}
 
 private data class NewSessionMenuModel(
   val standardItems: List<NewSessionMenuItem>,
@@ -857,7 +904,7 @@ private data class NewSessionMenuItem(
 private const val SESSION_TREE_ACTION_SLOT_SIZE = 18
 private const val SESSION_TREE_ACTION_ICON_SIZE = 14
 private const val SESSION_TREE_ACTION_GAP = 4
-private const val SESSION_TREE_ACTION_RIGHT_GAP = 8
+private const val SESSION_TREE_ACTION_RIGHT_GAP = 4
 private const val SESSION_TREE_THREAD_PROVIDER_ICON_SIZE = 12
 private const val SESSION_TREE_THREAD_META_LEFT_GAP = 8
 private const val SESSION_TREE_THREAD_META_RIGHT_GAP = 2
@@ -886,7 +933,7 @@ internal fun sessionTreeRowActionRightPadding(actionSlots: Int): Int {
   val slot = JBUI.scale(SESSION_TREE_ACTION_SLOT_SIZE)
   val gap = JBUI.scale(SESSION_TREE_ACTION_GAP)
   val rightGap = JBUI.scale(SESSION_TREE_ACTION_RIGHT_GAP)
-  return rightGap + (actionSlots * slot) + (if (actionSlots > 1) gap else 0)
+  return rightGap + (actionSlots * slot) + (if (actionSlots > 1) (actionSlots - 1) * gap else 0)
 }
 
 internal fun buildSessionTreeThreadRowPresentation(
@@ -1122,13 +1169,14 @@ internal class SessionTreeCellRenderer(
     val treeId = extractSessionTreeId(value) ?: return
     val treeNode = nodeResolver(treeId) ?: return
     val rowActions = rowActionsProvider(row, treeNode, selected)
-    val actionSlots = if (rowActions == null) 0 else 1 + if (rowActions.showQuickAction) 1 else 0
+    val actionSlots = rowActions?.actionSlots ?: 0
     val actionRightPadding = sessionTreeRowActionRightPadding(actionSlots)
     var metaRightPadding = 0
 
     when (treeNode) {
       is SessionTreeNode.Project -> {
-        icon = ProductIcons.getInstance().getProjectNodeIcon()
+        val projectIcon = ProductIcons.getInstance().getProjectNodeIcon()
+        icon = projectIcon
         val titleAttributes = if (treeNode.project.isOpen || treeNode.project.worktrees.any { it.isOpen }) {
           SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES
         }
@@ -1142,18 +1190,19 @@ internal class SessionTreeCellRenderer(
           append(" [$branchLabel]", SimpleTextAttributes.GRAYED_ATTRIBUTES)
         }
         if (treeNode.project.isLoading) {
-          append("  ${AgentSessionsBundle.message("toolwindow.loading")}", SimpleTextAttributes.GRAYED_ATTRIBUTES)
+          setAccessibleStatusText(AgentSessionsBundle.message("toolwindow.loading"))
         }
       }
 
       is SessionTreeNode.Worktree -> {
-        icon = AllIcons.Vcs.BranchNode
+        val worktreeIcon = AllIcons.Vcs.BranchNode
+        icon = worktreeIcon
         val worktreeName: @NlsSafe String = treeNode.worktree.name
         append(worktreeName, SimpleTextAttributes.REGULAR_ATTRIBUTES)
         val branchLabel: @NlsSafe String = treeNode.worktree.branch ?: AgentSessionsBundle.message("toolwindow.worktree.detached")
         append(" [$branchLabel]", SimpleTextAttributes.GRAYED_ATTRIBUTES)
         if (treeNode.worktree.isLoading) {
-          append("  ${AgentSessionsBundle.message("toolwindow.loading")}", SimpleTextAttributes.GRAYED_ATTRIBUTES)
+          setAccessibleStatusText(AgentSessionsBundle.message("toolwindow.loading"))
         }
       }
 

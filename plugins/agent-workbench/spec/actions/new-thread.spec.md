@@ -84,7 +84,7 @@ Canonical command mapping is owned by `spec/agent-core-contracts.spec.md`.
 - Optional app-server mode must surface concrete thread id after first user input.
   [@test] ../../sessions/testSrc/CodexAppServerClientTest.kt
 
-- Provider refresh must rebind pending Codex chat tabs to concrete identities and switch shell command to canonical resume mapping.
+- Provider refresh must rebind pending Codex chat tabs only to newly discovered concrete thread ids for the path, switch shell command to canonical resume mapping, and skip rebinding when baseline thread ids are not known for that path.
   [@test] ../../chat/testSrc/AgentChatEditorServiceTest.kt
   [@test] ../../sessions/testSrc/AgentSessionsLoadingCoordinatorTest.kt
 

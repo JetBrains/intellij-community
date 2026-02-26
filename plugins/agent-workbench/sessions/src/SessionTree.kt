@@ -411,15 +411,9 @@ internal fun resolveNewSessionRowActions(
   lastUsedProvider: AgentSessionProvider?,
 ): NewSessionRowActions? {
   val path = when (node) {
-    is SessionTreeNode.Project -> {
-      if (node.project.isLoading) return null
-      node.project.path
-    }
+    is SessionTreeNode.Project -> node.project.path
 
-    is SessionTreeNode.Worktree -> {
-      if (node.worktree.isLoading) return null
-      node.worktree.path
-    }
+    is SessionTreeNode.Worktree -> node.worktree.path
 
     is SessionTreeNode.Thread,
     is SessionTreeNode.SubAgent,
@@ -468,7 +462,8 @@ internal fun archiveTargetFromThreadNode(
   }
   return ArchiveThreadTarget(
     path = normalizeAgentWorkbenchPath(path),
-    thread = threadNode.thread,
+    provider = threadNode.thread.provider,
+    threadId = threadNode.thread.id,
   )
 }
 

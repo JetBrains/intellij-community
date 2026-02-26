@@ -6,7 +6,7 @@ targets:
   - ../common/src/icons/*.java
   - ../sessions/src/AgentSessionCli.kt
   - ../sessions/src/AgentSessionModels.kt
-  - ../sessions/src/AgentSessionsEditorTabActionContext.kt
+  - ../chat/src/AgentChatEditorTabActionContext.kt
   - ../sessions/src/AgentSessionsService.kt
   - ../sessions/src/AgentSessionsToolWindow.kt
   - ../sessions/src/SessionTree.kt

@@ -1,7 +1,9 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.agent.workbench.sessions
 
-import com.intellij.agent.workbench.sessions.core.AgentSessionThread
+import com.intellij.agent.workbench.chat.AgentChatEditorTabActionContext
+import com.intellij.agent.workbench.chat.resolveAgentChatEditorTabActionContext
+import com.intellij.agent.workbench.sessions.core.AgentSessionProvider
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.components.service
@@ -9,27 +11,27 @@ import com.intellij.openapi.project.DumbAwareAction
 
 internal class AgentSessionsArchiveThreadAction : DumbAwareAction {
   private val resolveTreeContext: (AnActionEvent) -> AgentSessionsTreePopupActionContext?
-  private val resolveEditorContext: (AnActionEvent) -> AgentChatThreadEditorTabActionContext?
-  private val canArchiveThread: (AgentSessionThread) -> Boolean
+  private val resolveEditorContext: (AnActionEvent) -> AgentChatEditorTabActionContext?
+  private val canArchiveProvider: (AgentSessionProvider) -> Boolean
   private val archiveThreads: (List<ArchiveThreadTarget>) -> Unit
 
   @Suppress("unused")
   constructor() {
     resolveTreeContext = ::resolveAgentSessionsTreePopupActionContext
-    resolveEditorContext = ::resolveAgentChatThreadEditorTabActionContext
-    canArchiveThread = { thread -> service<AgentSessionsService>().canArchiveThread(thread) }
+    resolveEditorContext = ::resolveAgentChatEditorTabActionContext
+    canArchiveProvider = { provider -> service<AgentSessionsService>().canArchiveProvider(provider) }
     archiveThreads = { targets -> service<AgentSessionsService>().archiveThreads(targets) }
   }
 
   internal constructor(
     resolveTreeContext: (AnActionEvent) -> AgentSessionsTreePopupActionContext?,
-    resolveEditorContext: (AnActionEvent) -> AgentChatThreadEditorTabActionContext?,
-    canArchiveThread: (AgentSessionThread) -> Boolean,
+    resolveEditorContext: (AnActionEvent) -> AgentChatEditorTabActionContext?,
+    canArchiveProvider: (AgentSessionProvider) -> Boolean,
     archiveThreads: (List<ArchiveThreadTarget>) -> Unit,
   ) {
     this.resolveTreeContext = resolveTreeContext
     this.resolveEditorContext = resolveEditorContext
-    this.canArchiveThread = canArchiveThread
+    this.canArchiveProvider = canArchiveProvider
     this.archiveThreads = archiveThreads
   }
 
@@ -37,7 +39,7 @@ internal class AgentSessionsArchiveThreadAction : DumbAwareAction {
     val treeContext = resolveTreeContext(e)
     if (treeContext != null) {
       val archiveTargets = treeContext.archiveTargets
-      val canArchive = archiveTargets.any { target -> canArchiveThread(target.thread) }
+      val canArchive = archiveTargets.any { target -> canArchiveProvider(target.provider) }
       e.presentation.isEnabledAndVisible = canArchive
       if (canArchive) {
         e.presentation.text = if (archiveTargets.size > 1) {
@@ -56,15 +58,16 @@ internal class AgentSessionsArchiveThreadAction : DumbAwareAction {
       return
     }
 
+    val archiveTarget = archiveTargetFromEditorContext(editorContext)
     e.presentation.text = templatePresentation.textWithMnemonic
     e.presentation.isVisible = true
-    e.presentation.isEnabled = canArchiveThread(editorContext.thread)
+    e.presentation.isEnabled = archiveTarget != null && canArchiveProvider(archiveTarget.provider)
   }
 
   override fun actionPerformed(e: AnActionEvent) {
     val treeContext = resolveTreeContext(e)
     if (treeContext != null) {
-      if (treeContext.archiveTargets.none { target -> canArchiveThread(target.thread) }) {
+      if (treeContext.archiveTargets.none { target -> canArchiveProvider(target.provider) }) {
         return
       }
       archiveThreads(treeContext.archiveTargets)
@@ -72,19 +75,21 @@ internal class AgentSessionsArchiveThreadAction : DumbAwareAction {
     }
 
     val editorContext = resolveEditorContext(e) ?: return
-    if (!canArchiveThread(editorContext.thread)) {
+    val archiveTarget = archiveTargetFromEditorContext(editorContext) ?: return
+    if (!canArchiveProvider(archiveTarget.provider)) {
       return
     }
-
-    archiveThreads(
-      listOf(
-        ArchiveThreadTarget(
-          path = editorContext.path,
-          thread = editorContext.thread,
-        )
-      )
-    )
+    archiveThreads(listOf(archiveTarget))
   }
 
   override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.BGT
+}
+
+private fun archiveTargetFromEditorContext(context: AgentChatEditorTabActionContext): ArchiveThreadTarget? {
+  if (context.isPendingThread) {
+    return null
+  }
+  val provider = context.provider ?: return null
+  val threadId = context.sessionId.takeIf { it.isNotBlank() } ?: return null
+  return ArchiveThreadTarget(path = context.path, provider = provider, threadId = threadId)
 }

@@ -104,6 +104,7 @@ class AgentSessionsTreeSnapshotTest {
     )
 
     assertEquals("/work/project-a-feature", target.path)
-    assertEquals("thread-1", target.thread.id)
+    assertEquals(AgentSessionProvider.CLAUDE, target.provider)
+    assertEquals("thread-1", target.threadId)
   }
 }

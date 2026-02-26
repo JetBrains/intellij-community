@@ -1,9 +1,9 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.agent.workbench.sessions
 
+import com.intellij.agent.workbench.chat.AgentChatEditorTabActionContext
 import com.intellij.agent.workbench.common.normalizeAgentWorkbenchPath
 import com.intellij.agent.workbench.sessions.core.AgentSessionProvider
-import com.intellij.agent.workbench.sessions.core.AgentSessionThread
 import com.intellij.openapi.project.ProjectManager
 import com.intellij.testFramework.TestActionEvent
 import com.intellij.testFramework.junit5.TestApplication
@@ -13,60 +13,13 @@ import org.junit.jupiter.api.Test
 @TestApplication
 class AgentSessionsEditorTabActionsTest {
   @Test
-  fun toThreadContextFromEditorContext() {
-    val editorContext = AgentChatEditorTabActionContext(
-      project = ProjectManager.getInstance().defaultProject,
-      path = normalizeAgentWorkbenchPath("/tmp/project"),
-      threadIdentity = "codex:thread-1",
-      threadId = "thread-1",
-    )
-
-    val context = toThreadEditorTabActionContext(editorContext)
-
-    assertThat(context).isNotNull
-    assertThat(context!!.path).isEqualTo(editorContext.path)
-    assertThat(context.provider).isEqualTo(AgentSessionProvider.CODEX)
-    assertThat(context.threadId).isEqualTo("thread-1")
-    assertThat(context.thread.id).isEqualTo("thread-1")
-    assertThat(context.thread.provider).isEqualTo(AgentSessionProvider.CODEX)
-  }
-
-  @Test
-  fun toThreadContextReturnsNullForInvalidIdentity() {
-    val editorContext = AgentChatEditorTabActionContext(
-      project = ProjectManager.getInstance().defaultProject,
-      path = normalizeAgentWorkbenchPath("/tmp/project"),
-      threadIdentity = "invalid-identity",
-      threadId = "thread-1",
-    )
-
-    val context = toThreadEditorTabActionContext(editorContext)
-
-    assertThat(context).isNull()
-  }
-
-  @Test
-  fun toThreadContextReturnsNullForPendingIdentity() {
-    val editorContext = AgentChatEditorTabActionContext(
-      project = ProjectManager.getInstance().defaultProject,
-      path = normalizeAgentWorkbenchPath("/tmp/project"),
-      threadIdentity = "codex:new-123",
-      threadId = "new-123",
-    )
-
-    val context = toThreadEditorTabActionContext(editorContext)
-
-    assertThat(context).isNull()
-  }
-
-  @Test
   fun archiveThreadActionVisibleAndEnabledOnlyWhenProviderSupportsArchive() {
-    val context = threadContext()
+    val context = editorContext()
 
     val unsupported = AgentSessionsArchiveThreadAction(
       resolveTreeContext = { null },
       resolveEditorContext = { context },
-      canArchiveThread = { false },
+      canArchiveProvider = { false },
       archiveThreads = { _ -> },
     )
     val unsupportedEvent = TestActionEvent.createTestEvent(unsupported)
@@ -77,7 +30,7 @@ class AgentSessionsEditorTabActionsTest {
     val supported = AgentSessionsArchiveThreadAction(
       resolveTreeContext = { null },
       resolveEditorContext = { context },
-      canArchiveThread = { true },
+      canArchiveProvider = { true },
       archiveThreads = { _ -> },
     )
     val supportedEvent = TestActionEvent.createTestEvent(supported)
@@ -88,13 +41,13 @@ class AgentSessionsEditorTabActionsTest {
 
   @Test
   fun archiveThreadActionInvokesArchiveCallback() {
-    val context = threadContext()
+    val context = editorContext()
     var archivedTargets: List<ArchiveThreadTarget>? = null
 
     val action = AgentSessionsArchiveThreadAction(
       resolveTreeContext = { null },
       resolveEditorContext = { context },
-      canArchiveThread = { true },
+      canArchiveProvider = { true },
       archiveThreads = { targets -> archivedTargets = targets },
     )
 
@@ -102,13 +55,13 @@ class AgentSessionsEditorTabActionsTest {
 
     val archivedTarget = checkNotNull(archivedTargets).single()
     assertThat(archivedTarget.path).isEqualTo(context.path)
-    assertThat(archivedTarget.thread.id).isEqualTo(context.threadId)
-    assertThat(archivedTarget.thread.provider).isEqualTo(context.provider)
+    assertThat(archivedTarget.threadId).isEqualTo(context.sessionId)
+    assertThat(archivedTarget.provider).isEqualTo(context.provider)
   }
 
   @Test
   fun selectInAgentThreadsActionEnsuresVisibilityAndActivatesToolWindow() {
-    val context = threadContext()
+    val context = editorContext()
     var ensuredPath: String? = null
     var ensuredProvider: AgentSessionProvider? = null
     var ensuredThreadId: String? = null
@@ -133,13 +86,13 @@ class AgentSessionsEditorTabActionsTest {
     action.actionPerformed(event)
     assertThat(ensuredPath).isEqualTo(context.path)
     assertThat(ensuredProvider).isEqualTo(context.provider)
-    assertThat(ensuredThreadId).isEqualTo(context.threadId)
+    assertThat(ensuredThreadId).isEqualTo(context.sessionId)
     assertThat(activatedProjectName).isEqualTo(context.project.name)
   }
 
   @Test
   fun goToSourceProjectActionOpensSourceProjectInDedicatedFrame() {
-    val context = editorContext(threadId = "thread-42")
+    val context = editorContext(threadId = "thread-42", sessionId = "thread-42")
     var openedPath: String? = null
 
     val action = AgentSessionsGoToSourceProjectFromEditorTabAction(
@@ -159,7 +112,7 @@ class AgentSessionsEditorTabActionsTest {
   @Test
   fun goToSourceProjectActionHiddenOutsideDedicatedFrame() {
     val action = AgentSessionsGoToSourceProjectFromEditorTabAction(
-      resolveContext = { editorContext(threadId = "thread-42") },
+      resolveContext = { editorContext(threadId = "thread-42", sessionId = "thread-42") },
       isDedicatedProject = { false },
       openProject = { _ -> error("should not open project when not in dedicated frame") },
     )
@@ -172,7 +125,7 @@ class AgentSessionsEditorTabActionsTest {
 
   @Test
   fun copyThreadIdActionCopiesThreadId() {
-    val context = editorContext(threadId = "thread-42")
+    val context = editorContext(threadId = "thread-42", sessionId = "thread-42")
     var copiedThreadId: String? = null
 
     val action = AgentSessionsCopyThreadIdFromEditorTabAction(
@@ -190,8 +143,8 @@ class AgentSessionsEditorTabActionsTest {
   }
 
   @Test
-  fun copyThreadIdActionDisabledWhenThreadIdBlank() {
-    val context = editorContext(threadId = "")
+  fun copyThreadIdActionDisabledWhenSessionIdBlank() {
+    val context = editorContext(threadId = "thread-42", sessionId = "")
     val action = AgentSessionsCopyThreadIdFromEditorTabAction(
       resolveContext = { context },
       copyToClipboard = { _ -> error("should not copy blank thread id") },
@@ -206,11 +159,11 @@ class AgentSessionsEditorTabActionsTest {
 
   @Test
   fun copyThreadIdActionDisabledForPendingIdentity() {
-    val context = AgentChatEditorTabActionContext(
-      project = ProjectManager.getInstance().defaultProject,
-      path = normalizeAgentWorkbenchPath("/tmp/project"),
+    val context = editorContext(
       threadIdentity = "codex:new-123",
       threadId = "thread-42",
+      sessionId = "new-123",
+      isPendingThread = true,
     )
     val action = AgentSessionsCopyThreadIdFromEditorTabAction(
       resolveContext = { context },
@@ -240,29 +193,20 @@ class AgentSessionsEditorTabActionsTest {
 
 }
 
-private fun editorContext(threadId: String): AgentChatEditorTabActionContext {
+private fun editorContext(
+  threadIdentity: String = "codex:thread-1",
+  threadId: String = "thread-1",
+  provider: AgentSessionProvider? = AgentSessionProvider.CODEX,
+  sessionId: String = "thread-1",
+  isPendingThread: Boolean = false,
+): AgentChatEditorTabActionContext {
   return AgentChatEditorTabActionContext(
     project = ProjectManager.getInstance().defaultProject,
     path = normalizeAgentWorkbenchPath("/tmp/project"),
-    threadIdentity = "codex:thread-1",
+    threadIdentity = threadIdentity,
     threadId = threadId,
-  )
-}
-
-private fun threadContext(): AgentChatThreadEditorTabActionContext {
-  val provider = AgentSessionProvider.CODEX
-  val threadId = "thread-1"
-  return AgentChatThreadEditorTabActionContext(
-    project = ProjectManager.getInstance().defaultProject,
-    path = normalizeAgentWorkbenchPath("/tmp/project"),
     provider = provider,
-    threadId = threadId,
-    thread = AgentSessionThread(
-      id = threadId,
-      title = "Thread 1",
-      updatedAt = 0L,
-      archived = false,
-      provider = provider,
-    ),
+    sessionId = sessionId,
+    isPendingThread = isPendingThread,
   )
 }

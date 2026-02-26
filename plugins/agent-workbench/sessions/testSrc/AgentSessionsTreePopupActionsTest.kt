@@ -1,6 +1,7 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.agent.workbench.sessions
 
+import com.intellij.agent.workbench.chat.AgentChatEditorTabActionContext
 import com.intellij.agent.workbench.sessions.core.AgentSessionLaunchMode
 import com.intellij.agent.workbench.sessions.core.AgentSessionProvider
 import com.intellij.agent.workbench.sessions.core.AgentSessionThread
@@ -115,18 +116,20 @@ class AgentSessionsTreePopupActionsTest {
     val archiveAction = AgentSessionsArchiveThreadAction(
       resolveTreeContext = { event -> resolveAgentSessionsTreePopupActionContext(event) },
       resolveEditorContext = { null },
-      canArchiveThread = { thread -> thread.provider == AgentSessionProvider.CODEX },
+      canArchiveProvider = { provider -> provider == AgentSessionProvider.CODEX },
       archiveThreads = { targets -> archivedTargets = targets },
     )
 
     val project = AgentProjectSessions(path = "/work/project-a", name = "Project A", isOpen = true)
     val codexTarget = ArchiveThreadTarget(
       path = "/work/project-a",
-      thread = thread(id = "codex-1", provider = AgentSessionProvider.CODEX),
+      provider = AgentSessionProvider.CODEX,
+      threadId = "codex-1",
     )
     val claudeTarget = ArchiveThreadTarget(
       path = "/work/project-a",
-      thread = thread(id = "claude-1", provider = AgentSessionProvider.CLAUDE),
+      provider = AgentSessionProvider.CLAUDE,
+      threadId = "claude-1",
     )
     val archiveContext = popupContext(
       nodeId = SessionTreeId.Thread(
@@ -134,7 +137,7 @@ class AgentSessionsTreePopupActionsTest {
         provider = AgentSessionProvider.CODEX,
         threadId = "codex-1",
       ),
-      node = SessionTreeNode.Thread(project = project, thread = codexTarget.thread),
+      node = SessionTreeNode.Thread(project = project, thread = thread(id = "codex-1", provider = AgentSessionProvider.CODEX)),
       archiveTargets = listOf(codexTarget, claudeTarget),
     )
     val archiveEvent = popupEvent(archiveAction, archiveContext)
@@ -151,7 +154,7 @@ class AgentSessionsTreePopupActionsTest {
         provider = AgentSessionProvider.CLAUDE,
         threadId = "claude-1",
       ),
-      node = SessionTreeNode.Thread(project = project, thread = claudeTarget.thread),
+      node = SessionTreeNode.Thread(project = project, thread = thread(id = "claude-1", provider = AgentSessionProvider.CLAUDE)),
       archiveTargets = listOf(claudeTarget),
     )
     val unsupportedEvent = popupEvent(archiveAction, unsupportedContext)
@@ -165,7 +168,8 @@ class AgentSessionsTreePopupActionsTest {
     val project = AgentProjectSessions(path = "/work/project-a", name = "Project A", isOpen = true)
     val treeTarget = ArchiveThreadTarget(
       path = "/work/project-a",
-      thread = thread(id = "tree-1", provider = AgentSessionProvider.CODEX),
+      provider = AgentSessionProvider.CODEX,
+      threadId = "tree-1",
     )
     val treeContext = popupContext(
       nodeId = SessionTreeId.Thread(
@@ -173,20 +177,21 @@ class AgentSessionsTreePopupActionsTest {
         provider = AgentSessionProvider.CODEX,
         threadId = "tree-1",
       ),
-      node = SessionTreeNode.Thread(project = project, thread = treeTarget.thread),
+      node = SessionTreeNode.Thread(project = project, thread = thread(id = "tree-1", provider = AgentSessionProvider.CODEX)),
       archiveTargets = listOf(treeTarget),
     )
-    val editorContext = AgentChatThreadEditorTabActionContext(
+    val editorContext = AgentChatEditorTabActionContext(
       project = ProjectManager.getInstance().defaultProject,
       path = "/work/project-from-editor",
-      provider = AgentSessionProvider.CODEX,
+      threadIdentity = "codex:editor-1",
       threadId = "editor-1",
-      thread = thread(id = "editor-1", provider = AgentSessionProvider.CODEX),
+      provider = AgentSessionProvider.CODEX,
+      sessionId = "editor-1",
     )
     val archiveAction = AgentSessionsArchiveThreadAction(
       resolveTreeContext = { treeContext },
       resolveEditorContext = { editorContext },
-      canArchiveThread = { true },
+      canArchiveProvider = { true },
       archiveThreads = { targets -> archivedTargets = targets },
     )
 

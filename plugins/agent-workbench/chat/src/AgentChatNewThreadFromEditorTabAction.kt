@@ -1,13 +1,10 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.agent.workbench.chat
 
-import com.intellij.agent.workbench.common.normalizeAgentWorkbenchPath
 import com.intellij.agent.workbench.sessions.core.AgentThreadQuickStartService
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
-import com.intellij.openapi.components.service
 import com.intellij.openapi.project.DumbAwareAction
-import com.intellij.openapi.project.Project
 
 internal class AgentChatNewThreadFromEditorTabAction : DumbAwareAction {
   private val resolveContext: (AnActionEvent) -> AgentChatEditorTabActionContext?
@@ -49,18 +46,4 @@ internal class AgentChatNewThreadFromEditorTabAction : DumbAwareAction {
   }
 
   override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.BGT
-}
-
-internal data class AgentChatEditorTabActionContext(
-  val project: Project,
-  val path: String,
-)
-
-internal fun resolveAgentChatEditorTabActionContext(event: AnActionEvent): AgentChatEditorTabActionContext? {
-  val project = event.project ?: return null
-  val selectedChatTab = project.service<AgentChatTabSelectionService>().selectedChatTab.value ?: return null
-  return AgentChatEditorTabActionContext(
-    project = project,
-    path = normalizeAgentWorkbenchPath(selectedChatTab.projectPath),
-  )
 }

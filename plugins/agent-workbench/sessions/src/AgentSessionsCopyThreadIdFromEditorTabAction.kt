@@ -1,6 +1,8 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.agent.workbench.sessions
 
+import com.intellij.agent.workbench.chat.AgentChatEditorTabActionContext
+import com.intellij.agent.workbench.chat.resolveAgentChatEditorTabActionContext
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.ide.CopyPasteManager
@@ -29,10 +31,10 @@ internal class AgentSessionsCopyThreadIdFromEditorTabAction : DumbAwareAction {
 
   override fun actionPerformed(e: AnActionEvent) {
     val context = resolveContext(e) ?: return
-    if (isAgentSessionNewIdentity(context.threadIdentity)) {
+    if (context.isPendingThread) {
       return
     }
-    val threadId = context.threadId.takeIf { it.isNotBlank() } ?: return
+    val threadId = context.sessionId.takeIf { it.isNotBlank() } ?: return
     copyToClipboard(threadId)
   }
 
@@ -44,7 +46,7 @@ internal class AgentSessionsCopyThreadIdFromEditorTabAction : DumbAwareAction {
     }
 
     e.presentation.isVisible = true
-    e.presentation.isEnabled = context.threadId.isNotBlank() && !isAgentSessionNewIdentity(context.threadIdentity)
+    e.presentation.isEnabled = context.sessionId.isNotBlank() && !context.isPendingThread
   }
 
   override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.BGT

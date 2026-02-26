@@ -2,6 +2,7 @@
 package com.intellij.agent.workbench.chat
 
 import com.intellij.agent.workbench.common.AgentThreadActivity
+import com.intellij.agent.workbench.sessions.core.AgentSessionProvider
 import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.vfs.VirtualFileSystem
@@ -28,6 +29,15 @@ internal class AgentChatVirtualFile internal constructor(
     private set
 
   var threadIdentity: String = ""
+    private set
+
+  var provider: AgentSessionProvider? = null
+    private set
+
+  var sessionId: String = ""
+    private set
+
+  var isPendingThread: Boolean = false
     private set
 
   var subAgentId: String? = null
@@ -131,6 +141,7 @@ internal class AgentChatVirtualFile internal constructor(
     var changed = false
     if (this.threadIdentity != threadIdentity) {
       this.threadIdentity = threadIdentity
+      updateThreadCoordinates()
       changed = true
     }
     if (this.shellCommand != shellCommand || this.threadId != threadId) {
@@ -165,6 +176,7 @@ internal class AgentChatVirtualFile internal constructor(
       projectPath = snapshot.identity.projectPath
       threadIdentity = snapshot.identity.threadIdentity
       subAgentId = snapshot.identity.subAgentId
+      updateThreadCoordinates()
     }
     if (snapshot.runtime.threadId.isNotBlank() || snapshot.runtime.shellCommand.isNotEmpty()) {
       updateCommandAndThreadId(shellCommand = snapshot.runtime.shellCommand, threadId = snapshot.runtime.threadId)
@@ -173,6 +185,13 @@ internal class AgentChatVirtualFile internal constructor(
       updateThreadTitle(snapshot.runtime.threadTitle)
     }
     updateThreadActivity(snapshot.runtime.threadActivity)
+  }
+
+  private fun updateThreadCoordinates() {
+    val coordinates = resolveAgentChatThreadCoordinates(threadIdentity)
+    provider = coordinates?.provider
+    sessionId = coordinates?.sessionId.orEmpty()
+    isPendingThread = coordinates?.isPending ?: false
   }
 
   internal fun toSnapshot(): AgentChatTabSnapshot {

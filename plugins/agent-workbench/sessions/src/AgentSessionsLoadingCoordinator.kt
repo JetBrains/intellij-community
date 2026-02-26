@@ -212,21 +212,21 @@ internal class AgentSessionsLoadingCoordinator(
             }
             return@launch
           }
-          val finalResult = loadSourcesIncrementally(
-            sessionSources = sessionSources,
-            normalizedPath = normalizedEntryPath,
-            project = entryProject,
-            prefetchedByProvider = prefetchedByProvider,
-            originalPath = entry.path,
-          ) { partial, anySuccess ->
-            stateStore.updateProject(normalizedEntryPath) { project ->
-              project.copy(
-                threads = partial.threads,
-                providerWarnings = partial.providerWarnings,
-                isLoading = if (anySuccess) false else project.isLoading,
-              )
+            val finalResult = loadSourcesIncrementally(
+              sessionSources = sessionSources,
+              normalizedPath = normalizedEntryPath,
+              project = entryProject,
+              prefetchedByProvider = prefetchedByProvider,
+              originalPath = entry.path,
+            ) { partial, isComplete ->
+              stateStore.updateProject(normalizedEntryPath) { project ->
+                project.copy(
+                  threads = partial.threads,
+                  providerWarnings = partial.providerWarnings,
+                  isLoading = !isComplete,
+                )
+              }
             }
-          }
           stateStore.updateProject(normalizedEntryPath) { project ->
             project.copy(
               isLoading = false,
@@ -259,12 +259,12 @@ internal class AgentSessionsLoadingCoordinator(
               project = worktreeProject,
               prefetchedByProvider = prefetchedByProvider,
               originalPath = wt.path,
-            ) { partial, anySuccess ->
+            ) { partial, isComplete ->
               stateStore.updateWorktree(normalizedEntryPath, normalizedWorktreePath) { worktree ->
                 worktree.copy(
                   threads = partial.threads,
                   providerWarnings = partial.providerWarnings,
-                  isLoading = if (anySuccess) false else worktree.isLoading,
+                  isLoading = !isComplete,
                 )
               }
             }
@@ -777,7 +777,7 @@ internal class AgentSessionsLoadingCoordinator(
         }
       }
 
-      val pollNewThreadIdsByPath = if (provider == AgentSessionProvider.CODEX && scopedPaths != null) {
+      val allowedNewThreadIdsByPath = if (provider == AgentSessionProvider.CODEX) {
         calculateNewProviderThreadIdsByPath(
           provider = provider,
           outcomes = outcomes,
@@ -792,7 +792,7 @@ internal class AgentSessionsLoadingCoordinator(
         provider = provider,
         outcomes = outcomes,
         refreshId = refreshId,
-        allowedThreadIdsByPath = pollNewThreadIdsByPath,
+        allowedThreadIdsByPath = allowedNewThreadIdsByPath,
       )
 
       syncOpenChatTabPresentation(provider = provider, outcomes = outcomes, refreshId = refreshId)
@@ -862,11 +862,13 @@ internal class AgentSessionsLoadingCoordinator(
     val targetsByPath = LinkedHashMap<String, MutableList<AgentChatPendingTabRebindTarget>>()
     for ((path, outcome) in outcomes) {
       val threads = outcome.threads ?: continue
-      val shouldFilterByAllowedIds = allowedThreadIdsByPath?.containsKey(path) == true
-      val allowedThreadIds = allowedThreadIdsByPath?.get(path).orEmpty()
+      val allowedThreadIds = allowedThreadIdsByPath?.get(path)
+      if (allowedThreadIdsByPath != null && allowedThreadIds == null) {
+        continue
+      }
       for (thread in threads) {
         if (thread.provider != provider) continue
-        if (shouldFilterByAllowedIds && thread.id !in allowedThreadIds) continue
+        if (allowedThreadIds != null && thread.id !in allowedThreadIds) continue
         val command = runCatching {
           buildAgentSessionResumeCommand(thread.provider, thread.id)
         }.getOrDefault(listOf(provider.value, "resume", thread.id))
@@ -1055,9 +1057,10 @@ internal class AgentSessionsLoadingCoordinator(
     project: Project,
     prefetchedByProvider: Map<AgentSessionProvider, Map<String, List<AgentSessionThread>>>,
     originalPath: String,
-    onPartialResult: (AgentSessionLoadResult, Boolean) -> Unit,
+    onPartialResult: (AgentSessionLoadResult, isComplete: Boolean) -> Unit,
   ): AgentSessionLoadResult {
     val sourceResults = java.util.concurrent.CopyOnWriteArrayList<AgentSessionSourceLoadResult>()
+    val totalSourceCount = sessionSources.size
     coroutineScope {
       for (source in sessionSources) {
         launch {
@@ -1074,7 +1077,7 @@ internal class AgentSessionsLoadingCoordinator(
             resolveErrorMessage = ::resolveErrorMessage,
             resolveWarningMessage = ::resolveProviderWarningMessage,
           )
-          onPartialResult(partial, sourceResults.any { it.result.isSuccess })
+          onPartialResult(partial, sourceResults.size == totalSourceCount)
         }
       }
     }

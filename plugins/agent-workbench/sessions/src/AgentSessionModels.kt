@@ -14,7 +14,8 @@ data class AgentSessionThreadPreview(
 
 internal data class ArchiveThreadTarget(
   @JvmField val path: String,
-  @JvmField val thread: AgentSessionThread,
+  val provider: AgentSessionProvider,
+  @JvmField val threadId: String,
 )
 
 internal data class AgentSessionProviderWarning(

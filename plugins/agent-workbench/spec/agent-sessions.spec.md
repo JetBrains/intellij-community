@@ -84,6 +84,13 @@ Shared contracts remain in `spec/agent-core-contracts.spec.md`.
 - Final refresh results must update preview cache only for paths that are not in blocking error state.
   [@test] ../sessions/testSrc/AgentSessionsServiceRefreshIntegrationTest.kt
 
+- Explicit refresh must set loading state only for project/worktree paths in the active refresh load scope; rows outside that scope must not show loading indicators.
+  [@test] ../sessions/testSrc/AgentSessionsServiceRefreshIntegrationTest.kt
+  [@test] ../sessions/testSrc/AgentSessionsSwingTreeCellRendererTest.kt
+
+- For refreshed project/worktree paths, loading state must remain visible until provider loading for that path is complete; first partial provider success must not clear loading.
+  [@test] ../sessions/testSrc/AgentSessionsServiceRefreshIntegrationTest.kt
+
 - Auto-open default project expansion must skip paths persisted as collapsed.
   [@test] ../sessions/testSrc/AgentSessionsSwingTreeStatePersistenceTest.kt
 
@@ -173,6 +180,7 @@ Shared contracts remain in `spec/agent-core-contracts.spec.md`.
 - Thread-row archive context menu applies to current multi-selection when invoked from a selected thread and shows `Archive Selected (N)` when `N > 1`.
 - Single-click on normal rows selects only; open happens on Enter or double-click.
 - Project/worktree rows expose new-session affordances when hovered/selected.
+- Project/worktree rows being refreshed show a right-side loading indicator in the row action area while refresh is in progress.
 - Provider warnings are inline and non-blocking when partial data exists.
 - Blocking errors are inline and non-openable.
 

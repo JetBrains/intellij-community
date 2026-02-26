@@ -57,6 +57,63 @@ class AgentSessionsSwingTreeCellRendererTest {
   }
 
   @Test
+  fun loadingProjectRowsUseProjectIconAndNoLoadingText() {
+    val project = AgentProjectSessions(path = "/work/project-a", name = "Project A", isOpen = true, isLoading = true)
+    val projectId = SessionTreeId.Project(project.path)
+    val renderer = SessionTreeCellRenderer(
+      nowProvider = { 0L },
+      rowActionsProvider = { _, _, _ -> null },
+      nodeResolver = { id ->
+        if (id == projectId) SessionTreeNode.Project(project) else null
+      },
+    )
+    val tree = createTree(width = 420)
+
+    renderer.getTreeCellRendererComponent(tree, descriptorValue(projectId), false, false, false, 0, false)
+
+    assertThat(renderer.getCharSequence(true).toString()).doesNotContain(AgentSessionsBundle.message("toolwindow.loading"))
+    assertThat(renderer.icon).isEqualTo(ProductIcons.getInstance().getProjectNodeIcon())
+    assertThat(renderer.ipad.right).isEqualTo(0)
+    assertThat(renderer.accessibleContext.accessibleName).contains(AgentSessionsBundle.message("toolwindow.loading"))
+  }
+
+  @Test
+  fun loadingWorktreeRowsUseBranchIconAndReserveRightActionSpace() {
+    val project = AgentProjectSessions(path = "/work/project-a", name = "Project A", isOpen = true)
+    val worktree = AgentWorktree(
+      path = "/work/project-a-feature",
+      name = "project-a-feature",
+      branch = "feature",
+      isOpen = false,
+      isLoading = true,
+    )
+    val worktreeId = SessionTreeId.Worktree(project.path, worktree.path)
+    val renderer = SessionTreeCellRenderer(
+      nowProvider = { 0L },
+      rowActionsProvider = { _, _, _ ->
+        SessionTreeRowActionPresentation(
+          showLoadingAction = true,
+          quickIcon = AllIcons.General.Add,
+          showQuickAction = true,
+          showPopupAction = true,
+          hoveredKind = null,
+        )
+      },
+      nodeResolver = { id ->
+        if (id == worktreeId) SessionTreeNode.Worktree(project, worktree) else null
+      },
+    )
+    val tree = createTree(width = 420)
+
+    renderer.getTreeCellRendererComponent(tree, descriptorValue(worktreeId), false, false, false, 0, false)
+
+    assertThat(renderer.getCharSequence(true).toString()).doesNotContain(AgentSessionsBundle.message("toolwindow.loading"))
+    assertThat(renderer.icon).isEqualTo(AllIcons.Vcs.BranchNode)
+    assertThat(renderer.ipad.right).isEqualTo(sessionTreeRowActionRightPadding(actionSlots = 3))
+    assertThat(renderer.accessibleContext.accessibleName).contains(AgentSessionsBundle.message("toolwindow.loading"))
+  }
+
+  @Test
   fun moreProjectRowsUseMutedTextWithoutLeadingIcon() {
     val moreId = SessionTreeId.MoreProjects
     val hiddenCount = 44

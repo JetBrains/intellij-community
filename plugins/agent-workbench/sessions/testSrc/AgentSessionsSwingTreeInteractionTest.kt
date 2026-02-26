@@ -75,8 +75,8 @@ class AgentSessionsSwingTreeInteractionTest {
     val projectSessions = AgentProjectSessions(path = "/work/project-a", name = "Project A", isOpen = true)
     val popupThread = AgentSessionThread(id = "popup-1", title = "Popup", updatedAt = 100, archived = false, provider = AgentSessionProvider.CODEX)
     val selectedThread = AgentSessionThread(id = "selected-1", title = "Selected", updatedAt = 100, archived = false, provider = AgentSessionProvider.CLAUDE)
-    val popupTarget = ArchiveThreadTarget(path = "/work/project-a", thread = popupThread)
-    val selectedTarget = ArchiveThreadTarget(path = "/work/project-b", thread = selectedThread)
+    val popupTarget = ArchiveThreadTarget(path = "/work/project-a", provider = popupThread.provider, threadId = popupThread.id)
+    val selectedTarget = ArchiveThreadTarget(path = "/work/project-b", provider = selectedThread.provider, threadId = selectedThread.id)
     val popupContext = AgentSessionsTreePopupActionContext(
       project = project,
       nodeId = SessionTreeId.Thread("/work/project-a", AgentSessionProvider.CODEX, "popup-1"),

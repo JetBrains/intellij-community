@@ -61,10 +61,14 @@ This file does not redefine runtime behavior; it maps each contract area to requ
 - Persisted UI-state coverage must include visible-count persistence, preview-provider persistence, and legacy provider fallback.
   [@test] ../sessions/testSrc/AgentSessionsTreeUiStateServiceTest.kt
 
-- New-thread action coverage must include quick-provider eligibility, loading-row suppression, Standard/YOLO popup modeling, dedup, and pending-to-concrete Codex rebinding.
+- New-thread action coverage must include quick-provider eligibility, loading-row exposure, Standard/YOLO popup modeling, dedup, and pending-to-concrete Codex rebinding.
   [@test] ../sessions/testSrc/AgentSessionsSwingNewSessionActionsTest.kt
   [@test] ../sessions/testSrc/AgentSessionsLoadingCoordinatorTest.kt
   [@test] ../chat/testSrc/AgentChatEditorServiceTest.kt
+
+- Refresh-loading coverage must include per-refreshed-path loading indicators and loading completion semantics (loading is not cleared on first partial provider success).
+  [@test] ../sessions/testSrc/AgentSessionsServiceRefreshIntegrationTest.kt
+  [@test] ../sessions/testSrc/AgentSessionsSwingTreeCellRendererTest.kt
 
 - Tool-window factory coverage must include Swing factory registration and title/gear action registration.
   [@test] ../sessions/testSrc/AgentSessionsToolWindowFactorySwingTest.kt

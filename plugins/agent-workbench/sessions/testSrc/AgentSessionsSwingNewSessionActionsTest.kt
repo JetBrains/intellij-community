@@ -12,8 +12,7 @@ import com.intellij.agent.workbench.sessions.core.providers.AgentSessionSource
 import com.intellij.agent.workbench.sessions.core.providers.InMemoryAgentSessionProviderRegistry
 import com.intellij.openapi.project.Project
 import com.intellij.testFramework.junit5.TestApplication
-import org.junit.jupiter.api.Assertions.assertEquals
-import org.junit.jupiter.api.Assertions.assertNull
+import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 
 @TestApplication
@@ -35,30 +34,36 @@ class AgentSessionsSwingNewSessionActionsTest {
         isOpen = false,
       )
 
-      assertEquals(
-        NewSessionRowActions(path = "/work/project-a", quickProvider = AgentSessionProvider.CODEX),
-        resolveNewSessionRowActions(SessionTreeNode.Project(project), AgentSessionProvider.CODEX),
-      )
-      assertEquals(
-        NewSessionRowActions(path = "/work/project-a-feature", quickProvider = AgentSessionProvider.CODEX),
-        resolveNewSessionRowActions(SessionTreeNode.Worktree(project, worktree), AgentSessionProvider.CODEX),
-      )
+      assertThat(resolveNewSessionRowActions(SessionTreeNode.Project(project), AgentSessionProvider.CODEX))
+        .isEqualTo(NewSessionRowActions(path = "/work/project-a", quickProvider = AgentSessionProvider.CODEX))
+      assertThat(resolveNewSessionRowActions(SessionTreeNode.Worktree(project, worktree), AgentSessionProvider.CODEX))
+        .isEqualTo(NewSessionRowActions(path = "/work/project-a-feature", quickProvider = AgentSessionProvider.CODEX))
     }
   }
 
   @Test
-  fun loadingProjectAndWorktreeRowsDoNotExposeNewSessionActions() {
-    val project = AgentProjectSessions(path = "/work/project-a", name = "Project A", isOpen = true, isLoading = true)
-    val worktree = AgentWorktree(
-      path = "/work/project-a-feature",
-      name = "project-a-feature",
-      branch = "feature",
-      isOpen = false,
-      isLoading = true,
+  fun loadingProjectAndWorktreeRowsExposeNewSessionActions() {
+    val bridge = TestProviderBridge(
+      provider = AgentSessionProvider.CODEX,
+      supportedModes = setOf(AgentSessionLaunchMode.STANDARD),
+      cliAvailable = true,
     )
 
-    assertNull(resolveNewSessionRowActions(SessionTreeNode.Project(project), AgentSessionProvider.CODEX))
-    assertNull(resolveNewSessionRowActions(SessionTreeNode.Worktree(project, worktree), AgentSessionProvider.CODEX))
+    AgentSessionProviderBridges.withRegistryForTest(InMemoryAgentSessionProviderRegistry(listOf(bridge))) {
+      val project = AgentProjectSessions(path = "/work/project-a", name = "Project A", isOpen = true, isLoading = true)
+      val worktree = AgentWorktree(
+        path = "/work/project-a-feature",
+        name = "project-a-feature",
+        branch = "feature",
+        isOpen = false,
+        isLoading = true,
+      )
+
+      assertThat(resolveNewSessionRowActions(SessionTreeNode.Project(project), AgentSessionProvider.CODEX))
+        .isEqualTo(NewSessionRowActions(path = "/work/project-a", quickProvider = AgentSessionProvider.CODEX))
+      assertThat(resolveNewSessionRowActions(SessionTreeNode.Worktree(project, worktree), AgentSessionProvider.CODEX))
+        .isEqualTo(NewSessionRowActions(path = "/work/project-a-feature", quickProvider = AgentSessionProvider.CODEX))
+    }
   }
 
   @Test
@@ -78,8 +83,8 @@ class AgentSessionsSwingNewSessionActionsTest {
     AgentSessionProviderBridges.withRegistryForTest(
       InMemoryAgentSessionProviderRegistry(listOf(codexDisabledBridge, claudeYoloOnlyBridge))
     ) {
-      assertEquals(AgentSessionProvider.CODEX, resolveQuickCreateProvider(AgentSessionProvider.CODEX))
-      assertNull(resolveQuickCreateProvider(AgentSessionProvider.CLAUDE))
+      assertThat(resolveQuickCreateProvider(AgentSessionProvider.CODEX)).isEqualTo(AgentSessionProvider.CODEX)
+      assertThat(resolveQuickCreateProvider(AgentSessionProvider.CLAUDE)).isNull()
     }
 
     val codexEnabledBridge = TestProviderBridge(
@@ -89,7 +94,7 @@ class AgentSessionsSwingNewSessionActionsTest {
     )
 
     AgentSessionProviderBridges.withRegistryForTest(InMemoryAgentSessionProviderRegistry(listOf(codexEnabledBridge))) {
-      assertEquals(AgentSessionProvider.CODEX, resolveQuickCreateProvider(AgentSessionProvider.CODEX))
+      assertThat(resolveQuickCreateProvider(AgentSessionProvider.CODEX)).isEqualTo(AgentSessionProvider.CODEX)
     }
   }
 
