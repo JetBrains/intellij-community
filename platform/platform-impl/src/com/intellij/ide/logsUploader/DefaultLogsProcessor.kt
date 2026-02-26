@@ -13,7 +13,7 @@ class DefaultLogsProcessor : LogProvider {
 
     return listOfNotNull(
       LogProvider.LogsEntry("", listOf(ideLogDir)),
-      daemonLogDir?.let { LogProvider.LogsEntry("Daemon", listOf(it)) },
+      daemonLogDir?.let { LogProvider.LogsEntry("Daemon", listOf(it), createSubdirectories = false) },
     )
   }
 
