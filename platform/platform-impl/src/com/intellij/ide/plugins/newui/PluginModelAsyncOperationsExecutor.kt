@@ -3,6 +3,7 @@ package com.intellij.ide.plugins.newui
 
 import com.intellij.ide.plugins.marketplace.PluginSearchResult
 import com.intellij.ide.plugins.marketplace.SetEnabledStateResult
+import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.asContextElement
@@ -18,6 +19,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus
+import java.util.function.Consumer
 import java.util.function.Function
 import javax.swing.JComponent
 
@@ -112,6 +114,29 @@ internal object PluginModelAsyncOperationsExecutor {
         else {
           modelFacade.installOrUpdatePlugin(component, plugin, updateDescriptor, modalityState)
         }
+      }
+    }
+  }
+
+  fun loadPopupMenuActions(
+    component: ListPluginComponent,
+    selection: List<ListPluginComponent>,
+    callback: Consumer<List<AnAction>>,
+  ) {
+    val customizer = component.customizer
+    if (customizer == null) {
+      callback.accept(emptyList())
+      return
+    }
+    val modelFacade = component.modelFacade
+    component.coroutineScope.launch(Dispatchers.IO) {
+      val stateForComponent = ModalityState.stateForComponent(component)
+      val popupSelection = selection.map {
+        PluginPopupMenuActionData(it.pluginModel, it.installedDescriptorForMarketplace, it.descriptorForActions)
+      }
+      val popupActions = customizer.getPopupMenuActions(modelFacade, popupSelection, stateForComponent)
+      withContext(Dispatchers.EDT + stateForComponent.asContextElement()) {
+        callback.accept(popupActions)
       }
     }
   }

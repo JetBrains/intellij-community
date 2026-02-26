@@ -106,22 +106,30 @@ public final class MultiSelectionEventHandler extends EventHandler {
             ensureMoveSingleSelection(component);
           }
 
-          DefaultActionGroup group = new DefaultActionGroup();
-          component.createPopupMenu(group, getSelection());
-          if (group.getChildrenCount() == 0) {
+          List<ListPluginComponent> selection = getSelection();
+          if (component.getCustomizer() != null) {
+            Component eventComponent = event.getComponent();
+            int eventX = event.getX();
+            int eventY = event.getY();
+            PluginModelAsyncOperationsExecutor.INSTANCE.loadPopupMenuActions(
+              component,
+              selection,
+              popupActions -> {
+                DefaultActionGroup group = new DefaultActionGroup();
+                popupActions.forEach(group::add);
+
+                showPopup(component, group, selection, eventComponent, eventX, eventY);
+              });
+            event.consume();
             return;
           }
 
-          try {
-            PluginsViewCustomizerKt.getListPluginComponentCustomizer().processCreatePopupMenu(component, group, getSelection());
+          DefaultActionGroup group = new DefaultActionGroup();
+          component.createPopupMenu(group, selection);
+          if (group.getChildrenCount() == 0) {
+            return;
           }
-          catch (Exception e) {
-            LOG.error("Error while customizing popup menu", e);
-          }
-
-          ActionPopupMenu popupMenu = ActionManager.getInstance().createActionPopupMenu("PluginManagerConfigurable", group);
-          popupMenu.setTargetComponent(component);
-          popupMenu.getComponent().show(event.getComponent(), event.getX(), event.getY());
+          showPopup(component, group, selection, event.getComponent(), event.getX(), event.getY());
           event.consume();
         }
       }
@@ -587,6 +595,28 @@ public final class MultiSelectionEventHandler extends EventHandler {
         component.setSelection(SelectionType.HOVER);
       }
     }, ModalityState.any());
+  }
+
+  private static void showPopup(@NotNull ListPluginComponent component,
+                                @NotNull DefaultActionGroup group,
+                                @NotNull List<ListPluginComponent> selection,
+                                @NotNull Component eventComponent,
+                                int eventX,
+                                int eventY) {
+    try {
+      PluginsViewCustomizerKt.getListPluginComponentCustomizer().processCreatePopupMenu(component, group, selection);
+    }
+    catch (Exception e) {
+      LOG.error("Error while customizing popup menu", e);
+    }
+
+    if (group.getChildrenCount() == 0 || !component.isShowing()) {
+      return;
+    }
+
+    ActionPopupMenu popupMenu = ActionManager.getInstance().createActionPopupMenu("PluginManagerConfigurable", group);
+    popupMenu.setTargetComponent(component);
+    popupMenu.getComponent().show(eventComponent, eventX, eventY);
   }
 
   private static @NotNull ListPluginComponent findParent(@NotNull ComponentEvent event) {
