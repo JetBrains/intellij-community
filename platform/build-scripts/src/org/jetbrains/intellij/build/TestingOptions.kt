@@ -180,6 +180,11 @@ open class TestingOptions {
   var attemptCount: Int = System.getProperty("intellij.build.test.attempt.count")?.toInt() ?: 1
 
   /**
+   * Number of full test runs. Each run executes all selected tests from scratch.
+   */
+  var repeatCount: Int = System.getProperty("intellij.build.test.repeat.count")?.toInt() ?: 1
+
+  /**
    * @see [com.intellij.TestCaseLoader.matchesCurrentBucket]
    */
   var bucketsCount: Int = System.getProperty(TestCaseLoader.TEST_RUNNERS_COUNT_FLAG)?.toInt() ?: 1
