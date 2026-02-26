@@ -16,21 +16,26 @@ import com.intellij.platform.searchEverywhere.utils.suspendLazy
 import com.intellij.psi.search.GlobalSearchScope
 import org.jetbrains.annotations.ApiStatus
 import java.util.UUID
-import kotlin.concurrent.atomics.AtomicReference
-import kotlin.concurrent.atomics.ExperimentalAtomicApi
 
-@OptIn(ExperimentalAtomicApi::class)
 @ApiStatus.Internal
 class ScopeChooserActionProviderDelegate private constructor(private val contributorWrapper: SeAsyncContributorWrapper<Any>) {
 
-  val searchScopesInfo: SuspendLazyProperty<SearchScopesInfo?> = suspendLazy { getSearchScopesInfo() }
+  private val searchScopesInfoWithIds: SuspendLazyProperty<Pair<SearchScopesInfo, SeScopeByIdMap>?> =
+    suspendLazy { createSearchScopesInfoIfPossible() }
 
-  private val availableScopes: AtomicReference<SeScopeById> =
-    contributorWrapper.contributor.unwrapFilesTabContributorIfPossible()?.let { filesTabContributor ->
-      AtomicReference(SeScopeByIdFiles(filesTabContributor))
-    } ?: AtomicReference(SeScopeByIdAtomicMap(emptyMap(), null, null))
+  val searchScopesInfo: SuspendLazyProperty<SearchScopesInfo?> =
+    suspendLazy { searchScopesInfoWithIds.getValue()?.first }
 
-  private suspend fun getSearchScopesInfo(): SearchScopesInfo? {
+  private val scopeById: SuspendLazyProperty<SeScopeById> =
+    suspendLazy {
+      contributorWrapper.contributor.unwrapFilesTabContributorIfPossible()?.let { filesTabContributor ->
+        SeScopeByIdFiles(filesTabContributor)
+      }
+      ?: searchScopesInfoWithIds.getValue()?.second
+      ?: SeScopeByIdMap(emptyMap(), null, null)
+    }
+
+  private suspend fun createSearchScopesInfoIfPossible(): Pair<SearchScopesInfo, SeScopeByIdMap>? {
     val scopeChooserAction: ScopeChooserAction = contributorWrapper.contributor.getActions { }.filterIsInstance<ScopeChooserAction>().firstOrNull()
                                                  ?: return null
 
@@ -68,22 +73,21 @@ class ScopeChooserActionProviderDelegate private constructor(private val contrib
       }?.scopeId
     }
 
-    availableScopes.store(SeScopeByIdAtomicMap(all, everywhereScopeId = everywhereScopeId, projectScopeId = projectScopeId))
-
     return SearchScopesInfo(scopeDataList,
                             selectedScopeId,
                             projectScopeId,
-                            everywhereScopeId)
+                            everywhereScopeId) to
+      SeScopeByIdMap(all, everywhereScopeId = everywhereScopeId, projectScopeId = projectScopeId)
   }
 
-  fun applyScope(isEverywhere: Boolean, isAutoTogglePossible: Boolean) {
-    val scope = availableScopes.load()[isEverywhere] ?: return
+  suspend fun applyScope(isEverywhere: Boolean, isAutoTogglePossible: Boolean) {
+    val scope = scopeById.getValue()[isEverywhere] ?: return
     applyScope(scope, isAutoTogglePossible)
   }
 
-  fun applyScope(scopeId: String?, isAutoTogglePossible: Boolean) {
+  suspend fun applyScope(scopeId: String?, isAutoTogglePossible: Boolean) {
     if (scopeId == null) return
-    val scope = availableScopes.load()[scopeId] ?: return
+    val scope = scopeById.getValue()[scopeId] ?: return
     applyScope(scope, isAutoTogglePossible)
   }
 
@@ -111,7 +115,7 @@ private interface SeScopeById {
   operator fun get(scopeId: String): ScopeDescriptor?
 }
 
-private class SeScopeByIdAtomicMap(
+private class SeScopeByIdMap(
   private val scopeIdToScope: Map<String, ScopeDescriptor>,
   private val everywhereScopeId: String?,
   private val projectScopeId: String?,
