@@ -9,6 +9,7 @@ import org.jetbrains.kotlin.idea.base.projectStructure.languageVersionSettings
 import org.jetbrains.kotlin.idea.base.util.module
 import org.jetbrains.kotlin.idea.codeinsight.api.applicators.fixes.KotlinQuickFixFactory
 import org.jetbrains.kotlin.idea.quickfix.K2EnableUnsupportedFeatureFix
+import org.jetbrains.kotlin.idea.quickfix.K2IncreaseLanguageVersionFix
 import java.util.EnumMap
 
 object UnsupportedFeatureFixFactory {
@@ -22,7 +23,8 @@ object UnsupportedFeatureFixFactory {
             if (featureMinLanguageVersion > moduleLanguageVersion) return@IntentionBased emptyList()
 
             listOf(
-                K2EnableUnsupportedFeatureFix(diagnostic.psi, module, languageFeature)
+                K2EnableUnsupportedFeatureFix(diagnostic.psi, module, languageFeature),
+                K2IncreaseLanguageVersionFix(diagnostic.psi, module, languageFeature),
             )
         }
 
