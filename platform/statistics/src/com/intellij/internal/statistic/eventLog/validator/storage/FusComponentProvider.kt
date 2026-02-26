@@ -50,10 +50,9 @@ import com.jetbrains.fus.reporting.defaults.DefaultMetadataStorage
 import com.jetbrains.fus.reporting.defaults.DefaultRemoteConfig
 import com.jetbrains.fus.reporting.defaults.MetadataUpdateDelay
 import com.jetbrains.fus.reporting.defaults.NoOpLoggerFactory
+import com.intellij.internal.statistic.eventLog.connection.metadata.createJvmHttpClient
 import com.jetbrains.fus.reporting.jvm.InMemoryJvmFileStorage
 import com.jetbrains.fus.reporting.jvm.JvmFileStorage
-import com.jetbrains.fus.reporting.jvm.JvmHttpClient
-import com.jetbrains.fus.reporting.jvm.ProxyInfo
 import com.jetbrains.fus.reporting.model.serialization.SerializationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
@@ -233,14 +232,7 @@ object FusComponentProvider {
 
     val jsonSerializer = FusJacksonSerializer()
 
-    val httpClient = JvmHttpClient(
-      sslContextProvider = { applicationInfo.connectionSettings.provideSSLContext() },
-      proxyProvider = { configurationUrl ->
-        ProxyInfo(applicationInfo.connectionSettings.provideProxy(configurationUrl).proxy)
-      },
-      extraHeadersProvider = { applicationInfo.connectionSettings.provideExtraHeaders() },
-      userAgent = applicationInfo.connectionSettings.provideUserAgent()
-    )
+    val httpClient = applicationInfo.connectionSettings.createJvmHttpClient()
 
     val remoteConfig = DefaultRemoteConfig(
       config,

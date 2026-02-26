@@ -5,6 +5,10 @@ import com.intellij.ide.Region
 import com.intellij.internal.statistic.eventLog.ExternalEventLogSettings
 import com.intellij.internal.statistic.eventLog.StatsAppConnectionSettings
 import com.intellij.internal.statistic.eventLog.connection.EventLogUploadSettingsClient
+import com.intellij.internal.statistic.eventLog.connection.metadata.StatsBasicConnectionSettings
+import com.intellij.internal.statistic.eventLog.connection.metadata.StatsConnectionSettings
+import com.intellij.internal.statistic.eventLog.connection.metadata.StatsProxyInfo
+import com.intellij.internal.statistic.eventLog.connection.metadata.createJvmHttpClient
 import com.intellij.internal.statistic.eventLog.validator.storage.FusComponentProvider
 import com.intellij.internal.statistic.utils.StatisticsUploadAssistant
 import com.intellij.testFramework.ExtensionTestUtil
@@ -12,10 +16,10 @@ import com.intellij.testFramework.fixtures.BasePlatformTestCase
 import com.jetbrains.fus.reporting.FusHttpClient
 import com.jetbrains.fus.reporting.configuration.ConfigurationClientFactory
 import com.jetbrains.fus.reporting.configuration.RegionCode
-import com.jetbrains.fus.reporting.jvm.JvmHttpClient
 import com.jetbrains.fus.reporting.jvm.ProxyInfo
 import org.assertj.core.api.Assertions
-import java.time.Duration
+import java.net.InetSocketAddress
+import java.net.Proxy
 
 private const val URL = "https://localhost/"
 private const val RECORDER = "FUS"
@@ -44,15 +48,7 @@ class ExternalEventLogSettingsTest : BasePlatformTestCase() {
   }
 
   fun setupHttpClientRequestBuilders() {
-    httpClient = JvmHttpClient(
-      proxyProvider = { configurationUrl ->
-        ProxyInfo(connectionSettings.provideProxy(configurationUrl).proxy)
-      },
-      sslContextProvider = { connectionSettings.provideSSLContext() },
-      extraHeadersProvider = { connectionSettings.provideExtraHeaders() },
-      userAgent = connectionSettings.provideUserAgent(),
-      timeout = Duration.ofSeconds(1)
-    )
+    httpClient = connectionSettings.createJvmHttpClient()
   }
 
   fun testSubstitution() {
@@ -137,5 +133,39 @@ class ExternalEventLogSettingsTest : BasePlatformTestCase() {
 
   fun testForceCollectionWithoutRecord() {
     assertTrue(!StatisticsUploadAssistant.isCollectAllowed() && StatisticsUploadAssistant.isCollectAllowedOrForced())
+  }
+
+  fun testProxyAuthIsPropagated() {
+    val fakeAuth = object : StatsProxyInfo.StatsProxyAuthProvider {
+      override val proxyLogin = "user"
+      override val proxyPassword = "pass"
+    }
+    val fakeProxy = StatsProxyInfo(Proxy(Proxy.Type.HTTP, InetSocketAddress("proxy.host", 8080)), fakeAuth)
+    val fakeSettings = StatsBasicConnectionSettings("test", proxy = fakeProxy)
+
+    val result = buildProxyInfo(fakeSettings)
+
+    Assertions.assertThat(result.proxyAuth).isNotNull()
+    Assertions.assertThat(result.proxyAuth!!.proxyLogin).isEqualTo("user")
+    Assertions.assertThat(result.proxyAuth!!.proxyPassword).isEqualTo("pass")
+  }
+
+  fun testProxyWithoutAuthIsPropagated() {
+    val fakeProxy = StatsProxyInfo(Proxy.NO_PROXY, null)
+    val fakeSettings = StatsBasicConnectionSettings("test", proxy = fakeProxy)
+
+    val result = buildProxyInfo(fakeSettings)
+
+    Assertions.assertThat(result.proxyAuth).isNull()
+  }
+
+  private fun buildProxyInfo(settings: StatsConnectionSettings): ProxyInfo {
+    val statsProxy = settings.provideProxy("https://example.com")
+    return ProxyInfo(statsProxy.proxy, statsProxy.proxyAuth?.let { auth ->
+      object : ProxyInfo.ProxyAuthProvider {
+        override val proxyLogin: String? = auth.proxyLogin
+        override val proxyPassword: String? = auth.proxyPassword
+      }
+    })
   }
 }

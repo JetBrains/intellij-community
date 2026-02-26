@@ -3,12 +3,11 @@ package com.intellij.internal.statistic.eventLog.connection
 
 import com.fasterxml.jackson.annotation.JsonInclude
 import com.intellij.internal.statistic.eventLog.EventLogApplicationInfo
+import com.intellij.internal.statistic.eventLog.connection.metadata.createJvmHttpClient
 import com.jetbrains.fus.reporting.FusJsonSerializer
 import com.jetbrains.fus.reporting.configuration.ConfigurationClient
 import com.jetbrains.fus.reporting.configuration.ConfigurationClientFactory
 import com.jetbrains.fus.reporting.configuration.RegionCode
-import com.jetbrains.fus.reporting.jvm.JvmHttpClient
-import com.jetbrains.fus.reporting.jvm.ProxyInfo
 import com.jetbrains.fus.reporting.model.serialization.SerializationException
 import org.jetbrains.annotations.ApiStatus
 import tools.jackson.core.JsonGenerator
@@ -42,14 +41,7 @@ open class EventLogUploadSettingsClient(
     productCode = applicationInfo.productCode,
     productVersion = applicationInfo.productVersion,
     isTestConfiguration = applicationInfo.isTestConfig,
-    httpClient = JvmHttpClient(
-      sslContextProvider = { applicationInfo.connectionSettings.provideSSLContext() },
-      proxyProvider = { configurationUrl ->
-        ProxyInfo(applicationInfo.connectionSettings.provideProxy(configurationUrl).proxy)
-      },
-      extraHeadersProvider = { applicationInfo.connectionSettings.provideExtraHeaders() },
-      userAgent = applicationInfo.connectionSettings.provideUserAgent()
-    ),
+    httpClient = applicationInfo.connectionSettings.createJvmHttpClient(),
     regionCode = if (applicationInfo.regionalCode == chinaRegion) RegionCode.CN else RegionCode.ALL,
     serializer = FusJacksonSerializer(),
     cacheTimeoutMs = cacheTimeoutMs
