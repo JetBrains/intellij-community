@@ -189,6 +189,7 @@ jvm_library(
     "//platform/platform-tests/eel-helper",
     "//platform/platform-impl/ui",
     "//platform/eel-provider",
+    "//libraries/mockito",
     "@lib//:io-mockk",
     "@lib//:io-mockk-jvm",
     "//platform/bookmarks",
