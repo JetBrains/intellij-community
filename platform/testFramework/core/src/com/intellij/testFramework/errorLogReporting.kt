@@ -3,6 +3,11 @@ package com.intellij.testFramework
 
 import com.intellij.platform.testFramework.teamCity.generifyErrorMessage
 import com.intellij.platform.testFramework.teamCity.reportTestFailure
+import java.util.ServiceLoader
+
+private val codeOwnerResolver: RuntimeCodeOwnerResolver? by lazy {
+  ServiceLoader.load(RuntimeCodeOwnerResolver::class.java).firstOrNull()
+}
 
 internal fun ErrorLog.reportAsFailures() {
   val errors = takeLoggedErrors()
@@ -20,6 +25,7 @@ internal fun ErrorLog.reportAsFailures() {
 private fun logAsTeamcityTestFailure(error: LoggedError) {
   val message = findMessage(error)
   val stackTraceContent = error.stackTraceToString()
+  val owner = TestLoggerFactory.getCurrentTestClass()?.let { codeOwnerResolver?.getOwnerGroupName(it) }
   val testName = if (message == null) {
     "Error logged without message"
   } else {
@@ -27,7 +33,7 @@ private fun logAsTeamcityTestFailure(error: LoggedError) {
       .replace("[:.()]".toRegex(), " ")
       .replace(" +".toRegex(), " ")
   }
-  System.out.reportTestFailure(testName, message ?: "", stackTraceContent)
+  System.out.reportTestFailure(testName, message ?: "", stackTraceContent, owner)
 }
 
 private fun findMessage(t: Throwable): String? {

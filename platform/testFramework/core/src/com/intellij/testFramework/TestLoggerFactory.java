@@ -76,6 +76,7 @@ public final class TestLoggerFactory implements Logger.Factory {
   private static final boolean myEchoDebugToStdout = Boolean.getBoolean("idea.test.logs.echo.debug.to.stdout");
 
   private static final AtomicInteger myRethrowErrorsNumber = new AtomicInteger(0);
+  private static final ThreadLocal<Class<?>> ourCurrentTestClass = new ThreadLocal<>();
 
   private final AtomicReference<DebugArtifactPublisher> myDebugArtifactPublisher = new AtomicReference<>();
 
@@ -265,6 +266,16 @@ public final class TestLoggerFactory implements Logger.Factory {
   }
 
   public static void onTestStarted() {
+    onTestStarted(null);
+  }
+
+  public static void onTestStarted(@Nullable Class<?> testClass) {
+    if (testClass == null) {
+      ourCurrentTestClass.remove();
+    }
+    else {
+      ourCurrentTestClass.set(testClass);
+    }
     myRethrowErrorsNumber.set(0);
     var factory = getTestLoggerFactory();
     if (factory != null) {
@@ -280,6 +291,10 @@ public final class TestLoggerFactory implements Logger.Factory {
     }
   }
 
+  public static @Nullable Class<?> getCurrentTestClass() {
+    return ourCurrentTestClass.get();
+  }
+
   /// @see #onTestFinished(boolean, String)
   public static void onTestFinished(boolean success, @NotNull Description description) {
     onTestFinished(success, description.getDisplayName());
@@ -287,6 +302,7 @@ public final class TestLoggerFactory implements Logger.Factory {
 
   /// @param testName used for the log file name
   public static void onTestFinished(boolean success, @NotNull String testName) {
+    ourCurrentTestClass.remove();
     var factory = getTestLoggerFactory();
     if (factory != null) {
       factory.myTestStartedMillis = 0;

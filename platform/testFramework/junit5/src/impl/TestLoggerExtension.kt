@@ -7,6 +7,7 @@ import org.junit.jupiter.api.extension.BeforeTestExecutionCallback
 import org.junit.jupiter.api.extension.ExtensionContext
 import org.junit.jupiter.api.extension.TestWatcher
 import java.util.Optional
+import kotlin.jvm.optionals.getOrNull
 
 /**
  * This extension re-throws logged errors after the test has ended.
@@ -15,7 +16,7 @@ import java.util.Optional
 internal class TestLoggerExtension : BeforeTestExecutionCallback, TestWatcher {
 
   override fun beforeTestExecution(context: ExtensionContext) {
-    TestLoggerFactory.onTestStarted()
+    TestLoggerFactory.onTestStarted(context.testClass.getOrNull())
   }
 
   override fun testSuccessful(context: ExtensionContext) {

@@ -556,7 +556,7 @@ Most likely there was an uncaught exception in asynchronous execution that resul
     Description testDescription = Description.createTestDescription(getClass(), getName());
     return () -> {
       boolean success = false;
-      TestLoggerFactory.onTestStarted();
+      TestLoggerFactory.onTestStarted(getClass());
       try {
         recordErrorsLoggedInTheCurrentThreadAndReportThemAsFailures(testRunnable);
         success = true;

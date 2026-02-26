@@ -5,24 +5,29 @@ import java.io.PrintStream
 import java.util.UUID
 
 // Functions in this file only handle TeamCity message formatting.
-
 fun PrintStream.reportTestFailure(testName: String, message: String, details: String) {
-  reportTest(testName, message, details, true)
+  reportTestFailure(testName, message, details, null)
+}
+
+fun PrintStream.reportTestFailure(testName: String, message: String, details: String, owner: String?) {
+  reportTest(testName, message, details, true, owner)
 }
 
 fun PrintStream.reportTestSuccess(testName: String, message: String = "", details: String = "") {
-  reportTest(testName, message, details, false)
+  reportTest(testName, message, details, false, null)
 }
 
-private fun PrintStream.reportTest(testName: String, message: String, details: String, isFailure: Boolean) {
+private fun PrintStream.reportTest(testName: String, message: String, details: String, isFailure: Boolean, owner: String?) {
   val flowId = UUID.randomUUID().toString()
   val escapedTestName = testName.escapeStringForTeamCity()
   val escapedMessage = message.escapeStringForTeamCity()
   val escapedDetails = details.escapeStringForTeamCity()
+  val escapedOwner = owner?.takeIf { it.isNotBlank() }?.escapeStringForTeamCity()
 
   println(buildString {
     appendLine("##teamcity[testStarted  flowId='$flowId' name='$escapedTestName' nodeId='$escapedTestName' parentNodeId='0']")
     if (isFailure) appendLine("##teamcity[testFailed   flowId='$flowId' name='$escapedTestName' nodeId='$escapedTestName' parentNodeId='0' message='$escapedMessage' details='$escapedDetails']")
+    if (isFailure && escapedOwner != null) appendLine("##teamcity[testMetadata testName='$escapedTestName' type='text' name='Code Owner' value='$escapedOwner' flowId='$flowId']")
     appendLine("##teamcity[testFinished flowId='$flowId' name='$escapedTestName' nodeId='$escapedTestName' parentNodeId='0']")
   })
 }

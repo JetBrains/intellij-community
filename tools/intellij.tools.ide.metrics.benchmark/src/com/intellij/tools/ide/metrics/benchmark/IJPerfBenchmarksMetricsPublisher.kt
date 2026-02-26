@@ -7,6 +7,7 @@ import com.intellij.openapi.util.BuildNumber
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.platform.diagnostic.telemetry.TelemetryManager
 import com.intellij.teamcity.TeamCityClient
+import com.intellij.testFramework.RuntimeCodeOwnerResolver
 import com.intellij.testFramework.UsefulTestCase
 import com.intellij.tools.ide.metrics.collector.MetricsCollector
 import com.intellij.tools.ide.metrics.collector.metrics.PerformanceMetrics
@@ -56,8 +57,8 @@ internal class IJPerfBenchmarksMetricsPublisher {
       return tempPropertiesFile.toPath()
     }
 
-    private val codeOwnerResolver: BenchmarkCodeOwnerResolver? by lazy {
-      ServiceLoader.load(BenchmarkCodeOwnerResolver::class.java).firstOrNull()
+    private val codeOwnerResolver: RuntimeCodeOwnerResolver? by lazy {
+      ServiceLoader.load(RuntimeCodeOwnerResolver::class.java).firstOrNull()
     }
 
     private val teamCityClient = TeamCityClient(
