@@ -428,7 +428,6 @@ jvm_library(
     "//plugins/kotlin/bundled-compiler-plugins-support:compilerPlugins-support-bundled",
     "//plugins/kotlin/onboarding",
     "//plugins/kotlin/onboarding-gradle",
-    "//plugins/kotlin/onboarding-maven",
     "//plugins/kotlin/base/code-insight/minimal",
     "//plugins/kotlin/highlighting/highlighting-minimal:kotlin-highlighting-minimal",
     "//plugins/kotlin/formatter/minimal",

@@ -209,7 +209,6 @@
   - name: intellij.kotlin.j2k
   - name: intellij.kotlin.onboarding
   - name: intellij.kotlin.onboarding.gradle
-  - name: intellij.kotlin.onboarding.maven
   - name: intellij.kotlin.plugin.updater
   - name: intellij.kotlin.preferences
   - name: intellij.kotlin.projectConfiguration

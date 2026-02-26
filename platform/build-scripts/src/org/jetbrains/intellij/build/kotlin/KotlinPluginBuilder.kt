@@ -140,7 +140,6 @@ abstract class KotlinPluginBuilder(val kind : KotlinPluginKind = System.getPrope
       "intellij.kotlin.j2k",
       "intellij.kotlin.onboarding",
       "intellij.kotlin.onboarding.gradle",
-      "intellij.kotlin.onboarding.maven",
       "intellij.kotlin.plugin.updater",
       "intellij.kotlin.preferences",
       "intellij.kotlin.projectConfiguration",
