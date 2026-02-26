@@ -1,10 +1,12 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.plugins
 
+import com.intellij.util.ThreeState
 import com.intellij.util.io.zip.JBZipFile
 import com.intellij.util.lang.ZipEntryResolverPool
 import com.intellij.util.lang.ZipEntryResolverPool.EntryResolver
 import java.io.InputStream
+import java.nio.charset.StandardCharsets
 import java.nio.file.Path
 
 /**
@@ -14,7 +16,12 @@ import java.nio.file.Path
  */
 internal class NonShareableJavaZipFilePool : ZipEntryResolverPool {
   override fun load(file: Path): EntryResolver = object : EntryResolver {
-    private val zipFile = JBZipFile(file)
+    private val zipFile = JBZipFile(
+      file,
+      /* encoding = */ StandardCharsets.UTF_8,
+      /* readonly = */ true,
+      /* isZip64 = */ ThreeState.UNSURE
+    )
 
     override fun loadZipEntry(path: String): ByteArray? = zipFile.getEntry(if (path[0] == '/') path.substring(1) else path)?.inputStream?.use(InputStream::readBytes)
 
