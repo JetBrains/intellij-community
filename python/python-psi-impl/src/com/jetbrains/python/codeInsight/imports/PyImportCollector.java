@@ -145,11 +145,11 @@ public class PyImportCollector {
                                                    @NotNull PyFile moduleFile,
                                                    @NotNull String visibleName) {
     for (PyClass topLevelClass : moduleFile.getTopLevelClasses()) {
-      PyClass nested = findNestedClassByName(topLevelClass, myRefText);
+      PyClass nested = PyNestedClassUtils.findNestedByName(topLevelClass, myRefText);
       if (nested == null) {
         continue;
       }
-      String nestedQualifier = buildNestedQualifier(nested, topLevelClass);
+      String nestedQualifier = PyNestedClassUtils.buildQualifiedName(nested, topLevelClass);
       if (nestedQualifier == null) {
         continue;
       }
@@ -165,18 +165,7 @@ public class PyImportCollector {
     }
   }
 
-  private static @Nullable PyClass findNestedClassByName(@NotNull PyClass parentClass, @NotNull String name) {
-    for (PyClass nested : parentClass.getNestedClasses()) {
-      if (name.equals(nested.getName())) {
-        return nested;
-      }
-      PyClass deeperNested = findNestedClassByName(nested, name);
-      if (deeperNested != null) {
-        return deeperNested;
-      }
-    }
-    return null;
-  }
+
 
   private PsiFile addImportViaElement(PsiFile existingImportFile, PyImportElement importElement, PsiElement source) {
     PyFile sourceFile = as(PyUtil.turnDirIntoInit(source), PyFile.class);
@@ -322,11 +311,11 @@ public class PyImportCollector {
     if (PyUtil.isTopLevel(nestedClass)) {
       return;
     }
-    PyClass outermost = getOutermostClass(nestedClass);
-    if (outermost == null || !PyUtil.isTopLevel(outermost)) {
+    PyClass outermost = PyNestedClassUtils.findTopLevelClass(nestedClass);
+    if (outermost == null) {
       return;
     }
-    String nestedQualifier = buildNestedQualifier(nestedClass, outermost);
+    String nestedQualifier = PyNestedClassUtils.buildQualifiedName(nestedClass, outermost);
     if (nestedQualifier == null) {
       return;
     }
@@ -342,35 +331,5 @@ public class PyImportCollector {
     if (seenCandidateNames.add(symbolImportQName)) {
       fix.addImport(outermost, srcfile, importPath, null, nestedQualifier);
     }
-  }
-
-  private static @Nullable PyClass getOutermostClass(@NotNull PyClass pyClass) {
-    PyClass current = pyClass;
-    PyClass parent = PsiTreeUtil.getParentOfType(current, PyClass.class);
-    while (parent != null) {
-      current = parent;
-      parent = PsiTreeUtil.getParentOfType(current, PyClass.class);
-    }
-    return current;
-  }
-
-  private static @Nullable String buildNestedQualifier(@NotNull PyClass nested, @NotNull PyClass outermost) {
-    Deque<String> names = new ArrayDeque<>();
-    PyClass current = nested;
-    while (current != null) {
-      String name = current.getName();
-      if (name == null) {
-        return null;
-      }
-      names.addFirst(name);
-      if (current == outermost) {
-        break;
-      }
-      current = PsiTreeUtil.getParentOfType(current, PyClass.class);
-    }
-    if (current != outermost) {
-      return null;
-    }
-    return StringUtil.join(names, ".");
   }
 }

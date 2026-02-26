@@ -834,25 +834,11 @@ public final class AddImportHelper {
 
     // Walk up to the top-level class if elementToImport is itself a nested class
     String nestedQualifierPrefix = null;
-    if (elementToImport instanceof PyClass && !PyUtil.isTopLevel(elementToImport)) {
-      List<String> nestingChain = new ArrayList<>();
-      nestingChain.add(elementToImport.getName());
-      PsiElement current = elementToImport;
-      while (current instanceof PyClass && !PyUtil.isTopLevel(current)) {
-        var outer = ScopeUtil.getScopeOwner(current);
-        if (outer instanceof PyClass outerClass) {
-          nestingChain.add(outerClass.getName());
-          current = outerClass;
-        }
-        else {
-          break;
-        }
-      }
-      if (current instanceof PyClass && PyUtil.isTopLevel(current)) {
-        elementToImport = (PsiNamedElement)current;
-        // Build qualifier like "Outer.Mid.Inner" from the chain [Inner, Mid, Outer]
-        Collections.reverse(nestingChain);
-        nestedQualifierPrefix = String.join(".", nestingChain);
+    if (elementToImport instanceof PyClass nestedClass && !PyUtil.isTopLevel(nestedClass)) {
+      PyClass topLevel = PyNestedClassUtils.findTopLevelClass(nestedClass);
+      if (topLevel != null) {
+        elementToImport = topLevel;
+        nestedQualifierPrefix = PyNestedClassUtils.buildQualifiedName(nestedClass, topLevel);
       }
     }
 
