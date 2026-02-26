@@ -177,6 +177,7 @@
       <module fileurl="file://$PROJECT_DIR$/android/device-manager-v2/intellij.android.device-manager-v2.iml" filepath="$PROJECT_DIR$/android/device-manager-v2/intellij.android.device-manager-v2.iml" />
       <module fileurl="file://$PROJECT_DIR$/android/device-manager-v2/integration/intellij.android.device-manager-v2.integration.iml" filepath="$PROJECT_DIR$/android/device-manager-v2/integration/intellij.android.device-manager-v2.integration.iml" />
       <module fileurl="file://$PROJECT_DIR$/android/intellij.android.device.tests/intellij.android.device.tests.iml" filepath="$PROJECT_DIR$/android/intellij.android.device.tests/intellij.android.device.tests.iml" />
+      <module fileurl="file://$PROJECT_DIR$/android/emulator-snapshots/intellij.android.emulator-snapshots.iml" filepath="$PROJECT_DIR$/android/emulator-snapshots/intellij.android.emulator-snapshots.iml" />
       <module fileurl="file://$PROJECT_DIR$/android/execution/common/intellij.android.execution.common.iml" filepath="$PROJECT_DIR$/android/execution/common/intellij.android.execution.common.iml" />
       <module fileurl="file://$PROJECT_DIR$/android/execution/common/intellij.android.execution.common.tests.iml" filepath="$PROJECT_DIR$/android/execution/common/intellij.android.execution.common.tests.iml" />
       <module fileurl="file://$PROJECT_DIR$/android/glance-designer/intellij.android.glance-designer.iml" filepath="$PROJECT_DIR$/android/glance-designer/intellij.android.glance-designer.iml" />

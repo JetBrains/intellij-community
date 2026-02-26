@@ -110,6 +110,7 @@ android/device-explorer-files
 android/device-explorer-monitor
 android/device-manager-v2
 android/device-manager-v2/integration
+android/emulator-snapshots
 android/execution/common
 android/glance-designer
 android/glasses-pairing
