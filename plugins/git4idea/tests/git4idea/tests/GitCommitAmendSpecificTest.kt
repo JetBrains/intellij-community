@@ -11,6 +11,7 @@ import com.intellij.vcs.log.Hash
 import com.intellij.vcs.log.impl.HashImpl
 import com.intellij.vcs.log.impl.VcsProjectLog
 import git4idea.checkin.GitAmendSpecificCommitSquasher
+import git4idea.i18n.GitBundle
 import git4idea.log.refreshAndWait
 import git4idea.rebase.GitSquashedCommitsMessage.canAutosquash
 import git4idea.rebase.GitSquashedCommitsMessage.getSubject
@@ -93,6 +94,29 @@ internal class GitCommitAmendSpecificTest : GitSingleRepoTest() {
     }
     assertNoChanges()
     assertTrue(canAutosquash(lastMessage(), setOf(getSubject(targetMessage))))
+  }
+
+  fun `test commit amend specific target not in current branch`() {
+    val initialContent = "initial content"
+    tac("a.txt", initialContent)
+    val targetHash = HashImpl.build(repo.last())
+    val targetMessage = repo.lastMessage()
+    tac("b.txt")
+
+    git("checkout --orphan orphan-branch") // create a branch without commits
+    tac("c.txt")
+
+    val updatedContent = "updated content"
+    overwrite("c.txt", updatedContent)
+
+    val changes = assertChangesWithRefresh {
+      modified("c.txt")
+    }
+
+    val newMessage = "new message\n"
+    val exception = amendSpecificCommit(targetHash, targetMessage, changes, newMessage).single()
+
+    assertEquals(GitBundle.message("git.commit.amend.specific.commit.not.found.error.message"), exception.message)
   }
 
   private fun amendSpecificCommit(
