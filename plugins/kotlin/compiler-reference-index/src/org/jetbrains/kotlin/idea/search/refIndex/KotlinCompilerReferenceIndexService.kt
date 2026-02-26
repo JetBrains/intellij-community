@@ -18,6 +18,7 @@ import com.intellij.ide.highlighter.JavaFileType
 import com.intellij.lang.injection.InjectedLanguageManager
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.runReadAction
+import com.intellij.openapi.application.runReadActionBlocking
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.logger
@@ -174,7 +175,7 @@ class KotlinCompilerReferenceIndexService(private val project: Project, private 
     private fun onExternalCompilationDetected(compiledModules: List<Module>) {
         val allModules = if (!initialized) allModules() else null
         compilationCounter.increment()
-        val projectPath = runReadAction { projectIfNotDisposed?.basePath }
+        val projectPath = runReadActionBlocking { projectIfNotDisposed?.basePath }
         withDirtyScopeUnderWriteLock {
             openStorage(projectPath)
 

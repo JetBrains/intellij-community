@@ -1,7 +1,7 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.search.refIndex.bta
 
-import com.intellij.openapi.application.runReadAction
+import com.intellij.openapi.application.runReadActionBlocking
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleManager
@@ -47,8 +47,8 @@ internal class BtaFileWatcher(private val project: Project) {
     }
 
     private fun checkForExternalCompilation(onModulesCompiled: (List<Module>) -> Unit) {
-        val modules = runReadAction {
-            if (project.isDisposed) return@runReadAction emptyArray()
+        val modules = runReadActionBlocking {
+            if (project.isDisposed) return@runReadActionBlocking emptyArray()
             ModuleManager.getInstance(project).modules
         }
         val updatedModules = modules.filter { module ->
@@ -88,13 +88,13 @@ internal class BtaFileWatcher(private val project: Project) {
         internal fun isApplicable(project: Project): Boolean =
             Registry.`is`(ENABLE_BTA_CRI_KEY) && (isGradleCriEnabled(project) || isMavenCriEnabled(project))
 
-        private fun isGradleCriEnabled(project: Project): Boolean = runReadAction {
+        private fun isGradleCriEnabled(project: Project): Boolean = runReadActionBlocking {
             GradleSettings.getInstance(project).linkedProjectsSettings.isNotEmpty()
                     && (readGradleProperty(project, CRI_PROPERTY)?.toBoolean() ?: false)
         }
 
         // TODO KTIJ-37735: check if CRI_PROPERTY is enabled for Maven projects
-        private fun isMavenCriEnabled(project: Project): Boolean = runReadAction {
+        private fun isMavenCriEnabled(project: Project): Boolean = runReadActionBlocking {
             ModuleManager.getInstance(project).modules.any { it.isMavenModule }
         }
     }

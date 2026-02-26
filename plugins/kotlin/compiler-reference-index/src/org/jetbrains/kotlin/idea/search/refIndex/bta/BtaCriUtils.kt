@@ -3,7 +3,7 @@
 
 package org.jetbrains.kotlin.idea.search.refIndex.bta
 
-import com.intellij.openapi.application.runReadAction
+import com.intellij.openapi.application.runReadActionBlocking
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.roots.ModuleRootManager
@@ -28,7 +28,7 @@ internal fun Module.getCriPath(): Path? {
  * For Gradle modules, uses [ExternalSystemApiUtil.getExternalProjectPath].
  * For Maven modules, falls back to the first content root.
  */
-private fun Module.getPath(): String? = runReadAction {
+private fun Module.getPath(): String? = runReadActionBlocking {
     ExternalSystemApiUtil.getExternalProjectPath(this)
         ?: ModuleRootManager.getInstance(this).contentRoots.firstOrNull()?.path
 }
