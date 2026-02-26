@@ -147,7 +147,7 @@ open class ActionSearchEverywhereContributor : WeightedSearchEverywhereContribut
 
   override fun showInFindResults(): Boolean = false
 
-  override fun getSearchProviderId(): String = ActionSearchEverywhereContributor::class.java.simpleName
+  override fun getSearchProviderId(): String = ID
 
   override fun getDataForItem(element: MatchedValue, dataId: String): Any? {
     return if (SetShortcutAction.SELECTED_ACTION.`is`(dataId)) element.getUnwrappedAction() else null
@@ -254,6 +254,10 @@ open class ActionSearchEverywhereContributor : WeightedSearchEverywhereContribut
   }
 
   companion object {
+    @Internal
+    @JvmField
+    val ID: String = ActionSearchEverywhereContributor::class.java.simpleName
+
     fun showAssignShortcutDialog(myProject: Project?, value: MatchedValue) {
       val action = value.getUnwrappedAction()
       if (action == null) return
