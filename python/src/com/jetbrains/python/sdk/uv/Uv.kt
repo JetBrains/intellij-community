@@ -1,6 +1,7 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.sdk.uv
 
+import com.intellij.openapi.module.Module
 import com.jetbrains.python.errorProcessing.PyResult
 import com.jetbrains.python.packaging.PyPackageName
 import com.jetbrains.python.packaging.common.PythonOutdatedPackage
@@ -27,7 +28,7 @@ interface UvLowLevel<P : PathHolder> {
   /**
   * Manage project dependencies by adding/removing them to the project along side installation
   */
-  suspend fun addDependency(pyPackages: PythonPackageInstallRequest, options: List<String>): PyResult<Unit>
+  suspend fun addDependency(pyPackages: PythonPackageInstallRequest, options: List<String>, workspaceMember: PyWorkspaceMember? = null): PyResult<Unit>
   suspend fun removeDependencies(pyPackages: Array<out String>, workspaceMember: PyWorkspaceMember? = null): PyResult<Unit>
 
   /**
@@ -38,7 +39,7 @@ interface UvLowLevel<P : PathHolder> {
 
   suspend fun listPackages(): PyResult<List<PythonPackage>>
   suspend fun listOutdatedPackages(): PyResult<List<PythonOutdatedPackage>>
-  suspend fun listTopLevelPackages(): PyResult<List<PythonPackage>>
+  suspend fun listTopLevelPackages(module: Module): PyResult<List<PythonPackage>>
   suspend fun listPackageRequirements(name: PythonPackage): PyResult<List<PyPackageName>>
   suspend fun listPackageRequirementsTree(name: PythonPackage): PyResult<String>
   suspend fun listProjectStructureTree(): PyResult<String>

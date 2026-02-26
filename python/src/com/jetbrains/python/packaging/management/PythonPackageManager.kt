@@ -9,6 +9,7 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.readAction
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.thisLogger
+import com.intellij.openapi.module.Module
 import com.intellij.openapi.progress.runBlockingMaybeCancellable
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.Sdk
@@ -108,12 +109,13 @@ abstract class PythonPackageManager(val project: Project, val sdk: Sdk) : Dispos
   suspend fun installPackage(
     installRequest: PythonPackageInstallRequest,
     options: List<String> = emptyList(),
+    module: Module? = null,
   ): PyResult<List<PythonPackage>> {
     if (sdk.isReadOnly) {
       return PyResult.localizedError(sdk.readOnlyErrorMessage)
     }
     waitForInit()
-    installPackageCommand(installRequest, options).getOr { return it }
+    installPackageCommand(installRequest, options, module).getOr { return it }
 
     return reloadPackages()
   }
@@ -234,9 +236,14 @@ abstract class PythonPackageManager(val project: Project, val sdk: Sdk) : Dispos
   @ApiStatus.Internal
   open fun syncErrorMessage(): PackageManagerErrorMessage? = null
 
+  /**
+   * @param module the target workspace member module for workspace-aware package managers (e.g., UV).
+   *   When provided, the package is added as a dependency of this specific workspace member
+   *   rather than the root project. Package managers that do not support workspaces ignore this parameter.
+   */
   @ApiStatus.Internal
   @CheckReturnValue
-  protected abstract suspend fun installPackageCommand(installRequest: PythonPackageInstallRequest, options: List<String>): PyResult<Unit>
+  protected abstract suspend fun installPackageCommand(installRequest: PythonPackageInstallRequest, options: List<String>, module: Module? = null): PyResult<Unit>
 
   @ApiStatus.Internal
   @CheckReturnValue

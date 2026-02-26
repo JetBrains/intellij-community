@@ -8,6 +8,7 @@ import com.fasterxml.jackson.module.kotlin.readValue
 import com.intellij.execution.target.TargetProgressIndicator
 import com.intellij.execution.target.value.constant
 import com.intellij.execution.target.value.getRelativeTargetPath
+import com.intellij.openapi.module.Module
 import com.intellij.platform.eel.provider.localEel
 import com.jetbrains.python.PyBundle
 import com.jetbrains.python.errorProcessing.ExecError
@@ -162,8 +163,9 @@ private class UvLowLevelImpl<P : PathHolder>(private val cwd: Path, private val 
     }
   }
 
-  override suspend fun listTopLevelPackages(): PyResult<List<PythonPackage>> {
-    val out = uvCli.runUv(cwd, venvPath, false, "tree", "--depth=1", "--locked")
+  override suspend fun listTopLevelPackages(module: Module): PyResult<List<PythonPackage>> {
+    val args = mutableListOf("tree", "--depth=1", "--frozen", "--package", module.name)
+    val out = uvCli.runUv(cwd, venvPath, false, *args.toTypedArray())
       .getOr { return it }
 
     return PyExecResult.success(UvOutputParser.parseUvPackageList(out))
@@ -177,14 +179,14 @@ private class UvLowLevelImpl<P : PathHolder>(private val cwd: Path, private val 
   }
 
   override suspend fun listPackageRequirementsTree(name: PythonPackage): PyResult<String> {
-    val out = uvCli.runUv(cwd, venvPath, false, "tree", "--package", name.name, "--locked")
+    val out = uvCli.runUv(cwd, venvPath, false, "tree", "--package", name.name, "--frozen")
       .getOr { return it }
 
     return PyExecResult.success(out)
   }
 
   override suspend fun listProjectStructureTree(): PyResult<String> {
-    val out = uvCli.runUv(cwd, venvPath, false, "tree", "--locked")
+    val out = uvCli.runUv(cwd, venvPath, false, "tree", "--frozen")
       .getOr { return it }
 
     return PyExecResult.success(out)
@@ -212,8 +214,15 @@ private class UvLowLevelImpl<P : PathHolder>(private val cwd: Path, private val 
     return PyExecResult.success(Unit)
   }
 
-  override suspend fun addDependency(pyPackages: PythonPackageInstallRequest, options: List<String>): PyResult<Unit> {
-    uvCli.runUv(cwd, venvPath, true, "add", *pyPackages.formatPackageName(), *options.toTypedArray())
+  override suspend fun addDependency(pyPackages: PythonPackageInstallRequest, options: List<String>, workspaceMember: PyWorkspaceMember?): PyResult<Unit> {
+    val args = mutableListOf("add")
+    if (workspaceMember != null) {
+      args.add("--package")
+      args.add(workspaceMember.name)
+    }
+    args.addAll(pyPackages.formatPackageName())
+    args.addAll(options)
+    uvCli.runUv(cwd, venvPath, true, *args.toTypedArray())
       .getOr { return it }
 
     return PyExecResult.success(Unit)
@@ -272,7 +281,7 @@ private class UvLowLevelImpl<P : PathHolder>(private val cwd: Path, private val 
   }
 
   fun constructSyncArgs(inexact: Boolean): MutableList<String> {
-    val args = mutableListOf("sync", "--check")
+    val args = mutableListOf("sync", "--check", "--all-packages")
 
     if (inexact) {
       args += "--inexact"
@@ -287,7 +296,7 @@ private class UvLowLevelImpl<P : PathHolder>(private val cwd: Path, private val 
   }
 
   override suspend fun sync(): PyResult<String> {
-    return uvCli.runUv(cwd, venvPath, true, "sync", "--all-packages", "--inexact")
+    return uvCli.runUv(cwd, venvPath, true, "sync", "--all-packages")
   }
 
   override suspend fun lock(): PyResult<String> {

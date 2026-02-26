@@ -2,6 +2,7 @@
 package com.jetbrains.python.packaging.conda
 
 import com.intellij.openapi.application.writeAction
+import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.util.Disposer
@@ -87,7 +88,7 @@ class CondaPackageManager(project: Project, sdk: Sdk) : PythonPackageManager(pro
     PyResult.success(condaPackages + onlyPipOutdated)
   }
 
-  override suspend fun installPackageCommand(installRequest: PythonPackageInstallRequest, options: List<String>): PyResult<Unit> = when (installRequest) {
+  override suspend fun installPackageCommand(installRequest: PythonPackageInstallRequest, options: List<String>, module: Module?): PyResult<Unit> = when (installRequest) {
     is PythonPackageInstallRequest.ByLocation -> pipPackageEngine.installPackageCommand(installRequest, options)
     is PythonPackageInstallRequest.ByRepositoryPythonPackageSpecifications -> installSeveralPackages(installRequest.specifications, options)
   }
