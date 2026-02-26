@@ -1,31 +1,32 @@
 <idea-plugin visibility="public">
   <dependencies>
-    <module name="intellij.python.parser"/>
-    <module name="intellij.python.ast"/>
-    <module name="intellij.python.syntax.core"/>
-    <module name="intellij.python.syntax"/>
-    <module name="intellij.python.psi"/>
-    <module name="intellij.python.psi.impl"/>
-    <module name="intellij.python.sdk"/>
-    <module name="intellij.python.sdk.ui"/>
-    <module name="intellij.python.pyproject"/>
     <module name="intellij.python.community.impl.poetry.common"/>
     <module name="intellij.python.community.impl.pipenv"/>
-    <module name="intellij.python.community.core.impl"/>
-    <module name="intellij.python.community.helpersLocator"/>
+    <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
+    <module name="intellij.python.ast"/>
     <module name="intellij.python.community"/>
-    <module name="intellij.python.community.impl"/>
+    <module name="intellij.python.community.core.impl"/>
     <module name="intellij.python.community.execService"/>
     <module name="intellij.python.community.execService.python"/>
+    <module name="intellij.python.community.helpersLocator"/>
+    <module name="intellij.python.community.impl"/>
     <module name="intellij.python.community.impl.installer"/>
-    <module name="intellij.python.pydev"/>
-    <module name="intellij.python.venv"/>
-    <module name="intellij.python.hatch"/>
-    <module name="intellij.python.community.services.shared"/>
-    <module name="intellij.python.community.services.internal.impl"/>
-    <module name="intellij.python.community.services.systemPython"/>
     <module name="intellij.python.community.interpreters"/>
-    <module name="intellij.python.processOutput"/>
+    <module name="intellij.python.community.services.internal.impl"/>
+    <module name="intellij.python.community.services.shared"/>
+    <module name="intellij.python.community.services.systemPython"/>
+    <module name="intellij.python.hatch"/>
+    <module name="intellij.python.parser"/>
+    <module name="intellij.python.psi"/>
+    <module name="intellij.python.psi.impl"/>
+    <module name="intellij.python.pydev"/>
+    <module name="intellij.python.pyproject"/>
+    <module name="intellij.python.sdk"/>
+    <module name="intellij.python.sdk.ui"/>
+    <module name="intellij.python.syntax"/>
+    <module name="intellij.python.syntax.core"/>
+    <module name="intellij.python.venv"/>
+    <!-- endregion -->
   </dependencies>
   <!-- Declare that we support core Python functionality -->
   <module value="com.intellij.modules.python"/>

@@ -1,9 +1,9 @@
 <idea-plugin visibility="internal">
   <dependencies>
     <module name="intellij.python.sdk"/>
-    <module name="intellij.python.processOutput"/>
+    <module name="intellij.python.processOutput.common"/>
   </dependencies>
   <extensions defaultExtensionNs="com.intellij">
-    <python.processOutput.processOutputIconMapping implementation="com.intellij.python.community.impl.pipenv.PipenvIconMapping"/>
+    <python.processOutput.common.processOutputIconMapping implementation="com.intellij.python.community.impl.pipenv.PipenvIconMapping"/>
   </extensions>
 </idea-plugin>

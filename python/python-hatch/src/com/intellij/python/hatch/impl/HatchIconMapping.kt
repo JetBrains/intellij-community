@@ -1,9 +1,9 @@
 package com.intellij.python.hatch.impl
 
 import com.intellij.python.hatch.icons.PythonHatchIcons
-import com.intellij.python.processOutput.ProcessBinaryFileName
-import com.intellij.python.processOutput.ProcessIcon
-import com.intellij.python.processOutput.ProcessOutputIconMapping
+import com.intellij.python.processOutput.common.ProcessBinaryFileName
+import com.intellij.python.processOutput.common.ProcessIcon
+import com.intellij.python.processOutput.common.ProcessOutputIconMapping
 
 internal class HatchIconMapping : ProcessOutputIconMapping() {
   override val mapping: Map<ProcessBinaryFileName, ProcessIcon> =

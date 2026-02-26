@@ -1543,8 +1543,9 @@ python/python-markdown
 python/python-parser
 python/python-poetry/backend
 python/python-poetry/common
-python/python-process-output
-python/python-process-output/impl
+python/python-process-output/backend
+python/python-process-output/common
+python/python-process-output/frontend
 python/python-psi-api
 python/python-psi-impl
 python/python-pyproject

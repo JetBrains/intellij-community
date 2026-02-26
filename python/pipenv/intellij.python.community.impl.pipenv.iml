@@ -14,6 +14,6 @@
     <orderEntry type="module" module-name="intellij.platform.core" />
     <orderEntry type="module" module-name="intellij.python.sdk" />
     <orderEntry type="module" module-name="intellij.platform.util" />
-    <orderEntry type="module" module-name="intellij.python.processOutput" />
+    <orderEntry type="module" module-name="intellij.python.processOutput.common" />
   </component>
 </module>

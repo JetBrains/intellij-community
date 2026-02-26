@@ -17,7 +17,6 @@
   <extensions defaultExtensionNs="com.intellij.platform">
     <rpc.backend.remoteApiProvider implementation="com.intellij.python.sdkConfigurator.backend.impl.rpcBridge.ApiProvider"/>
   </extensions>
-
   <actions>
     <action class="com.intellij.python.sdkConfigurator.backend.impl.platformBridge.ConfigureSDKAction" id="ConfigureSDKAction"/>
   </actions>

@@ -2,9 +2,9 @@
 package com.jetbrains.python.sdk
 
 import com.intellij.icons.AllIcons
-import com.intellij.python.processOutput.ProcessIcon
-import com.intellij.python.processOutput.ProcessMatcher
-import com.intellij.python.processOutput.ProcessOutputIconMapping
+import com.intellij.python.processOutput.common.ProcessIcon
+import com.intellij.python.processOutput.common.ProcessMatcher
+import com.intellij.python.processOutput.common.ProcessOutputIconMapping
 
 internal class SdkIconMapping : ProcessOutputIconMapping() {
   override val matchers: List<ProcessMatcher> = listOf(

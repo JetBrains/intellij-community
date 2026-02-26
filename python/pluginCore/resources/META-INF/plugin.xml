@@ -38,6 +38,9 @@ The Python plug-in provides smart editing for Python scripts. The feature set of
     <module name="intellij.python.sdkConfigurator.common" loading="required"/>
     <module name="intellij.python.sdkConfigurator.backend"/>
     <module name="intellij.python.sdkConfigurator.frontend"/>
+    <module name="intellij.python.processOutput.common" loading="required"/>
+    <module name="intellij.python.processOutput.backend" required-if-available="intellij.platform.backend"/>
+    <module name="intellij.python.processOutput.frontend" required-if-available="intellij.platform.frontend"/>
     <module name="intellij.python.community.impl.poetry.common" loading="required"/>
     <module name="intellij.python.community.impl.poetry.backend"/>
     <module name="intellij.python.community.impl.uv.common" loading="required"/>
@@ -59,8 +62,6 @@ The Python plug-in provides smart editing for Python scripts. The feature set of
     <module name="intellij.python.community.services.systemPython" loading="required"/>
     <module name="intellij.python.community.interpreters" loading="required"/>
     <module name="intellij.python.community.aliasProvider" loading="required"/>
-    <module name="intellij.python.processOutput" loading="required"/>
-    <module name="intellij.python.processOutput.impl"/>
     <module name="intellij.python.externalIndex" loading="required"/>
     <!--Mini-IDes support community python only-->
     <module name="intellij.python.community.plugin.minor"/> <!-- Python for Mini-IDEs-->
