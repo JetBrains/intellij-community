@@ -34,19 +34,21 @@ internal object GitAmendSpecificCommitSquasher {
    */
   fun squashAmendCommitIntoTarget(repository: GitRepository, target: Hash, newMessage: String) {
     val amendCommit = GitLogUtil.collectMetadataForCommit(repository.project, repository.root, GitUtil.HEAD) ?: error("No HEAD commit")
+    val amendCommitParent = amendCommit.parents.single()
     val targetCommit = GitLogUtil.collectMetadataForCommit(repository.project, repository.root, target.asString()) ?: error("No target commit")
 
     check(GitSquashedCommitsMessage.canAutosquash(amendCommit.fullMessage, setOf(targetCommit.subject)))
 
     runBlockingCancellable {
       val entries = repository.project.service<GitInteractiveRebaseEntriesProvider>().tryGetEntriesUsingLog(repository, targetCommit)
-        ?.plus(GitRebaseEntryGeneratedUsingLog(amendCommit))
-      checkNotNull(entries)
+                      ?.plus(GitRebaseEntryGeneratedUsingLog(amendCommit)) ?: run {
+        undoAmendCommit(repository, amendCommit.id, amendCommitParent)
+        throw VcsException(GitBundle.message("git.commit.amend.specific.commit.not.found.error.message"))
+      }
 
       val result =
         InMemoryRebaseOperations.squash(repository, listOf(amendCommit, targetCommit), newMessage, RebaseEntriesSource.Entries(entries))
 
-      val amendCommitParent = amendCommit.parents.single()
       when (result) {
         is GitCommitEditingOperationResult.Complete -> return@runBlockingCancellable
         is GitCommitEditingOperationResult.Conflict -> {
@@ -62,6 +64,7 @@ internal object GitAmendSpecificCommitSquasher {
   }
 
   private suspend fun undoAmendCommit(repository: GitRepository, amendCommit: Hash, amendCommitParent: Hash) {
+    repository.update()
     if (!repository.isHead(amendCommit)) return
     // try to reset, don't report on fail
     coroutineToIndicator { indicator ->
@@ -71,7 +74,6 @@ internal object GitAmendSpecificCommitSquasher {
                         indicator,
                         GitResetOperation.SmartResetPolicy.FAIL).execute(false)
     }
-    repository.update()
   }
 
   class AmendSpecificCommitConflictException(
