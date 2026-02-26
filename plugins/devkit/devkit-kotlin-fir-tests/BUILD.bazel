@@ -80,6 +80,8 @@ jvm_library(
     "//plugins/kotlin/test-framework:test-framework_test_lib",
     "//plugins/kotlin/intellij.kotlin.base.test:base-test",
     "//plugins/kotlin/intellij.kotlin.base.test:base-test_test_lib",
+    "//platform/lang-core",
+    "//platform/lang-core:lang-core_test_lib",
     "//plugins/java-i18n",
     "//plugins/java-i18n:java-i18n_test_lib",
     "//plugins/properties/properties-psi-api:psi",

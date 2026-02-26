@@ -298,6 +298,7 @@ private fun toPsiMethodForDeserialized(
 
             if (methodParameters[i].type != symbolParameterType) return false
         }
+        if (psiMethod.isConstructor) return true
         val psiMethodReturnType = psiMethod.returnType ?: PsiTypes.voidType()
         val symbolReturnType =
             // The return type of compiled `suspend` function is [Object].
