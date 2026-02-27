@@ -529,7 +529,7 @@ fun JToggleButton.bindSelectedIn(scope: CoroutineScope, flow: MutableStateFlow<B
 }
 
 // binary-compatible bridge for external plugins compiled against the old JCheckBox overload
-@Deprecated("Use JToggleButton.bindSelectedIn instead", ReplaceWith("JToggleButton.bindSelectedIn"))
+@Deprecated("Use JToggleButton.bindSelectedIn instead", ReplaceWith("JToggleButton.bindSelectedIn"), level = DeprecationLevel.HIDDEN)
 fun JCheckBox.bindSelectedIn(scope: CoroutineScope, flow: MutableStateFlow<Boolean>): Unit =
   (this as JToggleButton).bindSelectedIn(scope, flow)
 
