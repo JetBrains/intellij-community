@@ -1,5 +1,8 @@
 package org.jetbrains.jewel.markdown.processing
 
+import kotlin.text.first
+import kotlin.text.indexOf
+import kotlin.text.last
 import org.commonmark.node.Code as CMCode
 import org.commonmark.node.Delimited
 import org.commonmark.node.Emphasis as CMEmphasis
@@ -15,9 +18,11 @@ import org.commonmark.parser.beta.ParsedInline
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.jewel.foundation.ExperimentalJewelApi
 import org.jetbrains.jewel.foundation.util.JewelLogger
+import org.jetbrains.jewel.markdown.DimensionSize
 import org.jetbrains.jewel.markdown.InlineMarkdown
 import org.jetbrains.jewel.markdown.WithInlineMarkdown
 import org.jetbrains.jewel.markdown.WithTextContent
+import org.jetbrains.jewel.markdown.parseDimensionSize
 
 /**
  * Reads all supported child inline nodes into a list of [InlineMarkdown] nodes, using the provided [markdownProcessor]
@@ -25,7 +30,7 @@ import org.jetbrains.jewel.markdown.WithTextContent
  *
  * @param markdownProcessor Used to parse the inline contents as needed.
  * @return A list of the contents as parsed [InlineMarkdown].
- * @see toInlineMarkdownOrNull
+ * @see convertToInlineMarkdown
  */
 @ApiStatus.Experimental
 @ExperimentalJewelApi
@@ -33,10 +38,19 @@ public fun Node.readInlineMarkdown(markdownProcessor: MarkdownProcessor): List<I
     val inlines = buildList {
         var current = this@readInlineMarkdown.firstChild
         while (current != null) {
-            val inline = current.toInlineMarkdownOrNull(markdownProcessor)
+            val (inline, next) = current.convertToInlineMarkdown(markdownProcessor)
+            if (inline is InlineMarkdown.Image && next is CMText) {
+                val result = parseImageWithAttributes(inline, next)
+                if (result != null) {
+                    val (imageWithAttrs, nextNode) = result
+                    add(imageWithAttrs)
+                    current = nextNode
+                    continue
+                }
+            }
             if (inline != null) add(inline)
 
-            current = current.next
+            current = next
         }
     }
     return markdownProcessor.convertHtmlInlines(inlines)
@@ -51,45 +65,84 @@ public fun Node.readInlineMarkdown(markdownProcessor: MarkdownProcessor): List<I
  *   registered to [markdownProcessor].
  * @see readInlineMarkdown
  */
+@Suppress("unused") // public API, might be used externally
 @ExperimentalJewelApi
 @ApiStatus.Experimental
 public fun Node.toInlineMarkdownOrNull(markdownProcessor: MarkdownProcessor): InlineMarkdown? =
-    when (this) {
-        is CMText -> InlineMarkdown.Text(literal)
-        is CMLink ->
-            InlineMarkdown.Link(
-                destination = destination,
-                title = title,
-                inlineContent = readInlineMarkdown(markdownProcessor),
-            )
+    convertToInlineMarkdown(markdownProcessor).first
 
-        is CMEmphasis ->
-            InlineMarkdown.Emphasis(delimiter = openingDelimiter, inlineContent = readInlineMarkdown(markdownProcessor))
+private fun Node.convertToInlineMarkdown(markdownProcessor: MarkdownProcessor): Pair<InlineMarkdown?, Node?> {
+    val next: Node? = this.next
+    val inlineContent =
+        when (this) {
+            is CMText -> InlineMarkdown.Text(literal)
+            is CMLink ->
+                InlineMarkdown.Link(
+                    destination = destination,
+                    title = title,
+                    inlineContent = readInlineMarkdown(markdownProcessor),
+                )
 
-        is CMStrongEmphasis -> InlineMarkdown.StrongEmphasis(openingDelimiter, readInlineMarkdown(markdownProcessor))
+            is CMEmphasis ->
+                InlineMarkdown.Emphasis(
+                    delimiter = openingDelimiter,
+                    inlineContent = readInlineMarkdown(markdownProcessor),
+                )
 
-        is CMCode -> InlineMarkdown.Code(literal)
-        is CMHtmlInline -> InlineMarkdown.HtmlInline(literal)
-        is CMImage -> {
-            val inlineContent = readInlineMarkdown(markdownProcessor)
-            InlineMarkdown.Image(
-                source = destination,
-                alt = inlineContent.renderAsSimpleText().trim(),
-                title = title,
-                inlineContent = inlineContent,
-            )
+            is CMStrongEmphasis ->
+                InlineMarkdown.StrongEmphasis(openingDelimiter, readInlineMarkdown(markdownProcessor))
+
+            is CMCode -> InlineMarkdown.Code(literal)
+            is CMHtmlInline -> InlineMarkdown.HtmlInline(literal)
+            is CMImage -> {
+                val inlineContent = readInlineMarkdown(markdownProcessor)
+                InlineMarkdown.Image(
+                    source = destination,
+                    alt = inlineContent.renderAsSimpleText().trim(),
+                    title = title,
+                    inlineContent = inlineContent,
+                )
+            }
+
+            is CMHardLineBreak -> InlineMarkdown.HardLineBreak
+            is CMSoftLineBreak -> InlineMarkdown.SoftLineBreak
+            is Delimited ->
+                markdownProcessor.delimitedInlineExtensions
+                    .find { it.canProcess(this) }
+                    ?.processDelimitedInline(this, markdownProcessor)
+
+            is ParsedInline -> null // Unsupported — see JEWEL-747
+
+            else -> error("Unexpected block $this")
         }
+    return inlineContent to next
+}
 
-        is CMHardLineBreak -> InlineMarkdown.HardLineBreak
-        is CMSoftLineBreak -> InlineMarkdown.SoftLineBreak
-        is Delimited ->
-            markdownProcessor.delimitedInlineExtensions
-                .find { it.canProcess(this) }
-                ?.processDelimitedInline(this, markdownProcessor)
-        is ParsedInline -> null // Unsupported — see JEWEL-747
+private fun getImageSize(attrs: String): Pair<DimensionSize?, DimensionSize?> =
+    if (attrs.isValidImageAttributes()) parseImageAttributes(attrs) else (null to null)
 
-        else -> error("Unexpected block $this")
+private fun String.isValidImageAttributes(): Boolean =
+    length >= 2 && first() == '{' && last() == '}' && indexOf('\n') < 0 && indexOf('\r') < 0
+
+private fun parseImageAttributes(attrs: String): Pair<DimensionSize?, DimensionSize?> {
+    val content = attrs.substring(1, attrs.lastIndex)
+    var width: DimensionSize? = null
+    var height: DimensionSize? = null
+
+    imageSizeAttributeRegex.findAll(content).forEach { match ->
+        val name = match.groupValues[1]
+        val value = match.groups[2]?.value ?: match.groups[3]?.value ?: match.groups[4]?.value.orEmpty()
+
+        when (name) {
+            "width" -> width = value.parseDimensionSize()
+            "height" -> height = value.parseDimensionSize()
+        }
     }
+
+    return width to height
+}
+
+private val imageSizeAttributeRegex = Regex("""(?:^|\s)(width|height)\s*=\s*(?:"([^"]*)"|'([^']*)'|(\S+))""")
 
 /** Used to render content as simple plain text, used when creating image alt text. */
 internal fun List<InlineMarkdown>.renderAsSimpleText(): String = buildString {
@@ -105,4 +158,33 @@ internal fun List<InlineMarkdown>.renderAsSimpleText(): String = buildString {
             }
         }
     }
+}
+
+private fun parseImageWithAttributes(image: InlineMarkdown.Image, next: CMText): Pair<InlineMarkdown.Image, Node?>? {
+    val textLiteral = next.literal
+    val endAttrIdx = textLiteral.indexOf("}")
+    if (!textLiteral.startsWith("{") || endAttrIdx == -1) return null
+
+    val (width, height) = getImageSize(textLiteral.take(endAttrIdx + 1).trim())
+    if (width == null && height == null) return null // Cases like { random text } should be ignored
+
+    val remainder = textLiteral.substring(endAttrIdx + 1)
+    // If there's no text after the attributes we can safely skip the CMText node. Otherwise, remove the
+    // attributes from this CMText literal and return the remainder.
+    val nextNode =
+        if (remainder.isBlank()) {
+            next.next
+        } else {
+            next.literal = remainder
+            next
+        }
+
+    return InlineMarkdown.Image(
+        source = image.source,
+        alt = image.alt,
+        title = image.title,
+        inlineContent = image.inlineContent,
+        width = width,
+        height = height,
+    ) to nextNode
 }

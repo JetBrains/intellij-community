@@ -1,6 +1,21 @@
 // Signature format: 4.0
 package org.jetbrains.jewel.markdown {
 
+  @SuppressCompatibility @org.jetbrains.annotations.ApiStatus.Experimental @org.jetbrains.jewel.foundation.ExperimentalJewelApi public sealed interface DimensionSize {
+  }
+
+  @SuppressCompatibility @kotlin.jvm.JvmInline @org.jetbrains.annotations.ApiStatus.Experimental @org.jetbrains.jewel.foundation.ExperimentalJewelApi public static final value class DimensionSize.Percent implements org.jetbrains.jewel.markdown.DimensionSize {
+    ctor @KotlinOnly public DimensionSize.Percent(int value);
+    method public int getValue();
+    property public int value;
+  }
+
+  @SuppressCompatibility @kotlin.jvm.JvmInline @org.jetbrains.annotations.ApiStatus.Experimental @org.jetbrains.jewel.foundation.ExperimentalJewelApi public static final value class DimensionSize.Pixels implements org.jetbrains.jewel.markdown.DimensionSize {
+    ctor @KotlinOnly public DimensionSize.Pixels(int value);
+    method public int getValue();
+    property public int value;
+  }
+
   @SuppressCompatibility @org.jetbrains.annotations.ApiStatus.Experimental @org.jetbrains.jewel.foundation.ExperimentalJewelApi public sealed interface InlineMarkdown {
   }
 
@@ -37,16 +52,20 @@ package org.jetbrains.jewel.markdown {
   }
 
   @SuppressCompatibility @org.jetbrains.annotations.ApiStatus.Experimental @org.jetbrains.jewel.foundation.ExperimentalJewelApi @org.jetbrains.jewel.foundation.GenerateDataFunctions public static final class InlineMarkdown.Image implements org.jetbrains.jewel.markdown.InlineMarkdown org.jetbrains.jewel.markdown.WithInlineMarkdown {
-    ctor public InlineMarkdown.Image(String source, String alt, String? title, java.util.List<? extends org.jetbrains.jewel.markdown.InlineMarkdown> inlineContent);
-    ctor public InlineMarkdown.Image(String source, String alt, String? title, org.jetbrains.jewel.markdown.InlineMarkdown... inlineContent);
+    ctor public InlineMarkdown.Image(String source, String alt, String? title, java.util.List<? extends org.jetbrains.jewel.markdown.InlineMarkdown> inlineContent, optional org.jetbrains.jewel.markdown.DimensionSize? width, optional org.jetbrains.jewel.markdown.DimensionSize? height);
+    ctor public InlineMarkdown.Image(String source, String alt, String? title, org.jetbrains.jewel.markdown.InlineMarkdown[] inlineContent, optional org.jetbrains.jewel.markdown.DimensionSize? width, optional org.jetbrains.jewel.markdown.DimensionSize? height);
     method public String getAlt();
+    method public org.jetbrains.jewel.markdown.DimensionSize? getHeight();
     method public java.util.List<org.jetbrains.jewel.markdown.InlineMarkdown> getInlineContent();
     method public String getSource();
     method public String? getTitle();
+    method public org.jetbrains.jewel.markdown.DimensionSize? getWidth();
     property public String alt;
+    property public org.jetbrains.jewel.markdown.DimensionSize? height;
     property public java.util.List<org.jetbrains.jewel.markdown.InlineMarkdown> inlineContent;
     property public String source;
     property public String? title;
+    property public org.jetbrains.jewel.markdown.DimensionSize? width;
   }
 
   @SuppressCompatibility @org.jetbrains.annotations.ApiStatus.Experimental @org.jetbrains.jewel.foundation.ExperimentalJewelApi @org.jetbrains.jewel.foundation.GenerateDataFunctions public static final class InlineMarkdown.Link implements org.jetbrains.jewel.markdown.InlineMarkdown org.jetbrains.jewel.markdown.WithInlineMarkdown {
@@ -253,7 +272,9 @@ package org.jetbrains.jewel.markdown.extensions {
 
   @SuppressCompatibility @org.jetbrains.annotations.ApiStatus.Experimental @org.jetbrains.jewel.foundation.ExperimentalJewelApi public interface MarkdownBlockProcessorExtension {
     method public boolean canProcess(org.commonmark.node.CustomBlock block);
+    method public default boolean getAllowsMergingWithNextBlock();
     method public org.jetbrains.jewel.markdown.MarkdownBlock.CustomBlock? processMarkdownBlock(org.commonmark.node.CustomBlock block, org.jetbrains.jewel.markdown.processing.MarkdownProcessor processor);
+    property public default boolean allowsMergingWithNextBlock;
   }
 
   @SuppressCompatibility @org.jetbrains.annotations.ApiStatus.Experimental @org.jetbrains.jewel.foundation.ExperimentalJewelApi public interface MarkdownBlockRendererExtension {
