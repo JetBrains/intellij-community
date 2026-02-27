@@ -82,7 +82,7 @@ interface SplitComponentProvider<T : Id> {
         }
       }
       else {
-        fileLogger().warn("Couldn't find provider for place: $placeId")
+        fileLogger().error("Couldn't find provider for place: $placeId")
       }
       val component = JBLabel(IdeBundle.message("split.component.missing", "$placeId/$modelUid"))
       return component
