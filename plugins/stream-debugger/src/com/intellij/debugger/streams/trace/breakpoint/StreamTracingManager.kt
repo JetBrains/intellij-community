@@ -119,8 +119,9 @@ internal class StreamTracingManager(
     methodSignature: JvmMethodSignature,
   ): MethodExitRequest {
     return breakpointFactory.createMethodExitBreakpoint(evaluationContext, methodSignature) { evalContext, _, value ->
+      val result = instrumentationManager.onSourceOperationExit(evalContext, value)
       enableNextBreakpoint(-1)
-      instrumentationManager.onSourceOperationExit(evalContext, value)
+      result
     }
   }
 
@@ -132,12 +133,14 @@ internal class StreamTracingManager(
   ): StreamCallRuntimeInfo {
     // create exit request first to be able to activate it in entry request
     val exitRequest = breakpointFactory.createMethodExitBreakpoint(evaluationContext, methodSignature) { evalContext, _, value ->
+      val result = instrumentationManager.onIntermediateOperationExit(evalContext, callOrder, value)
       enableNextBreakpoint(callOrder)
-      instrumentationManager.onIntermediateOperationExit(evalContext, callOrder, value)
+      result
     }
     val entryRequest = breakpointFactory.createMethodEntryBreakpoint(evaluationContext, methodSignature) { evalContext, method, args ->
+      val result = instrumentationManager.onIntermediateOperationEntry(evalContext, callOrder, method, args)
       exitRequest.enable()
-      instrumentationManager.onIntermediateOperationEntry(evalContext, callOrder, method, args)
+      result
     }
     return StreamCallRuntimeInfo(entryRequest, exitRequest)
   }
@@ -156,8 +159,9 @@ internal class StreamTracingManager(
       value
     }
     val entryRequest = breakpointFactory.createMethodEntryBreakpoint(evaluationContext, methodSignature) { evalContext, method, args ->
+      val result = instrumentationManager.onTerminalOperationEntry(evalContext, method, args)
       exitRequest.enable()
-      instrumentationManager.onTerminalOperationEntry(evalContext, method, args)
+      result
     }
     return StreamCallRuntimeInfo(entryRequest, exitRequest)
   }
