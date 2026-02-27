@@ -8,6 +8,7 @@ import com.intellij.util.cancelOnDispose
 import com.jetbrains.python.NON_INTERACTIVE_ROOT_TRACE_CONTEXT
 import com.jetbrains.python.packaging.PyPackageVersion
 import com.jetbrains.python.packaging.PyPackageVersionNormalizer
+import com.jetbrains.python.packaging.PyPackagingSettings
 import com.jetbrains.python.packaging.PyRequirement
 import com.jetbrains.python.packaging.common.PythonRepositoryPackageSpecification
 import com.jetbrains.python.packaging.management.PythonRepositoryManager
@@ -50,7 +51,8 @@ abstract class PythonRepositoryManagerBase : PythonRepositoryManager, Disposable
 
   override suspend fun getLatestVersion(packageName: String, repository: PyPackageRepository?): PyPackageVersion? {
     waitForInit()
-    val version = getVersions(packageName, repository)?.firstOrNull() ?: return null
+    val versions = getVersions(packageName, repository) ?: return null
+    val version = PyPackagingSettings.getInstance(project).selectLatestVersion(versions) ?: return null
     return PyPackageVersionNormalizer.normalize(version)
   }
 
