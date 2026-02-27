@@ -1,10 +1,9 @@
-// "Rename variable to 'id'" "true"
+// "Rename variable to 'lastName'" "true"
 // COMPILER_ARGUMENTS: -Xname-based-destructuring=only-syntax
 
-data class Product(val id: String, val productName: String)
+data class Person(val firstName: String, val lastName: String)
 
-fun test(product: Product) {
-    val (id<caret>Value, name) = product
-    println(idValue)
+fun test(person: Person) {
+    val (_, lastName) = person
 }
 // FUS_K2_QUICKFIX_NAME: org.jetbrains.kotlin.idea.k2.codeinsight.inspections.declarations.RenameVariableToMatchPropertiesQuickFix
