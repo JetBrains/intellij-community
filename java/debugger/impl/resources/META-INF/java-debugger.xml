@@ -48,6 +48,13 @@
     <extensionPoint qualifiedName="com.intellij.debugger.additionalContextProvider"
                     interface="com.intellij.debugger.engine.evaluation.AdditionalContextProvider" dynamic="true"/>
 
+    <extensionPoint qualifiedName="com.intellij.debugger.evaluationExpressionConverter"
+                    beanClass="com.intellij.lang.LanguageExtensionPoint"
+                    dynamic="true">
+      <with attribute="implementationClass"
+            implements="com.intellij.debugger.engine.evaluation.DebuggerEvaluationExpressionConverter"/>
+    </extensionPoint>
+
     <extensionPoint qualifiedName="com.intellij.debuggerEditorTextProvider" beanClass="com.intellij.lang.LanguageExtensionPoint"
                     dynamic="true">
       <with attribute="implementationClass" implements="com.intellij.debugger.impl.EditorTextProvider"/>
