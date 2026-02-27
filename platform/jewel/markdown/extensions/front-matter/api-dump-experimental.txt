@@ -1,0 +1,79 @@
+*f:org.jetbrains.jewel.markdown.extensions.frontmatter.FrontMatter
+- org.jetbrains.jewel.markdown.MarkdownBlock$CustomBlock
+- sf:$stable:I
+- <init>(java.util.List):V
+- f:component1():java.util.List
+- f:copy(java.util.List):org.jetbrains.jewel.markdown.extensions.frontmatter.FrontMatter
+- bs:copy$default(org.jetbrains.jewel.markdown.extensions.frontmatter.FrontMatter,java.util.List,I,java.lang.Object):org.jetbrains.jewel.markdown.extensions.frontmatter.FrontMatter
+- equals(java.lang.Object):Z
+- f:getEntries():java.util.List
+- hashCode():I
+*f:org.jetbrains.jewel.markdown.extensions.frontmatter.FrontMatter$Entry
+- sf:$stable:I
+- <init>(java.lang.String,org.jetbrains.jewel.markdown.extensions.frontmatter.FrontMatter$Value):V
+- f:component1():java.lang.String
+- f:component2():org.jetbrains.jewel.markdown.extensions.frontmatter.FrontMatter$Value
+- f:copy(java.lang.String,org.jetbrains.jewel.markdown.extensions.frontmatter.FrontMatter$Value):org.jetbrains.jewel.markdown.extensions.frontmatter.FrontMatter$Entry
+- bs:copy$default(org.jetbrains.jewel.markdown.extensions.frontmatter.FrontMatter$Entry,java.lang.String,org.jetbrains.jewel.markdown.extensions.frontmatter.FrontMatter$Value,I,java.lang.Object):org.jetbrains.jewel.markdown.extensions.frontmatter.FrontMatter$Entry
+- equals(java.lang.Object):Z
+- f:getKey():java.lang.String
+- f:getValue():org.jetbrains.jewel.markdown.extensions.frontmatter.FrontMatter$Value
+- hashCode():I
+*:org.jetbrains.jewel.markdown.extensions.frontmatter.FrontMatter$Value
+*f:org.jetbrains.jewel.markdown.extensions.frontmatter.FrontMatter$Value$ListValue
+- org.jetbrains.jewel.markdown.extensions.frontmatter.FrontMatter$Value
+- sf:$stable:I
+- <init>(java.util.List):V
+- f:component1():java.util.List
+- f:copy(java.util.List):org.jetbrains.jewel.markdown.extensions.frontmatter.FrontMatter$Value$ListValue
+- bs:copy$default(org.jetbrains.jewel.markdown.extensions.frontmatter.FrontMatter$Value$ListValue,java.util.List,I,java.lang.Object):org.jetbrains.jewel.markdown.extensions.frontmatter.FrontMatter$Value$ListValue
+- equals(java.lang.Object):Z
+- f:getItems():java.util.List
+- hashCode():I
+*f:org.jetbrains.jewel.markdown.extensions.frontmatter.FrontMatter$Value$Scalar
+- org.jetbrains.jewel.markdown.extensions.frontmatter.FrontMatter$Value
+- sf:$stable:I
+- <init>(java.lang.String):V
+- f:component1():java.lang.String
+- f:copy(java.lang.String):org.jetbrains.jewel.markdown.extensions.frontmatter.FrontMatter$Value$Scalar
+- bs:copy$default(org.jetbrains.jewel.markdown.extensions.frontmatter.FrontMatter$Value$Scalar,java.lang.String,I,java.lang.Object):org.jetbrains.jewel.markdown.extensions.frontmatter.FrontMatter$Value$Scalar
+- equals(java.lang.Object):Z
+- f:getText():java.lang.String
+- hashCode():I
+*f:org.jetbrains.jewel.markdown.extensions.frontmatter.FrontMatterColors
+- sf:$stable:I
+- *sf:Companion:org.jetbrains.jewel.markdown.extensions.frontmatter.FrontMatterColors$Companion
+- equals(java.lang.Object):Z
+- f:getBackground-0d7_KjU():J
+- f:getBorderColor-0d7_KjU():J
+- hashCode():I
+*f:org.jetbrains.jewel.markdown.extensions.frontmatter.FrontMatterColors$Companion
+*f:org.jetbrains.jewel.markdown.extensions.frontmatter.FrontMatterMetrics
+- sf:$stable:I
+- *sf:Companion:org.jetbrains.jewel.markdown.extensions.frontmatter.FrontMatterMetrics$Companion
+- equals(java.lang.Object):Z
+- f:getBorderWidth-D9Ej5fM():F
+- f:getCellPadding():androidx.compose.foundation.layout.PaddingValues
+- hashCode():I
+*f:org.jetbrains.jewel.markdown.extensions.frontmatter.FrontMatterMetrics$Companion
+*f:org.jetbrains.jewel.markdown.extensions.frontmatter.FrontMatterProcessorExtension
+- org.jetbrains.jewel.markdown.extensions.MarkdownProcessorExtension
+- sf:$stable:I
+- sf:INSTANCE:org.jetbrains.jewel.markdown.extensions.frontmatter.FrontMatterProcessorExtension
+- getBlockProcessorExtension():org.jetbrains.jewel.markdown.extensions.MarkdownBlockProcessorExtension
+- getParserExtension():org.commonmark.parser.Parser$ParserExtension
+- getTextRendererExtension():org.commonmark.renderer.text.TextContentRenderer$TextContentRendererExtension
+*f:org.jetbrains.jewel.markdown.extensions.frontmatter.FrontMatterRendererExtension
+- org.jetbrains.jewel.markdown.extensions.MarkdownRendererExtension
+- sf:$stable:I
+- <init>(org.jetbrains.jewel.markdown.extensions.frontmatter.FrontMatterStyling):V
+- getBlockRenderer():org.jetbrains.jewel.markdown.extensions.MarkdownBlockRendererExtension
+*f:org.jetbrains.jewel.markdown.extensions.frontmatter.FrontMatterStyling
+- sf:$stable:I
+- *sf:Companion:org.jetbrains.jewel.markdown.extensions.frontmatter.FrontMatterStyling$Companion
+- <init>(org.jetbrains.jewel.markdown.extensions.frontmatter.FrontMatterColors,org.jetbrains.jewel.markdown.extensions.frontmatter.FrontMatterMetrics):V
+- equals(java.lang.Object):Z
+- f:getColors():org.jetbrains.jewel.markdown.extensions.frontmatter.FrontMatterColors
+- f:getMetrics():org.jetbrains.jewel.markdown.extensions.frontmatter.FrontMatterMetrics
+- hashCode():I
+*f:org.jetbrains.jewel.markdown.extensions.frontmatter.FrontMatterStyling$Companion

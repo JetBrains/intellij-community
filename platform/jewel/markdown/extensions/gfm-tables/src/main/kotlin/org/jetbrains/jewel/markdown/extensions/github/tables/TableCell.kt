@@ -2,9 +2,13 @@
 package org.jetbrains.jewel.markdown.extensions.github.tables
 
 import androidx.compose.ui.Alignment
+import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.jewel.foundation.ExperimentalJewelApi
 import org.jetbrains.jewel.markdown.InlineMarkdown
 import org.jetbrains.jewel.markdown.MarkdownBlock
 
+@ApiStatus.Experimental
+@ExperimentalJewelApi
 internal data class TableCell(
     val rowIndex: Int,
     val columnIndex: Int,
