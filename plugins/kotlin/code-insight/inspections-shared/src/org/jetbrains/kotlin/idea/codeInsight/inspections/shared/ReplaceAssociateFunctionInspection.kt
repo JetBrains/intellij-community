@@ -14,15 +14,14 @@ import org.jetbrains.kotlin.idea.codeinsight.api.classic.inspections.AbstractKot
 import org.jetbrains.kotlin.idea.codeinsight.utils.callExpression
 import org.jetbrains.kotlin.idea.codeinsights.impl.base.quickFix.AssociateFunction
 import org.jetbrains.kotlin.idea.codeinsights.impl.base.quickFix.AssociateFunction.ASSOCIATE_BY_KEY_AND_VALUE
+import org.jetbrains.kotlin.idea.codeinsights.impl.base.quickFix.AssociateFunction.ASSOCIATE_BY
 import org.jetbrains.kotlin.idea.codeinsights.impl.base.quickFix.AssociateFunction.ASSOCIATE_WITH
 import org.jetbrains.kotlin.idea.codeinsights.impl.base.quickFix.AssociateFunctionUtil
 import org.jetbrains.kotlin.idea.codeinsights.impl.base.quickFix.AssociateFunctionUtil.lambda
 import org.jetbrains.kotlin.idea.codeinsights.impl.base.quickFix.AssociateFunctionUtil.lastStatement
 import org.jetbrains.kotlin.idea.codeinsights.impl.base.quickFix.AssociateFunctionUtil.pair
 import org.jetbrains.kotlin.name.FqName
-import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.name.StandardClassIds.BASE_COLLECTIONS_PACKAGE
-import org.jetbrains.kotlin.name.StandardClassIds.BASE_SEQUENCES_PACKAGE
 import org.jetbrains.kotlin.psi.BuilderByPattern
 import org.jetbrains.kotlin.psi.KtCallExpression
 import org.jetbrains.kotlin.psi.KtDotQualifiedExpression
@@ -35,28 +34,22 @@ import org.jetbrains.kotlin.psi.buildExpression
 import org.jetbrains.kotlin.psi.dotQualifiedExpressionVisitor
 import org.jetbrains.kotlin.psi.psiUtil.allChildren
 import org.jetbrains.kotlin.psi.psiUtil.getStrictParentOfType
+import org.jetbrains.kotlin.name.Name
+import org.jetbrains.kotlin.name.StandardClassIds.BASE_SEQUENCES_PACKAGE
 
-private val associateFunctionNames: List<String> = listOf("associate", "associateTo")
-private val associateFqNames: Set<FqName> =
-    arrayOf(BASE_COLLECTIONS_PACKAGE, BASE_SEQUENCES_PACKAGE).mapTo(hashSetOf()) { it.child(Name.identifier("associate")) }
-private val associateToFqNames: Set<FqName> =
-    arrayOf(BASE_COLLECTIONS_PACKAGE, BASE_SEQUENCES_PACKAGE).mapTo(hashSetOf()) { it.child(Name.identifier("associateTo")) }
 
 class ReplaceAssociateFunctionInspection : AbstractKotlinInspection() {
 
     override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean): KtVisitorVoid = dotQualifiedExpressionVisitor(fun(dotQualifiedExpression) {
         val callExpression = dotQualifiedExpression.callExpression ?: return
         val calleeExpression = callExpression.calleeExpression ?: return
-        if (calleeExpression.text !in associateFunctionNames) return
-
-        val fqName = analyze(dotQualifiedExpression) {
-            val functionCall = dotQualifiedExpression.resolveToCall()?.singleFunctionCallOrNull() ?: return
+        val calleeExpressionFqName = analyze(calleeExpression) {
+            val functionCall = calleeExpression.resolveToCall()?.singleFunctionCallOrNull() ?: return
             functionCall.symbol.callableId?.asSingleFqName() ?: return
         }
-        val isAssociate = fqName in associateFqNames
-        val isAssociateTo = fqName in associateToFqNames
-        if (!isAssociate && !isAssociateTo) return
+        if (calleeExpressionFqName !in validAssociateFqNames) return
 
+        val isAssociateTo = calleeExpression.text == "associateTo"
         val (associateFunction, highlightType) = AssociateFunctionUtil.getAssociateFunctionAndProblemHighlightType(dotQualifiedExpression) ?: return
         holder.registerProblemWithoutOfflineInformation(
             calleeExpression,
@@ -90,13 +83,50 @@ class ReplaceAssociateFunctionFix(
             analyze(lastStatement) { pair(lastStatement) } ?: return
 
         val psiFactory = KtPsiFactory(project)
-        if (function == ASSOCIATE_BY_KEY_AND_VALUE) {
-            val destination = if (hasDestination) {
-                callExpression.valueArguments.firstOrNull()?.getArgumentExpression() ?: return
-            } else {
-                null
+
+        val expressionData = ExpressionData(callExpression, receiverExpression, lastStatement, keySelector, valueTransform, lambda, psiFactory)
+
+        val newExpression = when (function) {
+            ASSOCIATE_BY -> createAssociateByExpression(expressionData)
+            ASSOCIATE_WITH -> createAssociateWithExpression(expressionData)
+            ASSOCIATE_BY_KEY_AND_VALUE -> createAssociateByKeyAndValueExpression(expressionData)
+        }
+        dotQualifiedExpression.replace(newExpression)
+    }
+
+    private fun createAssociateWithExpression(expressionData: ExpressionData): KtExpression {
+        with(expressionData) {
+            lastStatement.replace(valueTransform)
+            return psiFactory.buildExpression {
+                appendExpression(receiverExpression)
+                appendFixedText(".")
+                appendFixedText(functionName)
+                callExpression.valueArgumentList?.let { appendValueArgumentList(it) }
+                if (callExpression.lambdaArguments.isNotEmpty()) appendLambda(lambda)
             }
-            val newExpression = psiFactory.buildExpression {
+        }
+    }
+
+    private fun createAssociateByExpression(expressionData: ExpressionData): KtExpression {
+        with(expressionData) {
+            lastStatement.replace(keySelector)
+            return psiFactory.buildExpression {
+                appendExpression(receiverExpression)
+                appendFixedText(".")
+                appendFixedText(functionName)
+                callExpression.valueArgumentList?.let { appendValueArgumentList(it) }
+                if (callExpression.lambdaArguments.isNotEmpty()) appendLambda(lambda)
+            }
+        }
+    }
+
+    private fun createAssociateByKeyAndValueExpression(expressionData: ExpressionData): KtExpression {
+        with(expressionData) {
+            val destination = callExpression.valueArguments
+                .firstOrNull()
+                ?.getArgumentExpression()
+                .takeIf { hasDestination }
+            return psiFactory.buildExpression {
                 appendExpression(receiverExpression)
                 appendFixedText(".")
                 appendFixedText(functionName)
@@ -110,21 +140,6 @@ class ReplaceAssociateFunctionFix(
                 appendLambda(lambda, valueTransform)
                 appendFixedText(")")
             }
-            dotQualifiedExpression.replace(newExpression)
-        } else {
-            lastStatement.replace(if (function == ASSOCIATE_WITH) valueTransform else keySelector)
-            val newExpression = psiFactory.buildExpression {
-                appendExpression(receiverExpression)
-                appendFixedText(".")
-                appendFixedText(functionName)
-                callExpression.valueArgumentList?.let { valueArgumentList ->
-                    appendValueArgumentList(valueArgumentList)
-                }
-                if (callExpression.lambdaArguments.isNotEmpty()) {
-                    appendLambda(lambda)
-                }
-            }
-            dotQualifiedExpression.replace(newExpression)
         }
     }
 
@@ -156,10 +171,27 @@ class ReplaceAssociateFunctionFix(
     companion object {
         fun replaceLastStatementForAssociateFunction(callExpression: KtCallExpression, function: AssociateFunction) {
             val lastStatement = callExpression.lambda()?.functionLiteral?.lastStatement() ?: return
-            val (keySelector, valueTransform) = analyze<Pair<KtExpression, KtExpression>?>(lastStatement) {
+            val (keySelector, valueTransform) = analyze(lastStatement) {
                 pair(lastStatement)
             } ?: return
             lastStatement.replace(if (function == ASSOCIATE_WITH) valueTransform else keySelector)
         }
     }
+
+    private data class ExpressionData(
+        val callExpression: KtCallExpression,
+        val receiverExpression: KtExpression,
+        val lastStatement: KtExpression,
+        val keySelector: KtExpression,
+        val valueTransform: KtExpression,
+        val lambda: KtLambdaExpression,
+        val psiFactory: KtPsiFactory,
+    )
 }
+
+private val validAssociateFqNames: List<FqName> = listOf(
+    BASE_COLLECTIONS_PACKAGE.child(Name.identifier("associate")),
+    BASE_COLLECTIONS_PACKAGE.child(Name.identifier("associateTo")),
+    BASE_SEQUENCES_PACKAGE.child(Name.identifier("associate")),
+    BASE_SEQUENCES_PACKAGE.child(Name.identifier("associateTo")),
+)
