@@ -30,7 +30,7 @@ open class MappingOperation(name: String) : OrderBasedOperation(name, MapResolve
 open class FlatMappingOperation(name: String) : OrderBasedOperation(name, FlatMapResolver())
 open class SortedOperation(name: String) : OrderBasedOperation(name, IdentityResolver())
 
-class DistinctOperation(name: String, handlerFactory: (Int, IntermediateStreamCall, Dsl) -> IntermediateCallHandler)
+open class DistinctOperation(name: String, handlerFactory: (Int, IntermediateStreamCall, Dsl) -> IntermediateCallHandler)
   : IntermediateOperationBase(name, handlerFactory, DistinctCallTraceInterpreter(), DistinctResolver())
 
 class ConcatOperation(name: String, orderResolver: ValuesOrderResolver) : OrderBasedOperation(name, orderResolver)

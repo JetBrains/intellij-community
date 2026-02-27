@@ -1,8 +1,6 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.debugger.streams.lib.impl
 
-import com.intellij.debugger.streams.core.lib.impl.DistinctOperation
-import com.intellij.debugger.streams.core.trace.impl.handler.unified.DistinctTraceHandler
 import com.intellij.debugger.streams.core.trace.impl.interpret.AllMatchTraceInterpreter
 import com.intellij.debugger.streams.core.trace.impl.interpret.AnyMatchTraceInterpreter
 import com.intellij.debugger.streams.core.trace.impl.interpret.NoneMatchTraceInterpreter
@@ -13,6 +11,7 @@ import com.intellij.debugger.streams.trace.breakpoint.instrumentation.Breakpoint
 import com.intellij.debugger.streams.trace.breakpoint.instrumentation.BreakpointBasedMappingOperation
 import com.intellij.debugger.streams.trace.breakpoint.instrumentation.BreakpointBasedMatchingOperation
 import com.intellij.debugger.streams.trace.breakpoint.instrumentation.BreakpointBasedOptionalResultOperation
+import com.intellij.debugger.streams.trace.breakpoint.instrumentation.BreakpointBasedDistinctOperation
 import com.intellij.debugger.streams.trace.breakpoint.instrumentation.BreakpointBasedParallelOperation
 import com.intellij.debugger.streams.trace.breakpoint.instrumentation.BreakpointBasedSortedOperation
 import com.intellij.debugger.streams.trace.breakpoint.instrumentation.BreakpointBasedToCollectionOperation
@@ -37,7 +36,7 @@ class StandardLibrarySupport : JvmLibrarySupportBase() {
                                      BreakpointBasedFlatMappingOperation("flatMapToInt"),
                                      BreakpointBasedFlatMappingOperation("flatMapToLong"),
                                      BreakpointBasedFlatMappingOperation("flatMapToDouble"),
-                                     DistinctOperation("distinct", { num, call, dsl -> DistinctTraceHandler(num, call, dsl) }),
+                                     BreakpointBasedDistinctOperation("distinct"),
                                      BreakpointBasedSortedOperation("sorted"),
                                      BreakpointBasedParallelOperation("parallel"))
 
