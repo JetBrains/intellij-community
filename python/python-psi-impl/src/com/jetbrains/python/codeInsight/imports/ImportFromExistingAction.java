@@ -207,7 +207,12 @@ public class ImportFromExistingAction implements QuestionAction {
     else { // just 'import'
       // all we need is to qualify our target
       PyElementGenerator gen = PyElementGenerator.getInstance(myTarget.getProject());
-      myTarget.replace(gen.createExpressionFromText(LanguageLevel.forElement(myTarget), importElement.getVisibleName() + "." + myName));
+      if (item.getQualifiedReferenceText() != null) {
+        myTarget.replace(gen.createExpressionFromText(LanguageLevel.forElement(myTarget), item.getQualifiedReferenceText()));
+      }
+      else {
+        myTarget.replace(gen.createExpressionFromText(LanguageLevel.forElement(myTarget), importElement.getVisibleName() + "." + myName));
+      }
     }
   }
 

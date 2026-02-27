@@ -435,6 +435,16 @@ public class PyAddImportQuickFixTest extends PyQuickFixTestCase {
     doMultiFileAutoImportTest("Import 'src.Outer.Inner from pkg'");
   }
 
+  // PY-88009
+  public void testQualifyWithRegularImport() {
+    doMultiFileAutoImportTest("Import 'pkg.src.MyClass'");
+  }
+
+  // PY-88009
+  public void testQualifyNestedClassWithRegularImport() {
+    doMultiFileAutoImportTest("Import 'pkg.src.Outer.Inner'");
+  }
+
   private void doTestProposedImportsOrdering(String @NotNull ... expected) {
     doMultiFileAutoImportTest("Import", fix -> {
       final List<String> candidates = ContainerUtil.map(fix.getCandidates(), c -> c.getPresentableText());

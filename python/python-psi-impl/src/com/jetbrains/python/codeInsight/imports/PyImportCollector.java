@@ -93,6 +93,14 @@ public class PyImportCollector {
     if (file instanceof PyFile pyFile) {
       for (PyImportElement importElement : pyFile.getImportTargets()) {
         existingImportFile = addImportViaElement(existingImportFile, importElement, importElement.resolve());
+        // For multi-component imports like "import pkg.src", also check for nested classes
+        QualifiedName importedQName = importElement.getImportedQName();
+        if (importedQName != null && importedQName.getComponentCount() > 1) {
+          String visibleName = importElement.getAsName() != null ? importElement.getVisibleName() : importedQName.toString();
+          if (visibleName != null) {
+            addCandidateViaImportedModule(importElement, visibleName);
+          }
+        }
       }
       existingImportFile = addCandidatesViaFromImports(existingImportFile, pyFile);
     }
@@ -114,13 +122,17 @@ public class PyImportCollector {
   }
 
   private void addCandidateViaImportedModule(@NotNull PyImportElement importElement) {
+    String visibleName = importElement.getVisibleName();
+    if (visibleName == null) {
+      return;
+    }
+    addCandidateViaImportedModule(importElement, visibleName);
+  }
+
+  private void addCandidateViaImportedModule(@NotNull PyImportElement importElement, @NotNull String visibleName) {
     PsiElement resolved = importElement.resolve();
     PyFile moduleFile = as(PyUtil.turnDirIntoInit(resolved), PyFile.class);
     if (moduleFile == null) {
-      return;
-    }
-    String visibleName = importElement.getVisibleName();
-    if (visibleName == null) {
       return;
     }
     // Check for top-level symbol in the module
@@ -181,13 +193,22 @@ public class PyImportCollector {
       if (definition != null && !(definition instanceof PyFile || definition instanceof PyImportElement) &&
           definition.getContainingFile() != null && PsiTreeUtil.isAncestor(source, definition.getContainingFile(), false)) {
         existingImportFile = sourceFile;
-        fix.addImport(definition, sourceFile, importElement);
+        String qualifiedRef = computeQualifiedRefForRegularImport(importElement);
+        fix.addImport(definition, sourceFile, importElement, null, null, qualifiedRef);
         if (name != null) {
           seenCandidateNames.add(name);
         }
       }
     }
     return existingImportFile;
+  }
+
+  private @Nullable String computeQualifiedRefForRegularImport(@NotNull PyImportElement importElement) {
+    if (importElement.getParent() instanceof PyFromImportStatement) return null;
+    QualifiedName importedQName = importElement.getImportedQName();
+    if (importedQName == null || importedQName.getComponentCount() <= 1) return null;
+    String prefix = importElement.getAsName() != null ? importElement.getVisibleName() : importedQName.toString();
+    return prefix + "." + myRefText;
   }
 
   private void addSymbolImportCandidates(PsiFile existingImportFile) {

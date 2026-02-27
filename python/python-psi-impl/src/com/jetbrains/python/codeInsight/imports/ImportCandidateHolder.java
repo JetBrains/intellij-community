@@ -135,6 +135,10 @@ public class ImportCandidateHolder implements Comparable<ImportCandidateHolder> 
 
   public @NotNull @NlsSafe String getPresentableText() {
     PyImportElement importElement = getImportElement();
+    // For regular imports with qualifiedReferenceText, the text already contains the full qualified path
+    if (myQualifiedReferenceText != null && importElement != null && !(importElement.getParent() instanceof PyFromImportStatement)) {
+      return myQualifiedReferenceText;
+    }
     final String name = myQualifiedReferenceText != null ? myQualifiedReferenceText : getImportableName();
     final QualifiedName path = myQualifiedReferenceText != null ? null : myPath;
     final StringBuilder sb = new StringBuilder(getQualifiedName(name, path, importElement));
