@@ -308,7 +308,7 @@ public class IdeaMenuUI extends BasicMenuUI {
       g.setColor(jMenu.getBackground());
       g.fillRect(0, 0, jMenu.getWidth(), jMenu.getHeight());
     }
-    if (WinAltKeyProcessor.isEnabled()) {
+    if (WinAltKeyProcessor.isEnabled() && ExperimentalUI.isNewUI()) {
       MenuElement[] selectedPath = MenuSelectionManager.defaultManager().getSelectedPath();
       if (IdeaPopupMenuUI.isMenuBarItem(comp) && buttonmodel.isSelected() && selectedPath.length == 2) {
         paintFocusBorder(g, comp, jMenu.getWidth(), jMenu.getHeight());
