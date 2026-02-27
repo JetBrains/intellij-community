@@ -10,6 +10,7 @@ import com.intellij.openapi.project.Project
 data class AgentChatEditorTabActionContext(
   val project: Project,
   val path: String,
+  val tabKey: String,
   val threadIdentity: String = "",
   val threadId: String = "",
   val provider: AgentSessionProvider? = null,
@@ -49,6 +50,7 @@ fun resolveAgentChatEditorTabActionContext(event: AnActionEvent): AgentChatEdito
   return AgentChatEditorTabActionContext(
     project = project,
     path = normalizeAgentWorkbenchPath(selectedChatFile.projectPath),
+    tabKey = selectedChatFile.tabKey,
     threadIdentity = selectedChatFile.threadIdentity,
     threadId = selectedChatFile.threadId,
     provider = selectedChatFile.provider,

@@ -1,6 +1,10 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.agent.workbench.sessions
 
+import com.intellij.agent.workbench.chat.AgentChatPendingCodexTabRebindOutcome
+import com.intellij.agent.workbench.chat.AgentChatPendingCodexTabRebindReport
+import com.intellij.agent.workbench.chat.AgentChatPendingCodexTabRebindRequest
+import com.intellij.agent.workbench.chat.AgentChatPendingCodexTabRebindStatus
 import com.intellij.agent.workbench.chat.AgentChatPendingCodexTabSnapshot
 import com.intellij.agent.workbench.chat.AgentChatPendingTabRebindTarget
 import com.intellij.agent.workbench.common.AgentThreadActivity
@@ -300,15 +304,20 @@ class AgentSessionsLoadingCoordinatorTest {
           )
         )
       },
-      openChatPendingTabSpecificBinder = { path, pendingThreadIdentity, target ->
-        rebindInvocations.add(
-          PendingCodexRebindInvocation(
-            path = path,
-            pendingThreadIdentity = pendingThreadIdentity,
-            target = target,
-          )
-        )
-        true
+      openChatPendingTabsBinder = { requestsByPath ->
+        requestsByPath.forEach { (path, requests) ->
+          requests.forEach { request ->
+            rebindInvocations.add(
+              PendingCodexRebindInvocation(
+                path = path,
+                pendingTabKey = request.pendingTabKey,
+                pendingThreadIdentity = request.pendingThreadIdentity,
+                target = request.target,
+              )
+            )
+          }
+        }
+        successfulPendingCodexRebindReport(requestsByPath)
       },
     ) { coordinator, stateStore ->
       stateStore.replaceProjects(
@@ -333,6 +342,7 @@ class AgentSessionsLoadingCoordinatorTest {
 
       val invocation = rebindInvocations.single()
       assertThat(invocation.path).isEqualTo(PROJECT_PATH)
+      assertThat(invocation.pendingTabKey).isEqualTo("pending-codex:new-1")
       assertThat(invocation.pendingThreadIdentity).isEqualTo("codex:new-1")
       val target = invocation.target
       assertThat(target.threadIdentity).isEqualTo(buildAgentSessionIdentity(AgentSessionProvider.CODEX, "codex-2"))
@@ -379,15 +389,20 @@ class AgentSessionsLoadingCoordinatorTest {
           )
         )
       },
-      openChatPendingTabSpecificBinder = { path, pendingThreadIdentity, target ->
-        rebindInvocations.add(
-          PendingCodexRebindInvocation(
-            path = path,
-            pendingThreadIdentity = pendingThreadIdentity,
-            target = target,
-          )
-        )
-        true
+      openChatPendingTabsBinder = { requestsByPath ->
+        requestsByPath.forEach { (path, requests) ->
+          requests.forEach { request ->
+            rebindInvocations.add(
+              PendingCodexRebindInvocation(
+                path = path,
+                pendingTabKey = request.pendingTabKey,
+                pendingThreadIdentity = request.pendingThreadIdentity,
+                target = request.target,
+              )
+            )
+          }
+        }
+        successfulPendingCodexRebindReport(requestsByPath)
       },
     ) { coordinator, stateStore ->
       stateStore.replaceProjects(
@@ -412,6 +427,7 @@ class AgentSessionsLoadingCoordinatorTest {
 
       val invocation = rebindInvocations.single()
       assertThat(invocation.path).isEqualTo(PROJECT_PATH)
+      assertThat(invocation.pendingTabKey).isEqualTo("pending-codex:new-2")
       assertThat(invocation.pendingThreadIdentity).isEqualTo("codex:new-2")
       val target = invocation.target
       assertThat(target.threadIdentity).isEqualTo(buildAgentSessionIdentity(AgentSessionProvider.CODEX, "codex-2"))
@@ -507,9 +523,11 @@ class AgentSessionsLoadingCoordinatorTest {
           )
         )
       },
-      openChatPendingTabSpecificBinder = { _, _, _ ->
+      openChatPendingTabsBinder = { requestsByPath ->
         binderInvocations.incrementAndGet()
-        false
+        failingPendingCodexRebindReport(
+          requestsByPath = requestsByPath,
+        )
       },
       pendingCodexRebindPollIntervalMs = 50L,
     ) { coordinator, _ ->
@@ -561,15 +579,20 @@ class AgentSessionsLoadingCoordinatorTest {
           )
         )
       },
-      openChatPendingTabSpecificBinder = { path, pendingThreadIdentity, target ->
-        rebindInvocations.add(
-          PendingCodexRebindInvocation(
-            path = path,
-            pendingThreadIdentity = pendingThreadIdentity,
-            target = target,
-          )
-        )
-        true
+      openChatPendingTabsBinder = { requestsByPath ->
+        requestsByPath.forEach { (path, requests) ->
+          requests.forEach { request ->
+            rebindInvocations.add(
+              PendingCodexRebindInvocation(
+                path = path,
+                pendingTabKey = request.pendingTabKey,
+                pendingThreadIdentity = request.pendingThreadIdentity,
+                target = request.target,
+              )
+            )
+          }
+        }
+        successfulPendingCodexRebindReport(requestsByPath)
       },
       pendingCodexRebindPollIntervalMs = 50L,
     ) { coordinator, stateStore ->
@@ -594,6 +617,7 @@ class AgentSessionsLoadingCoordinatorTest {
 
       val invocation = rebindInvocations.single()
       assertThat(invocation.path).isEqualTo(PROJECT_PATH)
+      assertThat(invocation.pendingTabKey).isEqualTo("pending-codex:new-3")
       assertThat(invocation.pendingThreadIdentity).isEqualTo("codex:new-3")
       val target = invocation.target
       assertThat(target.threadIdentity).isEqualTo(buildAgentSessionIdentity(AgentSessionProvider.CODEX, "codex-new"))
@@ -636,9 +660,11 @@ class AgentSessionsLoadingCoordinatorTest {
           )
         )
       },
-      openChatPendingTabSpecificBinder = { _, _, _ ->
+      openChatPendingTabsBinder = { requestsByPath ->
         binderInvocations.incrementAndGet()
-        false
+        failingPendingCodexRebindReport(
+          requestsByPath = requestsByPath,
+        )
       },
       pendingCodexRebindPollIntervalMs = 50L,
     ) { coordinator, stateStore ->
@@ -795,6 +821,7 @@ class AgentSessionsLoadingCoordinatorTest {
 
 private data class PendingCodexRebindInvocation(
   val path: String,
+  val pendingTabKey: String,
   val pendingThreadIdentity: String,
   val target: AgentChatPendingTabRebindTarget,
 )
@@ -802,16 +829,68 @@ private data class PendingCodexRebindInvocation(
 private fun pendingCodexTab(
   pendingThreadIdentity: String,
   projectPath: String = PROJECT_PATH,
+  pendingTabKey: String = "pending-$pendingThreadIdentity",
   pendingCreatedAtMs: Long? = null,
   pendingFirstInputAtMs: Long? = null,
   pendingLaunchMode: String? = null,
 ): AgentChatPendingCodexTabSnapshot {
   return AgentChatPendingCodexTabSnapshot(
     projectPath = projectPath,
+    pendingTabKey = pendingTabKey,
     pendingThreadIdentity = pendingThreadIdentity,
     pendingCreatedAtMs = pendingCreatedAtMs,
     pendingFirstInputAtMs = pendingFirstInputAtMs,
     pendingLaunchMode = pendingLaunchMode,
+  )
+}
+
+private fun successfulPendingCodexRebindReport(
+  requestsByPath: Map<String, List<AgentChatPendingCodexTabRebindRequest>>,
+): AgentChatPendingCodexTabRebindReport {
+  val outcomesByPath = LinkedHashMap<String, List<AgentChatPendingCodexTabRebindOutcome>>()
+  var requestedBindings = 0
+  for ((path, requests) in requestsByPath) {
+    requestedBindings += requests.size
+    outcomesByPath[path] = requests.map { request ->
+      AgentChatPendingCodexTabRebindOutcome(
+        projectPath = path,
+        request = request,
+        status = AgentChatPendingCodexTabRebindStatus.REBOUND,
+        reboundFiles = 1,
+      )
+    }
+  }
+  return AgentChatPendingCodexTabRebindReport(
+    requestedBindings = requestedBindings,
+    reboundBindings = requestedBindings,
+    reboundFiles = requestedBindings,
+    updatedPresentations = requestedBindings,
+    outcomesByPath = outcomesByPath,
+  )
+}
+
+private fun failingPendingCodexRebindReport(
+  requestsByPath: Map<String, List<AgentChatPendingCodexTabRebindRequest>>,
+): AgentChatPendingCodexTabRebindReport {
+  val outcomesByPath = LinkedHashMap<String, List<AgentChatPendingCodexTabRebindOutcome>>()
+  var requestedBindings = 0
+  for ((path, requests) in requestsByPath) {
+    requestedBindings += requests.size
+    outcomesByPath[path] = requests.map { request ->
+      AgentChatPendingCodexTabRebindOutcome(
+        projectPath = path,
+        request = request,
+        status = AgentChatPendingCodexTabRebindStatus.PENDING_TAB_NOT_OPEN,
+        reboundFiles = 0,
+      )
+    }
+  }
+  return AgentChatPendingCodexTabRebindReport(
+    requestedBindings = requestedBindings,
+    reboundBindings = 0,
+    reboundFiles = 0,
+    updatedPresentations = 0,
+    outcomesByPath = outcomesByPath,
   )
 }
 
@@ -827,7 +906,11 @@ private suspend fun withLoadingCoordinator(
     Map<Pair<String, String>, String>,
     Map<Pair<String, String>, AgentThreadActivity>,
   ) -> Int = { _, _ -> 0 },
-  openChatPendingTabSpecificBinder: (String, String, AgentChatPendingTabRebindTarget) -> Boolean = { _, _, _ -> false },
+  openChatPendingTabsBinder: (Map<String, List<AgentChatPendingCodexTabRebindRequest>>) -> AgentChatPendingCodexTabRebindReport = {
+    failingPendingCodexRebindReport(
+      requestsByPath = it,
+    )
+  },
   pendingCodexRebindPollIntervalMs: Long = 1_500L,
   action: suspend (AgentSessionsLoadingCoordinator, AgentSessionsStateStore) -> Unit,
 ) {
@@ -848,7 +931,7 @@ private suspend fun withLoadingCoordinator(
       openPendingCodexTabsProvider = openPendingCodexTabsProvider,
       openConcreteChatThreadIdentitiesByPathProvider = openConcreteChatThreadIdentitiesByPathProvider,
       openAgentChatTabPresentationUpdater = openChatTabPresentationUpdater,
-      openAgentChatPendingTabSpecificBinder = openChatPendingTabSpecificBinder,
+      openAgentChatPendingTabsBinder = openChatPendingTabsBinder,
       pendingCodexRebindPollIntervalMs = pendingCodexRebindPollIntervalMs,
     )
     action(coordinator, stateStore)

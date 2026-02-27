@@ -3,13 +3,15 @@
 
 package com.intellij.agent.workbench.sessions.service
 
+import com.intellij.agent.workbench.chat.AgentChatPendingCodexTabRebindReport
+import com.intellij.agent.workbench.chat.AgentChatPendingCodexTabRebindRequest
 import com.intellij.agent.workbench.chat.AgentChatPendingCodexTabSnapshot
 import com.intellij.agent.workbench.chat.AgentChatPendingTabRebindTarget
 import com.intellij.agent.workbench.chat.collectOpenAgentChatProjectPaths
 import com.intellij.agent.workbench.chat.collectOpenConcreteAgentChatThreadIdentitiesByPath
 import com.intellij.agent.workbench.chat.collectOpenPendingAgentChatProjectPaths
 import com.intellij.agent.workbench.chat.collectOpenPendingCodexTabsByPath
-import com.intellij.agent.workbench.chat.rebindSpecificOpenPendingCodexTab
+import com.intellij.agent.workbench.chat.rebindOpenPendingCodexTabs
 import com.intellij.agent.workbench.chat.updateOpenAgentChatTabPresentation
 import com.intellij.agent.workbench.common.AgentThreadActivity
 import com.intellij.agent.workbench.common.normalizeAgentWorkbenchPath
@@ -75,11 +77,9 @@ internal class AgentSessionsLoadingCoordinator(
     Map<Pair<String, String>, String>,
     Map<Pair<String, String>, AgentThreadActivity>,
   ) -> Int = ::updateOpenAgentChatTabPresentation,
-  private val openAgentChatPendingTabSpecificBinder: (
-    String,
-    String,
-    AgentChatPendingTabRebindTarget,
-  ) -> Boolean = ::rebindSpecificOpenPendingCodexTab,
+  private val openAgentChatPendingTabsBinder: (
+    Map<String, List<AgentChatPendingCodexTabRebindRequest>>,
+  ) -> AgentChatPendingCodexTabRebindReport = ::rebindOpenPendingCodexTabs,
   private val pendingCodexRebindPollIntervalMs: Long = PENDING_CODEX_REBIND_POLL_INTERVAL_MS,
 ) {
   private val refreshMutex = Mutex()
@@ -962,27 +962,25 @@ internal class AgentSessionsLoadingCoordinator(
       return
     }
 
-    val reboundTabs = withContext(Dispatchers.UI) {
-      var rebound = 0
-      for ((path, bindings) in bindingsByPath) {
-        for (binding in bindings) {
-          if (
-            openAgentChatPendingTabSpecificBinder(
-              path,
-              binding.pendingThreadIdentity,
-              binding.target,
-            )
-          ) {
-            rebound++
-          }
-        }
+    val requestsByPath = LinkedHashMap<String, List<AgentChatPendingCodexTabRebindRequest>>(bindingsByPath.size)
+    for ((path, bindings) in bindingsByPath) {
+      requestsByPath[path] = bindings.map { binding ->
+        AgentChatPendingCodexTabRebindRequest(
+          pendingTabKey = binding.pendingTabKey,
+          pendingThreadIdentity = binding.pendingThreadIdentity,
+          target = binding.target,
+        )
       }
-      rebound
+    }
+
+    val rebindReport = withContext(Dispatchers.UI) {
+      openAgentChatPendingTabsBinder(requestsByPath)
     }
 
     LOG.debug {
-      "Provider refresh id=$refreshId provider=${provider.value} rebound pending chat tabs (reboundTabs=$reboundTabs," +
-      " candidatePaths=${candidatesByPath.size}, matchedPaths=${bindingsByPath.size})"
+      "Provider refresh id=$refreshId provider=${provider.value} rebound pending chat tabs " +
+      "(reboundBindings=${rebindReport.reboundBindings}, reboundFiles=${rebindReport.reboundFiles}, " +
+      "requestedBindings=${rebindReport.requestedBindings}, candidatePaths=${candidatesByPath.size}, matchedPaths=${bindingsByPath.size})"
     }
   }
 

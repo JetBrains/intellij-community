@@ -5,6 +5,7 @@ import com.intellij.agent.workbench.chat.AgentChatPendingCodexTabSnapshot
 import com.intellij.agent.workbench.chat.AgentChatPendingTabRebindTarget
 
 internal data class CodexPendingTabBinding(
+  val pendingTabKey: String,
   val pendingThreadIdentity: String,
   val target: AgentChatPendingTabRebindTarget,
 )
@@ -67,8 +68,9 @@ internal object CodexPendingTabMatcher {
   ): PathMatchResult {
     val uniquePendingTabs = pendingTabs
       .asSequence()
-      .distinctBy { it.pendingThreadIdentity }
+      .distinctBy { it.pendingTabKey }
       .toList()
+    val pendingTabByKey = uniquePendingTabs.associateBy { it.pendingTabKey }
     val candidateByIdentity = deduplicateCandidates(candidates)
       .filterKeys { it !in openConcreteIdentities }
     val pendingEdges = LinkedHashMap<String, LinkedHashSet<String>>(uniquePendingTabs.size)
@@ -88,12 +90,12 @@ internal object CodexPendingTabMatcher {
           }
           if (updatedAt in minTimestamp..maxTimestamp) {
             connectedCandidates.add(candidateIdentity)
-            candidateEdges.getOrPut(candidateIdentity) { LinkedHashSet() }.add(pendingTab.pendingThreadIdentity)
+            candidateEdges.getOrPut(candidateIdentity) { LinkedHashSet() }.add(pendingTab.pendingTabKey)
           }
         }
       }
-      pendingEdges[pendingTab.pendingThreadIdentity] = connectedCandidates
-      initialEdgeCounts[pendingTab.pendingThreadIdentity] = connectedCandidates.size
+      pendingEdges[pendingTab.pendingTabKey] = connectedCandidates
+      initialEdgeCounts[pendingTab.pendingTabKey] = connectedCandidates.size
     }
 
     val bindings = LinkedHashMap<String, AgentChatPendingTabRebindTarget>()
@@ -102,45 +104,48 @@ internal object CodexPendingTabMatcher {
         .asSequence()
         .filter { it.value.size == 1 }
         .map { it.key to it.value.first() }
-        .filter { (pendingIdentity, candidateIdentity) ->
-          candidateEdges[candidateIdentity]?.let { pendingSet -> pendingSet.size == 1 && pendingIdentity in pendingSet } == true
+        .filter { (pendingTabKey, candidateIdentity) ->
+          candidateEdges[candidateIdentity]?.let { pendingSet -> pendingSet.size == 1 && pendingTabKey in pendingSet } == true
         }
         .toList()
       if (forcedPairs.isEmpty()) {
         break
       }
 
-      for ((pendingIdentity, candidateIdentity) in forcedPairs) {
-        if (pendingIdentity !in pendingEdges || candidateIdentity !in candidateEdges) {
+      for ((pendingTabKey, candidateIdentity) in forcedPairs) {
+        if (pendingTabKey !in pendingEdges || candidateIdentity !in candidateEdges) {
           continue
         }
         val target = candidateByIdentity[candidateIdentity] ?: continue
-        bindings[pendingIdentity] = target
+        bindings[pendingTabKey] = target
 
-        pendingEdges.remove(pendingIdentity)
+        pendingEdges.remove(pendingTabKey)
         candidateEdges.remove(candidateIdentity)
         pendingEdges.values.forEach { it.remove(candidateIdentity) }
-        candidateEdges.values.forEach { it.remove(pendingIdentity) }
+        candidateEdges.values.forEach { it.remove(pendingTabKey) }
       }
     }
 
     val ambiguousPendingIdentities = LinkedHashSet<String>()
     val noMatchPendingIdentities = LinkedHashSet<String>()
-    for ((pendingIdentity, remainingEdges) in pendingEdges) {
-      val initialEdgeCount = initialEdgeCounts[pendingIdentity] ?: 0
+    for ((pendingTabKey, remainingEdges) in pendingEdges) {
+      val pendingTab = pendingTabByKey[pendingTabKey] ?: continue
+      val initialEdgeCount = initialEdgeCounts[pendingTabKey] ?: 0
       if (remainingEdges.isNotEmpty() || initialEdgeCount > 0) {
-        ambiguousPendingIdentities.add(pendingIdentity)
+        ambiguousPendingIdentities.add(pendingTab.pendingThreadIdentity)
       }
       else {
-        noMatchPendingIdentities.add(pendingIdentity)
+        noMatchPendingIdentities.add(pendingTab.pendingThreadIdentity)
       }
     }
 
     val orderedBindings = bindings.entries
       .sortedBy { it.key }
-      .map { (pendingIdentity, target) ->
+      .mapNotNull { (pendingTabKey, target) ->
+        val pendingTab = pendingTabByKey[pendingTabKey] ?: return@mapNotNull null
         CodexPendingTabBinding(
-          pendingThreadIdentity = pendingIdentity,
+          pendingTabKey = pendingTabKey,
+          pendingThreadIdentity = pendingTab.pendingThreadIdentity,
           target = target,
         )
       }

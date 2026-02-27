@@ -2,6 +2,9 @@
 package com.intellij.agent.workbench.sessions
 
 import com.intellij.agent.workbench.chat.AgentChatEditorTabActionContext
+import com.intellij.agent.workbench.chat.AgentChatPendingCodexTabRebindReport
+import com.intellij.agent.workbench.chat.AgentChatPendingCodexTabRebindRequest
+import com.intellij.agent.workbench.chat.AgentChatPendingCodexTabRebindStatus
 import com.intellij.agent.workbench.chat.AgentChatPendingTabRebindTarget
 import com.intellij.agent.workbench.common.normalizeAgentWorkbenchPath
 import com.intellij.agent.workbench.sessions.actions.AgentSessionsBindPendingCodexThreadFromEditorTabAction
@@ -302,7 +305,7 @@ class AgentSessionsEditorTabActionsTest {
     val action = AgentSessionsBindPendingCodexThreadFromEditorTabAction(
       resolveContext = { context },
       resolveTarget = { target },
-      rebindPendingTab = { _, _, _ -> true },
+      rebindPendingTab = { requestsByPath -> successfulPendingCodexRebindReport(requestsByPath) },
     )
     val event = TestActionEvent.createTestEvent(action)
 
@@ -317,7 +320,11 @@ class AgentSessionsEditorTabActionsTest {
     val actionForNonPending = AgentSessionsBindPendingCodexThreadFromEditorTabAction(
       resolveContext = { editorContext(isPendingThread = false) },
       resolveTarget = { error("resolveTarget must not be called for non-pending context") },
-      rebindPendingTab = { _, _, _ -> false },
+      rebindPendingTab = { requestsByPath ->
+        failingPendingCodexRebindReport(
+          requestsByPath = requestsByPath,
+        )
+      },
     )
     val nonPendingEvent = TestActionEvent.createTestEvent(actionForNonPending)
     actionForNonPending.update(nonPendingEvent)
@@ -333,7 +340,11 @@ class AgentSessionsEditorTabActionsTest {
         )
       },
       resolveTarget = { error("resolveTarget must not be called for non-codex pending context") },
-      rebindPendingTab = { _, _, _ -> false },
+      rebindPendingTab = { requestsByPath ->
+        failingPendingCodexRebindReport(
+          requestsByPath = requestsByPath,
+        )
+      },
     )
     val claudePendingEvent = TestActionEvent.createTestEvent(actionForClaudePending)
     actionForClaudePending.update(claudePendingEvent)
@@ -357,23 +368,28 @@ class AgentSessionsEditorTabActionsTest {
       threadActivity = com.intellij.agent.workbench.common.AgentThreadActivity.UNREAD,
     )
     var reboundPath: String? = null
+    var reboundPendingTabKey: String? = null
     var reboundPendingIdentity: String? = null
     var reboundTarget: AgentChatPendingTabRebindTarget? = null
 
     val action = AgentSessionsBindPendingCodexThreadFromEditorTabAction(
       resolveContext = { context },
       resolveTarget = { target },
-      rebindPendingTab = { path, pendingIdentity, rebindTarget ->
-        reboundPath = path
-        reboundPendingIdentity = pendingIdentity
-        reboundTarget = rebindTarget
-        true
+      rebindPendingTab = { requestsByPath ->
+        val entry = requestsByPath.entries.single()
+        val request = entry.value.single()
+        reboundPath = entry.key
+        reboundPendingTabKey = request.pendingTabKey
+        reboundPendingIdentity = request.pendingThreadIdentity
+        reboundTarget = request.target
+        successfulPendingCodexRebindReport(requestsByPath)
       },
     )
 
     action.actionPerformed(TestActionEvent.createTestEvent(action))
 
     assertThat(reboundPath).isEqualTo(context.path)
+    assertThat(reboundPendingTabKey).isEqualTo(context.tabKey)
     assertThat(reboundPendingIdentity).isEqualTo(context.threadIdentity)
     assertThat(reboundTarget).isEqualTo(target)
   }
@@ -450,6 +466,7 @@ class AgentSessionsEditorTabActionsTest {
 
 private fun editorContext(
   path: String = "/tmp/project",
+  tabKey: String = "tab-pending-1",
   threadIdentity: String = "codex:thread-1",
   threadId: String = "thread-1",
   provider: AgentSessionProvider? = AgentSessionProvider.CODEX,
@@ -459,10 +476,47 @@ private fun editorContext(
   return AgentChatEditorTabActionContext(
     project = ProjectManager.getInstance().defaultProject,
     path = normalizeAgentWorkbenchPath(path),
+    tabKey = tabKey,
     threadIdentity = threadIdentity,
     threadId = threadId,
     provider = provider,
     sessionId = sessionId,
     isPendingThread = isPendingThread,
+  )
+}
+
+private fun successfulPendingCodexRebindReport(
+  requestsByPath: Map<String, List<AgentChatPendingCodexTabRebindRequest>>,
+): AgentChatPendingCodexTabRebindReport {
+  val requestedBindings = requestsByPath.values.sumOf { it.size }
+  return AgentChatPendingCodexTabRebindReport(
+    requestedBindings = requestedBindings,
+    reboundBindings = requestedBindings,
+    reboundFiles = requestedBindings,
+    updatedPresentations = requestedBindings,
+    outcomesByPath = emptyMap(),
+  )
+}
+
+private fun failingPendingCodexRebindReport(
+  requestsByPath: Map<String, List<AgentChatPendingCodexTabRebindRequest>>,
+): AgentChatPendingCodexTabRebindReport {
+  val requestedBindings = requestsByPath.values.sumOf { it.size }
+  val outcomesByPath = requestsByPath.mapValues { (path, requests) ->
+    requests.map { request ->
+      com.intellij.agent.workbench.chat.AgentChatPendingCodexTabRebindOutcome(
+        projectPath = path,
+        request = request,
+        status = AgentChatPendingCodexTabRebindStatus.PENDING_TAB_NOT_OPEN,
+        reboundFiles = 0,
+      )
+    }
+  }
+  return AgentChatPendingCodexTabRebindReport(
+    requestedBindings = requestedBindings,
+    reboundBindings = 0,
+    reboundFiles = 0,
+    updatedPresentations = 0,
+    outcomesByPath = outcomesByPath,
   )
 }

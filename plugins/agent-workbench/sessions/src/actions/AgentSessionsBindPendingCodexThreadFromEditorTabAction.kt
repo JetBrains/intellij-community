@@ -2,8 +2,10 @@
 package com.intellij.agent.workbench.sessions.actions
 
 import com.intellij.agent.workbench.chat.AgentChatEditorTabActionContext
+import com.intellij.agent.workbench.chat.AgentChatPendingCodexTabRebindReport
+import com.intellij.agent.workbench.chat.AgentChatPendingCodexTabRebindRequest
 import com.intellij.agent.workbench.chat.AgentChatPendingTabRebindTarget
-import com.intellij.agent.workbench.chat.rebindSpecificOpenPendingCodexTab
+import com.intellij.agent.workbench.chat.rebindOpenPendingCodexTabs
 import com.intellij.agent.workbench.chat.resolveAgentChatEditorTabActionContext
 import com.intellij.agent.workbench.sessions.service.PendingCodexRebindTargetResolver
 import com.intellij.agent.workbench.sessions.service.isPendingCodexEditorContext
@@ -14,7 +16,8 @@ internal class AgentSessionsBindPendingCodexThreadFromEditorTabAction @JvmOverlo
   private val resolveTarget: (AgentChatEditorTabActionContext) -> AgentChatPendingTabRebindTarget? = { context ->
     service<PendingCodexRebindTargetResolver>().resolve(context)
   },
-  private val rebindPendingTab: (String, String, AgentChatPendingTabRebindTarget) -> Boolean = ::rebindSpecificOpenPendingCodexTab,
+  private val rebindPendingTab: (Map<String, List<AgentChatPendingCodexTabRebindRequest>>) -> AgentChatPendingCodexTabRebindReport =
+    ::rebindOpenPendingCodexTabs,
   resolveContext: (AnActionEvent) -> AgentChatEditorTabActionContext? = ::resolveAgentChatEditorTabActionContext,
 ) : AgentSessionsEditorTabActionBase(resolveContext) {
 
@@ -23,8 +26,16 @@ internal class AgentSessionsBindPendingCodexThreadFromEditorTabAction @JvmOverlo
     if (!isPendingCodexEditorContext(context)) {
       return
     }
+    if (context.tabKey.isBlank()) {
+      return
+    }
     val target = resolveTarget(context) ?: return
-    rebindPendingTab(context.path, context.threadIdentity, target)
+    val request = AgentChatPendingCodexTabRebindRequest(
+      pendingTabKey = context.tabKey,
+      pendingThreadIdentity = context.threadIdentity,
+      target = target,
+    )
+    rebindPendingTab(mapOf(context.path to listOf(request)))
   }
 
   override fun update(e: AnActionEvent) {
