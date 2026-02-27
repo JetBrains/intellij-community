@@ -1,10 +1,10 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.testFramework.junit5.eel.params.api
 
 import com.intellij.execution.target.EelTargetEnvironmentRequest
 import com.intellij.execution.target.TargetEnvironmentConfiguration
 import com.intellij.platform.eel.EelApi
-import com.intellij.platform.eel.LocalEelApi
+import com.intellij.testFramework.junit5.eel.EelFixtureFilter
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.TestOnly
 
@@ -28,6 +28,8 @@ sealed interface EelHolder {
    * ```
    */
   val type: EelType
+
+  fun isEnabled(filter: EelFixtureFilter): Boolean
 }
 
 val EelHolder.target: TargetEnvironmentConfiguration get() = EelTargetEnvironmentRequest.Configuration(eel)

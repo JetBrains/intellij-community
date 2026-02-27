@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.testFramework.junit5.eel.params.impl.junit5
 
 import com.intellij.openapi.application.ApplicationManager
@@ -12,6 +12,7 @@ import com.intellij.platform.testFramework.junit5.eel.params.impl.junit5.EelsMan
 import com.intellij.platform.testFramework.junit5.eel.params.spi.EelIjentTestProvider.StartResult.Skipped
 import com.intellij.platform.testFramework.junit5.eel.params.spi.EelIjentTestProvider.StartResult.Started
 import com.intellij.platform.util.coroutines.childScope
+import com.intellij.testFramework.junit5.eel.EelFixtureFilter
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.cancelAndJoin
@@ -56,13 +57,17 @@ internal class EelsManager private constructor(private val eelHolders: List<EelH
             append("Install docker. ")
           }
 
-          error("""
-            Although some remote (ijent) eel implementations were found on a class-path, all of them were skipped.
-            That means, you've tested the local eel implementation only! 
-            If that was your plan, configure ${TestApplicationWithEel::osesMayNotHaveRemoteEels} and stick with the local eel only (not recommended).
-            But much better to do the following: $advice
-            Testing something against local eel only is not recommended. 
-          """.trimIndent())
+          // If the filter is not default, it's deliberately requested to run tests only with specific Eels,
+          // and it may turn out that no tests can run with the requested Eels.
+          if (EelFixtureFilter.instance.isDefault) {
+            error("""
+              Although some remote (ijent) eel implementations were found on a class-path, all of them were skipped.
+              That means, you've tested the local eel implementation only! 
+              If that was your plan, configure ${TestApplicationWithEel::osesMayNotHaveRemoteEels} and stick with the local eel only (not recommended).
+              But much better to do the following: $advice
+              Testing something against local eel only is not recommended. 
+            """.trimIndent())
+          }
         }
       }
     })

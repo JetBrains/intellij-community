@@ -1,10 +1,13 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.testFramework.junit5.eel.params.api
 
+import com.intellij.openapi.diagnostic.logger
 import com.intellij.platform.eel.EelApi
 import com.intellij.platform.eel.provider.localEel
 import com.intellij.platform.ijent.IjentApi
+import com.intellij.platform.testFramework.junit5.eel.params.impl.junit5.EelInterceptor
 import com.intellij.platform.testFramework.junit5.eel.params.spi.EelIjentTestProvider
+import com.intellij.testFramework.junit5.eel.EelFixtureFilter
 import org.jetbrains.annotations.TestOnly
 
 
@@ -21,6 +24,18 @@ internal class EelHolderImpl<T : Annotation>(val eelTestProvider: EelIjentTestPr
       append(")")
     }
   }
+
+  override fun isEnabled(filter: EelFixtureFilter): Boolean {
+    val name = eel.descriptor.toString()
+    return when {
+      name.contains("Wsl") -> filter.isWslEnabled
+      name.contains("Docker") -> filter.isDockerEnabled
+      else -> {
+        logger<EelInterceptor>().warn("Unknown EelApi $eel with descriptor $name.")
+        false
+      }
+    }
+  }
 }
 
 @TestOnly
@@ -28,4 +43,7 @@ internal object LocalEelHolder : EelHolder {
   override val type: EelType = EelType.Local
   override val eel: EelApi get() = localEel
   override fun toString(): String = "Local"
+
+  override fun isEnabled(filter: EelFixtureFilter): Boolean =
+    filter.isLocalEelEnabled
 }
