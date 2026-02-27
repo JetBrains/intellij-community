@@ -7,6 +7,8 @@ import com.intellij.psi.util.descendants
 import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.resolution.singleFunctionCallOrNull
 import org.jetbrains.kotlin.analysis.api.resolution.symbol
+import org.jetbrains.kotlin.analysis.api.types.KaClassType
+import org.jetbrains.kotlin.analysis.api.types.KaFunctionType
 import org.jetbrains.kotlin.analysis.api.types.symbol
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.psi.KtBlockExpression
@@ -20,6 +22,7 @@ import org.jetbrains.kotlin.psi.KtValueArgumentList
 import org.jetbrains.kotlin.psi.psiUtil.getChildrenOfType
 import org.jetbrains.plugins.gradle.service.resolve.GradleCommonClassNames.GRADLE_API_ARTIFACTS_DEPENDENCY
 import org.jetbrains.plugins.gradle.service.resolve.GradleCommonClassNames.GRADLE_API_ARTIFACTS_EXTERNAL_MODULE_DEPENDENCY
+import org.jetbrains.plugins.gradle.service.resolve.GradleCommonClassNames.GRADLE_API_REPOSITORY_HANDLER
 import org.jetbrains.uast.UExpression
 import org.jetbrains.uast.evaluateString
 import org.jetbrains.uast.kotlin.KotlinStringTemplateUPolyadicExpression
@@ -108,3 +111,30 @@ internal fun KtExpression.evaluateString(): String? {
     return if (parts.any { it == null }) null
     else parts.joinToString("")
 }
+
+internal fun KtCallExpression.isGradleRepositoriesBlock(): Boolean = analyze(this) {
+    if (this@isGradleRepositoriesBlock.calleeExpression?.text != "repositories") return@analyze false
+    val symbol = this@isGradleRepositoriesBlock.resolveToCall()?.singleFunctionCallOrNull()?.symbol ?: return@analyze false
+    val callableId = symbol.callableId ?: return@analyze false
+    if (callableId.asSingleFqName() !in REPOSITORIES_FQ_NAMES) return@analyze false
+    // check if the call parameter is of type `RepositoryHandler.() -> Unit` or `org.gradle.api.Action`
+    val paramType = symbol.valueParameters.singleOrNull()?.returnType ?: return@analyze false
+    if (paramType.isFunctionType && paramType is KaFunctionType) {
+        val leftParam = paramType.typeArguments.getOrNull(0)?.type as? KaClassType ?: return@analyze false
+        val rightParam = paramType.typeArguments.getOrNull(1)?.type as? KaClassType ?: return@analyze false
+        if (leftParam.classId.asSingleFqName() != FqName(GRADLE_API_REPOSITORY_HANDLER)) return@analyze false
+        if (rightParam.classId.asSingleFqName() != FqName("kotlin.Unit")) return@analyze false
+        return@analyze true
+    } else if (paramType.symbol?.classId?.asSingleFqName() == FqName("org.gradle.api.Action")) {
+        return@analyze true
+    } else {
+        return@analyze false
+    }
+}
+
+private val REPOSITORIES_FQ_NAMES = setOf(
+    FqName("org.gradle.kotlin.dsl.repositories"),
+    FqName("org.gradle.kotlin.dsl.ScriptHandlerScope.repositories"),
+    FqName("org.gradle.plugin.management.PluginManagementSpec.repositories"),
+    FqName("org.gradle.api.initialization.resolve.DependencyResolutionManagement.repositories")
+)
