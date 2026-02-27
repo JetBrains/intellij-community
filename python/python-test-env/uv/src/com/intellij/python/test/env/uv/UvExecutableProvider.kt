@@ -11,7 +11,7 @@ import com.intellij.util.system.OS
 import org.jetbrains.annotations.ApiStatus
 import java.nio.file.Path
 
-private const val UV_GITHUB_RELEASE_URL = "https://github.com/astral-sh/uv/releases"
+private const val UV_RELEASES_URL = "https://cache-redirector.jetbrains.com/github.com/astral-sh/uv/releases/download"
 private val LOG = Logger.getInstance("com.intellij.python.test.env.uv")
 
 /**
@@ -57,5 +57,5 @@ private fun getUvDownloadUrl(version: String): String {
     else -> throw IllegalStateException("Unsupported OS: ${OS.CURRENT}")
   }
 
-  return "$UV_GITHUB_RELEASE_URL/download/$version/uv-$platform.tar.gz"
+  return "$UV_RELEASES_URL/$version/uv-$platform.tar.gz"
 }
