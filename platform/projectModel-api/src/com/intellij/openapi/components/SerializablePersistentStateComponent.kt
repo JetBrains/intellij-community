@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.components
 
 import com.intellij.util.xmlb.SettingsInternalApi
@@ -69,7 +69,7 @@ abstract class SerializablePersistentStateComponent<T : Any>(
     STATE_HANDLE.setVolatile(this, newState)
   }
 
-  @Internal
+  // method cannot be marked as Internal because it is the only way to be notified when state is loaded
   override fun loadState(state: T) {
     @OptIn(SettingsInternalApi::class)
     setState(state)

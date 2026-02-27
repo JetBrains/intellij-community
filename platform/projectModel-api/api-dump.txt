@@ -113,6 +113,7 @@ a:com.intellij.openapi.components.SerializablePersistentStateComponent
 - <init>(java.lang.Object):V
 - f:getState():java.lang.Object
 - f:getStateModificationCount():J
+- loadState(java.lang.Object):V
 - pf:updateState(kotlin.jvm.functions.Function1):java.lang.Object
 f:com.intellij.openapi.components.SerializablePersistentStateComponent$Companion
 - f:compareAndSet(com.intellij.openapi.components.SerializablePersistentStateComponent,java.lang.Object,java.lang.Object):Z
