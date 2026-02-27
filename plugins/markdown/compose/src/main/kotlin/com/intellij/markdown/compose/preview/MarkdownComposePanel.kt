@@ -63,6 +63,7 @@ import org.jetbrains.jewel.markdown.extensions.github.tables.GitHubTableProcesso
 import org.jetbrains.jewel.markdown.extensions.github.tables.GitHubTableRendererExtension
 import org.jetbrains.jewel.markdown.extensions.images.Coil3ImageRendererExtension
 import org.jetbrains.jewel.markdown.processing.MarkdownProcessor
+import org.jetbrains.jewel.markdown.rendering.DefaultMarkdownBlockRenderer
 import org.jetbrains.jewel.markdown.rendering.InlineMarkdownRenderer
 import org.jetbrains.jewel.markdown.rendering.create
 import org.jetbrains.jewel.markdown.scrolling.ScrollSyncMarkdownBlockRenderer
@@ -97,7 +98,7 @@ internal class MarkdownComposePanel(
     val scrollingSynchronizer = remember(scrollState) { ScrollingSynchronizer.create(scrollState) }
     val markdownStyling = remember(scheme, fontSize) { JcefLikeMarkdownStyling(scheme, fontSize) }
     val markdownMode = remember(scrollingSynchronizer) {
-      MarkdownMode.EditorPreview(scrollingSynchronizer)
+      MarkdownMode.Standalone
     }
     val processor = remember(markdownMode) {
       MarkdownProcessor(
@@ -121,7 +122,7 @@ internal class MarkdownComposePanel(
     val imageRendererExtension = remember(coilContext) { Coil3ImageRendererExtension.withDefaultLoader(coilContext) }
     val allRenderingExtensions = listOf(tableRenderer, alertRenderer, GitHubStrikethroughRendererExtension, imageRendererExtension)
     val blockRenderer = remember(markdownStyling) {
-      ScrollSyncMarkdownBlockRenderer(
+      DefaultMarkdownBlockRenderer(
         markdownStyling,
         allRenderingExtensions,
         InlineMarkdownRenderer.create(allRenderingExtensions),
@@ -159,7 +160,7 @@ internal class MarkdownComposePanel(
   private fun MarkdownPreviewPanel(
     scrollState: ScrollState,
     scrollingSynchronizer: ScrollingSynchronizer?,
-    blockRenderer: ScrollSyncMarkdownBlockRenderer,
+    blockRenderer: DefaultMarkdownBlockRenderer,
     animationSpec: AnimationSpec<Float> = TweenSpec(easing = LinearEasing),
   ) {
     val request by updateHandler.requests.collectAsState(null)
