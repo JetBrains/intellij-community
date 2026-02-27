@@ -64,9 +64,14 @@ object LogPacker {
 
         coroutineContext.ensureActive()
 
-        LogProvider.EP.extensionList.firstOrNull()?.let { logProvider ->
+        zip.addDirectory("", logs)
+
+        coroutineContext.ensureActive()
+
+        LogProvider.EP.extensionList.forEach { logProvider ->
           logProvider.getAdditionalLogFiles(project).forEach { entry ->
-            for (dir in entry.files) {
+            entry.files.forEach { dir ->
+              coroutineContext.ensureActive()
               if (dir.exists()) {
                 val dirPrefix = when {
                   entry.entryName.isEmpty() -> ""
