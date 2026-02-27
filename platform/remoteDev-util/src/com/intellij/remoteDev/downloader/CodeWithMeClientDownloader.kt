@@ -978,9 +978,9 @@ object CodeWithMeClientDownloader {
 
   private fun createSymlink(link: Path, target: Path) {
     val targetRealPath = target.toRealPath()
-    val linkExists = true
-    val linkRealPath = if (link.exists(LinkOption.NOFOLLOW_LINKS)) link.toRealPath() else null
-    val isSymlink = FileSystemUtil.getAttributes(link.toFile())?.isSymLink == true
+    val linkExists = link.exists(LinkOption.NOFOLLOW_LINKS)
+    val linkRealPath = if (linkExists) link.toRealPath() else null
+    val isSymlink = isSymlink(link)
 
     LOG.info("$link: exists=$linkExists, realPath=$linkRealPath, isSymlink=$isSymlink")
     if (linkExists && isSymlink && linkRealPath == targetRealPath) {
