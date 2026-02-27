@@ -16,7 +16,7 @@ import org.jetbrains.annotations.ApiStatus
 sealed interface XStackFramesEvent {
   @ApiStatus.Internal
   @Serializable
-  data class XNewStackFrames(val frames: List<XStackFrameDto>, val frameToSelect : XStackFrameDto?, val last: Boolean) : XStackFramesEvent
+  data class XNewStackFrames(val frames: List<XStackFrameDto>, val frameToSelectId: XStackFrameId?, val last: Boolean) : XStackFramesEvent
 
   @Serializable
   data class ErrorOccurred(val errorMessage: @NlsContexts.DialogMessage String) : XStackFramesEvent

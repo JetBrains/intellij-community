@@ -23,6 +23,8 @@ import javax.swing.JComponent
 import javax.swing.JPanel
 import kotlin.time.Duration.Companion.milliseconds
 
+private val LOG = com.intellij.openapi.diagnostic.logger<XSplitterWatchesViewImpl>()
+
 /**
  * Allows customizing of variables view and splitting into 2 components.
  * Notice that you must provide the bottom component of the view by implementing XDebugSessionTabCustomizer in your XDebugProcess
@@ -63,7 +65,8 @@ class XSplitterWatchesViewImpl(
           try {
             withContext(Dispatchers.EDT) { updateView() }
           }
-          catch (_: Throwable) {
+          catch (ex: Throwable) {
+            LOG.warn("Failed to update watches view", ex)
           }
         }
     }
