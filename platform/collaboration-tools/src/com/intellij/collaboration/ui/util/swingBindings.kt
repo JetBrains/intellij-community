@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.collaboration.ui.util
 
 import com.intellij.collaboration.async.ComputedListChange
@@ -512,7 +512,7 @@ fun <D> JPanel.bindChildIn(
   }
 }
 
-fun JCheckBox.bindSelectedIn(scope: CoroutineScope, flow: MutableStateFlow<Boolean>) {
+fun JToggleButton.bindSelectedIn(scope: CoroutineScope, flow: MutableStateFlow<Boolean>) {
   scope.launchNow {
     val listener = { _: Any? -> flow.value = model.isSelected }
     model.addChangeListener(listener)
@@ -527,6 +527,11 @@ fun JCheckBox.bindSelectedIn(scope: CoroutineScope, flow: MutableStateFlow<Boole
     }
   }
 }
+
+// binary-compatible bridge for external plugins compiled against the old JCheckBox overload
+@Deprecated("Use JToggleButton.bindSelectedIn instead", ReplaceWith("JToggleButton.bindSelectedIn"))
+fun JCheckBox.bindSelectedIn(scope: CoroutineScope, flow: MutableStateFlow<Boolean>): Unit =
+  (this as JToggleButton).bindSelectedIn(scope, flow)
 
 fun JToggleButton.bindSelected(isSelected: Flow<Boolean>, onSelected: (selected: Boolean) -> Unit) {
   launchOnShow("Checkbox state binding") {
