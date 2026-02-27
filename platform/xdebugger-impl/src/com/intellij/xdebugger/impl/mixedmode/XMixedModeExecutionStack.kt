@@ -3,14 +3,12 @@ package com.intellij.xdebugger.impl.mixedmode
 
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.editor.markup.GutterIconRenderer
-import com.intellij.platform.debugger.impl.rpc.XSourcePositionDto
 import com.intellij.xdebugger.XDebugSession
 import com.intellij.xdebugger.frame.XDescriptor
 import com.intellij.xdebugger.frame.XExecutionStack
 import com.intellij.xdebugger.frame.XStackFrame
 import com.intellij.xdebugger.impl.XDebugSessionImpl
 import com.intellij.xdebugger.impl.frame.XStackFrameContainerEx
-import com.intellij.xdebugger.impl.rpc.toRpc
 import com.intellij.xdebugger.impl.util.notifyOnFrameChanged
 import com.intellij.xdebugger.mixedMode.MixedModeStackBuilder
 import com.intellij.xdebugger.mixedMode.XExecutionStackWithNativeThreadId
@@ -55,13 +53,7 @@ class XMixedModeExecutionStack(
 
     // getTopFrame method is not adequate for us since in the split debugger the first call of getTopFrame will be cached forever,
     // but RiderJumpToStatementHandler needs a real position
-    val topFramePositionDeferred = CompletableDeferred<XSourcePositionDto?>()
-    computedFramesMap.invokeOnCompletion { topFramePositionDeferred.complete(getCalculatedTopFrame()?.sourcePosition?.toRpc()) }
-    val descriptor = XMixedModeExecutionStackDescriptor(
-      highStackDescriptor,
-      lowStackDescriptor,
-      topFramePositionDeferred
-    )
+    val descriptor = XMixedModeExecutionStackDescriptor(highStackDescriptor, lowStackDescriptor)
     //FrontendDescriptorStateManager.getInstance(session.project).registerDescriptor(descriptor, coroutineScope)
     descriptor
   }
