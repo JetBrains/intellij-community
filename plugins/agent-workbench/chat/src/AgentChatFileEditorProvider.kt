@@ -4,6 +4,7 @@ package com.intellij.agent.workbench.chat
 // @spec community/plugins/agent-workbench/spec/agent-chat-editor.spec.md
 
 import com.intellij.openapi.application.EDT
+import com.intellij.openapi.application.UI
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.fileEditor.AsyncFileEditorProvider
 import com.intellij.openapi.fileEditor.FileEditor
@@ -32,31 +33,43 @@ internal class AgentChatFileEditorProvider : AsyncFileEditorProvider {
     document: Document?,
     editorCoroutineScope: CoroutineScope,
   ): FileEditor {
-    return withContext(Dispatchers.EDT) {
-      createChatEditor(project, file as AgentChatVirtualFile)
+    val chatFile = file as AgentChatVirtualFile
+    val validationError = validate(chatFile)
+    if (validationError == null) {
+      return withContext(Dispatchers.UI) {
+        AgentChatFileEditor(project = project, file = chatFile)
+      }
+    }
+    else {
+      return withContext(Dispatchers.EDT) {
+        handleValidationError(project, chatFile, validationError)
+      }
     }
   }
 
   override fun createEditor(project: Project, file: VirtualFile): FileEditor {
-    return createChatEditor(project, file as AgentChatVirtualFile)
+    val chatFile = file as AgentChatVirtualFile
+    val validationError = validate(chatFile)
+    if (validationError == null) {
+      return AgentChatFileEditor(project = project, file = chatFile)
+    }
+    else {
+      return handleValidationError(project, chatFile, validationError)
+    }
   }
 
   override fun getEditorTypeId(): String = "agent.workbench-chat-editor"
 
-  override fun getPolicy(): FileEditorPolicy = FileEditorPolicy.HIDE_DEFAULT_EDITOR
+  override fun getPolicy(): FileEditorPolicy = FileEditorPolicy.HIDE_OTHER_EDITORS
 }
 
-private fun createChatEditor(project: Project, file: AgentChatVirtualFile): FileEditor {
-  val validationError = validate(file)
-  if (validationError != null) {
-    forgetAgentChatTabMetadata(file.tabKey)
-    AgentChatRestoreNotificationService.reportRestoreFailure(project, file, validationError)
-    if (!project.isDisposed) {
-      FileEditorManager.getInstance(project).closeFile(file)
-    }
-    return AgentChatUnavailableFileEditor(file)
+private fun handleValidationError(project: Project, file: AgentChatVirtualFile, validationError: String): FileEditor {
+  forgetAgentChatTabMetadata(file.tabKey)
+  AgentChatRestoreNotificationService.reportRestoreFailure(project, file, validationError)
+  if (!project.isDisposed) {
+    FileEditorManager.getInstance(project).closeFile(file)
   }
-  return AgentChatFileEditor(project = project, file = file)
+  return AgentChatUnavailableFileEditor(file)
 }
 
 private fun validate(file: AgentChatVirtualFile): String? {

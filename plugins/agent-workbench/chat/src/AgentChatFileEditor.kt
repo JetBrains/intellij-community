@@ -7,13 +7,15 @@ import com.intellij.agent.workbench.sessions.core.AgentSessionProvider
 import com.intellij.openapi.actionSystem.ActionGroup
 import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.actionSystem.DefaultActionGroup
-import com.intellij.openapi.components.service
+import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.fileEditor.FileEditor
 import com.intellij.openapi.fileEditor.FileEditorState
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.UserDataHolderBase
 import com.intellij.terminal.frontend.toolwindow.TerminalToolWindowTab
 import com.intellij.terminal.frontend.toolwindow.TerminalToolWindowTabsManager
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 import org.jetbrains.plugins.terminal.startup.TerminalProcessType
@@ -29,6 +31,7 @@ private const val BIND_PENDING_CODEX_THREAD_FROM_EDITOR_TAB_ACTION_ID = "AgentWo
 internal class AgentChatFileEditor(
   private val project: Project,
   private val file: AgentChatVirtualFile,
+  private val terminalTabs: AgentChatTerminalTabs = ToolWindowAgentChatTerminalTabs,
 ) : UserDataHolderBase(), FileEditor {
   private val component = JPanel(BorderLayout())
   private val editorTabActions: ActionGroup? by lazy {
@@ -46,15 +49,14 @@ internal class AgentChatFileEditor(
     }
     DefaultActionGroup(actions)
   }
-  private var tab: TerminalToolWindowTab? = null
+  private var tab: AgentChatTerminalTab? = null
   private var initializationStarted: Boolean = false
   private var disposed: Boolean = false
 
   override fun getComponent(): JComponent = component
 
   override fun getPreferredFocusedComponent(): JComponent {
-    ensureInitialized()
-    return tab?.view?.preferredFocusableComponent ?: component
+    return tab?.preferredFocusableComponent ?: component
   }
 
   override fun getName(): String = file.threadTitle
@@ -80,7 +82,7 @@ internal class AgentChatFileEditor(
   override fun dispose() {
     disposed = true
     tab?.let { terminalTab ->
-      TerminalToolWindowTabsManager.getInstance(project).closeTab(terminalTab)
+      terminalTabs.closeTab(project, terminalTab)
     }
     tab = null
     component.removeAll()
@@ -92,36 +94,29 @@ internal class AgentChatFileEditor(
     }
     initializationStarted = true
     try {
-      val terminalManager = TerminalToolWindowTabsManager.getInstance(project)
-      val createdTab = terminalManager.createTabBuilder()
-        .shouldAddToToolWindow(false)
-        .workingDirectory(file.projectPath)
-        .processType(TerminalProcessType.NON_SHELL)
-        .tabName(file.threadTitle)
-        .shellCommand(file.shellCommand)
-        .createTab()
+      val createdTab = terminalTabs.createTab(project, file)
       tab = createdTab
       subscribePendingFirstInput(createdTab)
       component.removeAll()
-      component.add(createdTab.content.component, BorderLayout.CENTER)
+      component.add(createdTab.component, BorderLayout.CENTER)
       component.revalidate()
       component.repaint()
     }
     catch (e: CancellationException) {
       throw e
     }
-    catch (t: Throwable) {
-      AgentChatRestoreNotificationService.reportTerminalInitializationFailure(project, file, t)
+    catch (e: Throwable) {
+      AgentChatRestoreNotificationService.reportTerminalInitializationFailure(project, file, e)
     }
   }
 
-  private fun subscribePendingFirstInput(createdTab: TerminalToolWindowTab) {
+  private fun subscribePendingFirstInput(createdTab: AgentChatTerminalTab) {
     if (!file.isPendingThread || file.provider != AgentSessionProvider.CODEX) {
       return
     }
-    val tabsService = service<AgentChatTabsService>()
-    createdTab.view.coroutineScope.launch {
-      createdTab.view.keyEventsFlow.collectLatest {
+    createdTab.coroutineScope.launch {
+      val tabsService = serviceAsync<AgentChatTabsService>()
+      createdTab.keyEventsFlow.collectLatest {
         if (!file.markPendingFirstInputAtMsIfAbsent(System.currentTimeMillis())) {
           return@collectLatest
         }
@@ -129,4 +124,53 @@ internal class AgentChatFileEditor(
       }
     }
   }
+}
+
+internal interface AgentChatTerminalTab {
+  val component: JComponent
+  val preferredFocusableComponent: JComponent
+  val coroutineScope: CoroutineScope
+  val keyEventsFlow: Flow<*>
+}
+
+internal interface AgentChatTerminalTabs {
+  fun createTab(project: Project, file: AgentChatVirtualFile): AgentChatTerminalTab
+
+  fun closeTab(project: Project, tab: AgentChatTerminalTab)
+}
+
+private object ToolWindowAgentChatTerminalTabs : AgentChatTerminalTabs {
+  override fun createTab(project: Project, file: AgentChatVirtualFile): AgentChatTerminalTab {
+    val terminalTab = TerminalToolWindowTabsManager.getInstance(project)
+      .createTabBuilder()
+      .shouldAddToToolWindow(false)
+      .deferSessionStartUntilUiShown(true)
+      .workingDirectory(file.projectPath)
+      .processType(TerminalProcessType.NON_SHELL)
+      .tabName(file.threadTitle)
+      .shellCommand(file.shellCommand)
+      .createTab()
+    return ToolWindowAgentChatTerminalTab(terminalTab)
+  }
+
+  override fun closeTab(project: Project, tab: AgentChatTerminalTab) {
+    val toolWindowTab = (tab as? ToolWindowAgentChatTerminalTab)?.delegate ?: return
+    TerminalToolWindowTabsManager.getInstance(project).closeTab(toolWindowTab)
+  }
+}
+
+private class ToolWindowAgentChatTerminalTab(
+  val delegate: TerminalToolWindowTab,
+) : AgentChatTerminalTab {
+  override val component: JComponent
+    get() = delegate.content.component
+
+  override val preferredFocusableComponent: JComponent
+    get() = delegate.view.preferredFocusableComponent
+
+  override val coroutineScope: CoroutineScope
+    get() = delegate.view.coroutineScope
+
+  override val keyEventsFlow: Flow<*>
+    get() = delegate.view.keyEventsFlow
 }
