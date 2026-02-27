@@ -66,10 +66,7 @@ internal val experimentsPartition: List<ExperimentAssignment> = listOf(
     experiment = ABExperimentOption.SPLIT_SEARCH_EVERYWHERE,
     experimentBuckets = (0 until 512).toSet(),
     controlBuckets = (512 until 1024).toSet(),
-    majorVersion = "2026.1 EAP",
-    products = EnumSet.of(IntelliJPlatformProduct.IDEA,
-                          IntelliJPlatformProduct.PYCHARM,
-                          IntelliJPlatformProduct.RIDER),
+    majorVersion = "2026.2",
   ),
   // the rest belongs to the "unassigned" experiment
 )
@@ -78,7 +75,10 @@ internal val experimentsPartition: List<ExperimentAssignment> = listOf(
  * This method can be configured to allow options only in particular IDEs.
  */
 fun isAllowed(option: ABExperimentOption): Boolean = when (option) {
-  ABExperimentOption.SPLIT_SEARCH_EVERYWHERE -> IdeProductMode.isMonolith
+  ABExperimentOption.SPLIT_SEARCH_EVERYWHERE -> {
+    IdeProductMode.isMonolith
+    && ApplicationInfo.getInstance().isEAP
+  }
   else -> true
 }
 
