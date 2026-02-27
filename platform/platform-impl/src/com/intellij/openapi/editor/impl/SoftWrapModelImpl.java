@@ -515,7 +515,7 @@ public final class SoftWrapModelImpl extends InlayModel.SimpleAdapter
       return;
     }
     myUpdateInProgress = false;
-    if (!isSoftWrappingEnabled()) {
+    if (!myUseSoftWraps) {
       if (shouldSoftWrapsBeForced(event)) {
         forceSoftWraps();
         if (isSoftWrappingEnabled()) {
