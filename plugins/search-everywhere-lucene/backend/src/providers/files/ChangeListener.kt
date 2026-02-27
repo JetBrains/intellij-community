@@ -46,10 +46,12 @@ internal class ChangeListener : AsyncFileListener {
       return null
     }
 
-    projects.forEach { project ->
-      FileIndex.getInstance(project).scheduleIndexingOp(LuceneFileIndexOperation.ReindexFiles(virtualFilesToIndex,changedUrls))
+    return object: AsyncFileListener.ChangeApplier {
+      override fun afterVfsChange() {
+        projects.forEach { project ->
+          FileIndex.getInstance(project).scheduleIndexingOp(LuceneFileIndexOperation.ReindexFiles(virtualFilesToIndex,changedUrls))
+        }
+      }
     }
-
-    return null
   }
 }
