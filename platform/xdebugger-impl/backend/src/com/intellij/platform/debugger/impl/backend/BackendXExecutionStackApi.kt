@@ -12,8 +12,6 @@ import com.intellij.platform.debugger.impl.rpc.XStackFrameId
 import com.intellij.platform.debugger.impl.rpc.XStackFramePresentation
 import com.intellij.platform.debugger.impl.rpc.XStackFramePresentationFragment
 import com.intellij.platform.debugger.impl.rpc.XStackFramesEvent
-import com.intellij.platform.debugger.impl.rpc.toRpc
-import com.intellij.xdebugger.frame.XExecutionStack
 import com.intellij.xdebugger.frame.XStackFrame
 import com.intellij.xdebugger.impl.frame.XStackFrameContainerEx
 import com.intellij.xdebugger.impl.rpc.models.findValue
@@ -61,8 +59,11 @@ internal class BackendXExecutionStackApi : XExecutionStackApi {
           val frameDtos = framesCopy.map { frame ->
             frame.toRpc(executionStackModel.coroutineScope, session)
           }
-          val frameToSelect = toSelect?.toRpc(executionStackModel.coroutineScope, session)
-          trySend(XStackFramesEvent.XNewStackFrames(frameDtos, frameToSelect, last))
+          val frameToSelectId = toSelect?.let {
+            val index = framesCopy.indexOf(it)
+            if (index >= 0) frameDtos[index].stackFrameId else null
+          }
+          trySend(XStackFramesEvent.XNewStackFrames(frameDtos, frameToSelectId, last))
           val framesWithIds = frameDtos.zip(framesCopy) { dto, frame -> dto.stackFrameId to frame }
           subscribeToPresentationUpdates(executionStackId, framesWithIds, last)
         }

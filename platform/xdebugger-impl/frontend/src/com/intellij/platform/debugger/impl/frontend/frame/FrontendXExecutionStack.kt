@@ -65,11 +65,14 @@ internal class FrontendXExecutionStack(
             //  But it requires further investigation.
             val feFrames = event.frames.map { suspendContextLifetimeScope.getOrCreateStackFrame(it, project) }
             if (container is XStackFrameContainerEx) {
-              val frameToSelect = event.frameToSelect?.let { suspendContextLifetimeScope.getOrCreateStackFrame(it, project) }
+              val frameToSelect = event.frameToSelectId?.let { frameToSelectId ->
+                feFrames.firstOrNull { it.id == frameToSelectId }
+              }
               container.addStackFrames(feFrames, frameToSelect, event.last)
             }
-            else
+            else {
               container.addStackFrames(feFrames, event.last)
+            }
           }
           is XStackFramesEvent.NewPresentation -> {
             val frame = suspendContextLifetimeScope.findStackFrame(event.stackFrameId)
