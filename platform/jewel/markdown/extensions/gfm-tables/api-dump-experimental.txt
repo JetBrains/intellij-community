@@ -48,3 +48,55 @@
 - s:getEntries():kotlin.enums.EnumEntries
 - s:valueOf(java.lang.String):org.jetbrains.jewel.markdown.extensions.github.tables.RowBackgroundStyle
 - s:values():org.jetbrains.jewel.markdown.extensions.github.tables.RowBackgroundStyle[]
+*f:org.jetbrains.jewel.markdown.extensions.github.tables.TableBlock
+- org.jetbrains.jewel.markdown.MarkdownBlock$CustomBlock
+- sf:$stable:I
+- <init>(org.jetbrains.jewel.markdown.extensions.github.tables.TableHeader,java.util.List):V
+- f:component1():org.jetbrains.jewel.markdown.extensions.github.tables.TableHeader
+- f:component2():java.util.List
+- f:copy(org.jetbrains.jewel.markdown.extensions.github.tables.TableHeader,java.util.List):org.jetbrains.jewel.markdown.extensions.github.tables.TableBlock
+- bs:copy$default(org.jetbrains.jewel.markdown.extensions.github.tables.TableBlock,org.jetbrains.jewel.markdown.extensions.github.tables.TableHeader,java.util.List,I,java.lang.Object):org.jetbrains.jewel.markdown.extensions.github.tables.TableBlock
+- equals(java.lang.Object):Z
+- f:getColumnCount():I
+- f:getHeader():org.jetbrains.jewel.markdown.extensions.github.tables.TableHeader
+- f:getRowCount():I
+- f:getRows():java.util.List
+- hashCode():I
+*f:org.jetbrains.jewel.markdown.extensions.github.tables.TableCell
+- org.jetbrains.jewel.markdown.MarkdownBlock$CustomBlock
+- sf:$stable:I
+- <init>(I,I,java.util.List,androidx.compose.ui.Alignment$Horizontal):V
+- f:component1():I
+- f:component2():I
+- f:component3():java.util.List
+- f:component4():androidx.compose.ui.Alignment$Horizontal
+- f:copy(I,I,java.util.List,androidx.compose.ui.Alignment$Horizontal):org.jetbrains.jewel.markdown.extensions.github.tables.TableCell
+- bs:copy$default(org.jetbrains.jewel.markdown.extensions.github.tables.TableCell,I,I,java.util.List,androidx.compose.ui.Alignment$Horizontal,I,java.lang.Object):org.jetbrains.jewel.markdown.extensions.github.tables.TableCell
+- equals(java.lang.Object):Z
+- f:getAlignment():androidx.compose.ui.Alignment$Horizontal
+- f:getColumnIndex():I
+- f:getContent():java.util.List
+- f:getRowIndex():I
+- hashCode():I
+*f:org.jetbrains.jewel.markdown.extensions.github.tables.TableHeader
+- org.jetbrains.jewel.markdown.MarkdownBlock$CustomBlock
+- sf:$stable:I
+- <init>(java.util.List):V
+- f:component1():java.util.List
+- f:copy(java.util.List):org.jetbrains.jewel.markdown.extensions.github.tables.TableHeader
+- bs:copy$default(org.jetbrains.jewel.markdown.extensions.github.tables.TableHeader,java.util.List,I,java.lang.Object):org.jetbrains.jewel.markdown.extensions.github.tables.TableHeader
+- equals(java.lang.Object):Z
+- f:getCells():java.util.List
+- hashCode():I
+*f:org.jetbrains.jewel.markdown.extensions.github.tables.TableRow
+- org.jetbrains.jewel.markdown.MarkdownBlock$CustomBlock
+- sf:$stable:I
+- <init>(I,java.util.List):V
+- f:component1():I
+- f:component2():java.util.List
+- f:copy(I,java.util.List):org.jetbrains.jewel.markdown.extensions.github.tables.TableRow
+- bs:copy$default(org.jetbrains.jewel.markdown.extensions.github.tables.TableRow,I,java.util.List,I,java.lang.Object):org.jetbrains.jewel.markdown.extensions.github.tables.TableRow
+- equals(java.lang.Object):Z
+- f:getCells():java.util.List
+- f:getRowIndex():I
+- hashCode():I

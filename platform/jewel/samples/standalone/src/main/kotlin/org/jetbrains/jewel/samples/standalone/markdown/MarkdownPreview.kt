@@ -32,6 +32,7 @@ import org.jetbrains.jewel.intui.markdown.standalone.styling.light
 import org.jetbrains.jewel.markdown.LazyMarkdown
 import org.jetbrains.jewel.markdown.MarkdownBlock
 import org.jetbrains.jewel.markdown.extensions.autolink.AutolinkProcessorExtension
+import org.jetbrains.jewel.markdown.extensions.frontmatter.FrontMatterProcessorExtension
 import org.jetbrains.jewel.markdown.extensions.github.alerts.AlertStyling
 import org.jetbrains.jewel.markdown.extensions.github.alerts.GitHubAlertProcessorExtension
 import org.jetbrains.jewel.markdown.extensions.github.alerts.GitHubAlertRendererExtension
@@ -63,6 +64,7 @@ internal fun MarkdownPreview(rawMarkdown: CharSequence, modifier: Modifier = Mod
         MarkdownProcessor(
             listOf(
                 AutolinkProcessorExtension,
+                FrontMatterProcessorExtension,
                 GitHubAlertProcessorExtension,
                 GitHubStrikethroughProcessorExtension(),
                 GitHubTableProcessorExtension,

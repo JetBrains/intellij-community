@@ -64,7 +64,7 @@ public object GitHubTableProcessorExtension : MarkdownProcessorExtension {
                             TableCell(
                                 rowIndex = 0,
                                 columnIndex = columnIndex,
-                                content = cell.readInlineMarkdown(processor),
+                                content = inlinesAsCellContent(cell.readInlineMarkdown(processor)),
                                 alignment = getAlignment(cell),
                             )
                         }
@@ -77,7 +77,7 @@ public object GitHubTableProcessorExtension : MarkdownProcessorExtension {
                                     TableCell(
                                         rowIndex = rowIndex + 1, // The header is row zero
                                         columnIndex = columnIndex,
-                                        content = cell.readInlineMarkdown(processor),
+                                        content = inlinesAsCellContent(cell.readInlineMarkdown(processor)),
                                         alignment = getAlignment(cell),
                                     )
                                 },
@@ -133,6 +133,8 @@ private object GitHubTablesCommonMarkExtension : ParserExtension, TextContentRen
     }
 }
 
+private fun inlinesAsCellContent(inlines: List<InlineMarkdown>): MarkdownBlock = MarkdownBlock.Paragraph(inlines)
+
 private object GitHubTablesHtmlConverterExtension : MarkdownHtmlConverterExtension {
     override val supportedTags: Set<String>
         get() = setOf("table")
@@ -151,14 +153,18 @@ private object GitHubTablesHtmlConverterExtension : MarkdownHtmlConverterExtensi
             val htmlRows = tbody.children.filterIsInstance<MarkdownHtmlNode.Element>().filter { it.tag == "tr" }
             if (htmlRows.isEmpty()) return null
             val markdownRows: List<MutableList<TableCell>> = buildList {
-                for (i in 0..htmlRows.lastIndex) {
+                for ((i, element) in htmlRows.withIndex()) {
                     add(
-                        htmlRows[i]
+                        element
                             .rowElements()
                             .mapIndexed { index, rowCell ->
                                 val inlines = convertInlines(rowCell.children)
-                                if (inlines.isEmpty()) return@mapIndexed TableCell(i, index, emptyList(), null)
-                                TableCell(rowIndex = i, columnIndex = index, content = inlines, alignment = null)
+                                TableCell(
+                                    rowIndex = i,
+                                    columnIndex = index,
+                                    content = inlinesAsCellContent(inlines),
+                                    alignment = null,
+                                )
                             }
                             .toMutableList()
                     )
@@ -167,7 +173,14 @@ private object GitHubTablesHtmlConverterExtension : MarkdownHtmlConverterExtensi
             val maxColumns = markdownRows.maxOf { it.size }
             for ((rowIndex, row) in markdownRows.withIndex()) {
                 for (columnIndex in row.size until maxColumns) {
-                    row.add(TableCell(rowIndex, columnIndex, emptyList(), null))
+                    row.add(
+                        TableCell(
+                            rowIndex = rowIndex,
+                            columnIndex = columnIndex,
+                            content = inlinesAsCellContent(emptyList()),
+                            alignment = null,
+                        )
+                    )
                 }
             }
             val header = TableHeader(markdownRows.first())
