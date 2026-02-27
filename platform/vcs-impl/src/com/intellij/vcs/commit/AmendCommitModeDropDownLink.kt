@@ -2,7 +2,6 @@
 package com.intellij.vcs.commit
 
 import com.intellij.icons.AllIcons
-import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.UI
 import com.intellij.openapi.ui.popup.JBPopup
 import com.intellij.openapi.ui.popup.JBPopupFactory
@@ -17,22 +16,14 @@ import org.jetbrains.annotations.Nls
 import javax.swing.JList
 
 internal class AmendCommitModeDropDownLink(val amendHandler: AmendCommitHandler) :
-  DropDownLink<CommitToAmend>(CommitToAmend.Last, { link -> createPopup(link, amendHandler) }), AmendCommitModeListener, Disposable {
-
-  init {
-    amendHandler.addAmendCommitModeListener(this, this)
-  }
-
+  DropDownLink<CommitToAmend>(CommitToAmend.Last, { link -> createPopup(link, amendHandler) }) {
   override fun itemToString(item: CommitToAmend): String = Companion.itemToString(item)
 
-  override fun amendCommitModeToggled() {
+  fun update() {
     val item = if (amendHandler.commitToAmend == CommitToAmend.None) CommitToAmend.Last else amendHandler.commitToAmend
 
     selectedItem = item
     text = itemToLinkText(item)
-  }
-
-  override fun dispose() {
   }
 
   companion object {
