@@ -9,6 +9,7 @@ import com.intellij.markdown.utils.lang.CodeBlockHtmlSyntaxHighlighter
 import com.intellij.markdown.utils.lang.HtmlSyntaxHighlighter
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.io.toCanonicalPath
+import com.intellij.openapi.util.text.HtmlChunk
 import git4idea.repo.GitRepository
 import org.intellij.markdown.IElementType
 import org.intellij.markdown.MarkdownElementType
@@ -16,6 +17,7 @@ import org.intellij.markdown.MarkdownElementTypes
 import org.intellij.markdown.MarkdownTokenTypes
 import org.intellij.markdown.ast.ASTNode
 import org.intellij.markdown.ast.findChildOfType
+import org.intellij.markdown.ast.getParentOfType
 import org.intellij.markdown.ast.getTextInNode
 import org.intellij.markdown.flavours.gfm.GFMElementTypes
 import org.intellij.markdown.flavours.gfm.GFMFlavourDescriptor
@@ -52,19 +54,20 @@ import java.nio.file.InvalidPathException
 
 
 /**
- * Class which converts GitLab Markdown notes to HTML string.
+ * Class that converts GitLab Markdown notes to HTML string.
  */
 @ApiStatus.Internal
 class GitLabMarkdownToHtmlConverter(
   private val project: Project,
   private val repository: GitRepository,
-  serverPath: GitLabServerPath,
+  private val serverPath: GitLabServerPath,
   projectId: String,
   private val projectPath: GitLabProjectPath,
 ) {
 
   companion object {
     private val MARKDOWN_IMAGE_SETTINGS = MarkdownElementType("MARKDOWN_IMAGE_SETTINGS")
+    private val MARKDOWN_MR_ID = MarkdownElementType("MARKDOWN_MR_ID")
     private const val UPLOADS_PATH = "/uploads/"
     internal const val OPEN_FILE_LINK_PREFIX = "glfilelink:"
     internal const val OPEN_MR_LINK_PREFIX = "glmergerequest:"
@@ -82,15 +85,14 @@ class GitLabMarkdownToHtmlConverter(
   fun convertToHtml(markdownSource: @NonNls String): String {
     if (markdownSource.isBlank()) return markdownSource
     // TODO: fix bug with CRLF line endings from markdown library
-    val text = preprocessMergeRequestIds(processIssueIdsMarkdown(project, markdownSource)).replace("\r", "")
+    val text = processIssueIdsMarkdown(project, markdownSource).replace("\r", "")
     val flavourDescriptor = GitLabFlavourDescriptor(repository, projectPath, CodeBlockHtmlSyntaxHighlighter(project),
                                                     projectWebUrlBase, projectApiUri)
 
-    return MarkdownToHtmlConverter(flavourDescriptor).convertMarkdownToHtml(text, null)
+    return MarkdownToHtmlConverter(flavourDescriptor).convertMarkdownToHtml(text, serverPath.uri.ensureEndsWithSlash())
   }
 
-  private fun preprocessMergeRequestIds(markdownSource: String): String =
-    markdownSource.replace("(!\\d+)".toRegex(), "[$1]($1)")
+  private fun String.ensureEndsWithSlash(): String = if (endsWith("/")) this else "$this/"
 
   private class GitLabFlavourDescriptor(
     private val gitRepository: GitRepository,
@@ -108,6 +110,7 @@ class GitLabMarkdownToHtmlConverter(
         return listOf(AutolinkParser(listOf(MarkdownTokenTypes.AUTOLINK, GFMTokenTypes.GFM_AUTOLINK)),
                       BacktickParser(),
                       MathParser(),
+                      MergeRequestIdLinkParser(),
                       GitLabImageParser(),
                       InlineLinkParser(),
                       ReferenceLinkParser(),
@@ -136,7 +139,38 @@ class GitLabMarkdownToHtmlConverter(
         MarkdownElementTypes.INLINE_LINK to inlineLinkProvider,
         MarkdownElementTypes.FULL_REFERENCE_LINK to referenceLinkProvider,
         MarkdownElementTypes.SHORT_REFERENCE_LINK to referenceLinkProvider,
+        MarkdownTokenTypes.TEXT to GitLabTextGeneratingProvider(baseURI),
+        MARKDOWN_MR_ID to GitLabTextWithMRIdGeneratingProvider(baseURI),
       )
+    }
+  }
+
+  /**
+   * Parses MR ids (e.g. `!123`).
+   * Since '!' is a separate token, this symbol is not included in `MarkdownTokenTypes.TEXT` elements.
+   * So we need to parse this combination manually: exclamation token and adjacent text element which start with a digit.
+   * In the text element after a digit can be other symbols, they also will be a part of the parsed node.
+   */
+  private class MergeRequestIdLinkParser : SequentialParser {
+    override fun parse(tokens: TokensCache, rangesToGlue: List<IntRange>): SequentialParser.ParsingResult {
+      val result = SequentialParser.ParsingResultBuilder()
+      var iterator = tokens.RangesListIterator(rangesToGlue)
+      val delegateIndices = RangesListBuilder()
+
+      while (iterator.type != null) {
+        if (iterator.type == MarkdownTokenTypes.EXCLAMATION_MARK) {
+          val start = iterator.index
+          val next = iterator.advance()
+          if (next.type == MarkdownTokenTypes.TEXT && next.firstChar.isDigit()) {
+            result.withNode(SequentialParser.Node(start..next.index + 1, MARKDOWN_MR_ID))
+            iterator = next.advance()
+            continue
+          }
+        }
+        delegateIndices.put(iterator.index)
+        iterator = iterator.advance()
+      }
+      return result.withFurtherProcessing(delegateIndices.get())
     }
   }
 
@@ -205,6 +239,46 @@ class GitLabMarkdownToHtmlConverter(
         }
       }
       return null
+    }
+  }
+
+  /**
+   * MR id element is expected to start with ! and some digits and can have some additional text in the end.
+   */
+  private class GitLabTextWithMRIdGeneratingProvider(
+    private val baseURI: URI?,
+  ) : GeneratingProvider {
+    override fun processNode(visitor: HtmlGenerator.HtmlGeneratingVisitor, text: String, node: ASTNode) {
+      if (node.getParentOfType(MarkdownElementTypes.CODE_SPAN) != null) {
+        visitor.consumeHtml(text)
+        return
+      }
+      val nodeText = node.getTextInNode(text).toString()
+      visitor.consumeHtml(nodeText.replacePullRequestIds().replaceUserIdsWithLinks(baseURI))
+    }
+
+    private fun String.replacePullRequestIds(): String {
+      if (!contains('!')) return this
+      return replace("""(!\d+)""".toRegex()) {
+        val mr = it.value
+        val mrId = mr.substring(1)
+        val url = "$OPEN_MR_LINK_PREFIX$mrId"
+        HtmlChunk.link(url, mr).toString()
+      }
+    }
+  }
+
+  /**
+   * Processes a text element and converting user mentions if it's not under an inlined code element.
+   */
+  private class GitLabTextGeneratingProvider(private val baseURI: URI?) : GeneratingProvider {
+    override fun processNode(visitor: HtmlGenerator.HtmlGeneratingVisitor, text: String, node: ASTNode) {
+      if (node.getParentOfType(MarkdownElementTypes.CODE_SPAN) != null) {
+        visitor.consumeHtml(text)
+        return
+      }
+      val nodeText = node.getTextInNode(text).toString()
+      visitor.consumeHtml(nodeText.replaceUserIdsWithLinks(baseURI))
     }
   }
 
@@ -339,13 +413,6 @@ class GitLabMarkdownToHtmlConverter(
     override fun processDestination(
       linkDestination: String,
     ): CharSequence {
-      // If the destination starts with '!', it's a GitLab MR reference
-      if (linkDestination.startsWith('!')) {
-        val mrIid = linkDestination.substring(1)
-        val mrUrl = "$OPEN_MR_LINK_PREFIX$mrIid"
-        return mrUrl
-      }
-
       // If the link looks an awful lot like a website link
       if (linkDestination.startsWith("http:") || linkDestination.startsWith("https:")) {
         return LinkMap.normalizeDestination(linkDestination, true)
@@ -390,5 +457,20 @@ class GitLabMarkdownToHtmlConverter(
 
       return LinkMap.normalizeDestination(linkDestination, true)
     }
+  }
+}
+
+// Similar regexp is used in GitHub website for user id validation.
+// The real rules are stricter, but this regexp should cover most cases.
+private val CAPTURE_USER_ID_REGEX =
+  """(?<=^|[\s\p{Punct}])(@[a-zA-Z0-9_.][a-zA-Z0-9_\-.]{0,254}[a-zA-Z0-9_\-]|@[a-zA-Z0-9_])(?=[\s\p{Punct}]|$)""".toRegex()
+
+private fun String.replaceUserIdsWithLinks(baseURI: URI?): String {
+  if (!contains('@')) return this
+  return replace(CAPTURE_USER_ID_REGEX) {
+    val mention = it.value
+    val userId = mention.substring(1)
+    val url = baseURI?.resolve(userId)?.toString() ?: userId
+    HtmlChunk.link(url, mention).toString()
   }
 }
