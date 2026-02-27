@@ -313,7 +313,6 @@
 
     <cachesInvalidator implementation="com.intellij.openapi.vfs.newvfs.FSRecordsCacheInvalidator" order="after rootCachesInvalidator"/>
     <cachesInvalidator id="rootCachesInvalidator" implementation="com.intellij.ide.actions.RootCachesInvalidator" order="first"/>
-    <logsPreprocessor implementation="com.intellij.ide.logsUploader.DefaultLogsProcessor"/>
 
     <applicationService serviceInterface="com.intellij.util.ui.RestartDialog" open="true"
                         serviceImplementation="com.intellij.util.ui.RestartDialogImpl"/>
