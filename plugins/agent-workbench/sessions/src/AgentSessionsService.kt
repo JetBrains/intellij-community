@@ -61,6 +61,8 @@ private const val OPEN_SUB_AGENT_ACTION_KEY_PREFIX = "subagent-open"
 private const val ARCHIVE_THREADS_ACTION_KEY_PREFIX = "threads-archive"
 private const val UNARCHIVE_THREADS_ACTION_KEY_PREFIX = "threads-unarchive"
 private const val AGENT_SESSIONS_NOTIFICATION_GROUP_ID = "Agent Workbench Sessions"
+private const val PENDING_LAUNCH_MODE_STANDARD = "standard"
+private const val PENDING_LAUNCH_MODE_YOLO = "yolo"
 private val CODEX_ARCHIVE_REFRESH_DELAY = 1.seconds
 
 @Service(Service.Level.APP)
@@ -476,11 +478,11 @@ internal class AgentSessionsService private constructor(
     }
   }
 
-  private data class ArchiveBatchOutcome(
-    @JvmField val archivedTargets: List<ArchiveThreadTarget>,
-    @JvmField val undoTargets: List<ArchiveThreadTarget>,
-    @JvmField val requiresCodexRefreshDelay: Boolean,
-  )
+private data class ArchiveBatchOutcome(
+  @JvmField val archivedTargets: List<ArchiveThreadTarget>,
+  @JvmField val undoTargets: List<ArchiveThreadTarget>,
+  @JvmField val requiresCodexRefreshDelay: Boolean,
+)
 
   private fun launchDropAction(
     key: String,
@@ -506,6 +508,11 @@ internal class AgentSessionsService private constructor(
     loadingCoordinator.loadWorktreeThreadsOnDemand(projectPath, worktreePath)
   }
 }
+
+private data class PendingCodexMetadata(
+  @JvmField val createdAtMs: Long,
+  @JvmField val launchMode: String,
+)
 
 private fun isSessionsToolWindowVisible(project: Project): Boolean {
   return ToolWindowManager.getInstance(project)
@@ -621,6 +628,21 @@ private fun dedicatedFrameOpenProgressRequest(currentProject: Project?): SingleF
   )
 }
 
+private fun resolvePendingCodexMetadata(identity: String, command: List<String>): PendingCodexMetadata? {
+  if (!isAgentSessionNewIdentity(identity)) {
+    return null
+  }
+  val provider = parseAgentSessionIdentity(identity)?.provider ?: return null
+  if (provider != AgentSessionProvider.CODEX) {
+    return null
+  }
+  val launchMode = if ("--full-auto" in command) PENDING_LAUNCH_MODE_YOLO else PENDING_LAUNCH_MODE_STANDARD
+  return PendingCodexMetadata(
+    createdAtMs = System.currentTimeMillis(),
+    launchMode = launchMode,
+  )
+}
+
 private suspend fun openNewChat(normalizedPath: String, identity: String, command: List<String>) {
   val title = AgentSessionsBundle.message("toolwindow.action.new.thread")
   val dedicatedFrame = AgentChatOpenModeSettings.openInDedicatedFrame()
@@ -670,6 +692,7 @@ private suspend fun openNewChatInProject(
   title: String,
 ) {
   val threadId = resolveAgentSessionId(identity)
+  val pendingMetadata = resolvePendingCodexMetadata(identity = identity, command = command)
   openChat(
     project = project,
     projectPath = projectPath,
@@ -679,6 +702,8 @@ private suspend fun openNewChatInProject(
     threadTitle = title,
     subAgentId = null,
     threadActivity = AgentThreadActivity.READY,
+    pendingCreatedAtMs = pendingMetadata?.createdAtMs,
+    pendingLaunchMode = pendingMetadata?.launchMode,
   )
   focusProjectWindow(project)
 }

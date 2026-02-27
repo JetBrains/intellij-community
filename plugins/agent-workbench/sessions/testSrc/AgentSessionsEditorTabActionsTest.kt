@@ -2,6 +2,7 @@
 package com.intellij.agent.workbench.sessions
 
 import com.intellij.agent.workbench.chat.AgentChatEditorTabActionContext
+import com.intellij.agent.workbench.chat.AgentChatPendingTabRebindTarget
 import com.intellij.agent.workbench.common.normalizeAgentWorkbenchPath
 import com.intellij.agent.workbench.sessions.core.AgentSessionProvider
 import com.intellij.openapi.project.ProjectManager
@@ -121,6 +122,101 @@ class AgentSessionsEditorTabActionsTest {
     action.update(event)
 
     assertThat(event.presentation.isEnabledAndVisible).isFalse()
+  }
+
+  @Test
+  fun bindPendingCodexThreadActionVisibleAndEnabledWhenTargetIsAvailable() {
+    val context = editorContext(
+      threadIdentity = "codex:new-1",
+      threadId = "",
+      provider = AgentSessionProvider.CODEX,
+      sessionId = "new-1",
+      isPendingThread = true,
+    )
+    val target = AgentChatPendingTabRebindTarget(
+      threadIdentity = "codex:thread-42",
+      threadId = "thread-42",
+      shellCommand = listOf("codex", "resume", "thread-42"),
+      threadTitle = "Recovered",
+      threadActivity = com.intellij.agent.workbench.common.AgentThreadActivity.READY,
+    )
+    val action = AgentSessionsBindPendingCodexThreadFromEditorTabAction(
+      resolveContext = { context },
+      resolveTarget = { target },
+      rebindPendingTab = { _, _, _ -> true },
+    )
+    val event = TestActionEvent.createTestEvent(action)
+
+    action.update(event)
+
+    assertThat(event.presentation.isVisible).isTrue()
+    assertThat(event.presentation.isEnabled).isTrue()
+  }
+
+  @Test
+  fun bindPendingCodexThreadActionHiddenForNonPendingOrNonCodexContext() {
+    val actionForNonPending = AgentSessionsBindPendingCodexThreadFromEditorTabAction(
+      resolveContext = { editorContext(isPendingThread = false) },
+      resolveTarget = { error("resolveTarget must not be called for non-pending context") },
+      rebindPendingTab = { _, _, _ -> false },
+    )
+    val nonPendingEvent = TestActionEvent.createTestEvent(actionForNonPending)
+    actionForNonPending.update(nonPendingEvent)
+    assertThat(nonPendingEvent.presentation.isEnabledAndVisible).isFalse()
+
+    val actionForClaudePending = AgentSessionsBindPendingCodexThreadFromEditorTabAction(
+      resolveContext = {
+        editorContext(
+          threadIdentity = "claude:new-1",
+          provider = AgentSessionProvider.CLAUDE,
+          sessionId = "new-1",
+          isPendingThread = true,
+        )
+      },
+      resolveTarget = { error("resolveTarget must not be called for non-codex pending context") },
+      rebindPendingTab = { _, _, _ -> false },
+    )
+    val claudePendingEvent = TestActionEvent.createTestEvent(actionForClaudePending)
+    actionForClaudePending.update(claudePendingEvent)
+    assertThat(claudePendingEvent.presentation.isEnabledAndVisible).isFalse()
+  }
+
+  @Test
+  fun bindPendingCodexThreadActionInvokesSpecificRebindCallback() {
+    val context = editorContext(
+      threadIdentity = "codex:new-1",
+      threadId = "",
+      provider = AgentSessionProvider.CODEX,
+      sessionId = "new-1",
+      isPendingThread = true,
+    )
+    val target = AgentChatPendingTabRebindTarget(
+      threadIdentity = "codex:thread-42",
+      threadId = "thread-42",
+      shellCommand = listOf("codex", "resume", "thread-42"),
+      threadTitle = "Recovered",
+      threadActivity = com.intellij.agent.workbench.common.AgentThreadActivity.UNREAD,
+    )
+    var reboundPath: String? = null
+    var reboundPendingIdentity: String? = null
+    var reboundTarget: AgentChatPendingTabRebindTarget? = null
+
+    val action = AgentSessionsBindPendingCodexThreadFromEditorTabAction(
+      resolveContext = { context },
+      resolveTarget = { target },
+      rebindPendingTab = { path, pendingIdentity, rebindTarget ->
+        reboundPath = path
+        reboundPendingIdentity = pendingIdentity
+        reboundTarget = rebindTarget
+        true
+      },
+    )
+
+    action.actionPerformed(TestActionEvent.createTestEvent(action))
+
+    assertThat(reboundPath).isEqualTo(context.path)
+    assertThat(reboundPendingIdentity).isEqualTo(context.threadIdentity)
+    assertThat(reboundTarget).isEqualTo(target)
   }
 
   @Test

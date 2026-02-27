@@ -26,7 +26,7 @@ Define project/worktree `New Thread` behavior in the Swing tree implementation:
 - hover/selection row affordances,
 - quick-create with last used provider,
 - provider popup with Standard and YOLO entries,
-- creation-flow deduplication and Codex pending-to-concrete identity rebinding.
+- creation-flow deduplication and Codex pending-to-concrete identity rebinding (strict auto-match + manual bind fallback).
 
 Canonical command mapping is owned by `spec/agent-core-contracts.spec.md`.
 
@@ -78,6 +78,9 @@ Canonical command mapping is owned by `spec/agent-core-contracts.spec.md`.
 - Codex new-thread opens must start in pending identity state (`codex:new-*`) with `sessionId = null`.
   [@test] ../../chat/testSrc/AgentChatEditorServiceTest.kt
 
+- Pending Codex tabs must persist pending metadata (`pendingCreatedAtMs`, optional `pendingFirstInputAtMs`, optional `pendingLaunchMode`) so rebind matching can use deterministic time windows.
+  [@test] ../../chat/testSrc/AgentChatEditorServiceTest.kt
+
 - App-server backend remains the default discovery source; rollout discovery remains an explicit compatibility override.
   [@test] ../../codex/sessions/testSrc/CodexSessionBackendSelectorTest.kt
 
@@ -85,7 +88,13 @@ Canonical command mapping is owned by `spec/agent-core-contracts.spec.md`.
   [@test] ../../sessions/testSrc/CodexAppServerClientTest.kt
 
 - Provider refresh must rebind pending Codex chat tabs only to newly discovered concrete thread ids for the path, switch shell command to canonical resume mapping, and skip rebinding when baseline thread ids are not known for that path.
+  Matching must use strict path-local one-to-one assignment with timestamp windows; ambiguous candidates must not be rebound automatically.
   [@test] ../../chat/testSrc/AgentChatEditorServiceTest.kt
+  [@test] ../../sessions/testSrc/AgentSessionsLoadingCoordinatorTest.kt
+
+- When automatic pending-Codex matching is ambiguous or unmatched, users must be able to manually rebind from editor tab actions via `Bind Pending Codex Thread`.
+  [@test] ../../chat/testSrc/AgentChatEditorServiceTest.kt
+  [@test] ../../sessions/testSrc/AgentSessionsEditorTabActionsTest.kt
   [@test] ../../sessions/testSrc/AgentSessionsLoadingCoordinatorTest.kt
 
 - `Codex (Full Auto)` semantics are defined by command mapping and require no additional warning text in this flow.

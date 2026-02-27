@@ -103,6 +103,9 @@ class AgentSessionsGearActionsTest {
     assertThat(actionManager.getAction("AgentWorkbenchSessions.GoToSourceProjectFromEditorTab"))
       .isNotNull
       .isInstanceOf(AgentSessionsGoToSourceProjectFromEditorTabAction::class.java)
+    assertThat(actionManager.getAction("AgentWorkbenchSessions.BindPendingCodexThreadFromEditorTab"))
+      .isNotNull
+      .isInstanceOf(AgentSessionsBindPendingCodexThreadFromEditorTabAction::class.java)
     assertThat(actionManager.getAction("AgentWorkbenchSessions.CopyThreadIdFromEditorTab"))
       .isNotNull
       .isInstanceOf(AgentSessionsCopyThreadIdFromEditorTabAction::class.java)
@@ -111,13 +114,15 @@ class AgentSessionsGearActionsTest {
 
     val archiveIndex = entries.requiredIndex("AgentWorkbenchSessions.ArchiveThreadFromEditorTab")
     val goToSourceIndex = entries.requiredIndex("AgentWorkbenchSessions.GoToSourceProjectFromEditorTab")
+    val bindPendingIndex = entries.requiredIndex("AgentWorkbenchSessions.BindPendingCodexThreadFromEditorTab")
     val closeEditorsGroupIndex = entries.requiredIndex("CloseEditorsGroup")
     val copyThreadIdIndex = entries.requiredIndex("AgentWorkbenchSessions.CopyThreadIdFromEditorTab")
     val selectInThreadsIndex = entries.requiredIndex("AgentWorkbenchSessions.SelectThreadInAgentThreads")
     val copyPathsIndex = entries.requiredIndex("CopyPaths")
 
     assertThat(archiveIndex).isLessThan(goToSourceIndex)
-    assertThat(goToSourceIndex).isLessThan(closeEditorsGroupIndex)
+    assertThat(goToSourceIndex).isLessThan(bindPendingIndex)
+    assertThat(bindPendingIndex).isLessThan(closeEditorsGroupIndex)
     assertThat(closeEditorsGroupIndex).isLessThan(copyThreadIdIndex)
     assertThat(copyThreadIdIndex).isLessThan(selectInThreadsIndex)
     assertThat(selectInThreadsIndex).isLessThan(copyPathsIndex)

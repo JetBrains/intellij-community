@@ -3,10 +3,13 @@
 
 package com.intellij.agent.workbench.sessions
 
+import com.intellij.agent.workbench.chat.AgentChatPendingCodexTabSnapshot
 import com.intellij.agent.workbench.chat.AgentChatPendingTabRebindTarget
 import com.intellij.agent.workbench.chat.collectOpenAgentChatProjectPaths
+import com.intellij.agent.workbench.chat.collectOpenConcreteAgentChatThreadIdentitiesByPath
 import com.intellij.agent.workbench.chat.collectOpenPendingAgentChatProjectPaths
-import com.intellij.agent.workbench.chat.rebindOpenAgentChatPendingTabs
+import com.intellij.agent.workbench.chat.collectOpenPendingCodexTabsByPath
+import com.intellij.agent.workbench.chat.rebindSpecificOpenPendingCodexTab
 import com.intellij.agent.workbench.chat.updateOpenAgentChatTabPresentation
 import com.intellij.agent.workbench.common.AgentThreadActivity
 import com.intellij.agent.workbench.common.normalizeAgentWorkbenchPath
@@ -14,6 +17,7 @@ import com.intellij.agent.workbench.sessions.core.AgentSessionProvider
 import com.intellij.agent.workbench.sessions.core.AgentSessionThread
 import com.intellij.agent.workbench.sessions.core.providers.AgentSessionProviderBridges
 import com.intellij.agent.workbench.sessions.core.providers.AgentSessionSource
+import com.intellij.openapi.application.UI
 import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
@@ -28,6 +32,7 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
+import kotlinx.coroutines.withContext
 import java.util.concurrent.atomic.AtomicLong
 import kotlin.time.Duration.Companion.milliseconds
 
@@ -35,6 +40,10 @@ private val LOG = logger<AgentSessionsLoadingCoordinator>()
 private const val SOURCE_UPDATE_DEBOUNCE_MS = 350L
 private const val SOURCE_REFRESH_GATE_RETRY_MS = 500L
 private const val PENDING_CODEX_REBIND_POLL_INTERVAL_MS = 1_500L
+private const val PENDING_CODEX_MATCH_PRE_WINDOW_MS = 20_000L
+private const val PENDING_CODEX_MATCH_POST_WINDOW_MS = 120_000L
+private const val PENDING_CODEX_AMBIGUITY_NOTIFY_AFTER_POLLS = 2
+private const val PENDING_CODEX_AMBIGUITY_NOTIFY_COOLDOWN_MS = 5 * 60 * 1000L
 
 internal class AgentSessionsLoadingCoordinator(
   private val serviceScope: CoroutineScope,
@@ -45,13 +54,17 @@ internal class AgentSessionsLoadingCoordinator(
   private val isRefreshGateActive: suspend () -> Boolean,
   private val openAgentChatProjectPathsProvider: suspend () -> Set<String> = ::collectOpenAgentChatProjectPaths,
   private val openPendingAgentChatProjectPathsProvider: suspend () -> Set<String> = ::collectOpenPendingAgentChatProjectPaths,
+  private val openPendingCodexTabsProvider: suspend () -> Map<String, List<AgentChatPendingCodexTabSnapshot>> = ::collectOpenPendingCodexTabsByPath,
+  private val openConcreteChatThreadIdentitiesByPathProvider: suspend () -> Map<String, Set<String>> = ::collectOpenConcreteAgentChatThreadIdentitiesByPath,
   private val openAgentChatTabPresentationUpdater: suspend (
     Map<Pair<String, String>, String>,
     Map<Pair<String, String>, AgentThreadActivity>,
   ) -> Int = ::updateOpenAgentChatTabPresentation,
-  private val openAgentChatPendingTabBinder: suspend (
-    Map<String, List<AgentChatPendingTabRebindTarget>>,
-  ) -> Int = ::rebindOpenAgentChatPendingTabs,
+  private val openAgentChatPendingTabSpecificBinder: (
+    String,
+    String,
+    AgentChatPendingTabRebindTarget,
+  ) -> Boolean = ::rebindSpecificOpenPendingCodexTab,
   private val pendingCodexRebindPollIntervalMs: Long = PENDING_CODEX_REBIND_POLL_INTERVAL_MS,
 ) {
   private val refreshMutex = Mutex()
@@ -72,6 +85,8 @@ internal class AgentSessionsLoadingCoordinator(
   private val archiveSuppressionsLock = Any()
   private val pendingCodexRebindPollLock = Any()
   private var pendingCodexRebindPollJob: Job? = null
+  private val pendingCodexAmbiguityLock = Any()
+  private val pendingCodexAmbiguityStateByKey = LinkedHashMap<String, PendingCodexAmbiguityState>()
 
   fun observeSessionSourceUpdates() {
     ensureSourceUpdateObservers()
@@ -859,7 +874,7 @@ internal class AgentSessionsLoadingCoordinator(
       return
     }
 
-    val targetsByPath = LinkedHashMap<String, MutableList<AgentChatPendingTabRebindTarget>>()
+    val candidatesByPath = LinkedHashMap<String, MutableList<AgentChatPendingTabRebindTarget>>()
     for ((path, outcome) in outcomes) {
       val threads = outcome.threads ?: continue
       val allowedThreadIds = allowedThreadIdsByPath?.get(path)
@@ -872,25 +887,70 @@ internal class AgentSessionsLoadingCoordinator(
         val command = runCatching {
           buildAgentSessionResumeCommand(thread.provider, thread.id)
         }.getOrDefault(listOf(provider.value, "resume", thread.id))
-        targetsByPath.getOrPut(path) { ArrayList() }.add(
+        candidatesByPath.getOrPut(path) { ArrayList() }.add(
           AgentChatPendingTabRebindTarget(
             threadIdentity = buildAgentSessionIdentity(thread.provider, thread.id),
             threadId = thread.id,
             shellCommand = command,
             threadTitle = thread.title,
             threadActivity = thread.activity,
+            threadUpdatedAt = thread.updatedAt,
           )
         )
       }
     }
 
-    if (targetsByPath.isEmpty()) {
+    if (candidatesByPath.isEmpty()) {
       return
     }
 
-    val reboundTabs = openAgentChatPendingTabBinder(targetsByPath)
+    val pendingTabsByPath = openPendingCodexTabsProvider()
+    if (pendingTabsByPath.isEmpty()) {
+      clearPendingCodexAmbiguityState()
+      return
+    }
+
+    val openConcreteThreadIdentitiesByPath = openConcreteChatThreadIdentitiesByPathProvider()
+    val matchResult = CodexPendingTabMatcher.match(
+      pendingTabsByPath = pendingTabsByPath,
+      candidatesByPath = candidatesByPath,
+      openConcreteIdentitiesByPath = openConcreteThreadIdentitiesByPath,
+      preWindowMs = PENDING_CODEX_MATCH_PRE_WINDOW_MS,
+      postWindowMs = PENDING_CODEX_MATCH_POST_WINDOW_MS,
+    )
+
+    reportPendingCodexMatchingGaps(
+      refreshId = refreshId,
+      ambiguousByPath = matchResult.ambiguousPendingThreadIdentitiesByPath,
+      noMatchByPath = matchResult.noMatchPendingThreadIdentitiesByPath,
+    )
+
+    val bindingsByPath = matchResult.bindingsByPath
+    if (bindingsByPath.isEmpty()) {
+      return
+    }
+
+    val reboundTabs = withContext(Dispatchers.UI) {
+      var rebound = 0
+      for ((path, bindings) in bindingsByPath) {
+        for (binding in bindings) {
+          if (
+            openAgentChatPendingTabSpecificBinder(
+              path,
+              binding.pendingThreadIdentity,
+              binding.target,
+            )
+          ) {
+            rebound++
+          }
+        }
+      }
+      rebound
+    }
+
     LOG.debug {
-      "Provider refresh id=$refreshId provider=${provider.value} rebound pending chat tabs (reboundTabs=$reboundTabs)"
+      "Provider refresh id=$refreshId provider=${provider.value} rebound pending chat tabs (reboundTabs=$reboundTabs," +
+      " candidatePaths=${candidatesByPath.size}, matchedPaths=${bindingsByPath.size})"
     }
   }
 
@@ -945,6 +1005,68 @@ internal class AgentSessionsLoadingCoordinator(
       result[path] = newThreadIds
     }
     return result
+  }
+
+  private fun clearPendingCodexAmbiguityState() {
+    synchronized(pendingCodexAmbiguityLock) {
+      pendingCodexAmbiguityStateByKey.clear()
+    }
+  }
+
+  private fun reportPendingCodexMatchingGaps(
+    refreshId: Long,
+    ambiguousByPath: Map<String, Set<String>>,
+    noMatchByPath: Map<String, Set<String>>,
+  ) {
+    val trackedKeys = LinkedHashSet<String>()
+    val now = System.currentTimeMillis()
+
+    for ((path, pendingIdentities) in ambiguousByPath) {
+      for (pendingIdentity in pendingIdentities) {
+        val key = "$path|$pendingIdentity"
+        trackedKeys.add(key)
+
+        var shouldWarn = false
+        synchronized(pendingCodexAmbiguityLock) {
+          val previous = pendingCodexAmbiguityStateByKey[key]
+          val nextPollCount = (previous?.pollCount ?: 0) + 1
+          val lastWarnedAtMs = previous?.lastWarnedAtMs
+          if (
+            nextPollCount >= PENDING_CODEX_AMBIGUITY_NOTIFY_AFTER_POLLS &&
+            (lastWarnedAtMs == null || now - lastWarnedAtMs >= PENDING_CODEX_AMBIGUITY_NOTIFY_COOLDOWN_MS)
+          ) {
+            shouldWarn = true
+            pendingCodexAmbiguityStateByKey[key] = PendingCodexAmbiguityState(
+              pollCount = nextPollCount,
+              lastWarnedAtMs = now,
+            )
+          }
+          else {
+            pendingCodexAmbiguityStateByKey[key] = PendingCodexAmbiguityState(
+              pollCount = nextPollCount,
+              lastWarnedAtMs = lastWarnedAtMs,
+            )
+          }
+        }
+
+        if (shouldWarn) {
+          LOG.warn(
+            "Provider refresh id=$refreshId provider=codex skipped ambiguous pending tab binding for path=$path, " +
+            "pendingIdentity=$pendingIdentity. Use editor tab action 'Bind Pending Codex Thread'."
+          )
+        }
+      }
+    }
+
+    for ((path, pendingIdentities) in noMatchByPath) {
+      for (pendingIdentity in pendingIdentities) {
+        trackedKeys.add("$path|$pendingIdentity")
+      }
+    }
+
+    synchronized(pendingCodexAmbiguityLock) {
+      pendingCodexAmbiguityStateByKey.keys.retainAll(trackedKeys)
+    }
   }
 
   private suspend fun markOnDemandLoading(path: String): Boolean {
@@ -1269,6 +1391,11 @@ private fun List<AgentSessionThread>.toThreadPreviews(): List<AgentSessionThread
 private data class ProviderRefreshOutcome(
   @JvmField val threads: List<AgentSessionThread>? = null,
   @JvmField val warningMessage: String? = null,
+)
+
+private data class PendingCodexAmbiguityState(
+  @JvmField val pollCount: Int,
+  @JvmField val lastWarnedAtMs: Long?,
 )
 
 private data class ArchiveSuppression(

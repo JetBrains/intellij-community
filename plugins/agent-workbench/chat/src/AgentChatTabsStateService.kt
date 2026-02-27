@@ -21,7 +21,7 @@ import kotlinx.serialization.Serializable
 import java.nio.file.Files
 import kotlin.time.Duration.Companion.minutes
 
-private const val AGENT_CHAT_TABS_STATE_VERSION = 1
+private const val AGENT_CHAT_TABS_STATE_VERSION = 2
 private const val AGENT_CHAT_TABS_STATE_TTL_MILLIS = 30L * 24 * 60 * 60 * 1000
 private const val AGENT_CHAT_LEGACY_METADATA_DIR_NAME = "agent-workbench-chat-frame"
 private const val AGENT_CHAT_LEGACY_METADATA_TABS_DIR_NAME = "tabs"
@@ -157,6 +157,9 @@ internal data class PersistedAgentChatTabState(
   @JvmField val shellCommand: List<String>,
   @JvmField val lastKnownTitle: String,
   @JvmField val lastKnownActivity: String,
+  @JvmField val pendingCreatedAtMs: Long? = null,
+  @JvmField val pendingFirstInputAtMs: Long? = null,
+  @JvmField val pendingLaunchMode: String? = null,
   @JvmField val updatedAt: Long,
 )
 
@@ -193,6 +196,8 @@ private fun isExpired(updatedAt: Long, now: Long): Boolean {
 }
 
 private fun PersistedAgentChatTabState.toSnapshot(tabKey: AgentChatTabKey): AgentChatTabSnapshot {
+  val resolvedPendingCreatedAtMs = pendingCreatedAtMs
+    ?: updatedAt.takeIf { it > 0L && isPersistedPendingThreadIdentity(threadIdentity) }
   return AgentChatTabSnapshot(
     tabKey = tabKey,
     identity = AgentChatTabIdentity(
@@ -206,6 +211,9 @@ private fun PersistedAgentChatTabState.toSnapshot(tabKey: AgentChatTabKey): Agen
       threadTitle = lastKnownTitle,
       shellCommand = shellCommand,
       threadActivity = parseThreadActivity(lastKnownActivity),
+      pendingCreatedAtMs = resolvedPendingCreatedAtMs,
+      pendingFirstInputAtMs = pendingFirstInputAtMs,
+      pendingLaunchMode = pendingLaunchMode,
     ),
   )
 }
@@ -220,8 +228,19 @@ private fun AgentChatTabSnapshot.toPersisted(updatedAt: Long): PersistedAgentCha
     shellCommand = runtime.shellCommand,
     lastKnownTitle = runtime.threadTitle,
     lastKnownActivity = runtime.threadActivity.name,
+    pendingCreatedAtMs = runtime.pendingCreatedAtMs,
+    pendingFirstInputAtMs = runtime.pendingFirstInputAtMs,
+    pendingLaunchMode = runtime.pendingLaunchMode,
     updatedAt = updatedAt,
   )
+}
+
+private fun isPersistedPendingThreadIdentity(threadIdentity: String): Boolean {
+  val separator = threadIdentity.indexOf(':')
+  if (separator <= 0 || separator == threadIdentity.lastIndex) {
+    return false
+  }
+  return threadIdentity.substring(separator + 1).startsWith("new-")
 }
 
 private fun parseThreadActivity(value: String): AgentThreadActivity {

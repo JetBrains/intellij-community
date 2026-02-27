@@ -56,7 +56,7 @@ Define how Agent chat tabs are opened, restored, reused, and rendered in editor 
 - Restore metadata must be persisted in app-level cache-file-backed `AgentChatTabsStateService` keyed by `tabKey`.
   [@test] ../chat/testSrc/AgentChatEditorServiceTest.kt
 
-- Persisted tab-state payload must include project hash/path, thread identity/sub-agent, thread id, shell command, title, activity, and updated timestamp.
+- Persisted tab-state payload must include project hash/path, thread identity/sub-agent, thread id, shell command, title, activity, pending Codex metadata (`pendingCreatedAtMs`, `pendingFirstInputAtMs`, `pendingLaunchMode`), and updated timestamp.
   [@test] ../chat/testSrc/AgentChatEditorServiceTest.kt
 
 - Chat restore must restore all previously open Agent chat tabs, not only the selected one.
@@ -78,6 +78,9 @@ Define how Agent chat tabs are opened, restored, reused, and rendered in editor 
   [@test] ../chat/testSrc/AgentChatFileEditorProviderTest.kt
 
 - Reopening an already-open tab with a newer thread title must update existing tab presentation.
+  [@test] ../chat/testSrc/AgentChatEditorServiceTest.kt
+
+- Pending Codex tabs must capture first user-input timestamp once (on first terminal key event) and persist it for later rebind matching.
   [@test] ../chat/testSrc/AgentChatEditorServiceTest.kt
 
 - Editor tab icon must be provider-specific using canonical identity; `READY` is unbadged, non-`READY` activities use the activity badge mapping, unknown provider uses the default chat icon, and unknown activity defaults to `READY`.
@@ -102,6 +105,10 @@ Define how Agent chat tabs are opened, restored, reused, and rendered in editor 
 - Shared command mapping and editor-tab popup action contract must follow `spec/agent-core-contracts.spec.md`.
   [@test] ../sessions/testSrc/AgentSessionCliTest.kt
   [@test] ../sessions/testSrc/AgentSessionsEditorTabActionsTest.kt
+
+- Editor tab actions must include `Bind Pending Codex Thread` for pending Codex tabs, invoking targeted rebind for the active pending tab only.
+  [@test] ../sessions/testSrc/AgentSessionsEditorTabActionsTest.kt
+  [@test] ../chat/testSrc/AgentChatEditorServiceTest.kt
 
 ## User Experience
 - Clicking a thread opens its chat tab.

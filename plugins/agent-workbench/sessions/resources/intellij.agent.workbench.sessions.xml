@@ -88,9 +88,14 @@
       class="com.intellij.agent.workbench.sessions.AgentSessionsGoToSourceProjectFromEditorTabAction">
       <add-to-group group-id="EditorTabPopupMenu" anchor="after" relative-to-action="AgentWorkbenchSessions.ArchiveThreadFromEditorTab"/>
     </action>
+    <action
+      id="AgentWorkbenchSessions.BindPendingCodexThreadFromEditorTab"
+      class="com.intellij.agent.workbench.sessions.AgentSessionsBindPendingCodexThreadFromEditorTabAction">
+      <add-to-group group-id="EditorTabPopupMenu" anchor="after" relative-to-action="AgentWorkbenchSessions.GoToSourceProjectFromEditorTab"/>
+    </action>
     <group id="AgentWorkbenchSessions.EditorTabPopup.SeparatorBeforeCloseActions">
       <separator/>
-      <add-to-group group-id="EditorTabPopupMenu" anchor="after" relative-to-action="AgentWorkbenchSessions.GoToSourceProjectFromEditorTab"/>
+      <add-to-group group-id="EditorTabPopupMenu" anchor="after" relative-to-action="AgentWorkbenchSessions.BindPendingCodexThreadFromEditorTab"/>
     </group>
     <action
       id="AgentWorkbenchSessions.CopyThreadIdFromEditorTab"

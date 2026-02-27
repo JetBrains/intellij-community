@@ -55,6 +55,15 @@ internal class AgentChatVirtualFile internal constructor(
   var threadActivity: AgentThreadActivity = AgentThreadActivity.READY
     private set
 
+  var pendingCreatedAtMs: Long? = null
+    private set
+
+  var pendingFirstInputAtMs: Long? = null
+    private set
+
+  var pendingLaunchMode: String? = null
+    private set
+
   @TestOnly
   internal constructor(
     projectPath: String,
@@ -131,6 +140,35 @@ internal class AgentChatVirtualFile internal constructor(
     this.threadId = threadId
   }
 
+  fun updatePendingMetadata(
+    pendingCreatedAtMs: Long?,
+    pendingFirstInputAtMs: Long?,
+    pendingLaunchMode: String?,
+  ): Boolean {
+    if (
+      this.pendingCreatedAtMs == pendingCreatedAtMs &&
+      this.pendingFirstInputAtMs == pendingFirstInputAtMs &&
+      this.pendingLaunchMode == pendingLaunchMode
+    ) {
+      return false
+    }
+    this.pendingCreatedAtMs = pendingCreatedAtMs
+    this.pendingFirstInputAtMs = pendingFirstInputAtMs
+    this.pendingLaunchMode = pendingLaunchMode
+    return true
+  }
+
+  fun markPendingFirstInputAtMsIfAbsent(timestampMs: Long): Boolean {
+    if (!isPendingThread) {
+      return false
+    }
+    if (pendingFirstInputAtMs != null) {
+      return false
+    }
+    pendingFirstInputAtMs = timestampMs
+    return true
+  }
+
   fun rebindPendingThread(
     threadIdentity: String,
     shellCommand: List<String>,
@@ -152,6 +190,9 @@ internal class AgentChatVirtualFile internal constructor(
       changed = true
     }
     if (updateThreadActivity(threadActivity)) {
+      changed = true
+    }
+    if (updatePendingMetadata(pendingCreatedAtMs = null, pendingFirstInputAtMs = null, pendingLaunchMode = null)) {
       changed = true
     }
 
@@ -185,6 +226,11 @@ internal class AgentChatVirtualFile internal constructor(
       updateThreadTitle(snapshot.runtime.threadTitle)
     }
     updateThreadActivity(snapshot.runtime.threadActivity)
+    updatePendingMetadata(
+      pendingCreatedAtMs = snapshot.runtime.pendingCreatedAtMs,
+      pendingFirstInputAtMs = snapshot.runtime.pendingFirstInputAtMs,
+      pendingLaunchMode = snapshot.runtime.pendingLaunchMode,
+    )
   }
 
   private fun updateThreadCoordinates() {
@@ -208,6 +254,9 @@ internal class AgentChatVirtualFile internal constructor(
         threadTitle = threadTitle,
         shellCommand = shellCommand,
         threadActivity = threadActivity,
+        pendingCreatedAtMs = pendingCreatedAtMs,
+        pendingFirstInputAtMs = pendingFirstInputAtMs,
+        pendingLaunchMode = pendingLaunchMode,
       ),
     )
   }

@@ -3,15 +3,19 @@ package com.intellij.agent.workbench.chat
 
 // @spec community/plugins/agent-workbench/spec/agent-chat-editor.spec.md
 
+import com.intellij.agent.workbench.sessions.core.AgentSessionProvider
 import com.intellij.openapi.actionSystem.ActionGroup
 import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.actionSystem.DefaultActionGroup
+import com.intellij.openapi.components.service
 import com.intellij.openapi.fileEditor.FileEditor
 import com.intellij.openapi.fileEditor.FileEditorState
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.UserDataHolderBase
 import com.intellij.terminal.frontend.toolwindow.TerminalToolWindowTab
 import com.intellij.terminal.frontend.toolwindow.TerminalToolWindowTabsManager
+import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.launch
 import org.jetbrains.plugins.terminal.startup.TerminalProcessType
 import java.awt.BorderLayout
 import java.beans.PropertyChangeListener
@@ -20,6 +24,7 @@ import javax.swing.JComponent
 import javax.swing.JPanel
 
 private const val NEW_THREAD_FROM_EDITOR_TAB_ACTION_ID = "AgentWorkbenchChat.NewThreadFromEditorTab"
+private const val BIND_PENDING_CODEX_THREAD_FROM_EDITOR_TAB_ACTION_ID = "AgentWorkbenchSessions.BindPendingCodexThreadFromEditorTab"
 
 internal class AgentChatFileEditor(
   private val project: Project,
@@ -27,8 +32,19 @@ internal class AgentChatFileEditor(
 ) : UserDataHolderBase(), FileEditor {
   private val component = JPanel(BorderLayout())
   private val editorTabActions: ActionGroup? by lazy {
-    val action = ActionManager.getInstance().getAction(NEW_THREAD_FROM_EDITOR_TAB_ACTION_ID) ?: return@lazy null
-    action as? ActionGroup ?: DefaultActionGroup(action)
+    val actionManager = ActionManager.getInstance()
+    val actions = listOfNotNull(
+      actionManager.getAction(NEW_THREAD_FROM_EDITOR_TAB_ACTION_ID),
+      actionManager.getAction(BIND_PENDING_CODEX_THREAD_FROM_EDITOR_TAB_ACTION_ID),
+    )
+    if (actions.isEmpty()) {
+      return@lazy null
+    }
+    if (actions.size == 1) {
+      val singleAction = actions.single()
+      return@lazy singleAction as? ActionGroup ?: DefaultActionGroup(singleAction)
+    }
+    DefaultActionGroup(actions)
   }
   private var tab: TerminalToolWindowTab? = null
   private var initializationStarted: Boolean = false
@@ -85,6 +101,7 @@ internal class AgentChatFileEditor(
         .shellCommand(file.shellCommand)
         .createTab()
       tab = createdTab
+      subscribePendingFirstInput(createdTab)
       component.removeAll()
       component.add(createdTab.content.component, BorderLayout.CENTER)
       component.revalidate()
@@ -95,6 +112,21 @@ internal class AgentChatFileEditor(
     }
     catch (t: Throwable) {
       AgentChatRestoreNotificationService.reportTerminalInitializationFailure(project, file, t)
+    }
+  }
+
+  private fun subscribePendingFirstInput(createdTab: TerminalToolWindowTab) {
+    if (!file.isPendingThread || file.provider != AgentSessionProvider.CODEX) {
+      return
+    }
+    val tabsService = service<AgentChatTabsService>()
+    createdTab.view.coroutineScope.launch {
+      createdTab.view.keyEventsFlow.collectLatest {
+        if (!file.markPendingFirstInputAtMsIfAbsent(System.currentTimeMillis())) {
+          return@collectLatest
+        }
+        tabsService.upsert(file.toSnapshot())
+      }
     }
   }
 }
