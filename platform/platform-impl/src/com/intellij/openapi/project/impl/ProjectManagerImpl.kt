@@ -100,6 +100,7 @@ import com.intellij.openapi.wm.WindowManager
 import com.intellij.openapi.wm.ex.ProjectFrameCapabilitiesService
 import com.intellij.openapi.wm.ex.ProjectFrameCapability
 import com.intellij.openapi.wm.ex.WindowManagerEx
+import com.intellij.openapi.wm.ex.isBackgroundActivitiesSuppressed
 import com.intellij.openapi.wm.impl.welcomeScreen.WelcomeFrame
 import com.intellij.platform.PROJECT_NEWLY_CREATED
 import com.intellij.platform.PROJECT_NEWLY_OPENED
@@ -1069,7 +1070,7 @@ open class ProjectManagerImpl : ProjectManagerEx(), Disposable {
   protected open fun isRunStartUpActivitiesEnabled(project: Project): Boolean = true
 
   open suspend fun configureWorkspace(project: Project, projectStoreBaseDir: Path, options: OpenProjectTask): Module? {
-    if (ProjectFrameCapabilitiesService.getInstance().has(project, ProjectFrameCapability.SUPPRESS_BACKGROUND_ACTIVITIES)) {
+    if (isBackgroundActivitiesSuppressed(project)) {
       return null
     }
 

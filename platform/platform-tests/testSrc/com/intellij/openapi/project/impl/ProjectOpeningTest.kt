@@ -26,6 +26,7 @@ import com.intellij.testFramework.fixtures.BareTestFixtureTestCase
 import com.intellij.testFramework.rules.InMemoryFsRule
 import com.intellij.testFramework.rules.TempDirectory
 import com.intellij.testFramework.useProject
+import com.intellij.util.indexing.UnindexedFilesScanner
 import com.intellij.util.application
 import com.intellij.util.io.createDirectories
 import kotlinx.coroutines.Job
@@ -139,6 +140,40 @@ class ProjectOpeningTest : BareTestFixtureTestCase() {
     assertThat(suppressedProject).isNotNull()
     suppressedProject!!.useProject { }
     assertThat(configuratorInvoked.get()).isFalse()
+  }
+
+  @Test
+  fun suppressIndexingActivitiesCancelsScanningTasks() {
+    ExtensionTestUtil.maskExtensions(
+      ProjectFrameCapabilitiesService.EP_NAME,
+      listOf(object : ProjectFrameCapabilitiesProvider {
+        override fun getCapabilities(project: Project): Set<ProjectFrameCapability> {
+          return setOf(ProjectFrameCapability.SUPPRESS_INDEXING_ACTIVITIES)
+        }
+
+        override fun getUiPolicy(project: Project, capabilities: Set<ProjectFrameCapability>): ProjectFrameUiPolicy? {
+          return null
+        }
+      }),
+      testRootDisposable,
+      fireEvents = false,
+    )
+
+    val projectDir = tempDir.root.toPath().resolve("suppressed-indexing-scanning").createDirectories()
+    val project = runBlocking {
+      ProjectManagerEx.getInstanceEx().openProjectAsync(
+        projectDir,
+        OpenProjectTask {
+          isNewProject = true
+        }
+      )
+    }
+    assertThat(project).isNotNull()
+    project!!.useProject {
+      val history = UnindexedFilesScanner(it, "Suppression check").queue().get()
+      assertThat(history.times.isCancelled).isTrue()
+      assertThat(history.times.cancellationReason).contains("suppressed")
+    }
   }
 
   private suspend fun assertProjectOpenIsCancelled(options: OpenProjectTask) {

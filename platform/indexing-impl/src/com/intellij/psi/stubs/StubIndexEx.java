@@ -1,7 +1,6 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.stubs;
 
-import com.intellij.ide.lightEdit.LightEditCompatible;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.diagnostic.Logger;
@@ -12,8 +11,6 @@ import com.intellij.openapi.util.ModificationTracker;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileWithId;
-import com.intellij.openapi.wm.ex.ProjectFrameCapabilitiesService;
-import com.intellij.openapi.wm.ex.ProjectFrameCapability;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.search.GlobalSearchScope;
@@ -64,6 +61,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.IntPredicate;
 import java.util.function.Predicate;
 
+import static com.intellij.openapi.wm.ex.ProjectFrameCapabilitiesKt.isIndexingActivitiesSuppressedSync;
 import static com.intellij.util.indexing.diagnostic.IndexLookupTimingsReporting.IndexOperationFusCollector.TRACE_OF_STUB_ENTRIES_LOOKUP;
 import static com.intellij.util.indexing.diagnostic.IndexLookupTimingsReporting.IndexOperationFusCollector.lookupStubEntriesStarted;
 
@@ -74,14 +72,6 @@ public abstract class StubIndexEx extends StubIndex {
     for (StubIndexExtension<?, ?> extension : StubIndexExtension.EP_NAME.getExtensionList()) {
       extension.getKey();
     }
-  }
-
-  private static boolean isBackgroundActivitiesSuppressed(@NotNull Project project) {
-    if (project instanceof LightEditCompatible) {
-      return true;
-    }
-    ProjectFrameCapabilitiesService service = ApplicationManager.getApplication().getService(ProjectFrameCapabilitiesService.class);
-    return service != null && service.has(project, ProjectFrameCapability.SUPPRESS_BACKGROUND_ACTIVITIES);
   }
 
   private final Map<StubIndexKey<?, ?>, CachedValue<Map<KeyAndFileId<?>, StubIdList>>> myCachedStubIds = FactoryMap.createMap(k -> {
@@ -179,7 +169,7 @@ public abstract class StubIndexEx extends StubIndex {
     try {
       boolean dumb = DumbService.isDumb(project);
       if (dumb) {
-        if (isBackgroundActivitiesSuppressed(project)) return false;
+        if (isIndexingActivitiesSuppressedSync(project)) return false;
         DumbModeAccessType accessType = FileBasedIndex.getInstance().getCurrentDumbModeAccessType(project);
         if (accessType == DumbModeAccessType.RAW_INDEX_DATA_ACCEPTABLE) {
           // Do not disable this assertion.

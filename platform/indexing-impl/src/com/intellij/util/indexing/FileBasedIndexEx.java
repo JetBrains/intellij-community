@@ -1,7 +1,6 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.indexing;
 
-import com.intellij.ide.lightEdit.LightEditCompatible;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
@@ -25,8 +24,6 @@ import com.intellij.openapi.vfs.CompactVirtualFileSet;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.openapi.vfs.VirtualFileWithId;
-import com.intellij.openapi.wm.ex.ProjectFrameCapabilitiesService;
-import com.intellij.openapi.wm.ex.ProjectFrameCapability;
 import com.intellij.psi.SingleRootFileViewProvider;
 import com.intellij.psi.search.EverythingGlobalScope;
 import com.intellij.psi.search.GlobalSearchScope;
@@ -72,6 +69,7 @@ import java.util.concurrent.CancellationException;
 import java.util.function.BiPredicate;
 import java.util.function.IntPredicate;
 
+import static com.intellij.openapi.wm.ex.ProjectFrameCapabilitiesKt.isIndexingActivitiesSuppressedSync;
 import static com.intellij.util.SystemProperties.getBooleanProperty;
 import static com.intellij.util.indexing.diagnostic.IndexLookupTimingsReporting.IndexOperationFusCollector.TRACE_OF_ENTRIES_LOOKUP;
 import static com.intellij.util.indexing.diagnostic.IndexLookupTimingsReporting.IndexOperationFusCollector.lookupAllKeysStarted;
@@ -296,7 +294,7 @@ public abstract class FileBasedIndexEx extends FileBasedIndex {
       trace.keysWithAND(1)
         .withProject(project);
 
-      if (isBackgroundActivitiesSuppressed(project)) return Collections.emptyIterator();
+      if (isIndexingActivitiesSuppressedSync(project)) return Collections.emptyIterator();
       @Nullable Iterator<VirtualFile> restrictToFileIt = extractSingleFileOrEmpty(scope);
       if (restrictToFileIt != null) {
         VirtualFile restrictToFile = restrictToFileIt.hasNext() ? restrictToFileIt.next() : null;
@@ -590,21 +588,10 @@ public abstract class FileBasedIndexEx extends FileBasedIndex {
    * Consider iterating without a read action if you don't require a consistent snapshot.
    */
   public @NotNull List<IndexableFilesIterator> getIndexableFilesProviders(@NotNull Project project) {
-    if (isBackgroundActivitiesSuppressed(project)) {
+    if (isIndexingActivitiesSuppressedSync(project)) {
       return Collections.emptyList();
     }
     return IndexingIteratorsProvider.getInstance(project).getIndexingIterators();
-  }
-
-  private static boolean isBackgroundActivitiesSuppressed(@Nullable Project project) {
-    if (project == null) {
-      return false;
-    }
-    if (project instanceof LightEditCompatible) {
-      return true;
-    }
-    ProjectFrameCapabilitiesService service = ApplicationManager.getApplication().getService(ProjectFrameCapabilitiesService.class);
-    return service != null && service.has(project, ProjectFrameCapability.SUPPRESS_BACKGROUND_ACTIVITIES);
   }
 
   private @Nullable <K, V> IntSet collectFileIdsContainingAllKeys(@NotNull ID<K, V> indexId,

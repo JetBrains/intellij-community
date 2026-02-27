@@ -1,7 +1,6 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.indexing
 
-import com.intellij.ide.lightEdit.LightEdit
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.readAction
@@ -14,8 +13,7 @@ import com.intellij.openapi.project.RootsChangeRescanningInfo
 import com.intellij.openapi.projectRoots.SdkType
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.util.text.StringUtil
-import com.intellij.openapi.wm.ex.ProjectFrameCapabilitiesService
-import com.intellij.openapi.wm.ex.ProjectFrameCapability
+import com.intellij.openapi.wm.ex.isIndexingActivitiesSuppressedSync
 import com.intellij.platform.backend.workspace.WorkspaceModel
 import com.intellij.platform.workspace.jps.entities.LibraryEntity
 import com.intellij.platform.workspace.jps.entities.SdkEntity
@@ -69,7 +67,7 @@ class ProjectEntityIndexingService(
 
   fun indexChanges(changes: List<RootsChangeRescanningInfo>) {
     if (FileBasedIndex.getInstance() !is FileBasedIndexImpl) return
-    if (isBackgroundActivitiesSuppressed(project)) return
+    if (isIndexingActivitiesSuppressedSync(project)) return
     if (invalidateProjectFilterIfFirstScanningNotRequested(project)) return
 
     if (ModalityState.defaultModalityState() === ModalityState.any()) {
@@ -88,7 +86,7 @@ class ProjectEntityIndexingService(
 
   override fun workspaceFileIndexChanged(event: WorkspaceFileIndexChangedEvent) {
     if (FileBasedIndex.getInstance() !is FileBasedIndexImpl) return
-    if (isBackgroundActivitiesSuppressed(project)) return
+    if (isIndexingActivitiesSuppressedSync(project)) return
 
     if (ModalityState.defaultModalityState() === ModalityState.any()) {
       LOG.error("Unexpected modality: should not be ANY. Replace with NON_MODAL (130820241337)")
@@ -513,9 +511,4 @@ class ProjectEntityIndexingService(
       return builders
     }
   }
-}
-
-private fun isBackgroundActivitiesSuppressed(project: Project): Boolean {
-  return LightEdit.owns(project) ||
-         service<ProjectFrameCapabilitiesService>().has(project, ProjectFrameCapability.SUPPRESS_BACKGROUND_ACTIVITIES)
 }

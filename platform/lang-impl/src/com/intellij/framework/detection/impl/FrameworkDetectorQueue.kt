@@ -4,16 +4,13 @@ package com.intellij.framework.detection.impl
 import com.intellij.framework.detection.DetectedFrameworkDescription
 import com.intellij.framework.detection.DetectionExcludesConfiguration
 import com.intellij.framework.detection.impl.exclude.DetectionExcludesConfigurationImpl
-import com.intellij.ide.lightEdit.LightEdit
 import com.intellij.openapi.application.readAction
 import com.intellij.openapi.application.smartReadAction
-import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.progress.runBlockingMaybeCancellable
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.openapi.wm.ex.ProjectFrameCapabilitiesService
-import com.intellij.openapi.wm.ex.ProjectFrameCapability
+import com.intellij.openapi.wm.ex.isBackgroundActivitiesSuppressed
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.util.concurrency.annotations.RequiresReadLock
 import com.intellij.util.indexing.FileBasedIndex
@@ -155,9 +152,4 @@ internal class FrameworkDetectorQueue(
       notificationListener?.accept(newNamesToNotify)
     }
   }
-}
-
-private suspend fun isBackgroundActivitiesSuppressed(project: Project): Boolean {
-  return LightEdit.owns(project) ||
-         serviceAsync<ProjectFrameCapabilitiesService>().has(project, ProjectFrameCapability.SUPPRESS_BACKGROUND_ACTIVITIES)
 }

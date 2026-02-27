@@ -25,6 +25,7 @@ class AgentWorkbenchProjectFrameCapabilitiesProviderTest {
       .contains(ProjectFrameCapability.SUPPRESS_VCS_UI)
       .contains(ProjectFrameCapability.SUPPRESS_PROJECT_VIEW)
       .contains(ProjectFrameCapability.SUPPRESS_BACKGROUND_ACTIVITIES)
+      .contains(ProjectFrameCapability.SUPPRESS_INDEXING_ACTIVITIES)
       .contains(ProjectFrameCapability.EXCLUDE_FROM_PROJECT_WINDOW_SWITCH_ORDER)
   }
 

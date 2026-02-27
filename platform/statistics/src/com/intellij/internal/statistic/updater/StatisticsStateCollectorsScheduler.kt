@@ -2,7 +2,6 @@
 package com.intellij.internal.statistic.updater
 
 import com.intellij.ide.ApplicationActivity
-import com.intellij.ide.lightEdit.LightEdit
 import com.intellij.internal.statistic.service.fus.collectors.FUCounterUsageLogger
 import com.intellij.internal.statistic.service.fus.collectors.FUStateUsagesLogger
 import com.intellij.internal.statistic.service.fus.collectors.ProjectFUStateUsagesLogger
@@ -14,8 +13,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.project.waitForSmartMode
 import com.intellij.openapi.startup.ProjectActivity
-import com.intellij.openapi.wm.ex.ProjectFrameCapabilitiesService
-import com.intellij.openapi.wm.ex.ProjectFrameCapability
+import com.intellij.openapi.wm.ex.isBackgroundActivitiesSuppressed
 import kotlinx.coroutines.delay
 import java.util.concurrent.atomic.AtomicBoolean
 import kotlin.time.Duration.Companion.minutes
@@ -67,9 +65,4 @@ internal class StatisticsStateCollectorsScheduler : ApplicationActivity {
       }
     }
   }
-}
-
-private suspend fun isBackgroundActivitiesSuppressed(project: Project): Boolean {
-  return LightEdit.owns(project) ||
-         serviceAsync<ProjectFrameCapabilitiesService>().has(project, ProjectFrameCapability.SUPPRESS_BACKGROUND_ACTIVITIES)
 }
