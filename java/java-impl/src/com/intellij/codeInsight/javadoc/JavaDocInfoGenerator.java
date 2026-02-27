@@ -2332,6 +2332,7 @@ public class JavaDocInfoGenerator {
     return -1;
   }
 
+  /// @return Whether the tag should be represented as a colored code block
   private static boolean isCodeBlock(PsiInlineDocTag tag) {
     return CODE_TAG.equals(tag.getName()) && isInPre(tag, true);
   }
@@ -2357,11 +2358,16 @@ public class JavaDocInfoGenerator {
   private void generateLiteralValue(StringBuilder buffer, PsiDocTag tag, boolean doEscaping) {
     StringBuilder tmpBuffer = new StringBuilder();
     PsiElement[] children = tag.getChildren();
-    for (int i = 2; i < children.length - 1; i++) { // process all children except tag opening/closing elements
+    int start = 2; // process all children except tag opening/closing elements
+    for (int i = start; i < children.length - 1; i++) {
       PsiElement child = children[i];
       if (isLeadingAsterisks(child)) continue;
       String elementText = child.getText();
       if (child instanceof PsiWhiteSpace) {
+        if (i == start && elementText.charAt(0) == ' ') {
+          // remove the first space between the tag name and the intended content
+          elementText = elementText.substring(1);
+        }
         int pos = elementText.lastIndexOf('\n');
         if (pos >= 0) elementText = elementText.substring(0, pos + 1); // skip whitespace before leading asterisk
       }
@@ -2375,29 +2381,8 @@ public class JavaDocInfoGenerator {
     }
   }
 
-  /// @param strict If `true`, the method expects the `<pre>` tag to be the only text right before the `element`
   private static boolean isInPre(@NotNull PsiElement element, boolean strict) {
-    PsiElement sibling = element.getPrevSibling();
-    while (sibling != null) {
-      if (sibling instanceof PsiDocToken && sibling.getNode().getElementType() != JavaDocTokenType.DOC_COMMENT_LEADING_ASTERISKS) {
-        String text = StringUtil.toLowerCase(sibling.getText());
-        int pos = text.lastIndexOf("pre>");
-        if (pos > 0) {
-          switch (text.charAt(pos - 1)) {
-            case '<' -> {
-              if (!strict || text.trim().endsWith("pre>")) return true;
-            }
-            case '/' -> {
-              return false;
-            }
-          }
-        } else if (strict && !text.trim().isEmpty()) {
-          return false;
-        }
-      }
-      sibling = sibling.getPrevSibling();
-    }
-    return false;
+    return JavaDocUtil.isInHtmlTag(element, "pre", strict);
   }
 
   private static void appendPlainText(StringBuilder buffer, String text) {

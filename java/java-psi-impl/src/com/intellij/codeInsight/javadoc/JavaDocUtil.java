@@ -8,6 +8,7 @@ import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.JavaDirectoryService;
+import com.intellij.psi.JavaDocTokenType;
 import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.PsiAnonymousClass;
 import com.intellij.psi.PsiClass;
@@ -37,6 +38,7 @@ import com.intellij.psi.impl.source.javadoc.PsiDocMethodOrFieldRef;
 import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.javadoc.PsiDocFragmentRef;
 import com.intellij.psi.javadoc.PsiDocTagValue;
+import com.intellij.psi.javadoc.PsiDocToken;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.templateLanguages.TemplateLanguageUtil;
 import com.intellij.psi.util.MethodSignature;
@@ -542,5 +544,55 @@ public final class JavaDocUtil {
 
   public static boolean shouldRunInspectionOnOldMarkdownComment(@NotNull PsiElement element) {
     return shouldRunInspectionOnOldMarkdownComment(PsiTreeUtil.getParentOfType(element, PsiDocComment.class, false, PsiMember.class));
+  }
+
+  /// @param tagName The name, expected to be in lowercase
+  /// @param strict  If `true`, the method expects the `tagName` to be the only text right before the `element`
+  public static boolean isInHtmlTag(@NotNull PsiElement element, CharSequence tagName, boolean strict) {
+    // Check tag before element
+    PsiElement sibling = element.getPrevSibling();
+    previousSiblingStrictBreak:
+    while (sibling != null) {
+      if (sibling instanceof PsiDocToken && sibling.getNode().getElementType() != JavaDocTokenType.DOC_COMMENT_LEADING_ASTERISKS) {
+        String text = StringUtil.toLowerCase(sibling.getText());
+        int pos = text.lastIndexOf(tagName + ">");
+        if (pos > 0) {
+          char startChar = text.charAt(pos - 1);
+          if (startChar == '<') {
+            if (!strict) return true;
+            // previous tag is good, check for forward tag
+            if (text.trim().endsWith(tagName + ">")) break previousSiblingStrictBreak;
+          }
+          if (startChar == '/') {
+            // Found a closing tag
+            return false;
+          }
+        }
+        else if (strict && !text.trim().isEmpty()) {
+          return false;
+        }
+      }
+      sibling = sibling.getPrevSibling();
+    }
+
+    if (strict) {
+      // Check closing tag after element
+      sibling = element.getNextSibling();
+      while (sibling != null) {
+        if (sibling instanceof PsiDocToken && sibling.getNode().getElementType() != JavaDocTokenType.DOC_COMMENT_LEADING_ASTERISKS) {
+          String text = StringUtil.toLowerCase(sibling.getText());
+          int pos = text.indexOf(tagName + ">");
+          if (pos > 0 && text.charAt(pos - 1) == '/' && text.trim().startsWith("</" + tagName + ">")) {
+            return true;
+          }
+          else if (!text.trim().isEmpty()) {
+            return false;
+          }
+        }
+        sibling = sibling.getNextSibling();
+      }
+    }
+
+    return false;
   }
 }
