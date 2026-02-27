@@ -1141,6 +1141,7 @@
     <statistics.counterUsagesCollector implementationClass="com.intellij.codeInsight.inline.completion.logs.InlineCompletionLogs"/>
     <statistics.counterUsagesCollector implementationClass="com.intellij.find.findUsages.FindUsagesStatisticsCollector"/>
     <statistics.counterUsagesCollector implementationClass="com.intellij.usages.impl.UsageViewStatisticsCollector"/>
+    <statistics.projectUsagesCollector implementation="com.intellij.usages.impl.UsageViewStateCollector"/>
     <statistics.counterUsagesCollector implementationClass="com.intellij.openapi.fileTypes.impl.FileTypeConfigurableInteractions"/>
     <statistics.counterUsagesCollector implementationClass="com.intellij.codeInsight.daemon.impl.DaemonFusCollector"/>
     <statistics.counterUsagesCollector implementationClass="com.intellij.codeInsight.daemon.impl.IdentifierHighlightingFUSCollector"/>
