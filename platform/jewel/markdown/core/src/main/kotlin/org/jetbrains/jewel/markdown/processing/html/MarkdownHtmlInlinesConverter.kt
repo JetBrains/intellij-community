@@ -38,6 +38,9 @@ internal class MarkdownHtmlInlinesConverter {
                                 source = element.attr("src"),
                                 title = element.attr("title").ifEmpty { null },
                                 alt = element.attr("alt"),
+                                width = element.attr("width").parseHtmlSizeValue(),
+                                height = element.attr("height").parseHtmlSizeValue(),
+                                inlineContent = emptyList(),
                             )
                         )
                     }
