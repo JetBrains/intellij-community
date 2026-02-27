@@ -431,10 +431,17 @@ internal fun resolveNewSessionRowActions(
 }
 
 internal fun resolveQuickCreateProvider(lastUsedProvider: AgentSessionProvider?): AgentSessionProvider? {
-  val provider = lastUsedProvider ?: return null
-  val bridge = AgentSessionProviderBridges.find(provider) ?: return null
-  if (AgentSessionLaunchMode.STANDARD !in bridge.supportedLaunchModes) return null
-  return provider
+  val standardProviders = AgentSessionProviderBridges.allBridges()
+    .filter { bridge -> AgentSessionLaunchMode.STANDARD in bridge.supportedLaunchModes }
+    .map { bridge -> bridge.provider }
+  if (standardProviders.isEmpty()) return null
+
+  return if (lastUsedProvider != null && lastUsedProvider in standardProviders) {
+    lastUsedProvider
+  }
+  else {
+    standardProviders.first()
+  }
 }
 
 internal fun pathForMoreThreadsNode(id: SessionTreeId): String? {

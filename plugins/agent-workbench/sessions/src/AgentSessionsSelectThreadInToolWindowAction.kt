@@ -52,16 +52,6 @@ internal class AgentSessionsSelectThreadInToolWindowAction : DumbAwareAction {
   override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.BGT
 }
 
-private data class EditorTabThreadCoordinates(
-  val provider: AgentSessionProvider,
-  val threadId: String,
-)
-
-private fun threadCoordinatesFromEditorContext(context: AgentChatEditorTabActionContext): EditorTabThreadCoordinates? {
-  if (context.isPendingThread) {
-    return null
-  }
-  val provider = context.provider ?: return null
-  val threadId = context.sessionId.takeIf { it.isNotBlank() } ?: return null
-  return EditorTabThreadCoordinates(provider = provider, threadId = threadId)
+private fun threadCoordinatesFromEditorContext(context: AgentChatEditorTabActionContext): AgentSessionsEditorTabThreadCoordinates? {
+  return resolveAgentSessionsEditorTabThreadCoordinates(context)
 }

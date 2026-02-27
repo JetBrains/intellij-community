@@ -6,11 +6,6 @@ import com.intellij.agent.workbench.chat.AgentChatPendingTabRebindTarget
 import com.intellij.agent.workbench.common.normalizeAgentWorkbenchPath
 import com.intellij.agent.workbench.sessions.core.AgentSessionLaunchMode
 import com.intellij.agent.workbench.sessions.core.AgentSessionProvider
-import com.intellij.agent.workbench.sessions.core.AgentSessionThread
-import com.intellij.agent.workbench.sessions.core.providers.AgentSessionLaunchSpec
-import com.intellij.agent.workbench.sessions.core.providers.AgentSessionProviderBridge
-import com.intellij.agent.workbench.sessions.core.providers.AgentSessionProviderIcon
-import com.intellij.agent.workbench.sessions.core.providers.AgentSessionSource
 import com.intellij.openapi.project.ProjectManager
 import com.intellij.testFramework.TestActionEvent
 import com.intellij.testFramework.junit5.TestApplication
@@ -26,13 +21,13 @@ class AgentSessionsEditorTabActionsTest {
     var launchedProvider: AgentSessionProvider? = null
     var launchedMode: AgentSessionLaunchMode? = null
     var launchedProjectName: String? = null
-    val codexBridge = EditorTabTestProviderBridge(
+    val codexBridge = TestAgentSessionProviderBridge(
       provider = AgentSessionProvider.CODEX,
       supportedModes = setOf(AgentSessionLaunchMode.STANDARD, AgentSessionLaunchMode.YOLO),
       cliAvailable = true,
       yoloSessionLabelKey = "toolwindow.action.new.session.codex.yolo",
     )
-    val claudeBridge = EditorTabTestProviderBridge(
+    val claudeBridge = TestAgentSessionProviderBridge(
       provider = AgentSessionProvider.CLAUDE,
       supportedModes = setOf(AgentSessionLaunchMode.STANDARD),
       cliAvailable = true,
@@ -64,17 +59,18 @@ class AgentSessionsEditorTabActionsTest {
   }
 
   @Test
-  fun editorTabQuickNewThreadHiddenWhenLastUsedProviderIsNotEligible() {
+  fun editorTabQuickNewThreadFallsBackToFirstStandardProviderWhenLastUsedIsNotEligible() {
     val context = editorContext()
-    var createCalls = 0
+    var launchedProvider: AgentSessionProvider? = null
+    var launchedMode: AgentSessionLaunchMode? = null
     val fallbackProvider = AgentSessionProvider.from("fallback")
-    val codexYoloOnlyBridge = EditorTabTestProviderBridge(
+    val codexYoloOnlyBridge = TestAgentSessionProviderBridge(
       provider = AgentSessionProvider.CODEX,
       supportedModes = setOf(AgentSessionLaunchMode.YOLO),
       cliAvailable = true,
       yoloSessionLabelKey = "toolwindow.action.new.session.codex.yolo",
     )
-    val fallbackBridge = EditorTabTestProviderBridge(
+    val fallbackBridge = TestAgentSessionProviderBridge(
       provider = fallbackProvider,
       supportedModes = setOf(AgentSessionLaunchMode.STANDARD),
       cliAvailable = true,
@@ -83,17 +79,22 @@ class AgentSessionsEditorTabActionsTest {
       resolveContext = { context },
       allBridges = { listOf(codexYoloOnlyBridge, fallbackBridge) },
       lastUsedProvider = { AgentSessionProvider.CODEX },
-      createNewSession = { _, _, _, _ -> createCalls++ },
+      createNewSession = { _, provider, mode, _ ->
+        launchedProvider = provider
+        launchedMode = mode
+      },
     )
     val event = TestActionEvent.createTestEvent(action)
 
     action.update(event)
 
-    assertThat(event.presentation.isEnabledAndVisible).isFalse()
+    assertThat(event.presentation.isEnabledAndVisible).isTrue()
+    assertThat(event.presentation.icon).isEqualTo(providerIcon(fallbackProvider))
 
     action.actionPerformed(event)
 
-    assertThat(createCalls).isEqualTo(0)
+    assertThat(launchedProvider).isEqualTo(fallbackProvider)
+    assertThat(launchedMode).isEqualTo(AgentSessionLaunchMode.STANDARD)
   }
 
   @Test
@@ -103,13 +104,13 @@ class AgentSessionsEditorTabActionsTest {
     var launchedProvider: AgentSessionProvider? = null
     var launchedMode: AgentSessionLaunchMode? = null
     var launchedProjectName: String? = null
-    val codexBridge = EditorTabTestProviderBridge(
+    val codexBridge = TestAgentSessionProviderBridge(
       provider = AgentSessionProvider.CODEX,
       supportedModes = setOf(AgentSessionLaunchMode.STANDARD, AgentSessionLaunchMode.YOLO),
       cliAvailable = true,
       yoloSessionLabelKey = "toolwindow.action.new.session.codex.yolo",
     )
-    val claudeBridge = EditorTabTestProviderBridge(
+    val claudeBridge = TestAgentSessionProviderBridge(
       provider = AgentSessionProvider.CLAUDE,
       supportedModes = setOf(AgentSessionLaunchMode.STANDARD),
       cliAvailable = true,
@@ -148,7 +149,7 @@ class AgentSessionsEditorTabActionsTest {
 
   @Test
   fun editorTabPopupNewThreadHiddenWithoutEditorContext() {
-    val codexBridge = EditorTabTestProviderBridge(
+    val codexBridge = TestAgentSessionProviderBridge(
       provider = AgentSessionProvider.CODEX,
       supportedModes = setOf(AgentSessionLaunchMode.STANDARD),
       cliAvailable = true,
@@ -169,9 +170,8 @@ class AgentSessionsEditorTabActionsTest {
   fun archiveThreadActionVisibleAndEnabledOnlyWhenProviderSupportsArchive() {
     val context = editorContext()
 
-    val unsupported = AgentSessionsArchiveThreadAction(
-      resolveTreeContext = { null },
-      resolveEditorContext = { context },
+    val unsupported = AgentSessionsEditorTabArchiveThreadAction(
+      resolveContext = { context },
       canArchiveProvider = { false },
       archiveThreads = { _ -> },
     )
@@ -180,9 +180,8 @@ class AgentSessionsEditorTabActionsTest {
     assertThat(unsupportedEvent.presentation.isVisible).isTrue()
     assertThat(unsupportedEvent.presentation.isEnabled).isFalse()
 
-    val supported = AgentSessionsArchiveThreadAction(
-      resolveTreeContext = { null },
-      resolveEditorContext = { context },
+    val supported = AgentSessionsEditorTabArchiveThreadAction(
+      resolveContext = { context },
       canArchiveProvider = { true },
       archiveThreads = { _ -> },
     )
@@ -197,9 +196,8 @@ class AgentSessionsEditorTabActionsTest {
     val context = editorContext()
     var archivedTargets: List<ArchiveThreadTarget>? = null
 
-    val action = AgentSessionsArchiveThreadAction(
-      resolveTreeContext = { null },
-      resolveEditorContext = { context },
+    val action = AgentSessionsEditorTabArchiveThreadAction(
+      resolveContext = { context },
       canArchiveProvider = { true },
       archiveThreads = { targets -> archivedTargets = targets },
     )
@@ -458,50 +456,4 @@ private fun editorContext(
     sessionId = sessionId,
     isPendingThread = isPendingThread,
   )
-}
-
-private class EditorTabTestProviderBridge(
-  override val provider: AgentSessionProvider,
-  private val supportedModes: Set<AgentSessionLaunchMode>,
-  private val cliAvailable: Boolean,
-  override val yoloSessionLabelKey: String? = null,
-) : AgentSessionProviderBridge {
-  override val displayNameKey: String
-    get() = if (provider == AgentSessionProvider.CLAUDE) "toolwindow.provider.claude" else "toolwindow.provider.codex"
-
-  override val newSessionLabelKey: String
-    get() = if (provider == AgentSessionProvider.CLAUDE) "toolwindow.action.new.session.claude" else "toolwindow.action.new.session.codex"
-
-  override val icon: AgentSessionProviderIcon
-    get() = AgentSessionProviderIcon(path = "icons/codex@14x14.svg", iconClass = this::class.java)
-
-  override val supportedLaunchModes: Set<AgentSessionLaunchMode>
-    get() = supportedModes
-
-  override val sessionSource: AgentSessionSource = object : AgentSessionSource {
-    override val provider: AgentSessionProvider
-      get() = this@EditorTabTestProviderBridge.provider
-
-    override suspend fun listThreadsFromOpenProject(path: String, project: com.intellij.openapi.project.Project): List<AgentSessionThread> = emptyList()
-
-    override suspend fun listThreadsFromClosedProject(path: String): List<AgentSessionThread> = emptyList()
-  }
-
-  override val cliMissingMessageKey: String
-    get() = "toolwindow.error.cli"
-
-  override fun isCliAvailable(): Boolean = cliAvailable
-
-  override fun buildResumeCommand(sessionId: String): List<String> = listOf("test", "resume", sessionId)
-
-  override fun buildNewSessionCommand(mode: AgentSessionLaunchMode): List<String> = listOf("test", "new", mode.name)
-
-  override fun buildNewEntryCommand(): List<String> = listOf("test")
-
-  override suspend fun createNewSession(path: String, mode: AgentSessionLaunchMode): AgentSessionLaunchSpec {
-    return AgentSessionLaunchSpec(
-      sessionId = null,
-      command = listOf("test", "create", path, mode.name),
-    )
-  }
 }

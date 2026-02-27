@@ -31,11 +31,8 @@ internal class AgentSessionsCopyThreadIdFromEditorTabAction : DumbAwareAction {
 
   override fun actionPerformed(e: AnActionEvent) {
     val context = resolveContext(e) ?: return
-    if (context.isPendingThread) {
-      return
-    }
-    val threadId = context.sessionId.takeIf { it.isNotBlank() } ?: return
-    copyToClipboard(threadId)
+    val threadCoordinates = resolveAgentSessionsEditorTabThreadCoordinates(context) ?: return
+    copyToClipboard(threadCoordinates.threadId)
   }
 
   override fun update(e: AnActionEvent) {
@@ -46,7 +43,7 @@ internal class AgentSessionsCopyThreadIdFromEditorTabAction : DumbAwareAction {
     }
 
     e.presentation.isVisible = true
-    e.presentation.isEnabled = context.sessionId.isNotBlank() && !context.isPendingThread
+    e.presentation.isEnabled = resolveAgentSessionsEditorTabThreadCoordinates(context) != null
   }
 
   override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.BGT

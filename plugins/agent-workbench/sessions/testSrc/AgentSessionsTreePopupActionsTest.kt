@@ -1,15 +1,10 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.agent.workbench.sessions
 
-import com.intellij.agent.workbench.chat.AgentChatEditorTabActionContext
 import com.intellij.agent.workbench.sessions.core.AgentSessionLaunchMode
 import com.intellij.agent.workbench.sessions.core.AgentSessionProvider
 import com.intellij.agent.workbench.sessions.core.AgentSessionThread
 import com.intellij.agent.workbench.sessions.core.AgentSubAgent
-import com.intellij.agent.workbench.sessions.core.providers.AgentSessionLaunchSpec
-import com.intellij.agent.workbench.sessions.core.providers.AgentSessionProviderBridge
-import com.intellij.agent.workbench.sessions.core.providers.AgentSessionProviderIcon
-import com.intellij.agent.workbench.sessions.core.providers.AgentSessionSource
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.CommonDataKeys
@@ -113,9 +108,8 @@ class AgentSessionsTreePopupActionsTest {
   @Test
   fun archiveActionUsesCapabilityGateAndSelectedCountLabel() {
     var archivedTargets: List<ArchiveThreadTarget>? = null
-    val archiveAction = AgentSessionsArchiveThreadAction(
-      resolveTreeContext = { event -> resolveAgentSessionsTreePopupActionContext(event) },
-      resolveEditorContext = { null },
+    val archiveAction = AgentSessionsTreePopupArchiveThreadAction(
+      resolveContext = { event -> resolveAgentSessionsTreePopupActionContext(event) },
       canArchiveProvider = { provider -> provider == AgentSessionProvider.CODEX },
       archiveThreads = { targets -> archivedTargets = targets },
     )
@@ -163,7 +157,7 @@ class AgentSessionsTreePopupActionsTest {
   }
 
   @Test
-  fun archiveActionPrefersTreeContextWhenTreeAndEditorContextsAreBothAvailable() {
+  fun archiveActionArchivesTreeContextTargets() {
     var archivedTargets: List<ArchiveThreadTarget>? = null
     val project = AgentProjectSessions(path = "/work/project-a", name = "Project A", isOpen = true)
     val treeTarget = ArchiveThreadTarget(
@@ -180,17 +174,8 @@ class AgentSessionsTreePopupActionsTest {
       node = SessionTreeNode.Thread(project = project, thread = thread(id = "tree-1", provider = AgentSessionProvider.CODEX)),
       archiveTargets = listOf(treeTarget),
     )
-    val editorContext = AgentChatEditorTabActionContext(
-      project = ProjectManager.getInstance().defaultProject,
-      path = "/work/project-from-editor",
-      threadIdentity = "codex:editor-1",
-      threadId = "editor-1",
-      provider = AgentSessionProvider.CODEX,
-      sessionId = "editor-1",
-    )
-    val archiveAction = AgentSessionsArchiveThreadAction(
-      resolveTreeContext = { treeContext },
-      resolveEditorContext = { editorContext },
+    val archiveAction = AgentSessionsTreePopupArchiveThreadAction(
+      resolveContext = { treeContext },
       canArchiveProvider = { true },
       archiveThreads = { targets -> archivedTargets = targets },
     )
@@ -206,13 +191,13 @@ class AgentSessionsTreePopupActionsTest {
     var launchedProvider: AgentSessionProvider? = null
     var launchedMode: AgentSessionLaunchMode? = null
     var launchedProject: Project? = null
-    val codexBridge = PopupTestProviderBridge(
+    val codexBridge = TestAgentSessionProviderBridge(
       provider = AgentSessionProvider.CODEX,
       supportedModes = setOf(AgentSessionLaunchMode.STANDARD, AgentSessionLaunchMode.YOLO),
       cliAvailable = true,
       yoloSessionLabelKey = "toolwindow.action.new.session.codex.yolo",
     )
-    val claudeBridge = PopupTestProviderBridge(
+    val claudeBridge = TestAgentSessionProviderBridge(
       provider = AgentSessionProvider.CLAUDE,
       supportedModes = setOf(AgentSessionLaunchMode.STANDARD),
       cliAvailable = false,
@@ -284,17 +269,17 @@ class AgentSessionsTreePopupActionsTest {
   }
 
   @Test
-  fun newThreadGroupStaysPopupOnlyWhenLastUsedProviderIsNotEligibleForQuickStart() {
+  fun newThreadGroupFallsBackToFirstStandardWhenLastUsedProviderIsNotEligibleForQuickStart() {
     var launchedProvider: AgentSessionProvider? = null
     var launchedMode: AgentSessionLaunchMode? = null
     val fallbackProvider = AgentSessionProvider.from("fallback")
-    val codexYoloOnlyBridge = PopupTestProviderBridge(
+    val codexYoloOnlyBridge = TestAgentSessionProviderBridge(
       provider = AgentSessionProvider.CODEX,
       supportedModes = setOf(AgentSessionLaunchMode.YOLO),
       cliAvailable = true,
       yoloSessionLabelKey = "toolwindow.action.new.session.codex.yolo",
     )
-    val fallbackBridge = PopupTestProviderBridge(
+    val fallbackBridge = TestAgentSessionProviderBridge(
       provider = fallbackProvider,
       supportedModes = setOf(AgentSessionLaunchMode.STANDARD),
       cliAvailable = true,
@@ -316,12 +301,12 @@ class AgentSessionsTreePopupActionsTest {
 
     group.update(event)
     assertThat(event.presentation.isEnabledAndVisible).isTrue()
-    assertThat(event.presentation.isPerformGroup).isFalse()
+    assertThat(event.presentation.isPerformGroup).isTrue()
 
     group.actionPerformed(event)
 
-    assertThat(launchedProvider).isNull()
-    assertThat(launchedMode).isNull()
+    assertThat(launchedProvider).isEqualTo(fallbackProvider)
+    assertThat(launchedMode).isEqualTo(AgentSessionLaunchMode.STANDARD)
 
     val children = group.getChildren(event)
     assertThat(children).hasSize(4)
@@ -367,50 +352,4 @@ private fun thread(id: String, provider: AgentSessionProvider): AgentSessionThre
     provider = provider,
     subAgents = listOf(AgentSubAgent(id = "sub-$id", name = "Sub $id")),
   )
-}
-
-private class PopupTestProviderBridge(
-  override val provider: AgentSessionProvider,
-  private val supportedModes: Set<AgentSessionLaunchMode>,
-  private val cliAvailable: Boolean,
-  override val yoloSessionLabelKey: String? = null,
-) : AgentSessionProviderBridge {
-  override val displayNameKey: String
-    get() = if (provider == AgentSessionProvider.CLAUDE) "toolwindow.provider.claude" else "toolwindow.provider.codex"
-
-  override val newSessionLabelKey: String
-    get() = if (provider == AgentSessionProvider.CLAUDE) "toolwindow.action.new.session.claude" else "toolwindow.action.new.session.codex"
-
-  override val icon: AgentSessionProviderIcon
-    get() = AgentSessionProviderIcon(path = "icons/codex@14x14.svg", iconClass = this::class.java)
-
-  override val supportedLaunchModes: Set<AgentSessionLaunchMode>
-    get() = supportedModes
-
-  override val sessionSource: AgentSessionSource = object : AgentSessionSource {
-    override val provider: AgentSessionProvider
-      get() = this@PopupTestProviderBridge.provider
-
-    override suspend fun listThreadsFromOpenProject(path: String, project: Project): List<AgentSessionThread> = emptyList()
-
-    override suspend fun listThreadsFromClosedProject(path: String): List<AgentSessionThread> = emptyList()
-  }
-
-  override val cliMissingMessageKey: String
-    get() = "toolwindow.error.cli"
-
-  override fun isCliAvailable(): Boolean = cliAvailable
-
-  override fun buildResumeCommand(sessionId: String): List<String> = listOf("test", "resume", sessionId)
-
-  override fun buildNewSessionCommand(mode: AgentSessionLaunchMode): List<String> = listOf("test", "new", mode.name)
-
-  override fun buildNewEntryCommand(): List<String> = listOf("test")
-
-  override suspend fun createNewSession(path: String, mode: AgentSessionLaunchMode): AgentSessionLaunchSpec {
-    return AgentSessionLaunchSpec(
-      sessionId = null,
-      command = listOf("test", "create", path, mode.name),
-    )
-  }
 }

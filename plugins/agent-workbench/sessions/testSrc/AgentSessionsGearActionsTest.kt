@@ -114,7 +114,7 @@ class AgentSessionsGearActionsTest {
       .isInstanceOf(AgentSessionsSelectThreadInToolWindowAction::class.java)
     assertThat(actionManager.getAction("AgentWorkbenchSessions.ArchiveThreadFromEditorTab"))
       .isNotNull
-      .isInstanceOf(AgentSessionsArchiveThreadAction::class.java)
+      .isInstanceOf(AgentSessionsEditorTabArchiveThreadAction::class.java)
     assertThat(actionManager.getAction("AgentWorkbenchSessions.GoToSourceProjectFromEditorTab"))
       .isNotNull
       .isInstanceOf(AgentSessionsGoToSourceProjectFromEditorTabAction::class.java)

@@ -3,14 +3,8 @@ package com.intellij.agent.workbench.sessions
 
 import com.intellij.agent.workbench.sessions.core.AgentSessionLaunchMode
 import com.intellij.agent.workbench.sessions.core.AgentSessionProvider
-import com.intellij.agent.workbench.sessions.core.AgentSessionThread
-import com.intellij.agent.workbench.sessions.core.providers.AgentSessionLaunchSpec
-import com.intellij.agent.workbench.sessions.core.providers.AgentSessionProviderBridge
 import com.intellij.agent.workbench.sessions.core.providers.AgentSessionProviderBridges
-import com.intellij.agent.workbench.sessions.core.providers.AgentSessionProviderIcon
-import com.intellij.agent.workbench.sessions.core.providers.AgentSessionSource
 import com.intellij.agent.workbench.sessions.core.providers.InMemoryAgentSessionProviderRegistry
-import com.intellij.openapi.project.Project
 import com.intellij.testFramework.junit5.TestApplication
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
@@ -19,7 +13,7 @@ import org.junit.jupiter.api.Test
 class AgentSessionsSwingNewSessionActionsTest {
   @Test
   fun projectAndWorktreeRowsExposeQuickProviderFromLastUsedProvider() {
-    val bridge = TestProviderBridge(
+    val bridge = TestAgentSessionProviderBridge(
       provider = AgentSessionProvider.CODEX,
       supportedModes = setOf(AgentSessionLaunchMode.STANDARD),
       cliAvailable = true,
@@ -43,7 +37,7 @@ class AgentSessionsSwingNewSessionActionsTest {
 
   @Test
   fun loadingProjectAndWorktreeRowsExposeNewSessionActions() {
-    val bridge = TestProviderBridge(
+    val bridge = TestAgentSessionProviderBridge(
       provider = AgentSessionProvider.CODEX,
       supportedModes = setOf(AgentSessionLaunchMode.STANDARD),
       cliAvailable = true,
@@ -67,13 +61,13 @@ class AgentSessionsSwingNewSessionActionsTest {
   }
 
   @Test
-  fun quickProviderRequiresStandardModeOnly() {
-    val codexDisabledBridge = TestProviderBridge(
+  fun quickProviderFallsBackToFirstStandardProvider() {
+    val codexBridge = TestAgentSessionProviderBridge(
       provider = AgentSessionProvider.CODEX,
       supportedModes = setOf(AgentSessionLaunchMode.STANDARD),
       cliAvailable = false,
     )
-    val claudeYoloOnlyBridge = TestProviderBridge(
+    val claudeYoloOnlyBridge = TestAgentSessionProviderBridge(
       provider = AgentSessionProvider.CLAUDE,
       supportedModes = setOf(AgentSessionLaunchMode.YOLO),
       cliAvailable = true,
@@ -81,66 +75,28 @@ class AgentSessionsSwingNewSessionActionsTest {
     )
 
     AgentSessionProviderBridges.withRegistryForTest(
-      InMemoryAgentSessionProviderRegistry(listOf(codexDisabledBridge, claudeYoloOnlyBridge))
+      InMemoryAgentSessionProviderRegistry(listOf(codexBridge, claudeYoloOnlyBridge))
     ) {
       assertThat(resolveQuickCreateProvider(AgentSessionProvider.CODEX)).isEqualTo(AgentSessionProvider.CODEX)
-      assertThat(resolveQuickCreateProvider(AgentSessionProvider.CLAUDE)).isNull()
+      assertThat(resolveQuickCreateProvider(AgentSessionProvider.CLAUDE)).isEqualTo(AgentSessionProvider.CODEX)
+      assertThat(resolveQuickCreateProvider(null)).isEqualTo(AgentSessionProvider.CODEX)
     }
 
-    val codexEnabledBridge = TestProviderBridge(
-      provider = AgentSessionProvider.CODEX,
+    val yoloOnlyBridge = TestAgentSessionProviderBridge(
+      provider = AgentSessionProvider.from("yolo-only"),
+      supportedModes = setOf(AgentSessionLaunchMode.YOLO),
+      cliAvailable = true,
+      yoloSessionLabelKey = "toolwindow.action.new.session.codex.yolo",
+    )
+
+    val fallbackStandardBridge = TestAgentSessionProviderBridge(
+      provider = AgentSessionProvider.from("fallback"),
       supportedModes = setOf(AgentSessionLaunchMode.STANDARD),
       cliAvailable = true,
     )
 
-    AgentSessionProviderBridges.withRegistryForTest(InMemoryAgentSessionProviderRegistry(listOf(codexEnabledBridge))) {
-      assertThat(resolveQuickCreateProvider(AgentSessionProvider.CODEX)).isEqualTo(AgentSessionProvider.CODEX)
-    }
-  }
-
-  private class TestProviderBridge(
-    override val provider: AgentSessionProvider,
-    private val supportedModes: Set<AgentSessionLaunchMode>,
-    private val cliAvailable: Boolean,
-    override val yoloSessionLabelKey: String? = null,
-  ) : AgentSessionProviderBridge {
-    override val displayNameKey: String
-      get() = if (provider == AgentSessionProvider.CLAUDE) "toolwindow.provider.claude" else "toolwindow.provider.codex"
-
-    override val newSessionLabelKey: String
-      get() = if (provider == AgentSessionProvider.CLAUDE) "toolwindow.action.new.session.claude" else "toolwindow.action.new.session.codex"
-
-    override val icon: AgentSessionProviderIcon
-      get() = AgentSessionProviderIcon(path = "icons/codex@14x14.svg", iconClass = this::class.java)
-
-    override val supportedLaunchModes: Set<AgentSessionLaunchMode>
-      get() = supportedModes
-
-    override val sessionSource: AgentSessionSource = object : AgentSessionSource {
-      override val provider: AgentSessionProvider
-        get() = this@TestProviderBridge.provider
-
-      override suspend fun listThreadsFromOpenProject(path: String, project: Project): List<AgentSessionThread> = emptyList()
-
-      override suspend fun listThreadsFromClosedProject(path: String): List<AgentSessionThread> = emptyList()
-    }
-
-    override val cliMissingMessageKey: String
-      get() = "toolwindow.error.cli"
-
-    override fun isCliAvailable(): Boolean = cliAvailable
-
-    override fun buildResumeCommand(sessionId: String): List<String> = listOf("test", "resume", sessionId)
-
-    override fun buildNewSessionCommand(mode: AgentSessionLaunchMode): List<String> = listOf("test", "new", mode.name)
-
-    override fun buildNewEntryCommand(): List<String> = listOf("test")
-
-    override suspend fun createNewSession(path: String, mode: AgentSessionLaunchMode): AgentSessionLaunchSpec {
-      return AgentSessionLaunchSpec(
-        sessionId = null,
-        command = listOf("test", "create", path, mode.name),
-      )
+    AgentSessionProviderBridges.withRegistryForTest(InMemoryAgentSessionProviderRegistry(listOf(yoloOnlyBridge, fallbackStandardBridge))) {
+      assertThat(resolveQuickCreateProvider(AgentSessionProvider.CODEX)).isEqualTo(fallbackStandardBridge.provider)
     }
   }
 }

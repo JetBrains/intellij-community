@@ -74,7 +74,7 @@
       class="com.intellij.agent.workbench.sessions.AgentSessionsEditorTabNewThreadPopupGroup"/>
     <action
       id="AgentWorkbenchSessions.TreePopup.Archive"
-      class="com.intellij.agent.workbench.sessions.AgentSessionsArchiveThreadAction"/>
+      class="com.intellij.agent.workbench.sessions.AgentSessionsTreePopupArchiveThreadAction"/>
     <group id="AgentWorkbenchSessions.TreePopup">
       <reference ref="AgentWorkbenchSessions.TreePopup.Open"/>
       <reference ref="AgentWorkbenchSessions.TreePopup.More"/>
@@ -84,7 +84,7 @@
     </group>
     <action
       id="AgentWorkbenchSessions.ArchiveThreadFromEditorTab"
-      class="com.intellij.agent.workbench.sessions.AgentSessionsArchiveThreadAction">
+      class="com.intellij.agent.workbench.sessions.AgentSessionsEditorTabArchiveThreadAction">
       <add-to-group group-id="EditorTabPopupMenu" anchor="before" relative-to-action="CloseEditorsGroup"/>
       <keyboard-shortcut keymap="$default" first-keystroke="control alt DELETE"/>
       <keyboard-shortcut keymap="Default for XWin" first-keystroke="control alt DELETE" remove="true"/>
