@@ -8,7 +8,6 @@ import fleet.buildtool.codecache.detectNativeLibraryPlatformBasedOnItsName
 import fleet.buildtool.codecache.specs.NativeLibrariesExtractorSpec
 import fleet.buildtool.codecache.specs.NativeLibraryExtractor
 import fleet.buildtool.codecache.specs.ShadowedJarSpec
-import fleet.buildtool.scrambling.JarScrambler
 import fleet.codecache.CodeCacheHasher
 import org.slf4j.Logger
 import java.lang.module.ModuleFinder
@@ -24,7 +23,7 @@ import kotlin.io.path.listDirectoryEntries
 import kotlin.io.path.name
 import kotlin.io.path.writeText
 
-suspend fun generateDockInitDescriptor(
+suspend fun generateInitDescriptor(
   moduleName: String,
   runtimeClasspath: List<Path>,
   targetJdkVersionFeature: Int,

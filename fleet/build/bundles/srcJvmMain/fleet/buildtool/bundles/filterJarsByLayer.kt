@@ -81,7 +81,7 @@ private fun filterConflictingJars(
     //  no need to provide `exclude` blocks or equivalent as it will be done transparently for the plugin developer
     //  indeed only granular jars will be stripped out, not the dependency itself, so this code has the same value of an
     //  exclude statement, but done automatically
-    logger.warn("WARNING: found ${conflictingModules.size} module(s) already provided by either a plugin on which your plugin depends, or Fleet itself." + " They will *not* be added to your plugin module path causing them to be potentially resolved to a different version at runtime." + " List of module name(s): ${
+    logger.debug("WARNING: found ${conflictingModules.size} module(s) already provided by either a plugin on which your plugin depends, or Fleet itself." + " They will *not* be added to your plugin module path causing them to be potentially resolved to a different version at runtime." + " List of module name(s): ${
       conflictingModules.joinToString(", ")
     }")
   }
