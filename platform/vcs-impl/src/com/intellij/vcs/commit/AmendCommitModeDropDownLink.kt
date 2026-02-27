@@ -8,7 +8,6 @@ import com.intellij.openapi.ui.popup.JBPopup
 import com.intellij.openapi.ui.popup.JBPopupFactory
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vcs.VcsBundle
-import com.intellij.ui.JBColor
 import com.intellij.ui.SimpleListCellRenderer
 import com.intellij.ui.components.DropDownLink
 import com.intellij.util.ui.launchOnShow
@@ -22,8 +21,6 @@ internal class AmendCommitModeDropDownLink(val amendHandler: AmendCommitHandler)
 
   init {
     amendHandler.addAmendCommitModeListener(this, this)
-    foreground = JBColor.foreground()
-    isRolloverEnabled = false
   }
 
   override fun itemToString(item: CommitToAmend): String = Companion.itemToString(item)
@@ -71,8 +68,11 @@ internal class AmendCommitModeDropDownLink(val amendHandler: AmendCommitHandler)
             selected: Boolean,
             hasFocus: Boolean,
           ) {
-            text = itemToPopupText(value)
+            val fullText = itemToString(value)
+            val popupText = itemToPopupText(value)
+            text = popupText
             icon = if (value == link.selectedItem) AllIcons.Actions.Checked else AllIcons.Empty
+            toolTipText = if (popupText == fullText) null else fullText
           }
         })
         .setSelectedValue(link.selectedItem, true)
