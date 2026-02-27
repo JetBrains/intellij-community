@@ -21,7 +21,7 @@ import kotlinx.coroutines.CompletableDeferred
 import org.jetbrains.annotations.Nls
 
 sealed class EvaluationResult {
-  data class Success(val rawTrace: Value) : EvaluationResult()
+  data class Success(val evaluationContext: EvaluationContextImpl, val rawTrace: Value) : EvaluationResult()
   data class Error(val errorMessage: @Nls String) : EvaluationResult()
 }
 
@@ -74,7 +74,7 @@ internal class StreamTracingManager(
     }
 
     return if (result != null) {
-      EvaluationResult.Success(result)
+      EvaluationResult.Success(evalCtx, result)
     } else {
       EvaluationResult.Error(StreamDebuggerBundle.message("program.is.not.suspended"))
     }

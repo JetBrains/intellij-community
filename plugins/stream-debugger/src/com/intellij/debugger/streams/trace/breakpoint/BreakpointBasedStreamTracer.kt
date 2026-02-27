@@ -2,8 +2,8 @@
 package com.intellij.debugger.streams.trace.breakpoint
 
 import com.intellij.debugger.engine.JavaDebugProcess
+import com.intellij.debugger.engine.evaluation.EvaluationContextImpl
 import com.intellij.debugger.engine.withDebugContext
-import com.intellij.debugger.impl.DebuggerContextImpl
 import com.intellij.debugger.memory.utils.InstanceJavaValue
 import com.intellij.debugger.streams.core.StreamDebuggerBundle
 import com.intellij.debugger.streams.core.trace.AbstractStreamTracer
@@ -56,10 +56,7 @@ internal class BreakpointBasedStreamTracer(
       when (result) {
         is EvaluationResult.Error -> StreamTracer.Result.EvaluationFailed("", result.errorMessage)
         is EvaluationResult.Success -> {
-          val xValue = createXValue(
-            result.rawTrace,
-          ) ?: return StreamTracer.Result.EvaluationFailed("", StreamDebuggerBundle.message("program.is.not.suspended"))
-
+          val xValue = createXValue(result.evaluationContext, result.rawTrace)
           interpretStreamResult(xValue, chain, streamTraceExpression = "")
         }
       }
@@ -71,12 +68,10 @@ internal class BreakpointBasedStreamTracer(
   }
 
   private suspend fun createXValue(
+    evaluationContext: EvaluationContextImpl,
     jvmValue: Value,
-  ): XValue? {
-    val debuggerContext = xDebugProcess.debuggerSession.contextManager.context
-    return withDebugContext(debuggerContext.managerThread!!) {
-      val evaluationContext = debuggerContext.createEvaluationContext() ?: return@withDebugContext null
-      if (evaluationContext.suspendContext.isResumed) return@withDebugContext null
+  ): XValue {
+    return withDebugContext(evaluationContext.managerThread) {
       val nodeManager = xDebugProcess.nodeManager
       val valueDescriptor = PrimitiveValueDescriptor(xDebugProcess.session.project, jvmValue)
       InstanceJavaValue(valueDescriptor, evaluationContext, nodeManager)
