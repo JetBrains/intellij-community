@@ -9,33 +9,22 @@ import com.intellij.platform.searchEverywhere.SeResultEvent
 import com.intellij.platform.searchEverywhere.frontend.SeFilterEditor
 import com.intellij.platform.searchEverywhere.frontend.SeTab
 import com.intellij.platform.searchEverywhere.frontend.resultsProcessing.SeTabDelegate
+import com.intellij.platform.searchEverywhere.frontend.tabs.SeDefaultTabBase
 import com.intellij.searchEverywhereLucene.common.SearchEverywhereLuceneProviderIdUtils
 import kotlinx.coroutines.flow.Flow
 import org.jetbrains.annotations.Nls
 
 @Suppress("HardCodedStringLiteral")
-class SearchEverywhereLuceneFilesTab(private val delegate: SeTabDelegate) : SeTab {
+class SearchEverywhereLuceneFilesTab(delegate: SeTabDelegate) : SeDefaultTabBase(delegate) {
   override val name: @Nls String get() = "Lucene Files"
   override val id: String get() = SearchEverywhereLuceneProviderIdUtils.LUCENE_FILES
   override val priority: Int
     get() = 10
 
-  override fun getItems(params: SeParams): Flow<SeResultEvent> = delegate.getItems(params)
   override suspend fun getFilterEditor(): SeFilterEditor? = null
-  override suspend fun itemSelected(item: SeItemData, modifiers: Int, searchText: String): Boolean =
-    delegate.itemSelected(item, modifiers, searchText)
-
   override suspend fun canBeShownInFindResults(): Boolean = false
   override suspend fun performExtendedAction(item: SeItemData): Boolean = false
-  override suspend fun isPreviewEnabled(): Boolean = delegate.isPreviewEnabled()
-  override suspend fun getPreviewInfo(itemData: SeItemData): SePreviewInfo? = delegate.getPreviewInfo(itemData, false)
-  override suspend fun isExtendedInfoEnabled(): Boolean = delegate.isExtendedInfoEnabled()
-
   override suspend fun isCommandsSupported(): Boolean = false
 
-  override fun dispose() {
-    Disposer.dispose(delegate)
-  }
-
-
+  override fun dispose() {}
 }
