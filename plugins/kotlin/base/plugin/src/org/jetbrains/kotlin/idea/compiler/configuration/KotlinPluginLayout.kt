@@ -243,6 +243,10 @@ class KotlinPluginLayoutService(private val project: Project) {
 
 
     fun resolveRelativeToRemoteKotlinc(path: Path): Path {
+        if (KotlinPluginLayoutModeProvider.kotlinPluginLayoutMode == KotlinPluginLayoutMode.LSP) {
+            return path
+        }
+
         val kotlinc = KotlinPluginLayout.kotlincPath
         if (!path.startsWith(kotlinc)) return path
 
