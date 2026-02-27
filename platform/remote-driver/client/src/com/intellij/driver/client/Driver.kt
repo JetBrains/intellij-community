@@ -79,6 +79,17 @@ interface Driver : AutoCloseable {
   fun getProductVersion(): ProductVersion
 
   /**
+   * Duration to wait for indexing to finish, if it is in progress, before each remote call.
+   * If null, no waiting is performed.
+   */
+  var pauseOnIndexing: kotlin.time.Duration?
+
+  /**
+   * Hook that is called before each remote call.
+   */
+  var beforeCall: (Driver.() -> Unit)?
+
+  /**
    * Forcefully exits the application.
    * Don't use directly in tests, instead use `com.intellij.ide.starter.driver.engine.BackgroundRun.closeIdeAndWait`,
    * otherwise remote dev tests won't work since the client and not the host will be closed.

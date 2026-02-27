@@ -2,6 +2,7 @@ package com.intellij.driver.sdk
 
 import com.intellij.driver.client.Driver
 import com.intellij.driver.client.service
+import com.intellij.openapi.diagnostic.logger
 import java.time.Instant
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.minutes
@@ -58,6 +59,7 @@ internal fun Driver.waitForIndicators(projectGet: () -> Project?, timeout: Durat
   waitFor("Indicators", timeout) {
     val project = runCatching { projectGet.invoke() }.getOrNull()
     if (project == null || !isProjectOpened(project) || areIndicatorsVisible(project)) {
+      logger<Driver>().warn("There is an indicator detected. Waiting for disappearing with timeout ${timeout.inWholeSeconds}s.")
       smartLongEnoughStart = null
       return@waitFor false
     }

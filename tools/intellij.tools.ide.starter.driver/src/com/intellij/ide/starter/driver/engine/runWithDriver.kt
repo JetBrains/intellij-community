@@ -31,9 +31,10 @@ fun IDETestContext.runIdeWithDriver(commandLine: (IDERunContext) -> IDECommandLi
                                     expectedKill: Boolean = false,
                                     expectedExitCode: Int = 0,
                                     collectNativeThreads: Boolean = false,
+                                    pauseOnIndexing: Duration? = null,
                                     configure: IDERunContext.() -> Unit = {}): BackgroundRun {
   val driverRunner = remDevAwareDi.direct.instance<DriverRunner>()
-  return driverRunner.runIdeWithDriver(this, commandLine, commands, runTimeout, useStartupScript, launchName, expectedKill, expectedExitCode, collectNativeThreads) {
+  return driverRunner.runIdeWithDriver(this, commandLine, commands, runTimeout, useStartupScript, launchName, expectedKill, expectedExitCode, collectNativeThreads, pauseOnIndexing) {
     if (System.getenv("SCREEN_RECORDING_ENABLED").toBoolean()) {
       withScreenRecording()
     }

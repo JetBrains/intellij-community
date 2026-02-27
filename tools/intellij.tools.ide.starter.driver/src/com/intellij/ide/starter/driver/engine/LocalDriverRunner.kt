@@ -20,9 +20,9 @@ import java.util.UUID
 import kotlin.time.Duration
 
 class LocalDriverRunner : DriverRunner {
-  override fun runIdeWithDriver(context: IDETestContext, commandLine: (IDERunContext) -> IDECommandLine, commands: Iterable<MarshallableCommand>, runTimeout: Duration, useStartupScript: Boolean, launchName: String, expectedKill: Boolean, expectedExitCode: Int, collectNativeThreads: Boolean, configure: IDERunContext.() -> Unit): BackgroundRun {
+  override fun runIdeWithDriver(context: IDETestContext, commandLine: (IDERunContext) -> IDECommandLine, commands: Iterable<MarshallableCommand>, runTimeout: Duration, useStartupScript: Boolean, launchName: String, expectedKill: Boolean, expectedExitCode: Int, collectNativeThreads: Boolean, pauseOnIndexing: Duration?, configure: IDERunContext.() -> Unit): BackgroundRun {
     val driverOptions = DriverOptions()
-    val driver = DriverWithDetailedLogging(Driver.create(JmxHost(address = driverOptions.address)), logUiHierarchy = !context.isRemDevContext())
+    val driver = DriverWithDetailedLogging(Driver.create(JmxHost(address = driverOptions.address)), logUiHierarchy = !context.isRemDevContext(), pauseOnIndexing = pauseOnIndexing)
     val currentStep = Allure.getLifecycle().currentTestCaseOrStep
     val process = CompletableDeferred<IDEHandle>()
     EventsBus.subscribeOnce(process) { event: IdeLaunchEvent ->

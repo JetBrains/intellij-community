@@ -5,6 +5,7 @@ import com.intellij.driver.client.Remote
 import com.intellij.driver.model.LockSemantics
 import com.intellij.driver.model.OnDispatcher
 import com.intellij.driver.sdk.ui.ui
+import com.intellij.driver.sdk.waitForIndicators
 import com.intellij.ide.starter.ci.CIServer
 import com.intellij.ide.starter.ci.teamcity.TeamCityCIServer
 import com.intellij.ide.starter.ci.teamcity.TeamCityClient
@@ -27,13 +28,29 @@ import kotlin.io.path.div
 import kotlin.io.path.invariantSeparatorsPathString
 import kotlin.io.path.isRegularFile
 import kotlin.io.path.name
+import kotlin.time.Duration
 import kotlin.time.Duration.Companion.minutes
 import kotlin.time.Duration.Companion.seconds
 
-internal class DriverWithDetailedLogging(private val driver: Driver, logUiHierarchy: Boolean = true) : Driver by driver {
+internal class DriverWithDetailedLogging(private val driver: Driver, logUiHierarchy: Boolean = true, override var pauseOnIndexing: Duration? = null) : Driver by driver {
   private var runContext: IDERunContext? = null
 
   init {
+    pauseOnIndexing?.let {
+      var isInsideWaiting = false
+
+      driver.beforeCall = {
+        if (isConnected && !isInsideWaiting) {
+          isInsideWaiting = true
+          try {
+            waitForIndicators(it, false)
+          }
+          finally {
+            isInsideWaiting = false
+          }
+        }
+      }
+    }
     EventsBus.subscribeOnce(this) { event: IdeLaunchEvent ->
       runContext = event.runContext
       if (!CIServer.instance.isBuildRunningOnCI && !ConfigurationStorage.useDockerContainer() &&
