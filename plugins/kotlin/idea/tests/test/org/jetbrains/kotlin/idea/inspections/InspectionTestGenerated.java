@@ -146,11 +146,6 @@ public abstract class InspectionTestGenerated extends AbstractInspectionTest {
             runTest("testData/inspections/declaringClassMigration1_9/inspectionData/inspections.test");
         }
 
-        @TestMetadata("destructuringWrongName/inspectionData/inspections.test")
-        public void testDestructuringWrongName_inspectionData_Inspections_test() throws Exception {
-            runTest("testData/inspections/destructuringWrongName/inspectionData/inspections.test");
-        }
-
         @TestMetadata("dynamic/inspectionData/inspections.test")
         public void testDynamic_inspectionData_Inspections_test() throws Exception {
             runTest("testData/inspections/dynamic/inspectionData/inspections.test");
