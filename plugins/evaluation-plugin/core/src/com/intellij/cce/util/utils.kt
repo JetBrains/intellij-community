@@ -2,3 +2,5 @@
 package com.intellij.cce.util
 
 val isUnderTeamCity: Boolean = System.getenv("TEAMCITY_VERSION") != null
+
+val isUnderZenML: Boolean = System.getenv("ZENML_VERSION") != null
