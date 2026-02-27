@@ -81,6 +81,7 @@ import javax.swing.JPanel
 import javax.swing.JTree
 import javax.swing.KeyStroke
 import javax.swing.SwingUtilities
+import javax.swing.ToolTipManager
 import javax.swing.event.TreeExpansionEvent
 import javax.swing.event.TreeExpansionListener
 import javax.swing.tree.TreePath
@@ -103,6 +104,14 @@ internal class AgentSessionsToolWindowPanel(
     override fun paintComponent(g: Graphics) {
       super.paintComponent(g)
       paintNewSessionRowActions(g)
+    }
+
+    override fun getToolTipText(event: MouseEvent?): String? {
+      val mouseEvent = event ?: return null
+      val path = getPathForLocation(mouseEvent.x, mouseEvent.y) ?: return null
+      val id = idFromPath(path) ?: return null
+      val treeNode = sessionTreeNode(id) as? SessionTreeNode.Thread ?: return null
+      return buildSessionTreeThreadTooltipHtml(treeNode, System.currentTimeMillis())
     }
 
     override fun uiDataSnapshot(sink: DataSink) {
@@ -151,7 +160,9 @@ internal class AgentSessionsToolWindowPanel(
       rowActionsProvider = { row, treeNode, selected -> rowActionPresentation(row, treeNode, selected) },
       nodeResolver = { treeId -> sessionTreeModel.entriesById[treeId]?.node },
     )
+    tree.setExpandableItemsEnabled(false)
     tree.putClientProperty(AnimatedIcon.ANIMATION_IN_RENDERER_ALLOWED, true)
+    ToolTipManager.sharedInstance().registerComponent(tree)
 
     TreeUtil.installActions(tree)
     TreeUIHelper.getInstance().installTreeSpeedSearch(tree)
@@ -273,7 +284,12 @@ internal class AgentSessionsToolWindowPanel(
     val gap = JBUI.scale(SESSION_TREE_ACTION_GAP)
     val y = bounds.y + (bounds.height - slot) / 2
 
-    var right = helper.width - helper.rightMargin - rightGap
+    var right = sessionTreeRowActionsRightBoundary(
+      helperWidth = helper.width,
+      helperRightMargin = helper.rightMargin,
+      rightGap = rightGap,
+      selectionRightInset = sessionTreeThreadSelectionRightInset(tree),
+    )
 
     fun consumeSlot(show: Boolean): Rectangle? {
       if (!show) return null
@@ -863,6 +879,15 @@ internal fun sessionTreeRowActionRightPadding(actionSlots: Int): Int {
   return rightGap + (actionSlots * slot) + (if (actionSlots > 1) (actionSlots - 1) * gap else 0)
 }
 
+internal fun sessionTreeRowActionsRightBoundary(
+  helperWidth: Int,
+  helperRightMargin: Int,
+  rightGap: Int,
+  selectionRightInset: Int,
+): Int {
+  return helperWidth - helperRightMargin - selectionRightInset - rightGap
+}
+
 internal fun buildSessionTreeThreadRowPresentation(
   treeNode: SessionTreeNode.Thread,
   now: Long,
@@ -891,6 +916,23 @@ internal fun buildSessionTreeThreadRowPresentation(
     branchMismatchMessage = branchMismatchMessage,
     accessibleStatusText = accessibleStatusText,
   )
+}
+
+internal fun buildSessionTreeThreadTooltipHtml(
+  treeNode: SessionTreeNode.Thread,
+  now: Long,
+): @NlsSafe String {
+  val presentation = buildSessionTreeThreadRowPresentation(treeNode = treeNode, now = now)
+  val title = StringUtil.escapeXmlEntities(presentation.title)
+  val updatedText = presentation.timeLabel?.let { label ->
+    StringUtil.escapeXmlEntities(AgentSessionsBundle.message("toolwindow.updated", label))
+  }
+  return if (updatedText == null) {
+    "<html>$title</html>"
+  }
+  else {
+    "<html>$title<br>$updatedText</html>"
+  }
 }
 
 private object SessionTreeMiddleTextClipper : FragmentTextClipper {
@@ -965,6 +1007,21 @@ internal fun computeSessionTreeThreadTrailingPaint(
     timeRightBoundary = rightBoundary,
     timeTextWidth = timeTextWidth,
   )
+}
+
+internal fun resolveSessionTreeThreadTimePaintX(
+  preferredX: Int,
+  rendererWidth: Int,
+  timeTextWidth: Int,
+  selectionRightInset: Int = 0,
+): Int {
+  val maxVisibleX = (
+    rendererWidth -
+    selectionRightInset -
+    JBUI.scale(SESSION_TREE_THREAD_META_RIGHT_GAP) -
+    timeTextWidth
+  ).coerceAtLeast(0)
+  return preferredX.coerceAtMost(maxVisibleX)
 }
 
 private fun sessionTreeThreadSelectionRightInset(tree: JTree): Int {
@@ -1143,7 +1200,6 @@ internal class SessionTreeCellRenderer(
         icon = threadCompositeIcon(treeNode.thread.provider, treeNode.thread.activity, threadRowPresentation.statusColor)
         val threadTitle: @NlsSafe String = threadRowPresentation.title
         appendWithClipping(threadTitle, SimpleTextAttributes.REGULAR_ATTRIBUTES, SessionTreeMiddleTextClipper)
-
         threadTrailingPaint = computeSessionTreeThreadTrailingPaint(
           tree = tree,
           actionRightPadding = actionRightPadding,
@@ -1221,7 +1277,13 @@ internal class SessionTreeCellRenderer(
     val baseline = area.y + getTextBaseLine(metrics, area.height)
 
     val label = trailing.timeLabel ?: return
-    val x = trailing.timeX ?: return
+    val preferredX = trailing.timeX ?: return
+    val x = resolveSessionTreeThreadTimePaintX(
+      preferredX = preferredX,
+      rendererWidth = width,
+      timeTextWidth = trailing.timeTextWidth,
+      selectionRightInset = sessionTreeThreadSelectionRightInset(tree),
+    )
     g.color = trailingTextColor()
     g.drawString(label, x, baseline)
   }

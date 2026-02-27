@@ -20,6 +20,7 @@ targets:
   - ../sessions/src/AgentSessionsService.kt
   - ../sessions/src/AgentWorkbenchDedicatedFrameProjectManager.kt
   - ../sessions/src/AgentWorkbenchProjectFrameCapabilitiesProvider.kt
+  - ../sessions/src/AgentSessionsGoToSourceProjectFromToolbarAction.kt
   - ../sessions/src/AgentSessionsGoToSourceProjectFromEditorTabAction.kt
   - ../sessions/resources/intellij.agent.workbench.sessions.xml
   - ../sessions/testSrc/*.kt
@@ -28,7 +29,7 @@ targets:
 # Dedicated Frame Project Switching
 
 Status: Draft
-Date: 2026-02-26
+Date: 2026-02-27
 
 ## Summary
 Define how Agent Workbench dedicated-frame mode supports cross-project navigation with dedicated-frame participation in global window traversal while keeping project-window traversal explicit and dedicated-aware.
@@ -37,6 +38,7 @@ This spec owns:
 - dedicated-frame exclusion from `Next/Previous Project Window` traversal and `OpenProjectWindows` entries,
 - dedicated-frame frame-type propagation/persistence,
 - init-time main-toolbar pruning by `(frameType, place, id)`,
+- dedicated-frame main-toolbar source-project one-click affordance,
 - dedicated-frame explicit open/focus affordance,
 - editor-tab popup affordance to jump to source project.
 
@@ -83,6 +85,13 @@ This spec owns:
   [@test] ../sessions/testSrc/AgentSessionsEditorTabActionsTest.kt
   [@test] ../sessions/testSrc/AgentSessionsGearActionsTest.kt
 
+- In dedicated frame, main toolbar must expose `AgentWorkbenchSessions.GoToSourceProjectFromToolbar`:
+  - visible only in dedicated projects,
+  - shows active chat tab source project name and opens/focuses source project in one click,
+  - shows disabled `No source project` placeholder when no valid active source project path is available.
+  [@test] ../sessions/testSrc/AgentSessionsGoToSourceProjectFromToolbarActionTest.kt
+  [@test] ../sessions/testSrc/AgentSessionsGearActionsTest.kt
+
 - Sessions plugin must register `AgentWorkbenchSessions.OpenDedicatedFrame` and expose it from both:
   - sessions toolwindow header title actions,
   - `OpenProjectWindows` group (Window menu project windows section).
@@ -94,6 +103,7 @@ This spec owns:
 - `Next/Previous Project Window` skips dedicated frame windows as targets but still works when invoked from dedicated frame (switch anchor stays valid).
 - Dedicated frame does not show VCS quick actions or run-target/run-widget controls.
 - Users can explicitly open/focus dedicated frame via `Open Agent Dedicated Frame` action.
+- Dedicated frame main toolbar shows active source project (from selected chat tab) and allows one-click open/focus of that source project.
 - From dedicated frame, users can jump to source project via editor-tab popup action `Go to Source Project`.
 
 ## Data & Backend
@@ -101,12 +111,14 @@ This spec owns:
 - `AgentSessionsService` sets `OpenProjectTask.projectFrameTypeId` when opening dedicated frame project.
 - `AgentWorkbenchDedicatedFrameProjectManager.configureProject` persists `projectFrameTypeId` into recent metadata.
 - Source project open/focus behavior uses `AgentSessionsService.openOrFocusProject(path)`.
+- Toolbar source-project action resolves active chat-tab source path via `AgentChatTabSelectionService.selectedChatTab`.
 - Dedicated frame open/focus behavior uses `AgentSessionsService.openOrFocusDedicatedFrame(currentProject)`.
 
 ## Testing / Local Run
 - `./tests.cmd '-Dintellij.build.test.patterns=com.intellij.agent.workbench.sessions.AgentWorkbenchProjectFrameCapabilitiesProviderTest'`
 - `./tests.cmd '-Dintellij.build.test.patterns=com.intellij.openapi.wm.impl.ProjectWindowActionGroupTest'`
 - `./tests.cmd '-Dintellij.build.test.patterns=com.intellij.agent.workbench.sessions.AgentSessionsEditorTabActionsTest'`
+- `./tests.cmd '-Dintellij.build.test.patterns=com.intellij.agent.workbench.sessions.AgentSessionsGoToSourceProjectFromToolbarActionTest'`
 - `./tests.cmd '-Dintellij.build.test.patterns=com.intellij.agent.workbench.sessions.AgentSessionsGearActionsTest'`
 
 ## Open Questions / Risks

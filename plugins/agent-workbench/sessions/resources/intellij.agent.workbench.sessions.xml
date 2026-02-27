@@ -40,6 +40,12 @@
       class="com.intellij.agent.workbench.sessions.AgentSessionsOpenDedicatedFrameAction">
       <add-to-group group-id="OpenProjectWindows" anchor="after" relative-to-action="PreviousProjectWindow"/>
     </action>
+    <action
+      id="AgentWorkbenchSessions.GoToSourceProjectFromToolbar"
+      icon="AllIcons.Nodes.Project"
+      class="com.intellij.agent.workbench.sessions.AgentSessionsGoToSourceProjectFromToolbarAction">
+      <add-to-group group-id="MainToolbarRight" anchor="before" relative-to-action="NewUiRunWidget"/>
+    </action>
     <group id="AgentWorkbenchSessions.ToolWindow.GearActions">
       <reference ref="OpenFile"/>
       <separator/>
