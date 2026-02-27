@@ -84,30 +84,6 @@ class LuceneIndex(val project: Project, val coroutineScope: CoroutineScope, inde
     LOG.debug{ "Lucene Index docs number changes: before=$before, after=${after} (diff ${after - before})" }
   }
 
-  fun createIndex(initial_entities: List<Document>) {
-    processChanges {
-      writer.deleteAll()
-      writer.addDocuments(initial_entities)
-    }
-  }
-
-  fun addDocuments(entities: List<Document>) {
-    processChanges {
-      writer.addDocuments(entities)
-    }
-  }
-
-  fun updateDocuments(updated_docs: List<Pair<Term, Document>>) {
-    processChanges {
-      updated_docs.forEach { (term, doc) -> writer.updateDocument(term, doc) }
-    }
-  }
-
-  fun clearIndex() {
-    processChanges { writer.deleteAll() }
-  }
-
-
   fun search(query: Query): Flow<Pair<ScoreDoc, Document>> {
     val searcher: IndexSearcher = searcherManager.acquire()
 
