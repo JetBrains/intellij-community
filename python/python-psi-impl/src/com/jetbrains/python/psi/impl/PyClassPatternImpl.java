@@ -6,6 +6,7 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.codeInsight.controlflow.PyTypeAssertionEvaluator;
+import com.jetbrains.python.codeInsight.typing.PyTypingTypeProvider;
 import com.jetbrains.python.psi.PyClass;
 import com.jetbrains.python.psi.PyClassPattern;
 import com.jetbrains.python.psi.PyElementVisitor;
@@ -42,8 +43,14 @@ public class PyClassPatternImpl extends PyElementImpl implements PyClassPattern,
 
   @Override
   public @Nullable PyType getType(@NotNull TypeEvalContext context, TypeEvalContext.@NotNull Key key) {
-    final PyType type = context.getType(getClassNameReference());
+    PyType type = context.getType(getClassNameReference());
     if (type instanceof PyClassType classType) {
+      
+      PyClassType parameterized = PyTypingTypeProvider.parameterizeType(type, context);
+      if (parameterized != null) {
+        classType = parameterized;
+      }
+      
       final PyType instanceType = classType.toInstance();
       final PyType captureType = PyCaptureContext.getCaptureType(this, context);
       return Ref.deref(PyTypeAssertionEvaluator.createAssertionType(captureType, instanceType, true, true, context));

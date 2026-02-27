@@ -324,7 +324,7 @@ public class PyTypingTest extends PyTestCase {
   }
 
   public void testFlattenUnions() {
-    doTest("int | str | list",
+    doTest("int | str | list[Any]",
            """
              from typing import Union
              
@@ -2070,7 +2070,7 @@ public class PyTypingTest extends PyTestCase {
 
   // PY-44974
   public void testBitwiseOrUnionParenthesizedUnionOfUnions() {
-    doTest("int | list | dict | float | str",
+    doTest("int | list[Any] | dict[Any, Any] | float | str",
            """
              bar: int | ((list | dict) | (float | str)) = ""
              expr = bar
@@ -4936,7 +4936,7 @@ public class PyTypingTest extends PyTestCase {
 
   // PY-71002
   public void testTypeVarTupleWithDefaultParameterizedWithAnotherGeneric() {
-    doTest("Foo[list, list, int]", """
+    doTest("Foo[list[Any], list[Any], int]", """
       from typing import Generic, TypeVarTuple, Unpack, TypeVar
       T = TypeVar("T", default=list)
       DefaultTs = TypeVarTuple("DefaultTs", default=Unpack[tuple[T, int]])
@@ -5241,7 +5241,7 @@ public class PyTypingTest extends PyTestCase {
 
   // PY-71002
   public void testTypeVarDefaultsLongTypeVarToTypeVarChainWithFirstOverriden() {
-    doTest("list", """
+    doTest("list[Any]", """
       from typing import TypeVar, Generic
       
       T = TypeVar("T", default=str)

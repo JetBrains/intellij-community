@@ -543,7 +543,7 @@ public class Py3UnresolvedReferencesInspectionTest extends PyInspectionTestCase 
                    
                    def f(e: Literal[1, 2]):
                        a: tuple | None = None
-                       _ = e <weak_warning descr="Member 'None' of 'tuple | None' does not have attribute '__contains__'">in</weak_warning> a
+                       _ = e <weak_warning descr="Member 'None' of 'tuple[Any, ...] | None' does not have attribute '__contains__'">in</weak_warning> a
                    """);
   }
 

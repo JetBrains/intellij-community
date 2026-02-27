@@ -1381,8 +1381,8 @@ public class PyParameterInfoTest extends LightMarkedTestCase {
     feignCtrlPWithHintsForHighlightedOnly(marks.get("<arg1>").getTextOffset()).check("a: int, b, c, d, e", new String[]{"a: int, "});
     feignCtrlPWithHintsForHighlightedOnly(marks.get("<arg2>").getTextOffset()).check("a, b: str, c, d, e", new String[]{"b: str, "});
     feignCtrlPWithHintsForHighlightedOnly(marks.get("<arg3>").getTextOffset()).check("a, b, c: bool, d, e", new String[]{"c: bool, "});
-    feignCtrlPWithHintsForHighlightedOnly(marks.get("<arg4>").getTextOffset()).check("a, b, c, d: list, e", new String[]{"d: list, "});
-    feignCtrlPWithHintsForHighlightedOnly(marks.get("<arg5>").getTextOffset()).check("a, b, c, d, e: set", new String[]{"e: set"});
+    feignCtrlPWithHintsForHighlightedOnly(marks.get("<arg4>").getTextOffset()).check("a, b, c, d: list[Any], e", new String[]{"d: list[Any], "});
+    feignCtrlPWithHintsForHighlightedOnly(marks.get("<arg5>").getTextOffset()).check("a, b, c, d, e: set[Any]", new String[]{"e: set[Any]"});
   }
 
   // PY-58497

@@ -223,8 +223,8 @@ public class PyTypeTest extends PyTestCase {
 
   public void testReturnTypeAnno() {
     runWithLanguageLevel(
-      LanguageLevel.PYTHON34,
-      () -> doTest("list",
+      LanguageLevel.PYTHON311,
+      () -> doTest("list[Any]",
                    """
                      def foo(x) -> list:
                          return x
