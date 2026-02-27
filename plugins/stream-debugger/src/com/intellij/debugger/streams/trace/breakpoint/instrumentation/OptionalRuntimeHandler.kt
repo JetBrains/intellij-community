@@ -21,7 +21,7 @@ import com.sun.jdi.Value
  * ```
  * [
  *   [
- *     [intermediateTrace, timing],          // beforeAfter from rawResult
+ *     [beforeArray, afterArray],            // beforeAfter from rawResult
  *     [[isPresent: boolean[]], [value]]     // Optional-specific info
  *   ],
  *   wrappedResult                           // the Optional itself
@@ -37,18 +37,24 @@ internal class OptionalRuntimeHandler(
   override fun result(evaluationContextImpl: EvaluationContextImpl): Value {
     DebuggerManagerThreadImpl.assertIsManagerThread()
     return objectStorage.watch(evaluationContextImpl) {
-      val (beforeAfter, wrappedResult) = rawResult(evaluationContextImpl)
+      val (peekResult, wrappedResult) = rawResult(evaluationContextImpl)
       val optional = wrappedResult.getValue(0) as ObjectReference
       assertIsOptional(optional)
 
       val isPresent = optional.referenceType().method("isPresent", "()Z").invoke(optional)
       val unwrapped = unwrapOptionalOrDefault(optional)
+      val beforeAfter = peekResult.getValue(0)
 
-      val info = array(
-        beforeAfter,
-        array(array(isPresent), array(unwrapped))
+      array(
+        array(
+          beforeAfter,
+          array(
+            array(isPresent),
+            array(unwrapped)
+          )
+        ),
+        wrappedResult
       )
-      array(info, wrappedResult)
     }
   }
 

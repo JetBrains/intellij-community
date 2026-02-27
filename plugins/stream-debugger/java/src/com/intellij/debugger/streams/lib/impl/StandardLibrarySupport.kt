@@ -2,7 +2,6 @@
 package com.intellij.debugger.streams.lib.impl
 
 import com.intellij.debugger.streams.core.lib.impl.DistinctOperation
-import com.intellij.debugger.streams.core.lib.impl.SortedOperation
 import com.intellij.debugger.streams.core.trace.impl.handler.unified.DistinctTraceHandler
 import com.intellij.debugger.streams.core.trace.impl.interpret.AllMatchTraceInterpreter
 import com.intellij.debugger.streams.core.trace.impl.interpret.AnyMatchTraceInterpreter
@@ -12,6 +11,9 @@ import com.intellij.debugger.streams.trace.breakpoint.JavaBreakpointPositionReso
 import com.intellij.debugger.streams.trace.breakpoint.instrumentation.BreakpointBasedFilterOperation
 import com.intellij.debugger.streams.trace.breakpoint.instrumentation.BreakpointBasedFlatMappingOperation
 import com.intellij.debugger.streams.trace.breakpoint.instrumentation.BreakpointBasedMappingOperation
+import com.intellij.debugger.streams.trace.breakpoint.instrumentation.BreakpointBasedMatchingOperation
+import com.intellij.debugger.streams.trace.breakpoint.instrumentation.BreakpointBasedOptionalResultOperation
+import com.intellij.debugger.streams.trace.breakpoint.instrumentation.BreakpointBasedParallelOperation
 import com.intellij.debugger.streams.trace.breakpoint.instrumentation.BreakpointBasedSortedOperation
 import com.intellij.debugger.streams.trace.breakpoint.instrumentation.BreakpointBasedToCollectionOperation
 
@@ -37,18 +39,18 @@ class StandardLibrarySupport : JvmLibrarySupportBase() {
                                      BreakpointBasedFlatMappingOperation("flatMapToDouble"),
                                      DistinctOperation("distinct", { num, call, dsl -> DistinctTraceHandler(num, call, dsl) }),
                                      BreakpointBasedSortedOperation("sorted"),
-                                     ParallelOperation("parallel"))
+                                     BreakpointBasedParallelOperation("parallel"))
 
-    addTerminationOperationsSupport(MatchingOperation("anyMatch",
-                                                      AnyMatchTraceInterpreter()),
-                                    MatchingOperation("allMatch",
-                                                      AllMatchTraceInterpreter()),
-                                    MatchingOperation("noneMatch",
-                                                      NoneMatchTraceInterpreter()),
-                                    OptionalResultOperation("min"),
-                                    OptionalResultOperation("max"),
-                                    OptionalResultOperation("findAny"),
-                                    OptionalResultOperation("findFirst"),
+    addTerminationOperationsSupport(BreakpointBasedMatchingOperation("anyMatch",
+                                                                    AnyMatchTraceInterpreter()),
+                                    BreakpointBasedMatchingOperation("allMatch",
+                                                                    AllMatchTraceInterpreter()),
+                                    BreakpointBasedMatchingOperation("noneMatch",
+                                                                    NoneMatchTraceInterpreter()),
+                                    BreakpointBasedOptionalResultOperation("min"),
+                                    BreakpointBasedOptionalResultOperation("max"),
+                                    BreakpointBasedOptionalResultOperation("findAny"),
+                                    BreakpointBasedOptionalResultOperation("findFirst"),
                                     BreakpointBasedToCollectionOperation("toArray"),
                                     BreakpointBasedToCollectionOperation("toList"),
                                     BreakpointBasedToCollectionOperation("collect"))
