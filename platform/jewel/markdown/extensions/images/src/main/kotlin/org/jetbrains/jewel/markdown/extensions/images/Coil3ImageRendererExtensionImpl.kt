@@ -20,6 +20,7 @@ import coil3.request.ImageRequest
 import coil3.request.SuccessResult
 import coil3.size.Size
 import org.jetbrains.jewel.foundation.util.JewelLogger
+import org.jetbrains.jewel.markdown.DimensionSize
 import org.jetbrains.jewel.markdown.InlineMarkdown
 import org.jetbrains.jewel.markdown.extensions.ImageRendererExtension
 import org.jetbrains.jewel.markdown.rendering.LocalMarkdownImageSourceResolver
@@ -41,7 +42,11 @@ internal class Coil3ImageRendererExtensionImpl(private val imageLoader: ImageLoa
      * placeholder is initially small and is resized upon successful image loading to match the image's dimensions. The
      * actual image is then rendered inside this placeholder.
      *
-     * @param image The [InlineMarkdown.Image] data object containing the source, alt text, and title.
+     * If the image has a specified width and/or height, those dimensions are used for the placeholder. When only one
+     * dimension is specified, the other is scaled proportionally based on the loaded image's aspect ratio.
+     *
+     * @param image The [InlineMarkdown.Image] data object containing the source, alt text, title, and optional
+     *   dimensions.
      * @return An [InlineTextContent] that can be used by a `Text` or `BasicText` composable to render the image inline.
      */
     @Composable
@@ -80,25 +85,98 @@ internal class Coil3ImageRendererExtensionImpl(private val imageLoader: ImageLoa
         }
 
         val placeholder =
-            imageResult?.let {
-                val imageSize = it.image
-                with(LocalDensity.current) {
-                    // `toSp` ensures that the placeholder size matches the original image size in pixels.
-                    // This approach doesn't allow images from appearing larger with different screen scaling,
-                    // but simply maintains behavior consistent with standalone AsyncImage rendering.
-                    Placeholder(
-                        width = imageSize.width.toSp(),
-                        height = imageSize.height.toSp(),
-                        placeholderVerticalAlign = PlaceholderVerticalAlign.Bottom,
-                    )
-                }
-            }
-                ?: run {
-                    Placeholder(width = 0.sp, height = 1.sp, placeholderVerticalAlign = PlaceholderVerticalAlign.Bottom)
-                }
+            computePlaceholder(imageResult = imageResult, specifiedWidth = image.width, specifiedHeight = image.height)
 
         return InlineTextContent(placeholder) {
             Image(painter = painter, contentDescription = image.title, modifier = Modifier.fillMaxSize())
         }
     }
+
+    /**
+     * Computes the placeholder size for the image.
+     *
+     * If both dimensions are specified, those are used. If only one dimension is specified, the other is scaled
+     * proportionally based on the loaded image's aspect ratio. If no dimensions are specified, the loaded image's
+     * original dimensions are used. While loading, a minimal placeholder is used unless dimensions are specified.
+     *
+     * For percentage values, they are treated as a percentage of the original image size.
+     */
+    @Composable
+    private fun computePlaceholder(
+        imageResult: SuccessResult?,
+        specifiedWidth: DimensionSize?,
+        specifiedHeight: DimensionSize?,
+    ): Placeholder {
+        val density = LocalDensity.current
+
+        // At least one dimension is unspecified or requires the image to compute; return the "empty" placeholder
+        if (imageResult == null) {
+            // For pixel values, we can show them immediately; for percentage we need the image
+            val pixelWidth = (specifiedWidth as? DimensionSize.Pixels)?.value
+            val pixelHeight = (specifiedHeight as? DimensionSize.Pixels)?.value
+
+            if (pixelWidth != null && pixelHeight != null) {
+                return with(density) {
+                    Placeholder(
+                        width = pixelWidth.toSp(),
+                        height = pixelHeight.toSp(),
+                        placeholderVerticalAlign = PlaceholderVerticalAlign.Bottom,
+                    )
+                }
+            }
+
+            // `toSp` ensures that the placeholder size matches the original image size in pixels.
+            // This approach doesn't allow images from appearing larger with different screen scaling,
+            // but simply maintains behavior consistent with standalone AsyncImage rendering.
+            return Placeholder(width = 0.sp, height = 1.sp, placeholderVerticalAlign = PlaceholderVerticalAlign.Bottom)
+        }
+
+        // If we have a result, compute the final dimensions
+        val loadedImage = imageResult.image
+        val loadedWidth = loadedImage.width
+        val loadedHeight = loadedImage.height
+
+        // Resolve the specified dimensions to pixel values
+        val resolvedWidth = specifiedWidth?.toPixels(loadedWidth)
+        val resolvedHeight = specifiedHeight?.toPixels(loadedHeight)
+
+        val (finalWidth, finalHeight) =
+            when {
+                resolvedWidth != null && resolvedHeight != null -> {
+                    resolvedWidth to resolvedHeight
+                }
+                resolvedWidth != null -> {
+                    // Scale height proportionally
+                    val scaledHeight = (resolvedWidth.toFloat() / loadedWidth * loadedHeight).toInt()
+                    resolvedWidth to scaledHeight
+                }
+                resolvedHeight != null -> {
+                    // Scale width proportionally
+                    val scaledWidth = (resolvedHeight.toFloat() / loadedHeight * loadedWidth).toInt()
+                    scaledWidth to resolvedHeight
+                }
+                else -> {
+                    // No dimensions specified, use original
+                    loadedWidth to loadedHeight
+                }
+            }
+
+        return with(density) {
+            Placeholder(
+                width = finalWidth.toSp(),
+                height = finalHeight.toSp(),
+                placeholderVerticalAlign = PlaceholderVerticalAlign.Bottom,
+            )
+        }
+    }
+
+    /**
+     * Converts an [DimensionSize] to pixels. For [DimensionSize.Pixels], returns the value directly. For
+     * [DimensionSize.Percent], returns the percentage of the [originalDimension].
+     */
+    private fun DimensionSize.toPixels(originalDimension: Int): Int =
+        when (this) {
+            is DimensionSize.Pixels -> value
+            is DimensionSize.Percent -> (originalDimension * value / 100)
+        }
 }
