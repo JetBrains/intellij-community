@@ -3,6 +3,8 @@ package com.intellij.agent.workbench.chat
 
 // @spec community/plugins/agent-workbench/spec/agent-chat-editor.spec.md
 
+import com.intellij.agent.workbench.common.AgentWorkbenchActionIds
+import com.intellij.agent.workbench.sessions.core.AgentSessionProvider
 import com.intellij.openapi.actionSystem.ActionGroup
 import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.actionSystem.DefaultActionGroup
@@ -20,8 +22,6 @@ import java.util.concurrent.CancellationException
 import javax.swing.JComponent
 import javax.swing.JPanel
 import kotlin.time.Duration.Companion.milliseconds
-
-private const val NEW_THREAD_FROM_EDITOR_TAB_ACTION_ID = "AgentWorkbenchChat.NewThreadFromEditorTab"
 
 internal class AgentChatFileEditor(
   private val project: Project,
@@ -223,18 +223,10 @@ internal class AgentChatFileEditor(
   }
 }
 
-internal fun interface AgentChatTabSnapshotWriter {
-  suspend fun upsert(snapshot: AgentChatTabSnapshot)
-}
-
-private object ApplicationAgentChatTabSnapshotWriter : AgentChatTabSnapshotWriter {
-  override suspend fun upsert(snapshot: AgentChatTabSnapshot) {
-    serviceAsync<AgentChatTabsService>().upsert(snapshot)
-  }
-}
-
-private const val NEW_THREAD_QUICK_FROM_EDITOR_TAB_ACTION_ID: String = AgentWorkbenchActionIds.Sessions.EditorTab.NEW_THREAD_QUICK
-private const val NEW_THREAD_POPUP_FROM_EDITOR_TAB_ACTION_ID: String = AgentWorkbenchActionIds.Sessions.EditorTab.NEW_THREAD_POPUP
+private val NEW_THREAD_QUICK_FROM_EDITOR_TAB_ACTION_ID: String = AgentWorkbenchActionIds.Sessions.EditorTab.NEW_THREAD_QUICK
+private val NEW_THREAD_POPUP_FROM_EDITOR_TAB_ACTION_ID: String = AgentWorkbenchActionIds.Sessions.EditorTab.NEW_THREAD_POPUP
+private val BIND_PENDING_CODEX_THREAD_FROM_EDITOR_TAB_ACTION_ID: String =
+  AgentWorkbenchActionIds.Sessions.BIND_PENDING_CODEX_THREAD_FROM_EDITOR_TAB
 
 internal interface AgentChatTerminalTab {
   val component: JComponent

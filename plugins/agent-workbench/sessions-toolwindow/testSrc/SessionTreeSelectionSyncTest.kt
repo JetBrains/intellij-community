@@ -7,8 +7,8 @@ import com.intellij.agent.workbench.sessions.core.AgentSessionThread
 import com.intellij.agent.workbench.sessions.core.AgentSubAgent
 import com.intellij.agent.workbench.sessions.model.AgentProjectSessions
 import com.intellij.agent.workbench.sessions.model.AgentWorktree
-import com.intellij.agent.workbench.sessions.toolwindow.tree.SessionTreeId
-import com.intellij.agent.workbench.sessions.toolwindow.tree.resolveSelectedSessionTreeId
+import com.intellij.agent.workbench.sessions.tree.SessionTreeId
+import com.intellij.agent.workbench.sessions.tree.resolveSelectedSessionTreeId
 import com.intellij.testFramework.junit5.TestApplication
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test

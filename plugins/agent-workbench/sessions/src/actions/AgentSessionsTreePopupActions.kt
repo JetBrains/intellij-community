@@ -1,12 +1,21 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.agent.workbench.sessions
+package com.intellij.agent.workbench.sessions.actions
 
+import com.intellij.agent.workbench.sessions.AgentSessionsBundle
 import com.intellij.agent.workbench.sessions.core.AgentSessionLaunchMode
 import com.intellij.agent.workbench.sessions.core.AgentSessionProvider
 import com.intellij.agent.workbench.sessions.core.AgentSessionThread
 import com.intellij.agent.workbench.sessions.core.AgentSubAgent
 import com.intellij.agent.workbench.sessions.core.providers.AgentSessionProviderBridge
 import com.intellij.agent.workbench.sessions.core.providers.AgentSessionProviderBridges
+import com.intellij.agent.workbench.sessions.model.ArchiveThreadTarget
+import com.intellij.agent.workbench.sessions.service.AgentSessionsService
+import com.intellij.agent.workbench.sessions.state.AgentSessionsTreeUiStateService
+import com.intellij.agent.workbench.sessions.tree.SessionTreeId
+import com.intellij.agent.workbench.sessions.tree.SessionTreeNode
+import com.intellij.agent.workbench.sessions.tree.pathForMoreThreadsNode
+import com.intellij.agent.workbench.sessions.tree.pathForThreadNode
+import com.intellij.agent.workbench.sessions.ui.providerIcon
 import com.intellij.openapi.actionSystem.ActionGroup
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnAction
@@ -18,8 +27,6 @@ import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.project.Project
 import org.jetbrains.annotations.Nls
-
-internal const val AGENT_SESSIONS_TREE_POPUP_ACTION_GROUP_ID: String = "AgentWorkbenchSessions.TreePopup"
 
 internal object AgentSessionsTreePopupDataKeys {
   @JvmField
