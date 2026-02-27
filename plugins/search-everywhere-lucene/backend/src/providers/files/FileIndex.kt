@@ -111,9 +111,12 @@ internal class FileIndex(val project: Project, val coroutineScope: CoroutineScop
         luceneIndex.processChanges { writer ->
           writer.deleteAll()
           files.forEach { file ->
-            check(file.isValid) { "The file at ${file.path} is not Valid! We assume fileIndex.iterateContent only returns valid files" }
-            val (_, doc) = getDocument(file)
-            writer.addDocument(doc)
+            if (file.isValid) {
+              val (_, doc) = getDocument(file)
+              writer.addDocument(doc)
+            } else {
+              LOG.info("Skipping indexing ${file.path}, because it is not valid. But we assume fileIndex.iterateContent only returns valid files.")
+            }
           }
           LOG.debug {"Registered all ${files.size} files for the next lucene index commit." }
         }
@@ -132,7 +135,7 @@ internal class FileIndex(val project: Project, val coroutineScope: CoroutineScop
 
           op.changedUrls.forEach { url ->
             val virtualFile = VirtualFileManager.getInstance().findFileByUrl(url) ?: let {
-              urls_to_delete.add(getTerm("$url"))
+              urls_to_delete.add(getTerm(url))
               return@forEach
             } 
             virtualFiles.add(virtualFile)
@@ -142,7 +145,7 @@ internal class FileIndex(val project: Project, val coroutineScope: CoroutineScop
             if (!fileIndex.isInProject(virtualFile)) return@forEach
             check(virtualFile.isValid) { "The file at ${virtualFile.presentableUrl} is not Valid! We assume file events only returns valid files" }
             if (!virtualFile.isDirectory) {
-              files_to_reindex.add(virtualFile);
+              files_to_reindex.add(virtualFile)
             } else {
               // Should be used from readAction
               fileIndex.iterateContentUnderDirectory(virtualFile) { file ->
@@ -210,7 +213,7 @@ internal class FileIndex(val project: Project, val coroutineScope: CoroutineScop
       //We could track the deleted files in the FilesProvider instead, but this would make the FileIndex interface more complex.
       //The debouncing/merging logic in place should be enough to handle this anyway.
       if (deletedFilesToRemoveFromIndex.isNotEmpty()) {
-        LOG.debug { "Scheduling deletion of ${deletedFilesToRemoveFromIndex.size} files from index: ${deletedFilesToRemoveFromIndex.toString()}" }
+        LOG.debug { "Scheduling deletion of ${deletedFilesToRemoveFromIndex.size} files from index: ${deletedFilesToRemoveFromIndex.joinToString(", ", limit = 10)}" }
         scheduleIndexingOp(LuceneFileIndexOperation.ReindexFiles(changedUrls = deletedFilesToRemoveFromIndex))
       }
     }
