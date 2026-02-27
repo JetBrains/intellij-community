@@ -7,7 +7,6 @@ import com.intellij.openapi.options.Configurable
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.ui.configuration.PlatformContentEntriesConfigurable
 import com.intellij.openapi.ui.DialogPanel
-import com.intellij.openapi.util.Key
 import com.intellij.python.pyproject.model.PyProjectModelSettings
 import com.intellij.python.pyproject.model.PyProjectModelSettings.FeatureState.ASK
 import com.intellij.python.pyproject.model.PyProjectModelSettings.FeatureState.OFF
@@ -27,11 +26,6 @@ class PythonContentEntriesConfigurable(project: Project) : ModuleAwareProjectCon
 ) {
 
   private var pyprojectPanel: DialogPanel? = null
-
-  companion object {
-    @JvmField
-    val PYPROJECT_TOML_PENDING_KEY: Key<Boolean> = Key.create("PythonContentEntriesConfigurable.pendingUsePyprojectToml")
-  }
 
   override fun createModuleConfigurable(module: Module): Configurable {
     if (PlatformUtils.isPyCharmCommunity()) {
@@ -53,11 +47,8 @@ class PythonContentEntriesConfigurable(project: Project) : ModuleAwareProjectCon
       row {
         checkBox(PyBundle.message("python.pyproject.toml.based.project.model"))
           .bindSelected(settings::usePyprojectToml)
-          .applyToComponent {
-            addActionListener { project.putUserData(PYPROJECT_TOML_PENDING_KEY, isSelected) }
-          }
           .contextHelp(PyBundle.message("python.pyproject.toml.based.project.model.comment"))
-      }
+      }.bottomGap(com.intellij.ui.dsl.builder.BottomGap.SMALL)
       super.createComponent()?.let { parentComponent ->
         row {
           cell(parentComponent).align(Align.FILL)
@@ -74,18 +65,15 @@ class PythonContentEntriesConfigurable(project: Project) : ModuleAwareProjectCon
 
   override fun apply() {
     pyprojectPanel?.apply()
-    project.putUserData(PYPROJECT_TOML_PENDING_KEY, null)
     super.apply()
   }
 
   override fun reset() {
     pyprojectPanel?.reset()
-    project.putUserData(PYPROJECT_TOML_PENDING_KEY, null)
     super.reset()
   }
 
   override fun disposeUIResources() {
-    project.putUserData(PYPROJECT_TOML_PENDING_KEY, null)
     pyprojectPanel = null
     super.disposeUIResources()
   }

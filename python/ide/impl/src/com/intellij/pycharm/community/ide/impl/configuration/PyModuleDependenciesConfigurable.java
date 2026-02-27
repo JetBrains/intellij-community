@@ -10,7 +10,7 @@ import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.roots.ModuleOrderEntry;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.OrderEntry;
-import com.intellij.python.pyproject.model.PyProjectModelSettings;
+import com.intellij.python.pyproject.model.api.PyProjectTomlAPIKt;
 import com.intellij.ui.AncestorListenerAdapter;
 import com.intellij.ui.CheckBoxList;
 import com.intellij.ui.ToolbarDecorator;
@@ -30,10 +30,13 @@ import javax.swing.event.AncestorEvent;
 import java.awt.BorderLayout;
 import java.awt.Insets;
 import java.lang.reflect.Method;
-import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Comparator;
+import java.util.HashSet;
 import java.util.List;
 import java.util.ResourceBundle;
+import java.util.Set;
+
 
 
 public class PyModuleDependenciesConfigurable implements UnnamedConfigurable {
@@ -41,7 +44,7 @@ public class PyModuleDependenciesConfigurable implements UnnamedConfigurable {
   private List<Module> myInitialDependencies;
   private final JPanel myMainPanel;
   private final JPanel myListHolderPanel;
-  private final CheckBoxList<Module> myDependenciesList;
+  private final CheckBoxList<Module> myDependenciesList = new CheckBoxList<>();
   private final JBLabel myTitleLabel;
 
   public PyModuleDependenciesConfigurable(Module module) {
@@ -65,7 +68,6 @@ public class PyModuleDependenciesConfigurable implements UnnamedConfigurable {
                                                              GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW,
                                                              null, null, null, 0, false));
     }
-    myDependenciesList = new CheckBoxList<>();
     resetModel();
     ToolbarDecorator decorator = ToolbarDecorator.createDecorator(myDependenciesList,
                                                                   new EditableListModelDecorator(
@@ -81,9 +83,12 @@ public class PyModuleDependenciesConfigurable implements UnnamedConfigurable {
     });
   }
 
+  private boolean isPyProjectTomlManaged() {
+    return PyProjectTomlAPIKt.isPyProjectTomlBased(myModule);
+  }
+
   private void updateEnabledState() {
-    Boolean pending = myModule.getProject().getUserData(PythonContentEntriesConfigurable.PYPROJECT_TOML_PENDING_KEY);
-    boolean managed = pending != null ? pending : PyProjectModelSettings.getInstance(myModule.getProject()).getUsePyprojectToml();
+    boolean managed = isPyProjectTomlManaged();
     myDependenciesList.setEnabled(!managed);
     if (managed) {
       myTitleLabel.setText(PyBundle.message("python.pyproject.toml.dependencies.managed.hint"));
@@ -143,18 +148,15 @@ public class PyModuleDependenciesConfigurable implements UnnamedConfigurable {
   public JComponent $$$getRootComponent$$$() { return myMainPanel; }
 
   private void resetModel() {
-    myInitialDependencies = Arrays.asList(ModuleRootManager.getInstance(myModule).getDependencies());
-    List<Module> possibleDependencies = new ArrayList<>(myInitialDependencies);
-    for (Module otherModule : ModuleManager.getInstance(myModule.getProject()).getModules()) {
-      if (!possibleDependencies.contains(otherModule) && otherModule != myModule) {
-        possibleDependencies.add(otherModule);
-      }
-    }
-    myDependenciesList.setItems(possibleDependencies, module -> module.getName());
-    myDependenciesList.setBorder(null);
-    for (Module dependency : myInitialDependencies) {
-      myDependenciesList.setItemSelected(dependency, true);
-    }
+    List<Module> otherModules = Arrays.stream(ModuleManager.getInstance(myModule.getProject()).getModules())
+      .filter(m -> m != myModule)
+      .sorted(Comparator.comparing(Module::getName, String.CASE_INSENSITIVE_ORDER))
+      .toList();
+
+    Set<Module> dependencies = Set.of(ModuleRootManager.getInstance(myModule).getDependencies());
+    myDependenciesList.clear();
+    otherModules.forEach(m -> myDependenciesList.addItem(m, m.getName(), dependencies.contains(m)));
+    myInitialDependencies = myDependenciesList.getCheckedItems();
   }
 
   @Override
@@ -164,38 +166,24 @@ public class PyModuleDependenciesConfigurable implements UnnamedConfigurable {
 
   @Override
   public boolean isModified() {
-    return !collectDependencies().equals(myInitialDependencies);
-  }
-
-  private List<Module> collectDependencies() {
-    List<Module> result = new ArrayList<>();
-    for (int i = 0; i < myDependenciesList.getItemsCount(); i++) {
-      Module module = myDependenciesList.getItemAt(i);
-      if (myDependenciesList.isItemSelected(module)) {
-        result.add(module);
-      }
-    }
-    return result;
+    return !isPyProjectTomlManaged() && !myDependenciesList.getCheckedItems().equals(myInitialDependencies);
   }
 
   @Override
   public void apply() throws ConfigurationException {
+    List<Module> dependencies = myDependenciesList.getCheckedItems();
+    Set<Module> desired = new HashSet<>(dependencies);
     ApplicationManager.getApplication().runWriteAction(() -> {
       ModifiableRootModel model = ModuleRootManager.getInstance(myModule).getModifiableModel();
-      List<ModuleOrderEntry> entries = new ArrayList<>();
       for (OrderEntry entry : model.getOrderEntries()) {
-        if (entry instanceof ModuleOrderEntry) {
-          entries.add((ModuleOrderEntry)entry);
+        if (entry instanceof ModuleOrderEntry moe && !desired.remove(moe.getModule())) {
+          model.removeOrderEntry(entry);
         }
       }
-      for (ModuleOrderEntry entry : entries) {
-        model.removeOrderEntry(entry);
-      }
-      for (Module module : collectDependencies()) {
-        model.addModuleOrderEntry(module);
-      }
+      desired.forEach(model::addModuleOrderEntry);
       model.commit();
     });
+    myInitialDependencies = dependencies;
   }
 
   @Override

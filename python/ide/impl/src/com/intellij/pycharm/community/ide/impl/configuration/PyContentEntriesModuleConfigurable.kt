@@ -24,10 +24,7 @@ internal class PyContentEntriesModuleConfigurable(private val module: Module) : 
   private var modifiableModel: ModifiableRootModel? = null
   private var editor: PyContentEntriesEditor? = null
   private val isPyProjectTomlManaged: Boolean
-    get() {
-      val pending = module.project.getUserData(PythonContentEntriesConfigurable.PYPROJECT_TOML_PENDING_KEY)
-      return pending ?: PyProjectModelSettings.getInstance(module.project).usePyprojectToml
-    }
+    get() = PyProjectModelSettings.getInstance(module.project).usePyprojectToml
 
   override fun getDisplayName(): String = PyBundle.message("configurable.PyContentEntriesModuleConfigurable.display.name")
 
