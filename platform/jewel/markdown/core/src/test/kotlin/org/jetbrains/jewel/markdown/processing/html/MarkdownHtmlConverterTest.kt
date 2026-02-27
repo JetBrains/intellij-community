@@ -1,12 +1,14 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jewel.markdown.processing.html
 
+import org.jetbrains.jewel.markdown.DimensionSize
 import org.jetbrains.jewel.markdown.InlineMarkdown
 import org.jetbrains.jewel.markdown.MarkdownBlock
 import org.jetbrains.jewel.markdown.assertEquals
 import org.jetbrains.jewel.markdown.processing.MarkdownProcessor
 import org.junit.Test
 
+@Suppress("LargeClass")
 public class MarkdownHtmlConverterTest {
     private val processor = MarkdownProcessor(parseEmbeddedHtml = true)
 
@@ -234,14 +236,21 @@ public class MarkdownHtmlConverterTest {
     public fun `parses images -- img`() {
         val parsed =
             processor.processMarkdownDocument(
-                "Look at <img alt=\"Jewel logo\" src=\"art/jewel-logo.svg\" width=\"20%\"/>!"
+                "Look at <img alt=\"Jewel logo\" src=\"art/jewel-logo.svg\" width=\"20\"/>!"
             )
 
         parsed.assertEquals(
             MarkdownBlock.Paragraph(
                 listOf(
                     InlineMarkdown.Text("Look at "),
-                    InlineMarkdown.Image(source = "art/jewel-logo.svg", alt = "Jewel logo", title = null),
+                    InlineMarkdown.Image(
+                        source = "art/jewel-logo.svg",
+                        alt = "Jewel logo",
+                        title = null,
+                        width = DimensionSize.Pixels(20),
+                        height = null,
+                        inlineContent = emptyList(),
+                    ),
                     InlineMarkdown.Text("!"),
                 )
             )
@@ -251,14 +260,23 @@ public class MarkdownHtmlConverterTest {
     @Test
     public fun `parses single image in a paragraph`() {
         val parsed =
-            processor.processMarkdownDocument("<img alt=\"Jewel logo\" src=\"art/jewel-logo.svg\" width=\"20%\"/>")
+            processor.processMarkdownDocument("<img alt=\"Jewel logo\" src=\"art/jewel-logo.svg\" width=\"20\"/>")
 
         parsed.assertEquals(
             MarkdownBlock.HtmlBlockWithAttributes(
-                attributes = mapOf("width" to "20%", "src" to "art/jewel-logo.svg", "alt" to "Jewel logo"),
+                attributes = mapOf("width" to "20", "src" to "art/jewel-logo.svg", "alt" to "Jewel logo"),
                 mdBlock =
                     MarkdownBlock.Paragraph(
-                        listOf(InlineMarkdown.Image(source = "art/jewel-logo.svg", alt = "Jewel logo", title = null))
+                        listOf(
+                            InlineMarkdown.Image(
+                                source = "art/jewel-logo.svg",
+                                alt = "Jewel logo",
+                                title = null,
+                                width = DimensionSize.Pixels(20),
+                                height = null,
+                                inlineContent = emptyList(),
+                            )
+                        )
                     ),
             )
         )
@@ -298,7 +316,7 @@ public class MarkdownHtmlConverterTest {
         val parsed =
             processor.processMarkdownDocument(
                 """
-            Please press <a href="https://example.com"><img alt="Jewel logo" src="art/jewel-logo.svg" width="20%"/></a>
+            Please press <a href="https://example.com"><img alt="Jewel logo" src="art/jewel-logo.svg" width="20"/></a>
         """
                     .trimIndent()
             )
@@ -310,7 +328,14 @@ public class MarkdownHtmlConverterTest {
                     InlineMarkdown.Link(
                         destination = "https://example.com",
                         title = null,
-                        InlineMarkdown.Image(source = "art/jewel-logo.svg", alt = "Jewel logo", title = null),
+                        InlineMarkdown.Image(
+                            source = "art/jewel-logo.svg",
+                            alt = "Jewel logo",
+                            title = null,
+                            width = DimensionSize.Pixels(20),
+                            height = null,
+                            inlineContent = emptyList(),
+                        ),
                     ),
                 )
             )
@@ -557,6 +582,127 @@ public class MarkdownHtmlConverterTest {
             MarkdownBlock.HtmlBlockWithAttributes(
                 attributes = mapOf("id" to "title", "align" to "center"),
                 mdBlock = MarkdownBlock.Heading(inlineContent = listOf(InlineMarkdown.Text("Head")), level = 3),
+            )
+        )
+    }
+
+    @Test
+    public fun `parses img with numeric width and height`() {
+        val parsed = processor.processMarkdownDocument("""<img src="image.png" width="100" height="50">""")
+
+        parsed.assertEquals(
+            MarkdownBlock.HtmlBlockWithAttributes(
+                attributes = mapOf("src" to "image.png", "width" to "100", "height" to "50"),
+                mdBlock =
+                    MarkdownBlock.Paragraph(
+                        listOf(
+                            InlineMarkdown.Image(
+                                source = "image.png",
+                                alt = "",
+                                title = null,
+                                width = DimensionSize.Pixels(100),
+                                height = DimensionSize.Pixels(50),
+                                inlineContent = emptyList(),
+                            )
+                        )
+                    ),
+            )
+        )
+    }
+
+    @Test
+    public fun `parses img with extra suffix in size attributes`() {
+        val parsed = processor.processMarkdownDocument("""<img src="image.png" width="100px;" height="50px;">""")
+
+        parsed.assertEquals(
+            MarkdownBlock.HtmlBlockWithAttributes(
+                attributes = mapOf("src" to "image.png", "width" to "100px;", "height" to "50px;"),
+                mdBlock =
+                    MarkdownBlock.Paragraph(
+                        listOf(
+                            InlineMarkdown.Image(
+                                source = "image.png",
+                                alt = "",
+                                title = null,
+                                width = DimensionSize.Pixels(100),
+                                height = DimensionSize.Pixels(50),
+                                inlineContent = emptyList(),
+                            )
+                        )
+                    ),
+            )
+        )
+    }
+
+    @Test
+    public fun `parses img with only width specified`() {
+        val parsed = processor.processMarkdownDocument("""<img src="image.png" width="200">""")
+
+        parsed.assertEquals(
+            MarkdownBlock.HtmlBlockWithAttributes(
+                attributes = mapOf("src" to "image.png", "width" to "200"),
+                mdBlock =
+                    MarkdownBlock.Paragraph(
+                        listOf(
+                            InlineMarkdown.Image(
+                                source = "image.png",
+                                alt = "",
+                                title = null,
+                                width = DimensionSize.Pixels(200),
+                                height = null,
+                                inlineContent = emptyList(),
+                            )
+                        )
+                    ),
+            )
+        )
+    }
+
+    @Test
+    public fun `parses img with only height specified`() {
+        val parsed = processor.processMarkdownDocument("""<img src="image.png" height="150">""")
+
+        parsed.assertEquals(
+            MarkdownBlock.HtmlBlockWithAttributes(
+                attributes = mapOf("src" to "image.png", "height" to "150"),
+                mdBlock =
+                    MarkdownBlock.Paragraph(
+                        listOf(
+                            InlineMarkdown.Image(
+                                source = "image.png",
+                                alt = "",
+                                title = null,
+                                width = null,
+                                height = DimensionSize.Pixels(150),
+                                inlineContent = emptyList(),
+                            )
+                        )
+                    ),
+            )
+        )
+    }
+
+    @Test
+    public fun `parses img with invalid width -- returns null for width`() {
+        val parsed = processor.processMarkdownDocument("""<img src="image.png" width="auto">""")
+
+        // Invalid values like "auto" should not be parsed
+        parsed.assertEquals(
+            MarkdownBlock.HtmlBlockWithAttributes(
+                attributes = mapOf("src" to "image.png", "width" to "auto"),
+                mdBlock =
+                    MarkdownBlock.Paragraph(
+                        listOf(
+                            InlineMarkdown.Image(
+                                source = "image.png",
+                                alt = "",
+                                title = null,
+                                width = null,
+                                height = null,
+                                inlineContent = emptyList(),
+                            )
+                        )
+                    ),
             )
         )
     }

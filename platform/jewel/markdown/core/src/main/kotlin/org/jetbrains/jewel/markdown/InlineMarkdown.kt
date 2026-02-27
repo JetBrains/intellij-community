@@ -104,6 +104,22 @@ public sealed interface InlineMarkdown {
         override fun toString(): String = "HtmlInline(content='$content')"
     }
 
+    /**
+     * An inline image node, corresponding to `![alt](source "title")` in Markdown.
+     *
+     * Standard renderer implementations apply the following sizing rules based on [width] and [height]:
+     * - If you specify both sizes, the image is rendered at exactly those dimensions, stretching if the aspect ratio
+     *   differs from the original.
+     * - If you specify only one of them, the other dimension is scaled proportionally to preserve the aspect ratio.
+     * - If you don't specify either, the image is rendered at its intrinsic (loaded) size.
+     *
+     * @param source The URL or path of the image.
+     * @param alt The plain-text alternative description of the image.
+     * @param title The optional tooltip title of the image.
+     * @param inlineContent The parsed inline nodes that make up the alt text.
+     * @param width The optional display width. See [DimensionSize] for supported value types.
+     * @param height The optional display height. See [DimensionSize] for supported value types.
+     */
     @ApiStatus.Experimental
     @ExperimentalJewelApi
     @GenerateDataFunctions
@@ -112,13 +128,33 @@ public sealed interface InlineMarkdown {
         public val alt: String,
         public val title: String?,
         override val inlineContent: List<InlineMarkdown>,
+        public val width: DimensionSize? = null,
+        public val height: DimensionSize? = null,
     ) : InlineMarkdown, WithInlineMarkdown {
         public constructor(
             source: String,
             alt: String,
             title: String?,
             vararg inlineContent: InlineMarkdown,
-        ) : this(source, alt, title, inlineContent.toList())
+            width: DimensionSize? = null,
+            height: DimensionSize? = null,
+        ) : this(source, alt, title, inlineContent.toList(), width, height)
+
+        @Deprecated("Use a constructor with width and height parameters instead.", level = DeprecationLevel.HIDDEN)
+        public constructor(
+            source: String,
+            alt: String,
+            title: String?,
+            vararg inlineContent: InlineMarkdown,
+        ) : this(source, alt, title, inlineContent.toList(), null, null)
+
+        @Deprecated("Use a constructor with width and height parameters instead.", level = DeprecationLevel.HIDDEN)
+        public constructor(
+            source: String,
+            alt: String,
+            title: String?,
+            inlineContent: List<InlineMarkdown>,
+        ) : this(source, alt, title, inlineContent, null, null)
 
         override fun equals(other: Any?): Boolean {
             if (this === other) return true
@@ -130,6 +166,8 @@ public sealed interface InlineMarkdown {
             if (alt != other.alt) return false
             if (title != other.title) return false
             if (inlineContent != other.inlineContent) return false
+            if (width != other.width) return false
+            if (height != other.height) return false
 
             return true
         }
@@ -139,6 +177,8 @@ public sealed interface InlineMarkdown {
             result = 31 * result + alt.hashCode()
             result = 31 * result + (title?.hashCode() ?: 0)
             result = 31 * result + inlineContent.hashCode()
+            result = 31 * result + (width?.hashCode() ?: 0)
+            result = 31 * result + (height?.hashCode() ?: 0)
             return result
         }
 
@@ -147,7 +187,9 @@ public sealed interface InlineMarkdown {
                 "source='$source', " +
                 "alt='$alt', " +
                 "title=$title, " +
-                "inlineContent=$inlineContent" +
+                "inlineContent=$inlineContent, " +
+                "width=$width, " +
+                "height=$height" +
                 ")"
         }
     }
