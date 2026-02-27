@@ -189,7 +189,6 @@ class NotebookEditorUiComponent(private val data: ComponentData) : JEditorUiComp
   fun restartKernel(waitForFinish: Duration? = null) {
     restartKernelButton.run {
       strictClick()
-      restartKernelButton.waitNotFound()
       waitForFinish?.let { waitFound(waitForFinish) }
     }
   }

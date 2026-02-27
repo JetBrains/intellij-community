@@ -4,6 +4,7 @@ import com.intellij.driver.client.Driver
 import com.intellij.driver.client.Remote
 import com.intellij.driver.model.LockSemantics
 import com.intellij.driver.model.OnDispatcher
+import com.intellij.driver.sdk.isProjectOpened
 import com.intellij.driver.sdk.ui.ui
 import com.intellij.driver.sdk.waitForIndicators
 import com.intellij.ide.starter.ci.CIServer
@@ -43,7 +44,9 @@ internal class DriverWithDetailedLogging(private val driver: Driver, logUiHierar
         if (isConnected && !isInsideWaiting) {
           isInsideWaiting = true
           try {
-            waitForIndicators(it, false)
+            if (isProjectOpened()) {
+              waitForIndicators(it, false)
+            }
           }
           finally {
             isInsideWaiting = false
