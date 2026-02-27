@@ -7,6 +7,7 @@ import com.intellij.ide.util.gotoByName.GotoFileModel
 import com.intellij.openapi.application.readAction
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.platform.backend.presentation.TargetPresentation
@@ -99,7 +100,9 @@ class SearchEverywhereLuceneFilesProvider(private val project: Project) : SeItem
 
   override suspend fun canBeShownInFindResults(): Boolean = true
 
-  override fun dispose() {}
+  override fun dispose() {
+    Disposer.dispose(fileModel)
+  }
 
 
 }
