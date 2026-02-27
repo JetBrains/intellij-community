@@ -16,7 +16,6 @@ import org.apache.lucene.analysis.standard.StandardAnalyzer
 import org.apache.lucene.document.Document
 import org.apache.lucene.index.IndexWriter
 import org.apache.lucene.index.IndexWriterConfig
-import org.apache.lucene.index.Term
 import org.apache.lucene.search.IndexSearcher
 import org.apache.lucene.search.Query
 import org.apache.lucene.search.ScoreDoc
@@ -26,29 +25,36 @@ import org.apache.lucene.search.TopDocs
 import org.apache.lucene.store.FSDirectory
 import java.io.IOException
 import java.nio.file.Path
+import kotlin.concurrent.atomics.AtomicReference
+import kotlin.concurrent.atomics.ExperimentalAtomicApi
 import kotlin.io.path.div
 
 
-class LuceneIndex(val project: Project, val coroutineScope: CoroutineScope, indexName: String, val LOG: Logger) : Disposable {
+@OptIn(ExperimentalAtomicApi::class)
+class LuceneIndex(val project: Project, indexName: String, val log: Logger) : Disposable {
+
+  // These are managed as one to ensure proper cleanup and synchronization.
+  private data class IndexReaderWriter(val writer: IndexWriter, val searcherManager: SearcherManager)
 
   private val indexPath: Path = let {
     project.getProjectDataPath("luceneIndex") / indexName
   }
   private val directory = FSDirectory.open(indexPath)
-  private var writer: IndexWriter = createWriter()
-
-  private var searcherManager: SearcherManager = SearcherManager(writer, SearcherFactory())
+  private var atomicIndexRW: AtomicReference<IndexReaderWriter> = AtomicReference(createIndexReaderWriter())
 
   //TODO implement some recovery logic when index creation fails.
   // This can happen when the project is reopened.
   //TODO implement operating in a read-only mode, that just hopes the other process will maintain the index properly. (Or even better, indicate some fallback flag so the fallback logic is used.)
   // Then it regularly checks if the index is still locked and once the lock can be acquired, we take ownership of the index and reindex everything once.
+  private fun createIndexReaderWriter(): IndexReaderWriter {
     val analyzer = StandardAnalyzer()
     val config = IndexWriterConfig(analyzer)
-    // When closing the writer, the IDE shuts down. Since we reindex on startup anyways, we do not need to persist any pending changes.
+    // When closing the writer, the IDE shuts down. Since we reindex on startup anyway, we do not need to persist any pending changes.
     config.setCommitOnClose(false)
 
-    return IndexWriter(directory, config)
+    val writer = IndexWriter(directory, config)
+    val searcherManager = SearcherManager(writer, SearcherFactory())
+    return IndexReaderWriter(writer, searcherManager)
   }
 
 
@@ -61,32 +67,38 @@ class LuceneIndex(val project: Project, val coroutineScope: CoroutineScope, inde
    *                interrupted by coroutine context switches.
    */
   fun processChanges(changes: (IndexWriter) -> Unit) {
-    val before = searcherManager.acquire().indexReader.numDocs()
+    val indexRW = atomicIndexRW.load()
     try {
-      changes(writer)
-      writer.commit()
+      var before = 0
+      if (log.isDebugEnabled) {
+        before = indexRW.searcherManager.acquire().indexReader.numDocs()
+      }
+
+      changes(indexRW.writer)
+      indexRW.writer.commit()
+      indexRW.searcherManager.maybeRefresh()
+      if (log.isDebugEnabled) {
+        val after = indexRW.searcherManager.acquire().indexReader.numDocs()
+        log.debug{ "Lucene Index docs number changes: before=$before, after=${after} (diff ${after - before})" }
+      }
     }
     catch (t: Throwable) {
       // Best-effort rollback of any uncommitted changes
 
-      writer.rollback()
-      writer.close()
+      indexRW.writer.rollback()
+      indexRW.searcherManager.close()
+      indexRW.writer.close()
 
       // Reopen writer + searcher infrastructure so the index can continue operating
-      writer = createWriter()
-      searcherManager = SearcherManager(writer, SearcherFactory())
-
+      atomicIndexRW.store(createIndexReaderWriter())
       throw t
     }
-    searcherManager.maybeRefresh()
-    val after = searcherManager.acquire().indexReader.numDocs()
-    LOG.debug{ "Lucene Index docs number changes: before=$before, after=${after} (diff ${after - before})" }
   }
 
   fun search(query: Query): Flow<Pair<ScoreDoc, Document>> {
-    val searcher: IndexSearcher = searcherManager.acquire()
-
     return channelFlow {
+      val searcherManager = atomicIndexRW.load().searcherManager
+      val searcher: IndexSearcher = searcherManager.acquire()
       try {
         var after: ScoreDoc? = null
         var hits: TopDocs? = null
@@ -105,17 +117,19 @@ class LuceneIndex(val project: Project, val coroutineScope: CoroutineScope, inde
         }
       }
       finally {
+        // Docs say it's safe to call this after close, so even if atomicIndexRW is replaced with another instance, this is okay.
         searcherManager.release(searcher)
       }
     }.buffer(0, onBufferOverflow = BufferOverflow.SUSPEND)
   }
 
   override fun dispose() {
+    val indexRW = this.atomicIndexRW.load()
     try {
-      searcherManager.close()
+      indexRW.searcherManager.close()
     }catch (_: IOException) {}
     try {
-      writer.close()
+      indexRW.writer.close()
     }catch (_: IOException) {}
     try {
       directory.close()
