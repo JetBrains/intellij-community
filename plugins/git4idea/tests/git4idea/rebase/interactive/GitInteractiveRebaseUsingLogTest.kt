@@ -180,8 +180,9 @@ class GitInteractiveRebaseUsingLogTest : GitSingleRepoTest() {
   private fun checkEntriesGeneration(commit: VcsCommitMetadata) {
     logData.refreshAndWait(repo, true)
     val entriesGeneratedUsingLog = runBlocking {
-      repo.project.service<GitInteractiveRebaseEntriesProvider>().getEntriesUsingLog(repo, commit, logData) as GetEntriesUsingLogResult.Success
-    }.entries
+      repo.project.service<GitInteractiveRebaseEntriesProvider>()
+        .tryGetEntriesForDialog(repo, commit, logData)
+    } ?: error("Failed to get entries")
     val entriesGeneratedUsingGit = getRebaseEntriesUsingGit(commit)
     assertTrue(entriesGeneratedUsingGit.isNotEmpty() && entriesGeneratedUsingLog.isNotEmpty())
     entriesGeneratedUsingLog.forEachIndexed { i, generatedEntry ->
@@ -202,7 +203,7 @@ class GitInteractiveRebaseUsingLogTest : GitSingleRepoTest() {
   ) {
     logData.refreshAndWait(repo, true)
     val result = runBlocking {
-      repo.project.service<GitInteractiveRebaseEntriesProvider>().getEntriesUsingLog(repo, commit, logData)
+      repo.project.service<GitInteractiveRebaseEntriesProvider>().getEntriesForDialog(repo, commit, logData)
     }
 
     when (result) {

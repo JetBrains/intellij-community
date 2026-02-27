@@ -17,6 +17,7 @@ import git4idea.rebase.GitSquashedCommitsMessage.canAutosquash
 import git4idea.rebase.GitSquashedCommitsMessage.getSubject
 import git4idea.test.GitSingleRepoTest
 import git4idea.test.assertCommitted
+import git4idea.test.assertLatestHistory
 import git4idea.test.assertMessage
 import git4idea.test.last
 import git4idea.test.lastMessage
@@ -117,6 +118,48 @@ internal class GitCommitAmendSpecificTest : GitSingleRepoTest() {
     val exception = amendSpecificCommit(targetHash, targetMessage, changes, newMessage).single()
 
     assertEquals(GitBundle.message("git.commit.amend.specific.commit.not.found.error.message"), exception.message)
+  }
+
+  fun `test commit amend specific with fixup pair between commits`() {
+    val initialContent = "initial content"
+    tac("a.txt", initialContent)
+    val targetHash = HashImpl.build(repo.last())
+    val targetMessage = repo.lastMessage()
+
+    val baseContent = "base content"
+    tac("b.txt", baseContent)
+    val baseMessage = repo.lastMessage().trim()
+    val fixupTargetSubject = getSubject(baseMessage)
+    val fixupContent = "fixup content"
+    val fixupMessage = "fixup! $fixupTargetSubject"
+    file("b.txt").write(fixupContent).addCommit(fixupMessage)
+
+    val updatedContent = "updated content"
+    overwrite("a.txt", updatedContent)
+
+    val changes = assertChangesWithRefresh {
+      modified("a.txt")
+    }
+
+    val newMessage = "new message"
+    val exceptions = amendSpecificCommit(targetHash, targetMessage, changes, newMessage)
+    assertEmpty(exceptions)
+
+    assertNoChanges()
+
+    with(repo) {
+      assertLatestHistory(fixupMessage, baseMessage, newMessage)
+
+      assertCommitted(1) {
+        modified("b.txt", baseContent, fixupContent)
+      }
+      assertCommitted(2) {
+        added("b.txt", baseContent)
+      }
+      assertCommitted(3) {
+        added("a.txt", updatedContent)
+      }
+    }
   }
 
   private fun amendSpecificCommit(
