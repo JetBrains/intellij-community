@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.gradle.scripting.k2.inspections
 
 import com.intellij.codeInspection.ProblemsHolder
@@ -7,15 +7,12 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiRecursiveElementWalkingVisitor
 import com.intellij.psi.PsiWhiteSpace
 import com.intellij.psi.util.childrenOfType
-import com.intellij.util.asSafely
 import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.resolution.singleFunctionCallOrNull
 import org.jetbrains.kotlin.analysis.api.resolution.symbol
-import org.jetbrains.kotlin.analysis.api.symbols.KaCallableSymbol
 import org.jetbrains.kotlin.analysis.api.types.symbol
 import org.jetbrains.kotlin.gradle.scripting.k2.fixes.ShowDuplicateElementsAction
 import org.jetbrains.kotlin.idea.base.util.letIf
-import org.jetbrains.kotlin.idea.codeinsight.utils.resolveExpression
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.name.parentOrNull
 import org.jetbrains.kotlin.psi.KtCallExpression
@@ -26,11 +23,7 @@ class KotlinAvoidDuplicateRepositoriesInspectionVisitor(
     private val holder: ProblemsHolder
 ) : KtVisitorVoid() {
     override fun visitCallExpression(expression: KtCallExpression) {
-        if (expression.calleeExpression?.text != "repositories") return
-        analyze(expression) {
-            val callableId = expression.resolveExpression().asSafely<KaCallableSymbol>()?.callableId ?: return
-            if (callableId.asSingleFqName() !in REPOSITORIES_FQ_NAMES) return
-        }
+        if (!expression.isGradleRepositoriesBlock()) return
         val repositoriesBlock = expression.getBlock() ?: return
         val repositories = repositoriesBlock.childrenOfType<KtCallExpression>().filter { isRepositoryDeclaration(it) }
         val duplicateGroups = repositories.groupBy { it.normalizedRepositoryKey() }.filterValues { it.size > 1 }
@@ -84,14 +77,6 @@ class KotlinAvoidDuplicateRepositoriesInspectionVisitor(
             }
         })
         return sb.toString()
-    }
-
-    companion object {
-        private val REPOSITORIES_FQ_NAMES = setOf(
-            FqName("org.gradle.kotlin.dsl.repositories"),
-            FqName("org.gradle.plugin.management.PluginManagementSpec.repositories"),
-            FqName("org.gradle.api.initialization.resolve.DependencyResolutionManagement.repositories")
-        )
     }
 }
 
