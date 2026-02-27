@@ -15,6 +15,7 @@ dependencies {
     implementation(projects.markdown.extensions.autolink)
     implementation(projects.markdown.extensions.gfmAlerts)
     implementation(projects.markdown.extensions.gfmStrikethrough)
+    implementation(projects.markdown.extensions.frontMatter)
     implementation(projects.markdown.extensions.gfmTables)
     implementation(projects.markdown.extensions.images)
     implementation(projects.markdown.intUiStandaloneStyling)

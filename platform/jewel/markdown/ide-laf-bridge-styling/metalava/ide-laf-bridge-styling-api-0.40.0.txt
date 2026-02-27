@@ -45,6 +45,16 @@ package org.jetbrains.jewel.intui.markdown.bridge.styling {
 
 }
 
+package org.jetbrains.jewel.intui.markdown.bridge.styling.extensions.frontmatter {
+
+  public final class BridgeFrontMatterStylingKt {
+    method @SuppressCompatibility @org.jetbrains.annotations.ApiStatus.Experimental @org.jetbrains.jewel.foundation.ExperimentalJewelApi public static org.jetbrains.jewel.markdown.extensions.frontmatter.FrontMatterColors create(org.jetbrains.jewel.markdown.extensions.frontmatter.FrontMatterColors.Companion, optional long borderColor, optional long background);
+    method @SuppressCompatibility @org.jetbrains.annotations.ApiStatus.Experimental @org.jetbrains.jewel.foundation.ExperimentalJewelApi public static org.jetbrains.jewel.markdown.extensions.frontmatter.FrontMatterMetrics create(org.jetbrains.jewel.markdown.extensions.frontmatter.FrontMatterMetrics.Companion, optional float borderWidth, optional androidx.compose.foundation.layout.PaddingValues cellPadding);
+    method @SuppressCompatibility @org.jetbrains.annotations.ApiStatus.Experimental @org.jetbrains.jewel.foundation.ExperimentalJewelApi public static org.jetbrains.jewel.markdown.extensions.frontmatter.FrontMatterStyling create(org.jetbrains.jewel.markdown.extensions.frontmatter.FrontMatterStyling.Companion, optional org.jetbrains.jewel.markdown.extensions.frontmatter.FrontMatterColors colors, optional org.jetbrains.jewel.markdown.extensions.frontmatter.FrontMatterMetrics metrics);
+  }
+
+}
+
 package org.jetbrains.jewel.intui.markdown.bridge.styling.extensions.github.alerts {
 
   public final class BridgeGitHubAlertStylingKt {

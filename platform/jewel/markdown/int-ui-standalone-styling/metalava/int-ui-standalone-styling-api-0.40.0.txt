@@ -67,6 +67,18 @@ package org.jetbrains.jewel.intui.markdown.standalone.styling {
 
 }
 
+package org.jetbrains.jewel.intui.markdown.standalone.styling.extensions.frontmatter {
+
+  public final class IntUiFrontMatterStylingKt {
+    method @SuppressCompatibility @org.jetbrains.annotations.ApiStatus.Experimental @org.jetbrains.jewel.foundation.ExperimentalJewelApi public static org.jetbrains.jewel.markdown.extensions.frontmatter.FrontMatterColors dark(org.jetbrains.jewel.markdown.extensions.frontmatter.FrontMatterColors.Companion, optional long borderColor, optional long background);
+    method @SuppressCompatibility @org.jetbrains.annotations.ApiStatus.Experimental @org.jetbrains.jewel.foundation.ExperimentalJewelApi public static org.jetbrains.jewel.markdown.extensions.frontmatter.FrontMatterStyling dark(org.jetbrains.jewel.markdown.extensions.frontmatter.FrontMatterStyling.Companion, optional org.jetbrains.jewel.markdown.extensions.frontmatter.FrontMatterColors colors, optional org.jetbrains.jewel.markdown.extensions.frontmatter.FrontMatterMetrics metrics);
+    method @SuppressCompatibility @org.jetbrains.annotations.ApiStatus.Experimental @org.jetbrains.jewel.foundation.ExperimentalJewelApi public static org.jetbrains.jewel.markdown.extensions.frontmatter.FrontMatterMetrics defaults(org.jetbrains.jewel.markdown.extensions.frontmatter.FrontMatterMetrics.Companion, optional float borderWidth, optional androidx.compose.foundation.layout.PaddingValues cellPadding);
+    method @SuppressCompatibility @org.jetbrains.annotations.ApiStatus.Experimental @org.jetbrains.jewel.foundation.ExperimentalJewelApi public static org.jetbrains.jewel.markdown.extensions.frontmatter.FrontMatterColors light(org.jetbrains.jewel.markdown.extensions.frontmatter.FrontMatterColors.Companion, optional long borderColor, optional long background);
+    method @SuppressCompatibility @org.jetbrains.annotations.ApiStatus.Experimental @org.jetbrains.jewel.foundation.ExperimentalJewelApi public static org.jetbrains.jewel.markdown.extensions.frontmatter.FrontMatterStyling light(org.jetbrains.jewel.markdown.extensions.frontmatter.FrontMatterStyling.Companion, optional org.jetbrains.jewel.markdown.extensions.frontmatter.FrontMatterColors colors, optional org.jetbrains.jewel.markdown.extensions.frontmatter.FrontMatterMetrics metrics);
+  }
+
+}
+
 package org.jetbrains.jewel.intui.markdown.standalone.styling.extensions.github.alerts {
 
   public final class IntUiGitHubAlertStylingKt {

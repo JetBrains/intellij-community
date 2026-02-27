@@ -24,6 +24,11 @@ jvm_provided_library(
     lib = "//platform/jewel/markdown/extensions/gfm-tables",
 )
 
+jvm_provided_library(
+    name = "platform_jewel_markdown_extensions_front-matter_provided",
+    lib = "//platform/jewel/markdown/extensions/front-matter",
+)
+
 jvm_library(
     name = "ide-laf-bridge-styling",
     srcs = glob(
@@ -66,6 +71,7 @@ jvm_library(
         "//platform/util:util-ui",
         ":platform_jewel_markdown_extensions_gfm-alerts_provided",
         ":platform_jewel_markdown_extensions_gfm-tables_provided",
+        ":platform_jewel_markdown_extensions_front-matter_provided",
     ],
 )
 
@@ -102,6 +108,8 @@ jvm_library(
         "//platform/jewel/markdown/extensions/gfm-alerts:gfm-alerts_test_lib",
         "//platform/jewel/markdown/extensions/gfm-tables",
         "//platform/jewel/markdown/extensions/gfm-tables:gfm-tables_test_lib",
+        "//platform/jewel/markdown/extensions/front-matter",
+        "//platform/jewel/markdown/extensions/front-matter:front-matter_test_lib",
         "//platform/ide-core:ide-core_test_lib",
         "//platform/ide-core-impl:ide-core-impl_test_lib",
         "//platform/platform-impl:ide-impl_test_lib",
