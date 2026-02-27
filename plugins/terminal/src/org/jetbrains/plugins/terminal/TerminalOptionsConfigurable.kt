@@ -29,6 +29,7 @@ import com.intellij.openapi.options.ex.Settings
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.ComboBox
 import com.intellij.openapi.ui.DialogPanel
+import com.intellij.openapi.util.ClearableLazyValue
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.text.Strings
@@ -112,6 +113,18 @@ internal class TerminalOptionsConfigurable(private val project: Project) : Bound
   helpTopic = "reference.settings.terminal",
   _id = TERMINAL_CONFIGURABLE_ID
 ) {
+  private val additionalConfigurables: ClearableLazyValue<List<UnnamedConfigurable>> = ClearableLazyValue.create {
+    @Suppress("DEPRECATION")
+    val old = LocalTerminalCustomizer.EP_NAME.extensionList.mapNotNull { it.getBlockTerminalConfigurable(project) }
+    val new = TerminalSettingsProvider.EP_NAME.extensionList.mapNotNull { it.createConfigurable(project) }
+    new + old
+  }
+
+  private val blockTerminalConfigurables: ClearableLazyValue<List<UnnamedConfigurable>> = ClearableLazyValue.create {
+    @Suppress("DEPRECATION")
+    LocalTerminalCustomizer.EP_NAME.extensionList.mapNotNull { it.getBlockTerminalConfigurable(project) }
+  }
+
   override fun createPanel(): DialogPanel {
     val optionsProvider = TerminalOptionsProvider.instance
     val projectOptionsProvider = TerminalProjectOptionsProvider.getInstance(project)
@@ -225,7 +238,7 @@ internal class TerminalOptionsConfigurable(private val project: Project) : Bound
 
           panel {
             @Suppress("DEPRECATION")
-            configurables(LocalTerminalCustomizer.EP_NAME.extensionList.mapNotNull { it.getBlockTerminalConfigurable(project) })
+            configurables(blockTerminalConfigurables.value)
           }
 
         }.visibleIf(terminalEngineComboBox.selectedValueIs(TerminalEngine.NEW_TERMINAL))
@@ -419,9 +432,7 @@ internal class TerminalOptionsConfigurable(private val project: Project) : Bound
                          .and(ComponentPredicate.fromValue(RunCommandUsingIdeUtil.isVisible)))
         }
         panel {
-          configurables(TerminalSettingsProvider.EP_NAME.extensionList.mapNotNull { it.createConfigurable(project) })
-          @Suppress("DEPRECATION")
-          configurables(LocalTerminalCustomizer.EP_NAME.extensionList.mapNotNull { it.getConfigurable(project) })
+          configurables(additionalConfigurables.value)
         }
         row(message("settings.cursor.shape.label")) {
           comboBox(
@@ -430,6 +441,21 @@ internal class TerminalOptionsConfigurable(private val project: Project) : Bound
           ).bindItem(optionsProvider::cursorShape.toNullableProperty())
         }.layout(RowLayout.INDEPENDENT)
       }
+    }
+  }
+
+  override fun disposeUIResources() {
+    super.disposeUIResources()
+    disposeConfigurables(additionalConfigurables)
+    disposeConfigurables(blockTerminalConfigurables)
+  }
+
+  private fun disposeConfigurables(lazy: ClearableLazyValue<List<UnnamedConfigurable>>) {
+    if (lazy.isCached) {
+      for (configurable in lazy.value) {
+        configurable.disposeUIResources()
+      }
+      lazy.drop()
     }
   }
 
