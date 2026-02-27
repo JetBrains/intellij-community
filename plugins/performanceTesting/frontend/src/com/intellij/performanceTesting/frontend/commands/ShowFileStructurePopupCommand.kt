@@ -66,7 +66,7 @@ class ShowFileStructurePopupCommand(text: String, line: Int) : AbstractCommand(t
 
   companion object {
     @JvmField
-    val PREFIX: String = CMD_PREFIX + "showFileStructureDialogNew"
+    val PREFIX: String = CMD_PREFIX + "showFileStructureDialogSplit"
     const val SPAN_NAME: String = "FileStructurePopup"
   }
 }

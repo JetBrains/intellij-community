@@ -2,7 +2,6 @@
 package com.intellij.tools.ide.performanceTesting.commands
 
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
-import com.intellij.openapi.util.registry.Registry
 import com.intellij.tools.ide.performanceTesting.commands.dto.BuildToolsAutoReloadType
 import com.intellij.tools.ide.performanceTesting.commands.dto.BuildType
 import com.intellij.tools.ide.performanceTesting.commands.dto.GradleTaskInfoDto
@@ -634,12 +633,12 @@ fun <T : CommandChain> T.selectText(startLine: Int, startColumn: Int, endLine: I
   addCommand("${CMD_PREFIX}selectText", startLine.toString(), startColumn.toString(), endLine.toString(), endColumn.toString())
 }
 
-fun <T : CommandChain> T.showFileStructureDialog(): T = apply {
-  if (!Registry.`is`("frontend.structure.popup")) {
+fun <T : CommandChain> T.showFileStructureDialog(isSplitFileStructure: Boolean): T = apply {
+  if (!isSplitFileStructure) {
     addCommand("${CMD_PREFIX}showFileStructureDialogClassic")
   }
   else {
-    addCommand("${CMD_PREFIX}showFileStructureDialogNew")
+    addCommand("${CMD_PREFIX}showFileStructureDialogSplit")
   }
 }
 
