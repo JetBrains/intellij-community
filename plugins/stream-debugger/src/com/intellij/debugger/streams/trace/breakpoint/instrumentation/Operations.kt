@@ -2,12 +2,15 @@
 package com.intellij.debugger.streams.trace.breakpoint.instrumentation
 
 import com.intellij.debugger.streams.core.lib.impl.FilterOperation
+import com.intellij.debugger.streams.core.lib.impl.FlatMappingOperation
 import com.intellij.debugger.streams.core.lib.impl.MappingOperation
+import com.intellij.debugger.streams.core.lib.impl.SortedOperation
 import com.intellij.debugger.streams.core.lib.impl.ToCollectionOperation
 import com.intellij.debugger.streams.core.wrapper.IntermediateStreamCall
 import com.intellij.debugger.streams.core.wrapper.TerminatorStreamCall
 import com.intellij.debugger.streams.lib.impl.BreakpointBasedIntermediateOperation
 import com.intellij.debugger.streams.lib.impl.BreakpointBasedTerminalOperation
+import com.intellij.debugger.streams.lib.impl.ParallelOperation
 import com.intellij.debugger.streams.trace.breakpoint.ObjectStorage
 import com.sun.jdi.ObjectReference
 
@@ -17,6 +20,24 @@ class BreakpointBasedMappingOperation(name: String) : MappingOperation(name), Br
     callOrder: Int,
     call: IntermediateStreamCall,
     time: ObjectReference,
+  ): IntermediateCallHandler = PeekCallHandler(objectStorage, call.getTypeBefore(), call.getTypeAfter(), time)
+}
+
+class BreakpointBasedFlatMappingOperation(name: String) : FlatMappingOperation(name), BreakpointBasedIntermediateOperation {
+  override fun getRuntimeTraceHandler(
+    objectStorage: ObjectStorage,
+    callOrder: Int,
+    call: IntermediateStreamCall,
+    time: ObjectReference
+  ): IntermediateCallHandler = PeekCallHandler(objectStorage, call.getTypeBefore(), call.getTypeAfter(), time)
+}
+
+class BreakpointBasedSortedOperation(name: String) : SortedOperation(name), BreakpointBasedIntermediateOperation {
+  override fun getRuntimeTraceHandler(
+    objectStorage: ObjectStorage,
+    callOrder: Int,
+    call: IntermediateStreamCall,
+    time: ObjectReference
   ): IntermediateCallHandler = PeekCallHandler(objectStorage, call.getTypeBefore(), call.getTypeAfter(), time)
 }
 

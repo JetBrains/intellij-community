@@ -27,8 +27,8 @@ open class OrderBasedOperation(name: String, orderResolver: ValuesOrderResolver)
 
 open class FilterOperation(name: String) : OrderBasedOperation(name, FilterResolver())
 open class MappingOperation(name: String) : OrderBasedOperation(name, MapResolver())
-class FlatMappingOperation(name: String) : OrderBasedOperation(name, FlatMapResolver())
-class SortedOperation(name: String) : OrderBasedOperation(name, IdentityResolver())
+open class FlatMappingOperation(name: String) : OrderBasedOperation(name, FlatMapResolver())
+open class SortedOperation(name: String) : OrderBasedOperation(name, IdentityResolver())
 
 class DistinctOperation(name: String, handlerFactory: (Int, IntermediateStreamCall, Dsl) -> IntermediateCallHandler)
   : IntermediateOperationBase(name, handlerFactory, DistinctCallTraceInterpreter(), DistinctResolver())

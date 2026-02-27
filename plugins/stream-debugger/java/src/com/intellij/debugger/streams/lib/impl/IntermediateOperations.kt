@@ -6,6 +6,6 @@ import com.intellij.debugger.streams.core.resolve.FilterResolver
 import com.intellij.debugger.streams.core.trace.impl.interpret.SimplePeekCallTraceInterpreter
 import com.intellij.debugger.streams.trace.impl.handler.unified.ParallelHandler
 
-class ParallelOperation(name: String) : IntermediateOperationBase(name,
+open class ParallelOperation(name: String) : IntermediateOperationBase(name,
                                                                   { num, call, dsl -> ParallelHandler(num, call, dsl) },
                                                                   SimplePeekCallTraceInterpreter(), FilterResolver())
