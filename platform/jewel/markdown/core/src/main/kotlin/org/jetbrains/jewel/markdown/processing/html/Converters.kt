@@ -3,6 +3,7 @@ package org.jetbrains.jewel.markdown.processing.html
 
 import org.jetbrains.jewel.markdown.InlineMarkdown
 import org.jetbrains.jewel.markdown.MarkdownBlock
+import org.jetbrains.jewel.markdown.parseDimensionSize
 
 private typealias Tag = String
 
@@ -39,6 +40,9 @@ private object ImageConverter : HtmlElementConverter {
                     source = htmlElement.attributes["src"].orEmpty(),
                     alt = htmlElement.attributes["alt"].orEmpty(),
                     title = htmlElement.attributes["title"],
+                    width = htmlElement.attributes["width"]?.parseDimensionSize(),
+                    height = htmlElement.attributes["height"]?.parseDimensionSize(),
+                    inlineContent = emptyList(),
                 )
             )
         )
