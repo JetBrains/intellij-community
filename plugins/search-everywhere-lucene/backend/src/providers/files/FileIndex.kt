@@ -55,7 +55,7 @@ internal class FileIndex(val project: Project, val coroutineScope: CoroutineScop
     Disposer.register(this, luceneIndex)
 
     coroutineScope.launch {
-      // Wait until config is loaded and we can expect `ProjectFileIndex.getInstance()` to return the files to index.
+      // Wait until the config is loaded, and we can expect `ProjectFileIndex.getInstance()` to return the files to index.
       //Observation.awaitConfiguration(project)
 
       LOG.debug { "File Index in ${project.name} project stated processing changes..." }
@@ -67,7 +67,7 @@ internal class FileIndex(val project: Project, val coroutineScope: CoroutineScop
         }
 
         if (ops.any { it is LuceneFileIndexOperation.IndexAll }) {
-          // If ANY one of the ops is a reindexing request, we can also drop all other updates, as the updated state will be picked up by the reindexing anyways.
+          // If ANY one of the ops is a reindexing request, we can also drop all other updates, as reindexing will pick up the updated state anyway.
           processFileIndexOp(LuceneFileIndexOperation.IndexAll)
         }
         else {
@@ -87,7 +87,6 @@ internal class FileIndex(val project: Project, val coroutineScope: CoroutineScop
       }
     }
   }
-
 
   // TODO somehow inform UI that indexing is in progress
   private suspend fun processFileIndexOp(op: LuceneFileIndexOperation) {
@@ -206,7 +205,7 @@ internal class FileIndex(val project: Project, val coroutineScope: CoroutineScop
       }
       LuceneFileSearchResult(virtualFile, scoreDoc.score)
     }.onCompletion {
-      //This will fire often, as each character typed by the user causes a new search.
+      //This will fire oftentimes, as each character typed by the user causes a new search.
       //And since the same deleted files are likely showing up repeatedly, there are a bunch of requests to delete the same file.
       //We could track the deleted files in the FilesProvider instead, but this would make the FileIndex interface more complex.
       //The debouncing/merging logic in place should be enough to handle this anyway.
@@ -284,7 +283,7 @@ fun <T> Flow<T>.debounceBatch(
   }
 
   while (true) {
-    val got = select<Boolean> {
+    val got = select {
       ch.onReceiveCatching { result ->
         val v = result.getOrNull()
         if (v == null) {

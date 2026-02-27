@@ -42,8 +42,7 @@ class LuceneIndex(val project: Project, val coroutineScope: CoroutineScope, inde
   //TODO implement some recovery logic when index creation fails.
   // This can happen when the project is reopened.
   //TODO implement operating in a read-only mode, that just hopes the other process will maintain the index properly. (Or even better, indicate some fallback flag so the fallback logic is used.)
-  // Then it regularly checks if the index is still locked and once the lock can be aquired, we take ownership of the index and reindex everything once.
-  private fun createWriter(): IndexWriter {
+  // Then it regularly checks if the index is still locked and once the lock can be acquired, we take ownership of the index and reindex everything once.
     val analyzer = StandardAnalyzer()
     val config = IndexWriterConfig(analyzer)
     // When closing the writer, the IDE shuts down. Since we reindex on startup anyways, we do not need to persist any pending changes.
