@@ -386,8 +386,9 @@ internal fun shouldOpenOnActivation(node: SessionTreeNode): Boolean {
   return when (node) {
     is SessionTreeNode.Project,
     is SessionTreeNode.Worktree,
-    is SessionTreeNode.Thread,
     is SessionTreeNode.SubAgent -> true
+
+    is SessionTreeNode.Thread -> !isAgentSessionNewSessionId(node.thread.id)
 
     is SessionTreeNode.Warning,
     is SessionTreeNode.Error,

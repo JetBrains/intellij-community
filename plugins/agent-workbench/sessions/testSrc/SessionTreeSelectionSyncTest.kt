@@ -6,8 +6,7 @@ import com.intellij.agent.workbench.sessions.core.AgentSessionProvider
 import com.intellij.agent.workbench.sessions.core.AgentSessionThread
 import com.intellij.agent.workbench.sessions.core.AgentSubAgent
 import com.intellij.testFramework.junit5.TestApplication
-import org.junit.jupiter.api.Assertions.assertEquals
-import org.junit.jupiter.api.Assertions.assertNull
+import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 
 @TestApplication
@@ -40,7 +39,7 @@ class SessionTreeSelectionSyncTest {
 
     val selectedId = resolveSelectedSessionTreeId(projects, selection)
 
-    assertEquals(SessionTreeId.Thread("/work/project-a", AgentSessionProvider.CODEX, "thread-1"), selectedId)
+    assertThat(selectedId).isEqualTo(SessionTreeId.Thread("/work/project-a", AgentSessionProvider.CODEX, "thread-1"))
   }
 
   @Test
@@ -82,8 +81,9 @@ class SessionTreeSelectionSyncTest {
       ),
     )
 
-    assertEquals(SessionTreeId.SubAgent("/work/project-a", AgentSessionProvider.CODEX, "thread-1", "alpha"), selectedSubAgent)
-    assertEquals(SessionTreeId.Thread("/work/project-a", AgentSessionProvider.CODEX, "thread-1"), fallbackToThread)
+    assertThat(selectedSubAgent)
+      .isEqualTo(SessionTreeId.SubAgent("/work/project-a", AgentSessionProvider.CODEX, "thread-1", "alpha"))
+    assertThat(fallbackToThread).isEqualTo(SessionTreeId.Thread("/work/project-a", AgentSessionProvider.CODEX, "thread-1"))
   }
 
   @Test
@@ -132,14 +132,18 @@ class SessionTreeSelectionSyncTest {
       ),
     )
 
-    assertEquals(
-      SessionTreeId.WorktreeThread("/work/project-a", "/work/project-feature", AgentSessionProvider.CLAUDE, "thread-wt"),
-      threadSelection,
-    )
-    assertEquals(
-      SessionTreeId.WorktreeSubAgent("/work/project-a", "/work/project-feature", AgentSessionProvider.CLAUDE, "thread-wt", "agent-1"),
-      subAgentSelection,
-    )
+    assertThat(threadSelection)
+      .isEqualTo(SessionTreeId.WorktreeThread("/work/project-a", "/work/project-feature", AgentSessionProvider.CLAUDE, "thread-wt"))
+    assertThat(subAgentSelection)
+      .isEqualTo(
+        SessionTreeId.WorktreeSubAgent(
+          "/work/project-a",
+          "/work/project-feature",
+          AgentSessionProvider.CLAUDE,
+          "thread-wt",
+          "agent-1",
+        )
+      )
   }
 
   @Test
@@ -171,7 +175,7 @@ class SessionTreeSelectionSyncTest {
       ),
     )
 
-    assertNull(malformedIdentity)
-    assertNull(unknownPath)
+    assertThat(malformedIdentity).isNull()
+    assertThat(unknownPath).isNull()
   }
 }

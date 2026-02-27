@@ -776,6 +776,7 @@ internal class AgentSessionsToolWindowPanel(
 
       is SessionTreeNode.Thread -> {
         if (!includeOpenActions) return false
+        if (isAgentSessionNewSessionId(treeNode.thread.id)) return false
         val path = pathForThreadNode(id, treeNode.project.path)
         service.openChatThread(path, treeNode.thread, project)
         true

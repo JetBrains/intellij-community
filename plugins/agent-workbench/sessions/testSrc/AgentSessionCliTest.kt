@@ -12,10 +12,7 @@ import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.testFramework.junit5.TestApplication
-import org.junit.jupiter.api.Assertions.assertEquals
-import org.junit.jupiter.api.Assertions.assertNotEquals
-import org.junit.jupiter.api.Assertions.assertNull
-import org.junit.jupiter.api.Assertions.assertTrue
+import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 
 @TestApplication
@@ -27,82 +24,70 @@ class AgentSessionCliTest {
   fun parseIdentityParsesProviderAndSessionId() {
     val parsed = parseAgentSessionIdentity("codex:thread-1")
 
-    assertEquals(AgentSessionProvider.CODEX, parsed?.provider)
-    assertEquals("thread-1", parsed?.sessionId)
+    assertThat(parsed?.provider).isEqualTo(AgentSessionProvider.CODEX)
+    assertThat(parsed?.sessionId).isEqualTo("thread-1")
   }
 
   @Test
   fun parseIdentityRejectsMalformedValue() {
-    assertNull(parseAgentSessionIdentity("codex"))
-    assertNull(parseAgentSessionIdentity("codex:"))
-    assertNull(parseAgentSessionIdentity(":thread-1"))
-    assertNull(parseAgentSessionIdentity("Codex:thread-1"))
+    assertThat(parseAgentSessionIdentity("codex")).isNull()
+    assertThat(parseAgentSessionIdentity("codex:")).isNull()
+    assertThat(parseAgentSessionIdentity(":thread-1")).isNull()
+    assertThat(parseAgentSessionIdentity("Codex:thread-1")).isNull()
   }
 
   @Test
   fun resolveSessionIdExtractsThreadIdFromIdentity() {
-    assertEquals("thread-1", resolveAgentSessionId("codex:thread-1"))
+    assertThat(resolveAgentSessionId("codex:thread-1")).isEqualTo("thread-1")
   }
 
   @Test
   fun resolveSessionIdFallsBackForMalformedIdentity() {
-    assertEquals("invalid", resolveAgentSessionId("invalid"))
+    assertThat(resolveAgentSessionId("invalid")).isEqualTo("invalid")
   }
 
   @Test
   fun buildResumeCommandUsesProviderSpecificCommands() {
     withTestBridges {
-      assertEquals(
-        listOf("codex", "resume", "thread-1"),
-        buildAgentSessionResumeCommand(AgentSessionProvider.CODEX, "thread-1"),
-      )
-      assertEquals(
-        listOf("claude", "--resume", "session-1"),
-        buildAgentSessionResumeCommand(AgentSessionProvider.CLAUDE, "session-1"),
-      )
+      assertThat(buildAgentSessionResumeCommand(AgentSessionProvider.CODEX, "thread-1"))
+        .isEqualTo(listOf("codex", "resume", "thread-1"))
+      assertThat(buildAgentSessionResumeCommand(AgentSessionProvider.CLAUDE, "session-1"))
+        .isEqualTo(listOf("claude", "--resume", "session-1"))
     }
   }
 
   @Test
   fun buildNewEntryCommandUsesProviderSpecificCommands() {
     withTestBridges {
-      assertEquals(listOf("codex"), buildAgentSessionEntryCommand(AgentSessionProvider.CODEX))
-      assertEquals(listOf("claude"), buildAgentSessionEntryCommand(AgentSessionProvider.CLAUDE))
+      assertThat(buildAgentSessionEntryCommand(AgentSessionProvider.CODEX)).isEqualTo(listOf("codex"))
+      assertThat(buildAgentSessionEntryCommand(AgentSessionProvider.CLAUDE)).isEqualTo(listOf("claude"))
     }
   }
 
   @Test
   fun buildNewClaudeCommands() {
     withTestBridges {
-      assertEquals(
-        listOf("claude"),
-        buildAgentSessionNewCommand(AgentSessionProvider.CLAUDE, AgentSessionLaunchMode.STANDARD),
-      )
-      assertEquals(
-        listOf("claude", "--dangerously-skip-permissions"),
-        buildAgentSessionNewCommand(AgentSessionProvider.CLAUDE, AgentSessionLaunchMode.YOLO),
-      )
+      assertThat(buildAgentSessionNewCommand(AgentSessionProvider.CLAUDE, AgentSessionLaunchMode.STANDARD))
+        .isEqualTo(listOf("claude"))
+      assertThat(buildAgentSessionNewCommand(AgentSessionProvider.CLAUDE, AgentSessionLaunchMode.YOLO))
+        .isEqualTo(listOf("claude", "--dangerously-skip-permissions"))
     }
   }
 
   @Test
   fun buildNewCodexCommands() {
     withTestBridges {
-      assertEquals(
-        listOf("codex"),
-        buildAgentSessionNewCommand(AgentSessionProvider.CODEX, AgentSessionLaunchMode.STANDARD),
-      )
-      assertEquals(
-        listOf("codex", "--full-auto"),
-        buildAgentSessionNewCommand(AgentSessionProvider.CODEX, AgentSessionLaunchMode.YOLO),
-      )
+      assertThat(buildAgentSessionNewCommand(AgentSessionProvider.CODEX, AgentSessionLaunchMode.STANDARD))
+        .isEqualTo(listOf("codex"))
+      assertThat(buildAgentSessionNewCommand(AgentSessionProvider.CODEX, AgentSessionLaunchMode.YOLO))
+        .isEqualTo(listOf("codex", "--full-auto"))
     }
   }
 
   @Test
   fun resolveSessionIdReturnsBlankForPendingIdentity() {
-    assertEquals("", resolveAgentSessionId("codex:new-123"))
-    assertTrue(isAgentSessionNewIdentity("codex:new-123"))
+    assertThat(resolveAgentSessionId("codex:new-123")).isEqualTo("")
+    assertThat(isAgentSessionNewIdentity("codex:new-123")).isTrue()
   }
 
   @Test
@@ -110,15 +95,15 @@ class AgentSessionCliTest {
     val claudeA = buildAgentSessionNewIdentity(AgentSessionProvider.CLAUDE)
     val claudeB = buildAgentSessionNewIdentity(AgentSessionProvider.CLAUDE)
 
-    assertNotEquals(claudeA, claudeB)
-    assertTrue(claudeA.startsWith("claude:"))
-    assertTrue(buildAgentSessionNewIdentity(AgentSessionProvider.CODEX).startsWith("codex:"))
+    assertThat(claudeA).isNotEqualTo(claudeB)
+    assertThat(claudeA.startsWith("claude:")).isTrue()
+    assertThat(buildAgentSessionNewIdentity(AgentSessionProvider.CODEX).startsWith("codex:")).isTrue()
   }
 
   @Test
   fun buildExistingIdentityFormat() {
-    assertEquals("claude:abc", buildAgentSessionIdentity(AgentSessionProvider.CLAUDE, "abc"))
-    assertEquals("codex:xyz", buildAgentSessionIdentity(AgentSessionProvider.CODEX, "xyz"))
+    assertThat(buildAgentSessionIdentity(AgentSessionProvider.CLAUDE, "abc")).isEqualTo("claude:abc")
+    assertThat(buildAgentSessionIdentity(AgentSessionProvider.CODEX, "xyz")).isEqualTo("codex:xyz")
   }
 
   private fun withTestBridges(block: () -> Unit) {

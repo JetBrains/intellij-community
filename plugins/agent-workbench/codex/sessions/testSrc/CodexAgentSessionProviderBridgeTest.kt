@@ -2,6 +2,7 @@
 package com.intellij.agent.workbench.codex.sessions
 
 import com.intellij.agent.workbench.sessions.core.AgentSessionLaunchMode
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
@@ -36,7 +37,7 @@ class CodexAgentSessionProviderBridgeTest {
 
   @Test
   fun createNewSessionReturnsPendingLaunchSpec() {
-    runBlocking {
+    runBlocking(Dispatchers.Default) {
       val standard = bridge.createNewSession(path = "/work/project", mode = AgentSessionLaunchMode.STANDARD)
       assertThat(standard.sessionId).isNull()
       assertThat(standard.command).containsExactly("codex")

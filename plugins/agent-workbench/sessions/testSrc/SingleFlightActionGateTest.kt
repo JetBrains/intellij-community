@@ -14,7 +14,7 @@ import java.util.concurrent.atomic.AtomicInteger
 class SingleFlightActionGateTest {
   @Test
   fun dropSkipsDuplicateActionWhileKeyIsInFlight() {
-    runBlocking {
+    runBlocking(Dispatchers.Default) {
       val gate = SingleFlightActionGate()
       @Suppress("RAW_SCOPE_CREATION")
       val scope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
@@ -52,7 +52,7 @@ class SingleFlightActionGateTest {
 
   @Test
   fun dropAllowsDifferentKeysToRunConcurrently() {
-    runBlocking {
+    runBlocking(Dispatchers.Default) {
       val gate = SingleFlightActionGate()
       @Suppress("RAW_SCOPE_CREATION")
       val scope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
@@ -89,7 +89,7 @@ class SingleFlightActionGateTest {
 
   @Test
   fun dropReleasesKeyAfterCancellation() {
-    runBlocking {
+    runBlocking(Dispatchers.Default) {
       val gate = SingleFlightActionGate()
       @Suppress("RAW_SCOPE_CREATION")
       val scope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
@@ -119,7 +119,7 @@ class SingleFlightActionGateTest {
 
   @Test
   fun restartLatestRunsOnlyMostRecentPendingAction() {
-    runBlocking {
+    runBlocking(Dispatchers.Default) {
       val gate = SingleFlightActionGate()
       @Suppress("RAW_SCOPE_CREATION")
       val scope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
@@ -160,7 +160,7 @@ class SingleFlightActionGateTest {
 
   @Test
   fun queueRunsPendingActionsInOrder() {
-    runBlocking {
+    runBlocking(Dispatchers.Default) {
       val gate = SingleFlightActionGate()
       @Suppress("RAW_SCOPE_CREATION")
       val scope = CoroutineScope(SupervisorJob() + Dispatchers.Default)

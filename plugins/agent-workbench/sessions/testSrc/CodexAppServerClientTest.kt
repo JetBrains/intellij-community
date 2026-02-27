@@ -11,7 +11,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.runBlocking
 import org.assertj.core.api.Assertions.assertThat
-import org.junit.jupiter.api.Assertions.fail
+import org.assertj.core.api.Assertions.fail
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.io.TempDir
 import org.junit.jupiter.params.ParameterizedTest
@@ -36,7 +36,7 @@ class CodexAppServerClientTest {
 
   @ParameterizedTest(name = "{0}")
   @MethodSource("backends")
-  fun listThreadsUsesCodexAppServerBackends(backend: CodexBackend): Unit = runBlocking(Dispatchers.IO) {
+  fun listThreadsUsesCodexAppServerBackends(backend: CodexBackend): Unit = runBlocking(Dispatchers.Default) {
     val configPath = tempDir.resolve("codex-config.json")
     writeConfig(
       path = configPath,
@@ -50,7 +50,7 @@ class CodexAppServerClientTest {
   }
 
   @Test
-  fun listThreadsFiltersThreadsByCwdFilter(): Unit = runBlocking(Dispatchers.IO) {
+  fun listThreadsFiltersThreadsByCwdFilter(): Unit = runBlocking(Dispatchers.Default) {
     val projectA = tempDir.resolve("project-alpha")
     val projectB = tempDir.resolve("project-beta")
     Files.createDirectories(projectA)
@@ -96,7 +96,7 @@ class CodexAppServerClientTest {
   }
 
   @Test
-  fun listThreadsIncludesSubAgentSourcesAndParsesSourceStatusMetadata(): Unit = runBlocking(Dispatchers.IO) {
+  fun listThreadsIncludesSubAgentSourcesAndParsesSourceStatusMetadata(): Unit = runBlocking(Dispatchers.Default) {
     val project = tempDir.resolve("project-source-status")
     Files.createDirectories(project)
     val normalizedCwd = project.toString().replace('\\', '/').trimEnd('/')
@@ -160,7 +160,7 @@ class CodexAppServerClientTest {
   }
 
   @Test
-  fun listThreadsParsesSourceAndStatusVariantFormats(): Unit = runBlocking(Dispatchers.IO) {
+  fun listThreadsParsesSourceAndStatusVariantFormats(): Unit = runBlocking(Dispatchers.Default) {
     val project = tempDir.resolve("project-source-status-variants")
     Files.createDirectories(project)
     val normalizedCwd = project.toString().replace('\\', '/').trimEnd('/')
@@ -272,7 +272,7 @@ class CodexAppServerClientTest {
   }
 
   @Test
-  fun listThreadsPageSupportsCursorAndLimit(): Unit = runBlocking(Dispatchers.IO) {
+  fun listThreadsPageSupportsCursorAndLimit(): Unit = runBlocking(Dispatchers.Default) {
     val workingDir = tempDir.resolve("project-page")
     Files.createDirectories(workingDir)
     val configPath = workingDir.resolve("codex-config.json")
@@ -309,7 +309,7 @@ class CodexAppServerClientTest {
   }
 
   @Test
-  fun listThreadsTraversesAllPagesBeyondTenPageBoundary(): Unit = runBlocking(Dispatchers.IO) {
+  fun listThreadsTraversesAllPagesBeyondTenPageBoundary(): Unit = runBlocking(Dispatchers.Default) {
     val workingDir = tempDir.resolve("project-many-pages")
     Files.createDirectories(workingDir)
     val configPath = workingDir.resolve("codex-config.json")
@@ -344,7 +344,7 @@ class CodexAppServerClientTest {
   }
 
   @Test
-  fun listThreadsParsesPreviewAndTimestampVariants(): Unit = runBlocking(Dispatchers.IO) {
+  fun listThreadsParsesPreviewAndTimestampVariants(): Unit = runBlocking(Dispatchers.Default) {
     val workingDir = tempDir.resolve("project-preview")
     Files.createDirectories(workingDir)
     val configPath = workingDir.resolve("codex-config.json")
@@ -395,7 +395,7 @@ class CodexAppServerClientTest {
   }
 
   @Test
-  fun listThreadsFailsOnServerError(): Unit = runBlocking(Dispatchers.IO) {
+  fun listThreadsFailsOnServerError(): Unit = runBlocking(Dispatchers.Default) {
     val configPath = tempDir.resolve("codex-config.json")
     writeConfig(
       path = configPath,
@@ -434,7 +434,7 @@ class CodexAppServerClientTest {
   }
 
   @Test
-  fun createThreadStartsNewThreadAndAddsItToList(): Unit = runBlocking(Dispatchers.IO) {
+  fun createThreadStartsNewThreadAndAddsItToList(): Unit = runBlocking(Dispatchers.Default) {
     val workingDir = tempDir.resolve("project-start")
     Files.createDirectories(workingDir)
     val configPath = workingDir.resolve("codex-config.json")
@@ -473,7 +473,7 @@ class CodexAppServerClientTest {
   }
 
   @Test
-  fun createThreadWithParamsPassesThemThrough(): Unit = runBlocking(Dispatchers.IO) {
+  fun createThreadWithParamsPassesThemThrough(): Unit = runBlocking(Dispatchers.Default) {
     val workingDir = tempDir.resolve("project-start-params")
     Files.createDirectories(workingDir)
     val configPath = workingDir.resolve("codex-config.json")
@@ -501,7 +501,7 @@ class CodexAppServerClientTest {
   }
 
   @Test
-  fun archiveThreadMovesThreadFromActiveToArchivedList(): Unit = runBlocking(Dispatchers.IO) {
+  fun archiveThreadMovesThreadFromActiveToArchivedList(): Unit = runBlocking(Dispatchers.Default) {
     val workingDir = tempDir.resolve("project-archive")
     Files.createDirectories(workingDir)
     val configPath = workingDir.resolve("codex-config.json")
@@ -548,7 +548,7 @@ class CodexAppServerClientTest {
   }
 
   @Test
-  fun unarchiveThreadMovesThreadFromArchivedToActiveList(): Unit = runBlocking(Dispatchers.IO) {
+  fun unarchiveThreadMovesThreadFromArchivedToActiveList(): Unit = runBlocking(Dispatchers.Default) {
     val workingDir = tempDir.resolve("project-unarchive")
     Files.createDirectories(workingDir)
     val configPath = workingDir.resolve("codex-config.json")
@@ -595,7 +595,7 @@ class CodexAppServerClientTest {
   }
 
   @Test
-  fun idleTimeoutStopsLazyStartedProcess(): Unit = runBlocking(Dispatchers.IO) {
+  fun idleTimeoutStopsLazyStartedProcess(): Unit = runBlocking(Dispatchers.Default) {
     val workingDir = tempDir.resolve("project-idle-timeout")
     Files.createDirectories(workingDir)
     val configPath = workingDir.resolve("codex-config.json")
@@ -639,7 +639,7 @@ class CodexAppServerClientTest {
   }
 
   @Test
-  fun persistThreadSendsTurnStartWithoutInterrupt(): Unit = runBlocking(Dispatchers.IO) {
+  fun persistThreadSendsTurnStartWithoutInterrupt(): Unit = runBlocking(Dispatchers.Default) {
     val configPath = tempDir.resolve("codex-config.json")
     writeConfig(path = configPath, threads = emptyList())
 
@@ -668,7 +668,7 @@ class CodexAppServerClientTest {
   }
 
   @Test
-  fun createThreadFailsOnServerError(): Unit = runBlocking(Dispatchers.IO) {
+  fun createThreadFailsOnServerError(): Unit = runBlocking(Dispatchers.Default) {
     val configPath = tempDir.resolve("codex-config.json")
     writeConfig(path = configPath, threads = emptyList())
 
@@ -698,7 +698,7 @@ class CodexAppServerClientTest {
   }
 
   @Test
-  fun listThreadsUsesPathOverrideWhenExecutableProviderMissing(): Unit = runBlocking(Dispatchers.IO) {
+  fun listThreadsUsesPathOverrideWhenExecutableProviderMissing(): Unit = runBlocking(Dispatchers.Default) {
     val workingDir = tempDir.resolve("project-path-override")
     Files.createDirectories(workingDir)
     val configPath = workingDir.resolve("codex-config.json")
@@ -734,7 +734,7 @@ class CodexAppServerClientTest {
   }
 
   @Test
-  fun listThreadsFailsWithoutFallbackWhenConfiguredExecutableIsInvalid(): Unit = runBlocking(Dispatchers.IO) {
+  fun listThreadsFailsWithoutFallbackWhenConfiguredExecutableIsInvalid(): Unit = runBlocking(Dispatchers.Default) {
     val workingDir = tempDir.resolve("project-invalid-exec")
     Files.createDirectories(workingDir)
     val configPath = workingDir.resolve("codex-config.json")
@@ -765,7 +765,7 @@ class CodexAppServerClientTest {
   }
 
   @Test
-  fun listThreadsReportsDefaultExecutableStartFailuresWithoutCliMissingError(): Unit = runBlocking(Dispatchers.IO) {
+  fun listThreadsReportsDefaultExecutableStartFailuresWithoutCliMissingError(): Unit = runBlocking(Dispatchers.Default) {
     val workingDir = tempDir.resolve("project-invalid-env")
     Files.createDirectories(workingDir)
     val configPath = workingDir.resolve("codex-config.json")

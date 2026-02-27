@@ -2,6 +2,7 @@
 package com.intellij.agent.workbench.claude.sessions
 
 import com.intellij.agent.workbench.claude.common.ClaudeSessionsStore
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
@@ -51,7 +52,7 @@ class ClaudeSessionsStoreTest {
 
     val store = ClaudeSessionsStore(claudeHomeProvider = { tempDir.resolve(".claude") })
 
-    val threads = runBlocking { store.listThreads(projectPath) }
+    val threads = runBlocking(Dispatchers.Default) { store.listThreads(projectPath) }
 
     assertThat(threads).hasSize(1)
     val thread = threads.single()
@@ -76,7 +77,7 @@ class ClaudeSessionsStoreTest {
 
     val store = ClaudeSessionsStore(claudeHomeProvider = { tempDir.resolve(".claude") })
 
-    val threads = runBlocking { store.listThreads(projectPath) }
+    val threads = runBlocking(Dispatchers.Default) { store.listThreads(projectPath) }
 
     assertThat(threads).hasSize(1)
     val thread = threads.single()
@@ -102,7 +103,7 @@ class ClaudeSessionsStoreTest {
 
     val store = ClaudeSessionsStore(claudeHomeProvider = { tempDir.resolve(".claude") })
 
-    val threads = runBlocking { store.listThreads(projectPath) }
+    val threads = runBlocking(Dispatchers.Default) { store.listThreads(projectPath) }
 
     assertThat(threads).hasSize(1)
     assertThat(threads.single().title).contains("Investigate message-first ordering")
@@ -144,7 +145,7 @@ class ClaudeSessionsStoreTest {
 
     val store = ClaudeSessionsStore(claudeHomeProvider = { tempDir.resolve(".claude") })
 
-    val threads = runBlocking { store.listThreads(projectPath) }
+    val threads = runBlocking(Dispatchers.Default) { store.listThreads(projectPath) }
 
     assertThat(threads).hasSize(2)
     val withBranch = threads.first { it.id == "branch-session-1" }
@@ -170,7 +171,7 @@ class ClaudeSessionsStoreTest {
 
     val store = ClaudeSessionsStore(claudeHomeProvider = { tempDir.resolve(".claude") })
 
-    val threads = runBlocking { store.listThreads(projectPath) }
+    val threads = runBlocking(Dispatchers.Default) { store.listThreads(projectPath) }
 
     assertThat(threads).isEmpty()
   }
@@ -193,7 +194,7 @@ class ClaudeSessionsStoreTest {
 
     val store = ClaudeSessionsStore(claudeHomeProvider = { tempDir.resolve(".claude") })
 
-    val threads = runBlocking { store.listThreads(projectPath) }
+    val threads = runBlocking(Dispatchers.Default) { store.listThreads(projectPath) }
 
     assertThat(threads).hasSize(1)
     val thread = threads.single()

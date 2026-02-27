@@ -58,7 +58,7 @@ class CodexRolloutSessionBackendTest {
 
   @Test
   fun ignoresRolloutWithoutSessionMetaId() {
-    runBlocking {
+    runBlocking(Dispatchers.Default) {
       val projectDir = tempDir.resolve("project-no-id")
       Files.createDirectories(projectDir)
       writeRollout(
@@ -79,7 +79,7 @@ class CodexRolloutSessionBackendTest {
 
   @Test
   fun mapsDistinctActivitySignalsWithoutOverlappingMicroTests() {
-    runBlocking {
+    runBlocking(Dispatchers.Default) {
       val projectDir = tempDir.resolve("project-activity")
       Files.createDirectories(projectDir)
 
@@ -129,7 +129,7 @@ class CodexRolloutSessionBackendTest {
 
   @Test
   fun filtersByCwdAndMarksReadyAfterCompletedTask() {
-    runBlocking {
+    runBlocking(Dispatchers.Default) {
       val projectDir = tempDir.resolve("project-c")
       val otherDir = tempDir.resolve("project-d")
       Files.createDirectories(projectDir)
@@ -169,7 +169,7 @@ class CodexRolloutSessionBackendTest {
 
   @Test
   fun mapsBranchFromSessionMetaPayload() {
-    runBlocking {
+    runBlocking(Dispatchers.Default) {
       val projectDir = tempDir.resolve("project-branch")
       Files.createDirectories(projectDir)
       writeRollout(
@@ -190,7 +190,7 @@ class CodexRolloutSessionBackendTest {
 
   @Test
   fun foldsSubAgentThreadSpawnUnderParentThread() {
-    runBlocking {
+    runBlocking(Dispatchers.Default) {
       val projectDir = tempDir.resolve("project-subagent")
       Files.createDirectories(projectDir)
       val sessionsRoot = tempDir.resolve("sessions").resolve("2026").resolve("02").resolve("14")
@@ -229,7 +229,7 @@ class CodexRolloutSessionBackendTest {
 
   @Test
   fun keepsSubAgentThreadTopLevelWhenParentIsMissing() {
-    runBlocking {
+    runBlocking(Dispatchers.Default) {
       val projectDir = tempDir.resolve("project-subagent-missing-parent")
       Files.createDirectories(projectDir)
       writeRollout(
@@ -257,7 +257,7 @@ class CodexRolloutSessionBackendTest {
 
   @Test
   fun prefetchThreadsMapsPerResolvedPath() {
-    runBlocking {
+    runBlocking(Dispatchers.Default) {
       val projectA = tempDir.resolve("project-prefetch-a")
       val projectB = tempDir.resolve("project-prefetch-b")
       val projectC = tempDir.resolve("project-prefetch-c")
@@ -302,7 +302,7 @@ class CodexRolloutSessionBackendTest {
 
   @Test
   fun refreshesCachedThreadsWhenRolloutFilesChangeAndDelete() {
-    runBlocking {
+    runBlocking(Dispatchers.Default) {
       val projectDir = tempDir.resolve("project-cache")
       Files.createDirectories(projectDir)
 
@@ -355,7 +355,7 @@ class CodexRolloutSessionBackendTest {
 
   @Test
   fun retriesPreviouslyUnparseableRolloutAfterRewrite() {
-    runBlocking {
+    runBlocking(Dispatchers.Default) {
       val projectDir = tempDir.resolve("project-retry")
       Files.createDirectories(projectDir)
 
@@ -391,7 +391,7 @@ class CodexRolloutSessionBackendTest {
 
   @Test
   fun usesFirstNonEnvironmentUserMessageAsTitle() {
-    runBlocking {
+    runBlocking(Dispatchers.Default) {
       val projectDir = tempDir.resolve("project-title")
       Files.createDirectories(projectDir)
       writeRollout(
@@ -419,7 +419,7 @@ class CodexRolloutSessionBackendTest {
 
   @Test
   fun prefersThreadNameUpdatedEventForTitle() {
-    runBlocking {
+    runBlocking(Dispatchers.Default) {
       val projectDir = tempDir.resolve("project-thread-rename")
       Files.createDirectories(projectDir)
       writeRollout(
@@ -446,7 +446,7 @@ class CodexRolloutSessionBackendTest {
 
   @Test
   fun skipsMalformedJsonLineAndKeepsParsingLaterEvents() {
-    runBlocking {
+    runBlocking(Dispatchers.Default) {
       val projectDir = tempDir.resolve("project-malformed")
       Files.createDirectories(projectDir)
       writeRollout(
@@ -478,7 +478,7 @@ class CodexRolloutSessionBackendTest {
 
   @Test
   fun emitsUpdatesWhenExistingRolloutFileChanges() {
-    runBlocking {
+    runBlocking(Dispatchers.Default) {
       val projectDir = tempDir.resolve("project-updates-modify")
       Files.createDirectories(projectDir)
 
@@ -533,7 +533,7 @@ class CodexRolloutSessionBackendTest {
 
   @Test
   fun emitsUpdatesForNonRolloutSessionEventAndRefreshesByStatDiff() {
-    runBlocking {
+    runBlocking(Dispatchers.Default) {
       val projectDir = tempDir.resolve("project-updates-refresh-ping")
       Files.createDirectories(projectDir)
 
@@ -590,7 +590,7 @@ class CodexRolloutSessionBackendTest {
 
   @Test
   fun emitsUpdatesWhenRolloutFileCreatedInNewNestedSessionsDirectory() {
-    runBlocking {
+    runBlocking(Dispatchers.Default) {
       val projectDir = tempDir.resolve("project-updates-create")
       Files.createDirectories(projectDir)
 
@@ -635,7 +635,7 @@ class CodexRolloutSessionBackendTest {
 
   @Test
   fun refreshesThreadAfterSameSizeRewriteWhenLastModifiedTimeIsReset() {
-    runBlocking {
+    runBlocking(Dispatchers.Default) {
       val projectDir = tempDir.resolve("project-updates-same-size")
       Files.createDirectories(projectDir)
 

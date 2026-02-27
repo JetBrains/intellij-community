@@ -158,6 +158,11 @@ class AgentSessionsGearActionsTest {
       .contains("AgentWorkbenchSessions.TreePopup.More")
       .contains("AgentWorkbenchSessions.TreePopup.NewThread")
       .contains("AgentWorkbenchSessions.TreePopup.Archive")
+
+    assertThat(actionManager.getAction("AgentWorkbenchSessions.TreePopup.NewThread"))
+      .isNotNull
+    assertThat(actionManager.getAction("AgentWorkbenchSessions.TreePopup.NewThread")?.templatePresentation?.icon)
+      .isEqualTo(AllIcons.General.Add)
   }
 
   @Test

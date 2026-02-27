@@ -6,10 +6,7 @@ import com.intellij.agent.workbench.sessions.core.AgentSessionThread
 import com.intellij.agent.workbench.sessions.core.AgentSubAgent
 import com.intellij.openapi.project.ProjectManager
 import com.intellij.testFramework.junit5.TestApplication
-import org.junit.jupiter.api.Assertions.assertEquals
-import org.junit.jupiter.api.Assertions.assertFalse
-import org.junit.jupiter.api.Assertions.assertNull
-import org.junit.jupiter.api.Assertions.assertTrue
+import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 
 @TestApplication
@@ -18,10 +15,10 @@ class AgentSessionsSwingTreeInteractionTest {
   fun singleClickActionIsReservedForMoreRows() {
     val project = AgentProjectSessions(path = "/work/project-a", name = "Project A", isOpen = true)
 
-    assertTrue(shouldHandleSingleClick(SessionTreeNode.MoreProjects(hiddenCount = 2)))
-    assertTrue(shouldHandleSingleClick(SessionTreeNode.MoreThreads(project = project, hiddenCount = 4)))
-    assertFalse(shouldHandleSingleClick(SessionTreeNode.Project(project)))
-    assertFalse(shouldHandleSingleClick(SessionTreeNode.Warning("warning")))
+    assertThat(shouldHandleSingleClick(SessionTreeNode.MoreProjects(hiddenCount = 2))).isTrue()
+    assertThat(shouldHandleSingleClick(SessionTreeNode.MoreThreads(project = project, hiddenCount = 4))).isTrue()
+    assertThat(shouldHandleSingleClick(SessionTreeNode.Project(project))).isFalse()
+    assertThat(shouldHandleSingleClick(SessionTreeNode.Warning("warning"))).isFalse()
   }
 
   @Test
@@ -34,39 +31,38 @@ class AgentSessionsSwingTreeInteractionTest {
       isOpen = false,
     )
     val thread = AgentSessionThread(id = "thread-1", title = "Thread 1", updatedAt = 100, archived = false)
+    val pendingThread = AgentSessionThread(id = "new-1", title = "New Thread", updatedAt = 100, archived = false)
     val subAgent = AgentSubAgent(id = "sub-1", name = "Sub Agent")
 
-    assertTrue(shouldOpenOnActivation(SessionTreeNode.Project(project)))
-    assertTrue(shouldOpenOnActivation(SessionTreeNode.Worktree(project, worktree)))
-    assertTrue(shouldOpenOnActivation(SessionTreeNode.Thread(project, thread)))
-    assertTrue(shouldOpenOnActivation(SessionTreeNode.SubAgent(project, thread, subAgent)))
-    assertFalse(shouldOpenOnActivation(SessionTreeNode.MoreProjects(hiddenCount = 1)))
-    assertFalse(shouldOpenOnActivation(SessionTreeNode.MoreThreads(project, hiddenCount = 1)))
-    assertFalse(shouldOpenOnActivation(SessionTreeNode.Warning("warning")))
+    assertThat(shouldOpenOnActivation(SessionTreeNode.Project(project))).isTrue()
+    assertThat(shouldOpenOnActivation(SessionTreeNode.Worktree(project, worktree))).isTrue()
+    assertThat(shouldOpenOnActivation(SessionTreeNode.Thread(project, thread))).isTrue()
+    assertThat(shouldOpenOnActivation(SessionTreeNode.Thread(project, pendingThread))).isFalse()
+    assertThat(shouldOpenOnActivation(SessionTreeNode.SubAgent(project, thread, subAgent))).isTrue()
+    assertThat(shouldOpenOnActivation(SessionTreeNode.MoreProjects(hiddenCount = 1))).isFalse()
+    assertThat(shouldOpenOnActivation(SessionTreeNode.MoreThreads(project, hiddenCount = 1))).isFalse()
+    assertThat(shouldOpenOnActivation(SessionTreeNode.Warning("warning"))).isFalse()
   }
 
   @Test
   fun resolvesMoreThreadPathForProjectAndWorktreeRows() {
-    assertEquals(
-      "/work/project-a",
-      pathForMoreThreadsNode(SessionTreeId.MoreThreads(projectPath = "/work/project-a")),
-    )
-    assertEquals(
-      "/work/project-feature",
+    assertThat(pathForMoreThreadsNode(SessionTreeId.MoreThreads(projectPath = "/work/project-a")))
+      .isEqualTo("/work/project-a")
+    assertThat(
       pathForMoreThreadsNode(
         SessionTreeId.WorktreeMoreThreads(
           projectPath = "/work/project-a",
           worktreePath = "/work/project-feature",
         )
-      ),
-    )
-    assertEquals(null, pathForMoreThreadsNode(SessionTreeId.MoreProjects))
+      )
+    ).isEqualTo("/work/project-feature")
+    assertThat(pathForMoreThreadsNode(SessionTreeId.MoreProjects)).isNull()
   }
 
   @Test
   fun contextMenuSelectionRetargetPolicyMatchesIjTreeConventions() {
-    assertTrue(shouldRetargetSelectionForContextMenu(isClickedPathSelected = false))
-    assertFalse(shouldRetargetSelectionForContextMenu(isClickedPathSelected = true))
+    assertThat(shouldRetargetSelectionForContextMenu(isClickedPathSelected = false)).isTrue()
+    assertThat(shouldRetargetSelectionForContextMenu(isClickedPathSelected = true)).isFalse()
   }
 
   @Test
@@ -91,7 +87,7 @@ class AgentSessionsSwingTreeInteractionTest {
       selectedTreeNode = SessionTreeNode.Thread(projectSessions, selectedThread),
       selectedArchiveTargets = listOf(selectedTarget),
     )
-    assertEquals(popupContext, contextFromPopup)
+    assertThat(contextFromPopup).isEqualTo(popupContext)
 
     val contextFromSelection = resolveArchiveActionContext(
       popupActionContext = null,
@@ -100,14 +96,13 @@ class AgentSessionsSwingTreeInteractionTest {
       selectedTreeNode = SessionTreeNode.Thread(projectSessions, selectedThread),
       selectedArchiveTargets = listOf(selectedTarget),
     )
-    assertEquals(
+    assertThat(contextFromSelection).isEqualTo(
       AgentSessionsTreePopupActionContext(
         project = project,
         nodeId = SessionTreeId.Thread("/work/project-b", AgentSessionProvider.CLAUDE, "selected-1"),
         node = SessionTreeNode.Thread(projectSessions, selectedThread),
         archiveTargets = listOf(selectedTarget),
-      ),
-      contextFromSelection,
+      )
     )
 
     val missingSelectionContext = resolveArchiveActionContext(
@@ -117,6 +112,6 @@ class AgentSessionsSwingTreeInteractionTest {
       selectedTreeNode = null,
       selectedArchiveTargets = listOf(selectedTarget),
     )
-    assertNull(missingSelectionContext)
+    assertThat(missingSelectionContext).isNull()
   }
 }

@@ -10,6 +10,7 @@ import com.intellij.agent.workbench.sessions.core.providers.AgentSessionProvider
 import com.intellij.agent.workbench.sessions.core.providers.AgentSessionSource
 import com.intellij.agent.workbench.sessions.core.providers.InMemoryAgentSessionProviderRegistry
 import com.intellij.testFramework.junit5.TestApplication
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
@@ -18,7 +19,7 @@ import java.util.concurrent.atomic.AtomicInteger
 @TestApplication
 class AgentSessionsServiceArchiveIntegrationTest {
   @Test
-  fun archiveThreadsArchivesAllSupportedTargetsAndSkipsUnsupportedOnes() = runBlocking {
+  fun archiveThreadsArchivesAllSupportedTargetsAndSkipsUnsupportedOnes() = runBlocking(Dispatchers.Default) {
     val codexThreads = mutableListOf(
       thread(id = "codex-1", updatedAt = 300, provider = AgentSessionProvider.CODEX),
     )
@@ -66,7 +67,7 @@ class AgentSessionsServiceArchiveIntegrationTest {
     }
 
     AgentSessionProviderBridges.withRegistryForTest(InMemoryAgentSessionProviderRegistry(listOf(codexBridge, claudeBridge))) {
-      runBlocking {
+      runBlocking(Dispatchers.Default) {
         withService(
           sessionSourcesProvider = { listOf(codexSource, claudeSource) },
           projectEntriesProvider = { listOf(openProjectEntry(PROJECT_PATH, "Project A")) },
@@ -97,7 +98,7 @@ class AgentSessionsServiceArchiveIntegrationTest {
   }
 
   @Test
-  fun archiveThreadRemovesThreadAndRefreshesState() = runBlocking {
+  fun archiveThreadRemovesThreadAndRefreshesState() = runBlocking(Dispatchers.Default) {
     val cleanupCalls = mutableListOf<Pair<String, String>>()
     val sourceThreads = mutableListOf(
       thread(id = "codex-1", updatedAt = 200, provider = AgentSessionProvider.CODEX),
@@ -118,7 +119,7 @@ class AgentSessionsServiceArchiveIntegrationTest {
     )
 
     AgentSessionProviderBridges.withRegistryForTest(InMemoryAgentSessionProviderRegistry(listOf(bridge))) {
-      runBlocking {
+      runBlocking(Dispatchers.Default) {
         withService(
           sessionSourcesProvider = { listOf(sessionSource) },
           projectEntriesProvider = { listOf(openProjectEntry(PROJECT_PATH, "Project A")) },
@@ -147,7 +148,7 @@ class AgentSessionsServiceArchiveIntegrationTest {
   }
 
   @Test
-  fun archiveThreadKeepsThreadHiddenWhenRefreshReturnsStaleData() = runBlocking {
+  fun archiveThreadKeepsThreadHiddenWhenRefreshReturnsStaleData() = runBlocking(Dispatchers.Default) {
     val cleanupCalls = mutableListOf<Pair<String, String>>()
     val listCalls = AtomicInteger(0)
     val staleSourceThreads = listOf(
@@ -172,7 +173,7 @@ class AgentSessionsServiceArchiveIntegrationTest {
     )
 
     AgentSessionProviderBridges.withRegistryForTest(InMemoryAgentSessionProviderRegistry(listOf(bridge))) {
-      runBlocking {
+      runBlocking(Dispatchers.Default) {
         withService(
           sessionSourcesProvider = { listOf(sessionSource) },
           projectEntriesProvider = { listOf(openProjectEntry(PROJECT_PATH, "Project A")) },
@@ -208,7 +209,7 @@ class AgentSessionsServiceArchiveIntegrationTest {
   }
 
   @Test
-  fun archiveThreadDoesNotCleanupChatMetadataWhenArchiveFails() = runBlocking {
+  fun archiveThreadDoesNotCleanupChatMetadataWhenArchiveFails() = runBlocking(Dispatchers.Default) {
     val cleanupCalls = mutableListOf<Pair<String, String>>()
     val sourceThreads = mutableListOf(
       thread(id = "codex-1", updatedAt = 200, provider = AgentSessionProvider.CODEX),
@@ -226,7 +227,7 @@ class AgentSessionsServiceArchiveIntegrationTest {
     )
 
     AgentSessionProviderBridges.withRegistryForTest(InMemoryAgentSessionProviderRegistry(listOf(bridge))) {
-      runBlocking {
+      runBlocking(Dispatchers.Default) {
         withService(
           sessionSourcesProvider = { listOf(sessionSource) },
           projectEntriesProvider = { listOf(openProjectEntry(PROJECT_PATH, "Project A")) },
@@ -254,7 +255,56 @@ class AgentSessionsServiceArchiveIntegrationTest {
   }
 
   @Test
-  fun archiveThreadRefreshesAndRemovesThreadWhenCleanupFails() = runBlocking {
+  fun archivePendingCodexThreadPerformsLocalCleanupWithoutBackendArchiveCall() = runBlocking(Dispatchers.Default) {
+    val cleanupCalls = mutableListOf<Pair<String, String>>()
+    val archiveCalls = AtomicInteger(0)
+    val sourceThreads = mutableListOf(
+      thread(id = "codex-2", updatedAt = 100, provider = AgentSessionProvider.CODEX),
+    )
+    val sessionSource = ScriptedSessionSource(
+      provider = AgentSessionProvider.CODEX,
+      listFromOpenProject = { path, _ ->
+        if (path == PROJECT_PATH) sourceThreads.toList() else emptyList()
+      },
+    )
+    val bridge = testCodexBridge(
+      sessionSource = sessionSource,
+      onArchive = { _, _ ->
+        archiveCalls.incrementAndGet()
+        false
+      },
+    )
+
+    AgentSessionProviderBridges.withRegistryForTest(InMemoryAgentSessionProviderRegistry(listOf(bridge))) {
+      runBlocking(Dispatchers.Default) {
+        withService(
+          sessionSourcesProvider = { listOf(sessionSource) },
+          projectEntriesProvider = { listOf(openProjectEntry(PROJECT_PATH, "Project A")) },
+          archiveChatCleanup = { projectPath, threadIdentity ->
+            cleanupCalls.add(projectPath to threadIdentity)
+          },
+        ) { service ->
+          service.refresh()
+          waitForCondition {
+            service.state.value.projects.firstOrNull()?.threads?.any { it.id == "codex-2" } == true
+          }
+
+          service.archiveThread(PROJECT_PATH, AgentSessionProvider.CODEX, "new-pending")
+
+          waitForCondition {
+            cleanupCalls.isNotEmpty()
+          }
+
+          assertThat(archiveCalls.get()).isEqualTo(0)
+          assertThat(cleanupCalls)
+            .containsExactly(PROJECT_PATH to buildAgentSessionIdentity(AgentSessionProvider.CODEX, "new-pending"))
+        }
+      }
+    }
+  }
+
+  @Test
+  fun archiveThreadRefreshesAndRemovesThreadWhenCleanupFails() = runBlocking(Dispatchers.Default) {
     val listCalls = AtomicInteger(0)
     val sourceThreads = mutableListOf(
       thread(id = "codex-1", updatedAt = 200, provider = AgentSessionProvider.CODEX),
@@ -281,7 +331,7 @@ class AgentSessionsServiceArchiveIntegrationTest {
     )
 
     AgentSessionProviderBridges.withRegistryForTest(InMemoryAgentSessionProviderRegistry(listOf(bridge))) {
-      runBlocking {
+      runBlocking(Dispatchers.Default) {
         withService(
           sessionSourcesProvider = { listOf(sessionSource) },
           projectEntriesProvider = { listOf(openProjectEntry(PROJECT_PATH, "Project A")) },
@@ -311,7 +361,7 @@ class AgentSessionsServiceArchiveIntegrationTest {
   }
 
   @Test
-  fun unarchiveThreadsRestoresArchivedCodexThread() = runBlocking {
+  fun unarchiveThreadsRestoresArchivedCodexThread() = runBlocking(Dispatchers.Default) {
     val sourceThreads = mutableListOf(
       thread(id = "codex-1", updatedAt = 200, provider = AgentSessionProvider.CODEX),
       thread(id = "codex-2", updatedAt = 100, provider = AgentSessionProvider.CODEX),
@@ -337,7 +387,7 @@ class AgentSessionsServiceArchiveIntegrationTest {
     )
 
     AgentSessionProviderBridges.withRegistryForTest(InMemoryAgentSessionProviderRegistry(listOf(bridge))) {
-      runBlocking {
+      runBlocking(Dispatchers.Default) {
         withService(
           sessionSourcesProvider = { listOf(sessionSource) },
           projectEntriesProvider = { listOf(openProjectEntry(PROJECT_PATH, "Project A")) },

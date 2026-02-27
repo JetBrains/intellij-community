@@ -133,6 +133,10 @@ internal class AgentSessionsLoadingCoordinator(
     enqueueRefresh(RefreshRequestType.CATALOG_SYNC)
   }
 
+  internal fun refreshProviderScope(provider: AgentSessionProvider, scopedPaths: Set<String>) {
+    enqueueSourceRefresh(provider = provider, scopedPaths = scopedPaths)
+  }
+
   private fun enqueueRefresh(requestType: RefreshRequestType) {
     var shouldStartProcessor = false
     synchronized(refreshQueueLock) {
@@ -812,10 +816,22 @@ internal class AgentSessionsLoadingCoordinator(
 
       syncOpenChatTabPresentation(provider = provider, outcomes = outcomes, refreshId = refreshId)
 
+      val pendingProjectionPaths = if (provider == AgentSessionProvider.CODEX) {
+        mergePendingCodexThreadsFromOpenTabs(
+          outcomes = outcomes,
+          targetPaths = targetPaths,
+          refreshId = refreshId,
+        )
+      }
+      else {
+        emptySet()
+      }
+
       stateStore.update { state ->
         var changed = false
         val nextProjects = state.projects.map { project ->
-          val updatedProject = if (project.hasLoaded) {
+          val shouldApplyProjectOutcome = project.hasLoaded || project.path in pendingProjectionPaths
+          val updatedProject = if (shouldApplyProjectOutcome) {
             val outcome = outcomes[project.path]
             if (outcome != null) {
               changed = true
@@ -830,7 +846,8 @@ internal class AgentSessionsLoadingCoordinator(
           }
 
           val nextWorktrees = updatedProject.worktrees.map { worktree ->
-            if (!worktree.hasLoaded) return@map worktree
+            val shouldApplyWorktreeOutcome = worktree.hasLoaded || worktree.path in pendingProjectionPaths
+            if (!shouldApplyWorktreeOutcome) return@map worktree
             val outcome = outcomes[worktree.path] ?: return@map worktree
             changed = true
             worktree.withProviderRefreshOutcome(provider, outcome)
@@ -1005,6 +1022,117 @@ internal class AgentSessionsLoadingCoordinator(
       result[path] = newThreadIds
     }
     return result
+  }
+
+  private suspend fun mergePendingCodexThreadsFromOpenTabs(
+    outcomes: MutableMap<String, ProviderRefreshOutcome>,
+    targetPaths: Set<String>,
+    refreshId: Long,
+  ): Set<String> {
+    val pendingTabsByPath = try {
+      openPendingCodexTabsProvider()
+    }
+    catch (e: Throwable) {
+      if (e is CancellationException) throw e
+      LOG.warn("Failed to collect pending Codex tabs for provider refresh projection", e)
+      return emptySet()
+    }
+
+    if (pendingTabsByPath.isEmpty() || outcomes.isEmpty()) {
+      return emptySet()
+    }
+
+    val normalizedTargetPaths = targetPaths
+      .asSequence()
+      .map(::normalizeAgentWorkbenchPath)
+      .toHashSet()
+    val outcomePathByNormalizedPath = LinkedHashMap<String, String>()
+    outcomes.keys.forEach { path ->
+      outcomePathByNormalizedPath.putIfAbsent(normalizeAgentWorkbenchPath(path), path)
+    }
+
+    val projectedPaths = LinkedHashSet<String>()
+    var projectedThreads = 0
+    for ((path, pendingTabs) in pendingTabsByPath) {
+      val normalizedPath = normalizeAgentWorkbenchPath(path)
+      if (normalizedPath !in normalizedTargetPaths) {
+        continue
+      }
+
+      val outcomePath = outcomePathByNormalizedPath[normalizedPath] ?: continue
+      val pendingThreads = buildPendingCodexThreads(pendingTabs)
+      if (pendingThreads.isEmpty()) {
+        continue
+      }
+
+      val existingOutcome = outcomes[outcomePath] ?: ProviderRefreshOutcome()
+      val mergedThreads = mergeProviderThreadsWithPendingCodex(
+        sourceThreads = existingOutcome.threads.orEmpty(),
+        pendingThreads = pendingThreads,
+      )
+      outcomes[outcomePath] = existingOutcome.copy(threads = mergedThreads)
+      projectedPaths += normalizedPath
+      projectedThreads += pendingThreads.size
+    }
+
+    if (projectedPaths.isNotEmpty()) {
+      LOG.debug {
+        "Provider refresh id=$refreshId provider=codex projected pending rows " +
+        "(paths=${projectedPaths.size}, threads=$projectedThreads)"
+      }
+    }
+
+    return projectedPaths
+  }
+
+  private fun buildPendingCodexThreads(
+    pendingTabs: List<AgentChatPendingCodexTabSnapshot>,
+  ): List<AgentSessionThread> {
+    val threadsById = LinkedHashMap<String, AgentSessionThread>()
+    for (pendingTab in pendingTabs) {
+      val identity = parseAgentSessionIdentity(pendingTab.pendingThreadIdentity) ?: continue
+      if (identity.provider != AgentSessionProvider.CODEX) continue
+      if (!isAgentSessionNewSessionId(identity.sessionId)) continue
+
+      val updatedAt = pendingTab.pendingFirstInputAtMs ?: pendingTab.pendingCreatedAtMs ?: 0L
+      val pendingThread = AgentSessionThread(
+        id = identity.sessionId,
+        title = AgentSessionsBundle.message("toolwindow.action.new.thread"),
+        updatedAt = updatedAt,
+        archived = false,
+        activity = AgentThreadActivity.READY,
+        provider = AgentSessionProvider.CODEX,
+      )
+      val existing = threadsById[identity.sessionId]
+      if (existing == null || pendingThread.updatedAt > existing.updatedAt) {
+        threadsById[identity.sessionId] = pendingThread
+      }
+    }
+    return threadsById.values.toList()
+  }
+
+  private fun mergeProviderThreadsWithPendingCodex(
+    sourceThreads: List<AgentSessionThread>,
+    pendingThreads: List<AgentSessionThread>,
+  ): List<AgentSessionThread> {
+    if (pendingThreads.isEmpty()) {
+      return sourceThreads
+    }
+
+    val threadsById = LinkedHashMap<String, AgentSessionThread>(sourceThreads.size + pendingThreads.size)
+    sourceThreads.forEach { thread ->
+      threadsById[thread.id] = thread
+    }
+    pendingThreads.forEach { pendingThread ->
+      val existing = threadsById[pendingThread.id]
+      threadsById[pendingThread.id] = if (existing == null || pendingThread.updatedAt >= existing.updatedAt) {
+        pendingThread
+      }
+      else {
+        existing
+      }
+    }
+    return threadsById.values.sortedByDescending { thread -> thread.updatedAt }
   }
 
   private fun clearPendingCodexAmbiguityState() {

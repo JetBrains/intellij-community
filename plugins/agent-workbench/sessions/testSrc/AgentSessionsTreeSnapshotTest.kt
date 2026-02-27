@@ -4,9 +4,7 @@ package com.intellij.agent.workbench.sessions
 import com.intellij.agent.workbench.sessions.core.AgentSessionProvider
 import com.intellij.agent.workbench.sessions.core.AgentSessionThread
 import com.intellij.testFramework.junit5.TestApplication
-import org.junit.jupiter.api.Assertions.assertEquals
-import org.junit.jupiter.api.Assertions.assertFalse
-import org.junit.jupiter.api.Assertions.assertTrue
+import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 
 @TestApplication
@@ -36,17 +34,17 @@ class AgentSessionsTreeSnapshotTest {
       treeUiState = InMemorySessionsTreeUiState(),
     )
 
-    assertEquals(
-      listOf(
-        SessionTreeId.Project(projectPath),
-        SessionTreeId.Project("/work/project-open"),
-        SessionTreeId.MoreProjects,
-      ),
-      model.rootIds,
-    )
+    assertThat(model.rootIds)
+      .isEqualTo(
+        listOf(
+          SessionTreeId.Project(projectPath),
+          SessionTreeId.Project("/work/project-open"),
+          SessionTreeId.MoreProjects,
+        )
+      )
 
     val projectNode = requireNotNull(model.entriesById[SessionTreeId.Project(projectPath)])
-    assertTrue(projectNode.childIds.any { it == SessionTreeId.MoreThreads(projectPath) })
+    assertThat(projectNode.childIds.any { it == SessionTreeId.MoreThreads(projectPath) }).isTrue()
   }
 
   @Test
@@ -76,8 +74,8 @@ class AgentSessionsTreeSnapshotTest {
       treeUiState = uiState,
     )
 
-    assertFalse(model.autoOpenProjects.contains(SessionTreeId.Project("/work/project-open")))
-    assertTrue(model.autoOpenProjects.contains(SessionTreeId.Project("/work/project-error")))
+    assertThat(model.autoOpenProjects.contains(SessionTreeId.Project("/work/project-open"))).isFalse()
+    assertThat(model.autoOpenProjects.contains(SessionTreeId.Project("/work/project-error"))).isTrue()
   }
 
   @Test
@@ -103,8 +101,8 @@ class AgentSessionsTreeSnapshotTest {
       threadNode = thread,
     )
 
-    assertEquals("/work/project-a-feature", target.path)
-    assertEquals(AgentSessionProvider.CLAUDE, target.provider)
-    assertEquals("thread-1", target.threadId)
+    assertThat(target.path).isEqualTo("/work/project-a-feature")
+    assertThat(target.provider).isEqualTo(AgentSessionProvider.CLAUDE)
+    assertThat(target.threadId).isEqualTo("thread-1")
   }
 }

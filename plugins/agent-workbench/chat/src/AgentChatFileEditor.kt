@@ -23,7 +23,7 @@ import java.util.concurrent.CancellationException
 import javax.swing.JComponent
 import javax.swing.JPanel
 
-private const val NEW_THREAD_FROM_EDITOR_TAB_ACTION_ID = "AgentWorkbenchChat.NewThreadFromEditorTab"
+private const val NEW_THREAD_FROM_EDITOR_TAB_ACTION_ID = "AgentWorkbenchSessions.TreePopup.NewThread"
 private const val BIND_PENDING_CODEX_THREAD_FROM_EDITOR_TAB_ACTION_ID = "AgentWorkbenchSessions.BindPendingCodexThreadFromEditorTab"
 
 internal class AgentChatFileEditor(

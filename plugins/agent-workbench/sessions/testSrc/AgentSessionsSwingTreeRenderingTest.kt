@@ -4,9 +4,7 @@ package com.intellij.agent.workbench.sessions
 import com.intellij.agent.workbench.sessions.core.AgentSessionProvider
 import com.intellij.agent.workbench.sessions.core.AgentSessionThread
 import com.intellij.testFramework.junit5.TestApplication
-import org.junit.jupiter.api.Assertions.assertEquals
-import org.junit.jupiter.api.Assertions.assertFalse
-import org.junit.jupiter.api.Assertions.assertTrue
+import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 
 @TestApplication
@@ -36,7 +34,7 @@ class AgentSessionsSwingTreeRenderingTest {
     )
 
     val projectNode = requireNotNull(model.entriesById[SessionTreeId.Project(projectPath)])
-    assertEquals(listOf(SessionTreeId.Error(projectPath)), projectNode.childIds)
+    assertThat(projectNode.childIds).isEqualTo(listOf(SessionTreeId.Error(projectPath)))
   }
 
   @Test
@@ -63,8 +61,8 @@ class AgentSessionsSwingTreeRenderingTest {
     )
 
     val projectNode = requireNotNull(model.entriesById[SessionTreeId.Project(projectPath)])
-    assertTrue(projectNode.childIds.any { it == SessionTreeId.Warning(projectPath, AgentSessionProvider.CLAUDE) })
-    assertFalse(projectNode.childIds.any { it == SessionTreeId.Empty(projectPath) })
+    assertThat(projectNode.childIds.any { it == SessionTreeId.Warning(projectPath, AgentSessionProvider.CLAUDE) }).isTrue()
+    assertThat(projectNode.childIds.any { it == SessionTreeId.Empty(projectPath) }).isFalse()
   }
 
   @Test
@@ -92,6 +90,6 @@ class AgentSessionsSwingTreeRenderingTest {
     val projectNode = requireNotNull(model.entriesById[SessionTreeId.Project(projectPath)])
     val moreNodeId = projectNode.childIds.firstOrNull { it == SessionTreeId.MoreThreads(projectPath) }
     val moreThreads = moreNodeId?.let { model.entriesById[it]?.node as? SessionTreeNode.MoreThreads }
-    assertEquals(null, moreThreads?.hiddenCount)
+    assertThat(moreThreads?.hiddenCount).isNull()
   }
 }

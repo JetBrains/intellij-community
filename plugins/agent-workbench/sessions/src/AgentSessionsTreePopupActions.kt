@@ -1,6 +1,8 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.agent.workbench.sessions
 
+import com.intellij.agent.workbench.chat.AgentChatEditorTabActionContext
+import com.intellij.agent.workbench.chat.resolveAgentChatEditorTabActionContext
 import com.intellij.agent.workbench.sessions.core.AgentSessionLaunchMode
 import com.intellij.agent.workbench.sessions.core.AgentSessionProvider
 import com.intellij.agent.workbench.sessions.core.AgentSessionThread
@@ -150,24 +152,39 @@ internal class AgentSessionsTreePopupMoreAction : DumbAwareAction {
 internal class AgentSessionsTreePopupNewThreadGroup @JvmOverloads constructor(
   private val resolveContext: (AnActionEvent) -> AgentSessionsTreePopupActionContext? =
     ::resolveAgentSessionsTreePopupActionContext,
+  private val resolveEditorContext: (AnActionEvent) -> AgentChatEditorTabActionContext? =
+    ::resolveAgentChatEditorTabActionContext,
   private val allBridges: () -> List<AgentSessionProviderBridge> = AgentSessionProviderBridges::allBridges,
   private val createNewSession: (String, AgentSessionProvider, AgentSessionLaunchMode, Project) -> Unit =
     { path: String, provider: AgentSessionProvider, mode: AgentSessionLaunchMode, currentProject: Project ->
       service<AgentSessionsService>().createNewSession(path, provider, mode, currentProject)
     },
+  private val lastUsedProvider: () -> AgentSessionProvider? = { service<AgentSessionsTreeUiStateService>().getLastUsedProvider() },
 ) : ActionGroup(), DumbAware {
 
   override fun update(e: AnActionEvent) {
-    val context = resolveContext(e)
-    val path = context?.let(::newSessionPathFromNode)
+    val launchContext = resolveLaunchContext(e)
     val menuModel = buildNewSessionMenuModel()
-    e.presentation.isEnabledAndVisible =
-      path != null && (menuModel.standardItems.isNotEmpty() || menuModel.yoloItems.isNotEmpty())
+    val quickStartItem = resolveQuickStartItem(menuModel)
+    if (launchContext == null || quickStartItem == null) {
+      e.presentation.isEnabledAndVisible = false
+      return
+    }
+
+    e.presentation.isEnabledAndVisible = true
+    e.presentation.isPopupGroup = true
+    e.presentation.isPerformGroup = true
+    e.presentation.icon = providerIcon(quickStartItem.bridge.provider) ?: templatePresentation.icon
+  }
+
+  override fun actionPerformed(e: AnActionEvent) {
+    val launchContext = resolveLaunchContext(e) ?: return
+    val quickStartItem = resolveQuickStartItem(buildNewSessionMenuModel()) ?: return
+    createNewSession(launchContext.path, quickStartItem.bridge.provider, AgentSessionLaunchMode.STANDARD, launchContext.project)
   }
 
   override fun getChildren(e: AnActionEvent?): Array<AnAction> {
-    val context = e?.let(resolveContext) ?: return emptyArray()
-    val path = newSessionPathFromNode(context) ?: return emptyArray()
+    val launchContext = resolveLaunchContext(e) ?: return emptyArray()
     val menuModel = buildNewSessionMenuModel()
     if (menuModel.standardItems.isEmpty() && menuModel.yoloItems.isEmpty()) {
       return emptyArray()
@@ -176,9 +193,9 @@ internal class AgentSessionsTreePopupNewThreadGroup @JvmOverloads constructor(
     val actions = ArrayList<AnAction>(menuModel.standardItems.size + menuModel.yoloItems.size + 2)
     menuModel.standardItems.forEach { item ->
       actions += AgentSessionsTreePopupCreateSessionAction(
-        path = path,
+        path = launchContext.path,
         item = item,
-        project = context.project,
+        project = launchContext.project,
         createNewSession = createNewSession,
       )
     }
@@ -189,9 +206,9 @@ internal class AgentSessionsTreePopupNewThreadGroup @JvmOverloads constructor(
       actions += Separator.create(AgentSessionsBundle.message("toolwindow.action.new.session.section.auto"))
       menuModel.yoloItems.forEach { item ->
         actions += AgentSessionsTreePopupCreateSessionAction(
-          path = path,
+          path = launchContext.path,
           item = item,
-          project = context.project,
+          project = launchContext.project,
           createNewSession = createNewSession,
         )
       }
@@ -200,6 +217,21 @@ internal class AgentSessionsTreePopupNewThreadGroup @JvmOverloads constructor(
   }
 
   override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.BGT
+
+  private fun resolveLaunchContext(event: AnActionEvent?): NewSessionLaunchContext? {
+    if (event == null) {
+      return null
+    }
+
+    val treeContext = resolveContext(event)
+    if (treeContext != null) {
+      val path = newSessionPathFromNode(treeContext) ?: return null
+      return NewSessionLaunchContext(path = path, project = treeContext.project)
+    }
+
+    val editorContext = resolveEditorContext(event) ?: return null
+    return NewSessionLaunchContext(path = editorContext.path, project = editorContext.project)
+  }
 
   private fun buildNewSessionMenuModel(): TreePopupNewSessionMenuModel {
     val bridges = allBridges()
@@ -231,6 +263,23 @@ internal class AgentSessionsTreePopupNewThreadGroup @JvmOverloads constructor(
       standardItems = standardItems,
       yoloItems = yoloItems,
     )
+  }
+
+  private fun resolveQuickStartItem(menuModel: TreePopupNewSessionMenuModel): TreePopupNewSessionMenuItem? {
+    val standardItems = menuModel.standardItems
+    if (standardItems.isEmpty()) {
+      return null
+    }
+
+    val preferredProvider = lastUsedProvider()
+    if (preferredProvider != null) {
+      val preferredItem = standardItems.firstOrNull { it.bridge.provider == preferredProvider && it.isEnabled }
+      if (preferredItem != null) {
+        return preferredItem
+      }
+    }
+
+    return standardItems.firstOrNull { it.isEnabled }
   }
 }
 
@@ -282,6 +331,11 @@ private fun morePopupLabel(node: SessionTreeNode): @Nls String {
 private data class TreePopupNewSessionMenuModel(
   val standardItems: List<TreePopupNewSessionMenuItem>,
   val yoloItems: List<TreePopupNewSessionMenuItem>,
+)
+
+private data class NewSessionLaunchContext(
+  val path: String,
+  val project: Project,
 )
 
 private data class TreePopupNewSessionMenuItem(

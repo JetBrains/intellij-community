@@ -4,6 +4,7 @@ package com.intellij.agent.workbench.sessions
 import com.intellij.agent.workbench.sessions.core.AgentSessionProvider
 import com.intellij.testFramework.junit5.TestApplication
 import kotlinx.coroutines.CompletableDeferred
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
@@ -12,7 +13,7 @@ import java.util.concurrent.atomic.AtomicInteger
 @TestApplication
 class AgentSessionsServiceOnDemandIntegrationTest {
   @Test
-  fun ensureThreadVisibleExpandsProjectVisibleCountForHiddenThread() = runBlocking {
+  fun ensureThreadVisibleExpandsProjectVisibleCountForHiddenThread() = runBlocking(Dispatchers.Default) {
     val treeUiState = InMemorySessionsTreeUiState()
     withService(
       sessionSourcesProvider = {
@@ -62,7 +63,7 @@ class AgentSessionsServiceOnDemandIntegrationTest {
   }
 
   @Test
-  fun showMoreThreadsUpdatesRuntimeVisibleCountWithoutPersistingUiState() = runBlocking {
+  fun showMoreThreadsUpdatesRuntimeVisibleCountWithoutPersistingUiState() = runBlocking(Dispatchers.Default) {
     val treeUiState = InMemorySessionsTreeUiState()
     withService(
       sessionSourcesProvider = {
@@ -93,7 +94,7 @@ class AgentSessionsServiceOnDemandIntegrationTest {
   }
 
   @Test
-  fun ensureThreadVisibleDoesNotChangeVisibleCountForAlreadyVisibleThread() = runBlocking {
+  fun ensureThreadVisibleDoesNotChangeVisibleCountForAlreadyVisibleThread() = runBlocking(Dispatchers.Default) {
     withService(
       sessionSourcesProvider = {
         listOf(
@@ -136,7 +137,7 @@ class AgentSessionsServiceOnDemandIntegrationTest {
   }
 
   @Test
-  fun loadProjectThreadsOnDemandDeduplicatesConcurrentRequests() = runBlocking {
+  fun loadProjectThreadsOnDemandDeduplicatesConcurrentRequests() = runBlocking(Dispatchers.Default) {
     val invocationCount = AtomicInteger(0)
     val started = CompletableDeferred<Unit>()
     val release = CompletableDeferred<Unit>()
@@ -186,7 +187,7 @@ class AgentSessionsServiceOnDemandIntegrationTest {
   }
 
   @Test
-  fun loadWorktreeThreadsOnDemandDeduplicatesConcurrentRequestsWhileRefreshLoadsWorktree() = runBlocking {
+  fun loadWorktreeThreadsOnDemandDeduplicatesConcurrentRequestsWhileRefreshLoadsWorktree() = runBlocking(Dispatchers.Default) {
     val invocationCount = AtomicInteger(0)
     val started = CompletableDeferred<Unit>()
     val release = CompletableDeferred<Unit>()

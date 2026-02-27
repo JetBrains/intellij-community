@@ -4,9 +4,7 @@ package com.intellij.agent.workbench.sessions
 import com.intellij.agent.workbench.sessions.core.AgentSessionProvider
 import com.intellij.agent.workbench.sessions.core.AgentSessionThread
 import com.intellij.testFramework.junit5.TestApplication
-import org.junit.jupiter.api.Assertions.assertEquals
-import org.junit.jupiter.api.Assertions.assertFalse
-import org.junit.jupiter.api.Assertions.assertTrue
+import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 
 @TestApplication
@@ -31,7 +29,7 @@ class AgentSessionsTreeModelDiffTest {
 
     val diff = diffSessionTreeModels(oldModel, newModel)
 
-    assertTrue(diff.rootChanged)
+    assertThat(diff.rootChanged).isTrue()
   }
 
   @Test
@@ -90,9 +88,9 @@ class AgentSessionsTreeModelDiffTest {
 
     val diff = diffSessionTreeModels(oldModel, newModel)
 
-    assertFalse(diff.rootChanged)
-    assertEquals(setOf(SessionTreeId.Project("/work/project-a")), diff.structureChangedIds)
-    assertTrue(diff.contentChangedIds.isEmpty())
+    assertThat(diff.rootChanged).isFalse()
+    assertThat(diff.structureChangedIds).isEqualTo(setOf(SessionTreeId.Project("/work/project-a")))
+    assertThat(diff.contentChangedIds.isEmpty()).isTrue()
   }
 
   @Test
@@ -144,11 +142,9 @@ class AgentSessionsTreeModelDiffTest {
 
     val diff = diffSessionTreeModels(oldModel, newModel)
 
-    assertFalse(diff.rootChanged)
-    assertTrue(diff.structureChangedIds.isEmpty())
-    assertEquals(
-      setOf(SessionTreeId.Thread("/work/project-a", AgentSessionProvider.CODEX, "thread-1")),
-      diff.contentChangedIds,
-    )
+    assertThat(diff.rootChanged).isFalse()
+    assertThat(diff.structureChangedIds.isEmpty()).isTrue()
+    assertThat(diff.contentChangedIds)
+      .isEqualTo(setOf(SessionTreeId.Thread("/work/project-a", AgentSessionProvider.CODEX, "thread-1")))
   }
 }

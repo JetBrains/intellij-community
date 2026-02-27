@@ -3,9 +3,7 @@ package com.intellij.agent.workbench.sessions
 
 import com.intellij.agent.workbench.sessions.core.AgentSessionProvider
 import com.intellij.testFramework.junit5.TestApplication
-import org.junit.jupiter.api.Assertions.assertEquals
-import org.junit.jupiter.api.Assertions.assertFalse
-import org.junit.jupiter.api.Assertions.assertTrue
+import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 
 @TestApplication
@@ -36,8 +34,8 @@ class AgentSessionsSwingTreeStatePersistenceTest {
       treeUiState = uiState,
     )
 
-    assertFalse(model.autoOpenProjects.contains(SessionTreeId.Project("/work/project-open")))
-    assertTrue(model.autoOpenProjects.contains(SessionTreeId.Project("/work/project-error")))
+    assertThat(model.autoOpenProjects.contains(SessionTreeId.Project("/work/project-open"))).isFalse()
+    assertThat(model.autoOpenProjects.contains(SessionTreeId.Project("/work/project-error"))).isTrue()
   }
 
   @Test
@@ -64,7 +62,7 @@ class AgentSessionsSwingTreeStatePersistenceTest {
       treeUiState = InMemorySessionsTreeUiState(),
     )
 
-    assertTrue(model.autoOpenProjects.contains(SessionTreeId.Project("/work/project-a")))
+    assertThat(model.autoOpenProjects.contains(SessionTreeId.Project("/work/project-a"))).isTrue()
   }
 
   @Test
@@ -77,7 +75,7 @@ class AgentSessionsSwingTreeStatePersistenceTest {
       subAgentId = "sub-1",
     )
 
-    assertEquals(
+    assertThat(parentNodesForSelection(selectedTreeId)).isEqualTo(
       listOf(
         SessionTreeId.Project("/work/project-a"),
         SessionTreeId.Worktree("/work/project-a", "/work/project-a-feature"),
@@ -87,8 +85,7 @@ class AgentSessionsSwingTreeStatePersistenceTest {
           provider = AgentSessionProvider.CODEX,
           threadId = "thread-1",
         ),
-      ),
-      parentNodesForSelection(selectedTreeId),
+      )
     )
   }
 }

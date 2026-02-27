@@ -5,6 +5,7 @@ import com.intellij.agent.workbench.codex.sessions.backend.rollout.CodexRolloutS
 import com.intellij.agent.workbench.filewatch.AgentWorkbenchWatchEvent
 import com.intellij.agent.workbench.filewatch.AgentWorkbenchWatchEventType
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
@@ -16,7 +17,7 @@ class CodexRolloutSessionsWatcherTest {
   lateinit var tempDir: Path
 
   @Test
-  fun rolloutFileEventProducesPathScopedChange() = runBlocking {
+  fun rolloutFileEventProducesPathScopedChange() = runBlocking(Dispatchers.Default) {
     withWatcher(this) { watcher, _, sessionsRoot ->
       val rolloutPath = sessionsRoot.resolve("2026/02/16/rollout-thread.jsonl")
 
@@ -37,7 +38,7 @@ class CodexRolloutSessionsWatcherTest {
   }
 
   @Test
-  fun nonRolloutRegularFileEventInSessionsEmitsRefreshPing() = runBlocking {
+  fun nonRolloutRegularFileEventInSessionsEmitsRefreshPing() = runBlocking(Dispatchers.Default) {
     withWatcher(this) { watcher, _, sessionsRoot ->
       val nonRolloutPath = sessionsRoot.resolve("2026/02/16/thread.tmp")
 
@@ -58,7 +59,7 @@ class CodexRolloutSessionsWatcherTest {
   }
 
   @Test
-  fun fileEventOutsideSessionsIsIgnoredEvenIfRootIsCodexHome() = runBlocking {
+  fun fileEventOutsideSessionsIsIgnoredEvenIfRootIsCodexHome() = runBlocking(Dispatchers.Default) {
     withWatcher(this) { watcher, codexHome, _ ->
       val outsideSessionsPath = codexHome.resolve("config.toml")
 
@@ -77,7 +78,7 @@ class CodexRolloutSessionsWatcherTest {
   }
 
   @Test
-  fun directoryEventInSessionsRequestsFullRescan() = runBlocking {
+  fun directoryEventInSessionsRequestsFullRescan() = runBlocking(Dispatchers.Default) {
     withWatcher(this) { watcher, _, sessionsRoot ->
       val dayDir = sessionsRoot.resolve("2026/02/16")
 
@@ -98,7 +99,7 @@ class CodexRolloutSessionsWatcherTest {
   }
 
   @Test
-  fun overflowInSessionsRequestsFullRescan() = runBlocking {
+  fun overflowInSessionsRequestsFullRescan() = runBlocking(Dispatchers.Default) {
     withWatcher(this) { watcher, _, sessionsRoot ->
       val changeSet = watcher.eventToChangeSet(
         AgentWorkbenchWatchEvent(

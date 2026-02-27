@@ -1,9 +1,7 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.agent.workbench.sessions
 
-import org.junit.jupiter.api.Assertions.assertEquals
-import org.junit.jupiter.api.Assertions.assertFalse
-import org.junit.jupiter.api.Assertions.assertTrue
+import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 
 class SessionTreeInteractionTest {
@@ -11,27 +9,24 @@ class SessionTreeInteractionTest {
   fun singleClickActionIsReservedForMoreRows() {
     val project = AgentProjectSessions(path = "/work/project-a", name = "Project A", isOpen = true)
 
-    assertTrue(shouldHandleSingleClick(SessionTreeNode.MoreProjects(hiddenCount = 2)))
-    assertTrue(shouldHandleSingleClick(SessionTreeNode.MoreThreads(project = project, hiddenCount = 4)))
-    assertFalse(shouldHandleSingleClick(SessionTreeNode.Project(project)))
-    assertFalse(shouldHandleSingleClick(SessionTreeNode.Warning("warning")))
+    assertThat(shouldHandleSingleClick(SessionTreeNode.MoreProjects(hiddenCount = 2))).isTrue()
+    assertThat(shouldHandleSingleClick(SessionTreeNode.MoreThreads(project = project, hiddenCount = 4))).isTrue()
+    assertThat(shouldHandleSingleClick(SessionTreeNode.Project(project))).isFalse()
+    assertThat(shouldHandleSingleClick(SessionTreeNode.Warning("warning"))).isFalse()
   }
 
   @Test
   fun resolvesMoreThreadPathForProjectAndWorktreeRows() {
-    assertEquals(
-      "/work/project-a",
-      pathForMoreThreadsNode(SessionTreeId.MoreThreads(projectPath = "/work/project-a")),
-    )
-    assertEquals(
-      "/work/project-feature",
+    assertThat(pathForMoreThreadsNode(SessionTreeId.MoreThreads(projectPath = "/work/project-a")))
+      .isEqualTo("/work/project-a")
+    assertThat(
       pathForMoreThreadsNode(
         SessionTreeId.WorktreeMoreThreads(
           projectPath = "/work/project-a",
           worktreePath = "/work/project-feature",
         )
-      ),
-    )
-    assertEquals(null, pathForMoreThreadsNode(SessionTreeId.MoreProjects))
+      )
+    ).isEqualTo("/work/project-feature")
+    assertThat(pathForMoreThreadsNode(SessionTreeId.MoreProjects)).isNull()
   }
 }

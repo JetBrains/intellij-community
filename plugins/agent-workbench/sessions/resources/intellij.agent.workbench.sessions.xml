@@ -31,9 +31,6 @@
     <statusBarWidgetFactory
       id="claude.quota"
       implementation="com.intellij.agent.workbench.sessions.claude.ClaudeQuotaStatusBarWidgetFactory"/>
-    <applicationService
-      serviceInterface="com.intellij.agent.workbench.sessions.core.AgentThreadQuickStartService"
-      serviceImplementation="com.intellij.agent.workbench.sessions.AgentThreadQuickStartServiceImpl"/>
   </extensions>
 
   <actions resource-bundle="messages.AgentSessionsBundle">
@@ -59,6 +56,7 @@
     <group
       id="AgentWorkbenchSessions.TreePopup.NewThread"
       popup="true"
+      icon="AllIcons.General.Add"
       class="com.intellij.agent.workbench.sessions.AgentSessionsTreePopupNewThreadGroup"/>
     <action
       id="AgentWorkbenchSessions.TreePopup.Archive"

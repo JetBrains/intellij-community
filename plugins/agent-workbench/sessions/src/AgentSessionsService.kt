@@ -293,6 +293,9 @@ internal class AgentSessionsService private constructor(
       } ?: buildAgentSessionNewIdentity(provider)
 
       openNewChat(normalizedPath = normalizedPath, identity = identity, command = launchSpec.command)
+      if (provider == AgentSessionProvider.CODEX) {
+        loadingCoordinator.refreshProviderScope(provider = provider, scopedPaths = setOf(normalizedPath))
+      }
     }
   }
 
@@ -380,6 +383,23 @@ internal class AgentSessionsService private constructor(
 
     targets.forEach { target ->
       val provider = target.provider
+
+      if (provider == AgentSessionProvider.CODEX && isAgentSessionNewSessionId(target.threadId)) {
+        stateStore.removeThread(target.path, provider, target.threadId)
+        val threadIdentity = buildAgentSessionIdentity(provider, target.threadId)
+        try {
+          archiveChatCleanup(target.path, threadIdentity)
+        }
+        catch (t: Throwable) {
+          if (t is CancellationException) {
+            throw t
+          }
+          LOG.warn("Failed to clean archived pending thread chat metadata for ${provider}:${target.threadId}", t)
+        }
+        archivedTargets.add(target)
+        return@forEach
+      }
+
       val bridge = AgentSessionProviderBridges.find(provider)
       if (bridge == null) {
         logMissingProviderBridge(provider)
