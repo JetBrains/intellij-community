@@ -155,11 +155,14 @@ class AgentSessionsGearActionsTest {
   @Test
   fun dedicatedFrameRegistersMainToolbarSourceProjectAction() {
     val actionManager = ActionManager.getInstance()
+    val descriptor = checkNotNull(javaClass.classLoader.getResource("intellij.agent.workbench.sessions.xml")) {
+      "Module descriptor intellij.agent.workbench.sessions.xml is missing"
+    }.readText()
 
     assertThat(actionManager.getAction("AgentWorkbenchSessions.GoToSourceProjectFromToolbar"))
       .isNotNull
       .isInstanceOf(AgentSessionsGoToSourceProjectFromToolbarAction::class.java)
-    assertThat(actionsDescriptor())
+    assertThat(descriptor)
       .contains("id=\"AgentWorkbenchSessions.GoToSourceProjectFromToolbar\"")
       .contains("<add-to-group group-id=\"MainToolbarRight\" anchor=\"before\" relative-to-action=\"NewUiRunWidget\"/>")
   }

@@ -57,6 +57,81 @@ class AgentSessionsSwingTreeCellRendererTest {
   }
 
   @Test
+  fun loadingProjectRowsUseProjectIconAndNoLoadingText() {
+    val project = AgentProjectSessions(path = "/work/project-a", name = "Project A", isOpen = true, isLoading = true)
+    val projectId = SessionTreeId.Project(project.path)
+    val renderer = SessionTreeCellRenderer(
+      nowProvider = { 0L },
+      rowActionsProvider = { _, _, _ -> null },
+      nodeResolver = { id ->
+        if (id == projectId) SessionTreeNode.Project(project) else null
+      },
+    )
+    val tree = createTree(width = 420)
+
+    renderer.getTreeCellRendererComponent(tree, descriptorValue(projectId), false, false, false, 0, false)
+
+    assertThat(renderer.getCharSequence(true).toString()).doesNotContain(AgentSessionsBundle.message("toolwindow.loading"))
+    assertThat(renderer.icon).isEqualTo(ProductIcons.getInstance().getProjectNodeIcon())
+    assertThat(renderer.ipad.right).isEqualTo(0)
+    assertThat(renderer.accessibleContext.accessibleName).contains(AgentSessionsBundle.message("toolwindow.loading"))
+  }
+
+  @Test
+  fun loadingWorktreeRowsUseBranchIconAndReserveRightActionSpace() {
+    val project = AgentProjectSessions(path = "/work/project-a", name = "Project A", isOpen = true)
+    val worktree = AgentWorktree(
+      path = "/work/project-a-feature",
+      name = "project-a-feature",
+      branch = "feature",
+      isOpen = false,
+      isLoading = true,
+    )
+    val worktreeId = SessionTreeId.Worktree(project.path, worktree.path)
+    val renderer = SessionTreeCellRenderer(
+      nowProvider = { 0L },
+      rowActionsProvider = { _, _, _ ->
+        SessionTreeRowActionPresentation(
+          showLoadingAction = true,
+          quickIcon = AllIcons.General.Add,
+          showQuickAction = true,
+          showPopupAction = true,
+          hoveredKind = null,
+        )
+      },
+      nodeResolver = { id ->
+        if (id == worktreeId) SessionTreeNode.Worktree(project, worktree) else null
+      },
+    )
+    val tree = createTree(width = 420)
+
+    renderer.getTreeCellRendererComponent(tree, descriptorValue(worktreeId), false, false, false, 0, false)
+
+    assertThat(renderer.getCharSequence(true).toString()).doesNotContain(AgentSessionsBundle.message("toolwindow.loading"))
+    assertThat(renderer.icon).isEqualTo(AllIcons.Vcs.BranchNode)
+    assertThat(renderer.ipad.right).isEqualTo(sessionTreeRowActionRightPadding(actionSlots = 3))
+    assertThat(renderer.accessibleContext.accessibleName).contains(AgentSessionsBundle.message("toolwindow.loading"))
+  }
+
+  @Test
+  fun rowActionsRightBoundaryRespectsSelectionRightInset() {
+    val withoutInset = sessionTreeRowActionsRightBoundary(
+      helperWidth = 300,
+      helperRightMargin = 8,
+      rightGap = 4,
+      selectionRightInset = 0,
+    )
+    val withInset = sessionTreeRowActionsRightBoundary(
+      helperWidth = 300,
+      helperRightMargin = 8,
+      rightGap = 4,
+      selectionRightInset = 12,
+    )
+
+    assertThat(withInset).isEqualTo(withoutInset - 12)
+  }
+
+  @Test
   fun moreProjectRowsUseMutedTextWithoutLeadingIcon() {
     val moreId = SessionTreeId.MoreProjects
     val hiddenCount = 44
@@ -260,6 +335,46 @@ class AgentSessionsSwingTreeCellRendererTest {
   }
 
   @Test
+  fun threadTooltipContainsFullTitleAndUpdatedTime() {
+    val now = 28L * 24L * 60L * 60L * 1000L
+    val project = AgentProjectSessions(path = "/work/project-a", name = "Project A", isOpen = true)
+    val thread = AgentSessionThread(
+      provider = AgentSessionProvider.CODEX,
+      id = "thread-1",
+      title = "How much time need to compute A-C?",
+      updatedAt = 14L * 24L * 60L * 60L * 1000L,
+      archived = false,
+    )
+    val tooltip = buildSessionTreeThreadTooltipHtml(
+      treeNode = SessionTreeNode.Thread(project, thread),
+      now = now,
+    )
+
+    assertThat(tooltip).contains("<html>")
+    assertThat(tooltip).contains("How much time need to compute A-C?")
+    assertThat(tooltip).contains(AgentSessionsBundle.message("toolwindow.updated", "2w"))
+  }
+
+  @Test
+  fun threadTooltipOmitsUpdatedLineWhenTimestampMissing() {
+    val project = AgentProjectSessions(path = "/work/project-a", name = "Project A", isOpen = true)
+    val thread = AgentSessionThread(
+      provider = AgentSessionProvider.CODEX,
+      id = "thread-1",
+      title = "How much time",
+      updatedAt = 0L,
+      archived = false,
+    )
+    val tooltip = buildSessionTreeThreadTooltipHtml(
+      treeNode = SessionTreeNode.Thread(project, thread),
+      now = System.currentTimeMillis(),
+    )
+
+    assertThat(tooltip).contains("How much time")
+    assertThat(tooltip).doesNotContain("Updated")
+  }
+
+  @Test
   fun threadTrailingMetadataUsesSharedTimeColumnForStableReserveWidth() {
     val tree = createTree(width = 460)
     val metrics = tree.getFontMetrics(tree.font)
@@ -290,6 +405,57 @@ class AgentSessionsSwingTreeCellRendererTest {
     assertThat(shortTrailing.timeX).isNotEqualTo(longTrailing.timeX)
     assertThat(shortTrailing.timeX!! + shortTrailing.timeTextWidth).isEqualTo(shortTrailing.timeRightBoundary)
     assertThat(longTrailing.timeX!! + longTrailing.timeTextWidth).isEqualTo(longTrailing.timeRightBoundary)
+  }
+
+  @Test
+  fun threadTimePaintXClampsWhenPreferredPositionFallsOutsideRendererWidth() {
+    val rendererWidth = 180
+    val timeTextWidth = 20
+    val maxVisibleX = resolveSessionTreeThreadTimePaintX(
+      preferredX = Int.MAX_VALUE,
+      rendererWidth = rendererWidth,
+      timeTextWidth = timeTextWidth,
+    )
+
+    val clampedX = resolveSessionTreeThreadTimePaintX(
+      preferredX = 420,
+      rendererWidth = rendererWidth,
+      timeTextWidth = timeTextWidth,
+    )
+
+    assertThat(clampedX).isEqualTo(maxVisibleX)
+  }
+
+  @Test
+  fun threadTimePaintXPreservesPreferredPositionWhenItIsVisible() {
+    val preferredX = 30
+
+    val x = resolveSessionTreeThreadTimePaintX(
+      preferredX = preferredX,
+      rendererWidth = 180,
+      timeTextWidth = 20,
+    )
+
+    assertThat(x).isEqualTo(preferredX)
+  }
+
+  @Test
+  fun threadTimePaintXRespectsSelectionRightInset() {
+    val withoutInset = resolveSessionTreeThreadTimePaintX(
+      preferredX = Int.MAX_VALUE,
+      rendererWidth = 180,
+      timeTextWidth = 20,
+      selectionRightInset = 0,
+    )
+
+    val withInset = resolveSessionTreeThreadTimePaintX(
+      preferredX = Int.MAX_VALUE,
+      rendererWidth = 180,
+      timeTextWidth = 20,
+      selectionRightInset = 16,
+    )
+
+    assertThat(withInset).isLessThan(withoutInset)
   }
 
   @Test
