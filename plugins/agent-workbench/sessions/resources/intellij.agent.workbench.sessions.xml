@@ -59,6 +59,14 @@
       icon="AllIcons.General.Add"
       class="com.intellij.agent.workbench.sessions.AgentSessionsTreePopupNewThreadGroup"/>
     <action
+      id="AgentWorkbenchSessions.EditorTab.NewThreadQuick"
+      class="com.intellij.agent.workbench.sessions.AgentSessionsEditorTabNewThreadQuickAction"/>
+    <group
+      id="AgentWorkbenchSessions.EditorTab.NewThreadPopup"
+      popup="true"
+      icon="AllIcons.General.Add"
+      class="com.intellij.agent.workbench.sessions.AgentSessionsEditorTabNewThreadPopupGroup"/>
+    <action
       id="AgentWorkbenchSessions.TreePopup.Archive"
       class="com.intellij.agent.workbench.sessions.AgentSessionsArchiveThreadAction"/>
     <group id="AgentWorkbenchSessions.TreePopup">

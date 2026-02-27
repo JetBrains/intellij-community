@@ -9,8 +9,6 @@ import com.intellij.agent.workbench.common.AgentThreadActivity
 import com.intellij.agent.workbench.sessions.claude.ClaudeQuotaStatusBarWidgetSettings
 import com.intellij.agent.workbench.sessions.core.AgentSessionLaunchMode
 import com.intellij.agent.workbench.sessions.core.AgentSessionProvider
-import com.intellij.agent.workbench.sessions.core.providers.AgentSessionProviderBridge
-import com.intellij.agent.workbench.sessions.core.providers.AgentSessionProviderBridges
 import com.intellij.icons.AllIcons
 import com.intellij.ide.ui.ProductIcons
 import com.intellij.ide.util.treeView.AbstractTreeStructure
@@ -19,16 +17,10 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.ActionGroup
 import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.actionSystem.ActionPlaces
-import com.intellij.openapi.actionSystem.ActionUpdateThread
-import com.intellij.openapi.actionSystem.AnAction
-import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.DataSink
-import com.intellij.openapi.actionSystem.DefaultActionGroup
-import com.intellij.openapi.actionSystem.Separator
 import com.intellij.openapi.actionSystem.UiDataProvider
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.components.service
-import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.registry.Registry
@@ -65,7 +57,6 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
-import org.jetbrains.annotations.Nls
 import java.awt.BorderLayout
 import java.awt.Color
 import java.awt.Cursor
@@ -308,7 +299,8 @@ internal class AgentSessionsToolWindowPanel(
     if (!canShowActions) return null
 
     val path = tree.getPathForRow(row) ?: return null
-    val treeNode = treeNodeFromPath(path) ?: return null
+    val treeId = idFromPath(path) ?: return null
+    val treeNode = sessionTreeNode(treeId) ?: return null
     val rowActions = resolveNewSessionRowActions(treeNode, lastUsedProvider) ?: return null
     val presentation = rowActionPresentation(
       row = row,
@@ -318,11 +310,11 @@ internal class AgentSessionsToolWindowPanel(
     val rects = rowActionRects(row = row, presentation = presentation) ?: return null
     val quickRect = rects.quickRect
     if (quickRect != null && quickRect.contains(point)) {
-      return RowActionHit(row = row, kind = RowActionKind.QuickCreate, actions = rowActions, rects = rects)
+      return RowActionHit(row = row, nodeId = treeId, node = treeNode, kind = RowActionKind.QuickCreate, actions = rowActions, rects = rects)
     }
     val popupRect = rects.popupRect
     if (popupRect != null && popupRect.contains(point)) {
-      return RowActionHit(row = row, kind = RowActionKind.ShowPopup, actions = rowActions, rects = rects)
+      return RowActionHit(row = row, nodeId = treeId, node = treeNode, kind = RowActionKind.ShowPopup, actions = rowActions, rects = rects)
     }
     return null
   }
@@ -346,7 +338,12 @@ internal class AgentSessionsToolWindowPanel(
 
       RowActionKind.ShowPopup -> {
         val popupRect = hit.rects.popupRect ?: return false
-        showNewSessionActionPopup(path = hit.actions.path, anchorRect = popupRect, row = hit.row)
+        showNewSessionActionPopup(
+          nodeId = hit.nodeId,
+          node = hit.node,
+          anchorRect = popupRect,
+          row = hit.row,
+        )
       }
     }
     return true
@@ -370,73 +367,44 @@ internal class AgentSessionsToolWindowPanel(
     tree.cursor = Cursor.getDefaultCursor()
   }
 
-  private fun showNewSessionActionPopup(path: String, anchorRect: Rectangle, row: Int) {
-    val group = createNewSessionActionGroup(path) ?: return
-    val popupMenu = ActionManager.getInstance().createActionPopupMenu(ActionPlaces.TOOLWINDOW_POPUP, group).component
+  private fun showNewSessionActionPopup(
+    nodeId: SessionTreeId,
+    node: SessionTreeNode,
+    anchorRect: Rectangle,
+    row: Int,
+  ) {
+    val actionGroup = ActionManager.getInstance().getAction(AGENT_SESSIONS_TREE_POPUP_NEW_THREAD_GROUP_ID) as? ActionGroup
+                      ?: return
+    popupActionContext = AgentSessionsTreePopupActionContext(
+      project = project,
+      nodeId = nodeId,
+      node = node,
+      archiveTargets = selectedArchiveTargets(),
+    )
+    val popupMenu = ActionManager.getInstance().createActionPopupMenu(ActionPlaces.TOOLWINDOW_POPUP, actionGroup)
+    popupMenu.setTargetComponent(tree)
     popupPinnedRow = row
     TreeUtil.repaintRow(tree, row)
-    popupMenu.addPopupMenuListener(object : javax.swing.event.PopupMenuListener {
+    popupMenu.component.addPopupMenuListener(object : javax.swing.event.PopupMenuListener {
       override fun popupMenuWillBecomeVisible(e: javax.swing.event.PopupMenuEvent?) = Unit
 
       override fun popupMenuWillBecomeInvisible(e: javax.swing.event.PopupMenuEvent?) {
         clearPopupPinnedRow(row)
+        clearPopupActionContext()
       }
 
       override fun popupMenuCanceled(e: javax.swing.event.PopupMenuEvent?) {
         clearPopupPinnedRow(row)
+        clearPopupActionContext()
       }
     })
-    popupMenu.show(tree, anchorRect.x, anchorRect.y + anchorRect.height)
+    popupMenu.component.show(tree, anchorRect.x, anchorRect.y + anchorRect.height)
   }
 
   private fun clearPopupPinnedRow(row: Int) {
     if (popupPinnedRow != row) return
     popupPinnedRow = null
     TreeUtil.repaintRow(tree, row)
-  }
-
-  private fun createNewSessionActionGroup(path: String): DefaultActionGroup? {
-    val menuModel = buildNewSessionMenuModel()
-    if (menuModel.standardItems.isEmpty() && menuModel.yoloItems.isEmpty()) return null
-
-    val group = DefaultActionGroup()
-    menuModel.standardItems.forEach { item ->
-      group.add(createNewSessionAction(path, item))
-    }
-    if (menuModel.yoloItems.isNotEmpty()) {
-      if (menuModel.standardItems.isNotEmpty()) {
-        group.addSeparator()
-      }
-      group.add(Separator.create(AgentSessionsBundle.message("toolwindow.action.new.session.section.auto")))
-      menuModel.yoloItems.forEach { item ->
-        group.add(createNewSessionAction(path, item))
-      }
-    }
-    return group
-  }
-
-  private fun createNewSessionAction(path: String, item: NewSessionMenuItem): AnAction {
-    return object : DumbAwareAction(item.label, null, providerIcon(item.bridge.provider)) {
-      override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.EDT
-
-      override fun update(e: AnActionEvent) {
-        e.presentation.isEnabled = item.isEnabled
-        if (!item.isEnabled) {
-          e.presentation.description = AgentSessionsBundle.message(
-            "toolwindow.action.new.session.unavailable",
-            providerDisplayName(item.bridge.provider),
-          )
-        }
-        else {
-          e.presentation.description = null
-        }
-      }
-
-      override fun actionPerformed(e: AnActionEvent) {
-        if (!item.isEnabled) return
-        service.createNewSession(path, item.bridge.provider, item.mode, project)
-      }
-    }
   }
 
   private fun maybeShowPopup(event: MouseEvent) {
@@ -484,38 +452,6 @@ internal class AgentSessionsToolWindowPanel(
       selectedTreeId = selectedTreeId,
       selectedTreeNode = selectedTreeNode,
       selectedArchiveTargets = selectedArchiveTargets(),
-    )
-  }
-
-  private fun buildNewSessionMenuModel(): NewSessionMenuModel {
-    val bridges = AgentSessionProviderBridges.allBridges()
-    val standardItems = ArrayList<NewSessionMenuItem>(bridges.size)
-    val yoloItems = ArrayList<NewSessionMenuItem>()
-
-    bridges.forEach { bridge ->
-      if (AgentSessionLaunchMode.STANDARD in bridge.supportedLaunchModes) {
-        standardItems += NewSessionMenuItem(
-          bridge = bridge,
-          mode = AgentSessionLaunchMode.STANDARD,
-          label = AgentSessionsBundle.message(bridge.newSessionLabelKey),
-          isEnabled = true,
-        )
-      }
-
-      val yoloLabelKey = bridge.yoloSessionLabelKey
-      if (yoloLabelKey != null && AgentSessionLaunchMode.YOLO in bridge.supportedLaunchModes) {
-        yoloItems += NewSessionMenuItem(
-          bridge = bridge,
-          mode = AgentSessionLaunchMode.YOLO,
-          label = AgentSessionsBundle.message(yoloLabelKey),
-          isEnabled = true,
-        )
-      }
-    }
-
-    return NewSessionMenuModel(
-      standardItems = standardItems,
-      yoloItems = yoloItems,
     )
   }
 
@@ -871,6 +807,8 @@ private data class RowActionRects(
 
 private data class RowActionHit(
   val row: Int,
+  val nodeId: SessionTreeId,
+  val node: SessionTreeNode,
   val kind: RowActionKind,
   val actions: NewSessionRowActions,
   val rects: RowActionRects,
@@ -889,18 +827,6 @@ internal data class SessionTreeRowActionPresentation(
       (if (showQuickAction) 1 else 0) +
       (if (showPopupAction) 1 else 0)
 }
-
-private data class NewSessionMenuModel(
-  val standardItems: List<NewSessionMenuItem>,
-  val yoloItems: List<NewSessionMenuItem>,
-)
-
-private data class NewSessionMenuItem(
-  val bridge: AgentSessionProviderBridge,
-  val mode: AgentSessionLaunchMode,
-  val label: @Nls String,
-  val isEnabled: Boolean,
-)
 
 private const val SESSION_TREE_ACTION_SLOT_SIZE = 18
 private const val SESSION_TREE_ACTION_ICON_SIZE = 14

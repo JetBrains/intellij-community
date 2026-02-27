@@ -1,16 +1,22 @@
 ---
 name: Agent Sessions New-Session Actions
-description: Requirements for Swing tree new-thread affordances, provider selection popup, and service-level creation flow.
+description: Requirements for tree and editor-tab new-thread affordances, provider selection popup parity, and service-level creation flow.
 targets:
   - ../../sessions/src/AgentSessionsToolWindow.kt
   - ../../sessions/src/SessionTree.kt
+  - ../../sessions/src/AgentSessionsTreePopupActions.kt
   - ../../sessions/src/AgentSessionsService.kt
   - ../../sessions/src/AgentSessionCli.kt
+  - ../../chat/src/AgentChatFileEditor.kt
+  - ../../sessions/resources/intellij.agent.workbench.sessions.xml
   - ../../codex/sessions/src/CodexAgentSessionProviderBridge.kt
   - ../../codex/sessions/src/backend/CodexSessionBackendSelector.kt
   - ../../sessions/resources/messages/AgentSessionsBundle.properties
   - ../../chat/testSrc/AgentChatEditorServiceTest.kt
   - ../../sessions/testSrc/AgentSessionsSwingNewSessionActionsTest.kt
+  - ../../sessions/testSrc/AgentSessionsTreePopupActionsTest.kt
+  - ../../sessions/testSrc/AgentSessionsEditorTabActionsTest.kt
+  - ../../sessions/testSrc/AgentSessionsGearActionsTest.kt
   - ../../sessions/testSrc/AgentSessionCliTest.kt
   - ../../sessions/testSrc/AgentSessionsLoadingCoordinatorTest.kt
   - ../../codex/sessions/testSrc/CodexAgentSessionProviderBridgeTest.kt
@@ -19,10 +25,10 @@ targets:
 # Agent Sessions New-Session Actions
 
 Status: Draft
-Date: 2026-02-24
+Date: 2026-02-27
 
 ## Summary
-Define project/worktree `New Thread` behavior in the Swing tree implementation:
+Define project/worktree `New Thread` behavior across tree and editor-tab actions:
 - hover/selection row affordances,
 - quick-create with last used provider,
 - provider popup with Standard and YOLO entries,
@@ -33,6 +39,7 @@ Canonical command mapping is owned by `spec/agent-core-contracts.spec.md`.
 ## Goals
 - Keep new-thread behavior identical for project and worktree rows.
 - Keep provider and YOLO mode choices explicit and testable.
+- Keep tree and editor-tab new-thread controls consistent in labels, provider order, and mode sections.
 - Prevent duplicate creation from repeated clicks.
 - Keep Codex pending-thread creation flow compatible with rollout-default discovery.
 
@@ -58,6 +65,17 @@ Canonical command mapping is owned by `spec/agent-core-contracts.spec.md`.
 
 - Provider popup must include Standard entries and YOLO entries (`toolwindow.action.new.session.section.auto`) when launch mode support is available.
   [@test] ../../sessions/testSrc/AgentSessionsSwingNewSessionActionsTest.kt
+  [@test] ../../sessions/testSrc/AgentSessionsTreePopupActionsTest.kt
+  [@test] ../../sessions/testSrc/AgentSessionsEditorTabActionsTest.kt
+
+- Tree popup new-thread action must resolve launch context from tree rows only; editor-tab context must use dedicated editor-tab actions.
+  [@test] ../../sessions/testSrc/AgentSessionsTreePopupActionsTest.kt
+
+- Editor-tab new-thread controls must expose two separate actions:
+  - quick-provider action that launches `STANDARD` mode for eligible `lastUsedProvider`,
+  - popup-only Add action with provider entries and optional YOLO section.
+  [@test] ../../sessions/testSrc/AgentSessionsEditorTabActionsTest.kt
+  [@test] ../../sessions/testSrc/AgentSessionsGearActionsTest.kt
 
 - Swing row popup implementation must use IntelliJ action-system popup infrastructure; no Compose popup code is allowed.
   [@test] ../../sessions/testSrc/AgentSessionsToolWindowFactorySwingTest.kt
@@ -104,6 +122,7 @@ Canonical command mapping is owned by `spec/agent-core-contracts.spec.md`.
 - Hovering a project/worktree row reveals new-thread controls without opening the project.
 - Quick-provider icon enables one-click repeat creation.
 - Provider popup keeps normal and YOLO options explicit.
+- Editor tabs expose the same quick-provider + Add-popup language as tree new-thread actions.
 
 ## Data & Backend
 - Codex creation flow starts with pending identity and is resolved asynchronously on provider refresh.
@@ -115,6 +134,9 @@ Canonical command mapping is owned by `spec/agent-core-contracts.spec.md`.
 
 ## Testing / Local Run
 - `./tests.cmd '-Dintellij.build.test.patterns=com.intellij.agent.workbench.sessions.AgentSessionsSwingNewSessionActionsTest'`
+- `./tests.cmd '-Dintellij.build.test.patterns=com.intellij.agent.workbench.sessions.AgentSessionsTreePopupActionsTest'`
+- `./tests.cmd '-Dintellij.build.test.patterns=com.intellij.agent.workbench.sessions.AgentSessionsEditorTabActionsTest'`
+- `./tests.cmd '-Dintellij.build.test.patterns=com.intellij.agent.workbench.sessions.AgentSessionsGearActionsTest'`
 - `./tests.cmd '-Dintellij.build.test.patterns=com.intellij.agent.workbench.sessions.AgentSessionCliTest'`
 - `./tests.cmd '-Dintellij.build.test.patterns=com.intellij.agent.workbench.sessions.AgentSessionsLoadingCoordinatorTest'`
 - `./tests.cmd '-Dintellij.build.test.patterns=com.intellij.agent.workbench.codex.sessions.CodexAgentSessionProviderBridgeTest'`

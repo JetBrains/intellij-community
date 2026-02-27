@@ -166,6 +166,22 @@ class AgentSessionsGearActionsTest {
   }
 
   @Test
+  fun editorTabNewThreadActionsAreRegisteredInActionSystem() {
+    val actionManager = ActionManager.getInstance()
+    val quickActionId = "AgentWorkbenchSessions.EditorTab.NewThreadQuick"
+    val popupGroupId = "AgentWorkbenchSessions.EditorTab.NewThreadPopup"
+
+    assertThat(actionManager.getAction(quickActionId))
+      .isNotNull
+      .isInstanceOf(AgentSessionsEditorTabNewThreadQuickAction::class.java)
+    assertThat(actionManager.getAction(popupGroupId))
+      .isNotNull
+      .isInstanceOf(AgentSessionsEditorTabNewThreadPopupGroup::class.java)
+    assertThat(actionManager.getAction(popupGroupId)?.templatePresentation?.icon)
+      .isEqualTo(AllIcons.General.Add)
+  }
+
+  @Test
   fun refreshActionTriggersSessionsRefresh() {
     var refreshInvocations = 0
     val refreshAction = AgentSessionsRefreshAction(

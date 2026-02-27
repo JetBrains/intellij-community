@@ -4,7 +4,13 @@ package com.intellij.agent.workbench.sessions
 import com.intellij.agent.workbench.chat.AgentChatEditorTabActionContext
 import com.intellij.agent.workbench.chat.AgentChatPendingTabRebindTarget
 import com.intellij.agent.workbench.common.normalizeAgentWorkbenchPath
+import com.intellij.agent.workbench.sessions.core.AgentSessionLaunchMode
 import com.intellij.agent.workbench.sessions.core.AgentSessionProvider
+import com.intellij.agent.workbench.sessions.core.AgentSessionThread
+import com.intellij.agent.workbench.sessions.core.providers.AgentSessionLaunchSpec
+import com.intellij.agent.workbench.sessions.core.providers.AgentSessionProviderBridge
+import com.intellij.agent.workbench.sessions.core.providers.AgentSessionProviderIcon
+import com.intellij.agent.workbench.sessions.core.providers.AgentSessionSource
 import com.intellij.openapi.project.ProjectManager
 import com.intellij.testFramework.TestActionEvent
 import com.intellij.testFramework.junit5.TestApplication
@@ -13,6 +19,152 @@ import org.junit.jupiter.api.Test
 
 @TestApplication
 class AgentSessionsEditorTabActionsTest {
+  @Test
+  fun editorTabQuickNewThreadUsesLastUsedProviderAndLaunchesStandardSession() {
+    val context = editorContext(path = "/tmp/editor-project")
+    var launchedPath: String? = null
+    var launchedProvider: AgentSessionProvider? = null
+    var launchedMode: AgentSessionLaunchMode? = null
+    var launchedProjectName: String? = null
+    val codexBridge = EditorTabTestProviderBridge(
+      provider = AgentSessionProvider.CODEX,
+      supportedModes = setOf(AgentSessionLaunchMode.STANDARD, AgentSessionLaunchMode.YOLO),
+      cliAvailable = true,
+      yoloSessionLabelKey = "toolwindow.action.new.session.codex.yolo",
+    )
+    val claudeBridge = EditorTabTestProviderBridge(
+      provider = AgentSessionProvider.CLAUDE,
+      supportedModes = setOf(AgentSessionLaunchMode.STANDARD),
+      cliAvailable = true,
+    )
+    val action = AgentSessionsEditorTabNewThreadQuickAction(
+      resolveContext = { context },
+      allBridges = { listOf(codexBridge, claudeBridge) },
+      lastUsedProvider = { AgentSessionProvider.CLAUDE },
+      createNewSession = { path, provider, mode, project ->
+        launchedPath = path
+        launchedProvider = provider
+        launchedMode = mode
+        launchedProjectName = project.name
+      },
+    )
+    val event = TestActionEvent.createTestEvent(action)
+
+    action.update(event)
+
+    assertThat(event.presentation.isEnabledAndVisible).isTrue()
+    assertThat(event.presentation.icon).isEqualTo(providerIcon(AgentSessionProvider.CLAUDE))
+
+    action.actionPerformed(event)
+
+    assertThat(launchedPath).isEqualTo(context.path)
+    assertThat(launchedProvider).isEqualTo(AgentSessionProvider.CLAUDE)
+    assertThat(launchedMode).isEqualTo(AgentSessionLaunchMode.STANDARD)
+    assertThat(launchedProjectName).isEqualTo(context.project.name)
+  }
+
+  @Test
+  fun editorTabQuickNewThreadHiddenWhenLastUsedProviderIsNotEligible() {
+    val context = editorContext()
+    var createCalls = 0
+    val fallbackProvider = AgentSessionProvider.from("fallback")
+    val codexYoloOnlyBridge = EditorTabTestProviderBridge(
+      provider = AgentSessionProvider.CODEX,
+      supportedModes = setOf(AgentSessionLaunchMode.YOLO),
+      cliAvailable = true,
+      yoloSessionLabelKey = "toolwindow.action.new.session.codex.yolo",
+    )
+    val fallbackBridge = EditorTabTestProviderBridge(
+      provider = fallbackProvider,
+      supportedModes = setOf(AgentSessionLaunchMode.STANDARD),
+      cliAvailable = true,
+    )
+    val action = AgentSessionsEditorTabNewThreadQuickAction(
+      resolveContext = { context },
+      allBridges = { listOf(codexYoloOnlyBridge, fallbackBridge) },
+      lastUsedProvider = { AgentSessionProvider.CODEX },
+      createNewSession = { _, _, _, _ -> createCalls++ },
+    )
+    val event = TestActionEvent.createTestEvent(action)
+
+    action.update(event)
+
+    assertThat(event.presentation.isEnabledAndVisible).isFalse()
+
+    action.actionPerformed(event)
+
+    assertThat(createCalls).isEqualTo(0)
+  }
+
+  @Test
+  fun editorTabPopupNewThreadBuildsMenuAndLaunchesSelectedMode() {
+    val context = editorContext(path = "/tmp/editor-project")
+    var launchedPath: String? = null
+    var launchedProvider: AgentSessionProvider? = null
+    var launchedMode: AgentSessionLaunchMode? = null
+    var launchedProjectName: String? = null
+    val codexBridge = EditorTabTestProviderBridge(
+      provider = AgentSessionProvider.CODEX,
+      supportedModes = setOf(AgentSessionLaunchMode.STANDARD, AgentSessionLaunchMode.YOLO),
+      cliAvailable = true,
+      yoloSessionLabelKey = "toolwindow.action.new.session.codex.yolo",
+    )
+    val claudeBridge = EditorTabTestProviderBridge(
+      provider = AgentSessionProvider.CLAUDE,
+      supportedModes = setOf(AgentSessionLaunchMode.STANDARD),
+      cliAvailable = true,
+    )
+    val group = AgentSessionsEditorTabNewThreadPopupGroup(
+      resolveContext = { context },
+      allBridges = { listOf(codexBridge, claudeBridge) },
+      createNewSession = { path, provider, mode, project ->
+        launchedPath = path
+        launchedProvider = provider
+        launchedMode = mode
+        launchedProjectName = project.name
+      },
+    )
+    val event = TestActionEvent.createTestEvent(group)
+
+    group.update(event)
+
+    assertThat(event.presentation.isEnabledAndVisible).isTrue()
+    assertThat(event.presentation.isPopupGroup).isTrue()
+    assertThat(event.presentation.isPerformGroup).isFalse()
+
+    val children = group.getChildren(event)
+    assertThat(children).hasSize(5)
+
+    val yoloAction = children.first { action ->
+      action.templatePresentation.text == AgentSessionsBundle.message("toolwindow.action.new.session.codex.yolo")
+    }
+    yoloAction.actionPerformed(TestActionEvent.createTestEvent(yoloAction))
+
+    assertThat(launchedPath).isEqualTo(context.path)
+    assertThat(launchedProvider).isEqualTo(AgentSessionProvider.CODEX)
+    assertThat(launchedMode).isEqualTo(AgentSessionLaunchMode.YOLO)
+    assertThat(launchedProjectName).isEqualTo(context.project.name)
+  }
+
+  @Test
+  fun editorTabPopupNewThreadHiddenWithoutEditorContext() {
+    val codexBridge = EditorTabTestProviderBridge(
+      provider = AgentSessionProvider.CODEX,
+      supportedModes = setOf(AgentSessionLaunchMode.STANDARD),
+      cliAvailable = true,
+    )
+    val group = AgentSessionsEditorTabNewThreadPopupGroup(
+      resolveContext = { null },
+      allBridges = { listOf(codexBridge) },
+    )
+    val event = TestActionEvent.createTestEvent(group)
+
+    group.update(event)
+
+    assertThat(event.presentation.isEnabledAndVisible).isFalse()
+    assertThat(group.getChildren(event)).isEmpty()
+  }
+
   @Test
   fun archiveThreadActionVisibleAndEnabledOnlyWhenProviderSupportsArchive() {
     val context = editorContext()
@@ -290,6 +442,7 @@ class AgentSessionsEditorTabActionsTest {
 }
 
 private fun editorContext(
+  path: String = "/tmp/project",
   threadIdentity: String = "codex:thread-1",
   threadId: String = "thread-1",
   provider: AgentSessionProvider? = AgentSessionProvider.CODEX,
@@ -298,11 +451,57 @@ private fun editorContext(
 ): AgentChatEditorTabActionContext {
   return AgentChatEditorTabActionContext(
     project = ProjectManager.getInstance().defaultProject,
-    path = normalizeAgentWorkbenchPath("/tmp/project"),
+    path = normalizeAgentWorkbenchPath(path),
     threadIdentity = threadIdentity,
     threadId = threadId,
     provider = provider,
     sessionId = sessionId,
     isPendingThread = isPendingThread,
   )
+}
+
+private class EditorTabTestProviderBridge(
+  override val provider: AgentSessionProvider,
+  private val supportedModes: Set<AgentSessionLaunchMode>,
+  private val cliAvailable: Boolean,
+  override val yoloSessionLabelKey: String? = null,
+) : AgentSessionProviderBridge {
+  override val displayNameKey: String
+    get() = if (provider == AgentSessionProvider.CLAUDE) "toolwindow.provider.claude" else "toolwindow.provider.codex"
+
+  override val newSessionLabelKey: String
+    get() = if (provider == AgentSessionProvider.CLAUDE) "toolwindow.action.new.session.claude" else "toolwindow.action.new.session.codex"
+
+  override val icon: AgentSessionProviderIcon
+    get() = AgentSessionProviderIcon(path = "icons/codex@14x14.svg", iconClass = this::class.java)
+
+  override val supportedLaunchModes: Set<AgentSessionLaunchMode>
+    get() = supportedModes
+
+  override val sessionSource: AgentSessionSource = object : AgentSessionSource {
+    override val provider: AgentSessionProvider
+      get() = this@EditorTabTestProviderBridge.provider
+
+    override suspend fun listThreadsFromOpenProject(path: String, project: com.intellij.openapi.project.Project): List<AgentSessionThread> = emptyList()
+
+    override suspend fun listThreadsFromClosedProject(path: String): List<AgentSessionThread> = emptyList()
+  }
+
+  override val cliMissingMessageKey: String
+    get() = "toolwindow.error.cli"
+
+  override fun isCliAvailable(): Boolean = cliAvailable
+
+  override fun buildResumeCommand(sessionId: String): List<String> = listOf("test", "resume", sessionId)
+
+  override fun buildNewSessionCommand(mode: AgentSessionLaunchMode): List<String> = listOf("test", "new", mode.name)
+
+  override fun buildNewEntryCommand(): List<String> = listOf("test")
+
+  override suspend fun createNewSession(path: String, mode: AgentSessionLaunchMode): AgentSessionLaunchSpec {
+    return AgentSessionLaunchSpec(
+      sessionId = null,
+      command = listOf("test", "create", path, mode.name),
+    )
+  }
 }

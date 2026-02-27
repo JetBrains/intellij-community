@@ -284,95 +284,9 @@ class AgentSessionsTreePopupActionsTest {
   }
 
   @Test
-  fun newThreadGroupUsesEditorTabContextWhenTreeContextIsAbsent() {
-    var launchedPath: String? = null
+  fun newThreadGroupStaysPopupOnlyWhenLastUsedProviderIsNotEligibleForQuickStart() {
     var launchedProvider: AgentSessionProvider? = null
     var launchedMode: AgentSessionLaunchMode? = null
-    var launchedProject: Project? = null
-    val editorContext = AgentChatEditorTabActionContext(
-      project = ProjectManager.getInstance().defaultProject,
-      path = "/work/editor-project",
-    )
-    val codexBridge = PopupTestProviderBridge(
-      provider = AgentSessionProvider.CODEX,
-      supportedModes = setOf(AgentSessionLaunchMode.STANDARD),
-      cliAvailable = true,
-    )
-    val group = AgentSessionsTreePopupNewThreadGroup(
-      resolveContext = { null },
-      resolveEditorContext = { editorContext },
-      allBridges = { listOf(codexBridge) },
-      lastUsedProvider = { AgentSessionProvider.CODEX },
-      createNewSession = { path, provider, mode, project ->
-        launchedPath = path
-        launchedProvider = provider
-        launchedMode = mode
-        launchedProject = project
-      },
-    )
-
-    val event = TestActionEvent.createTestEvent(group)
-    group.update(event)
-    assertThat(event.presentation.isEnabledAndVisible).isTrue()
-    group.actionPerformed(event)
-
-    assertThat(launchedPath).isEqualTo(editorContext.path)
-    assertThat(launchedProvider).isEqualTo(AgentSessionProvider.CODEX)
-    assertThat(launchedMode).isEqualTo(AgentSessionLaunchMode.STANDARD)
-    assertThat(launchedProject).isEqualTo(editorContext.project)
-
-    launchedPath = null
-    launchedProvider = null
-    launchedMode = null
-    launchedProject = null
-
-    val children = group.getChildren(event)
-    assertThat(children).hasSize(1)
-
-    val action = children.single()
-    action.actionPerformed(TestActionEvent.createTestEvent(action))
-
-    assertThat(launchedPath).isEqualTo(editorContext.path)
-    assertThat(launchedProvider).isEqualTo(AgentSessionProvider.CODEX)
-    assertThat(launchedMode).isEqualTo(AgentSessionLaunchMode.STANDARD)
-    assertThat(launchedProject).isEqualTo(editorContext.project)
-  }
-
-  @Test
-  fun newThreadGroupPrefersTreeContextOverEditorTabContext() {
-    var launchedPath: String? = null
-    val treeContext = popupContext(
-      nodeId = SessionTreeId.Project("/work/tree-project"),
-      node = SessionTreeNode.Project(AgentProjectSessions(path = "/work/tree-project", name = "Tree Project", isOpen = true)),
-    )
-    val editorContext = AgentChatEditorTabActionContext(
-      project = ProjectManager.getInstance().defaultProject,
-      path = "/work/editor-project",
-    )
-    val codexBridge = PopupTestProviderBridge(
-      provider = AgentSessionProvider.CODEX,
-      supportedModes = setOf(AgentSessionLaunchMode.STANDARD),
-      cliAvailable = true,
-    )
-    val group = AgentSessionsTreePopupNewThreadGroup(
-      resolveContext = { treeContext },
-      resolveEditorContext = { editorContext },
-      allBridges = { listOf(codexBridge) },
-      lastUsedProvider = { AgentSessionProvider.CODEX },
-      createNewSession = { path, _, _, _ -> launchedPath = path },
-    )
-
-    val event = popupEvent(group, treeContext)
-    group.update(event)
-    assertThat(event.presentation.isEnabledAndVisible).isTrue()
-    group.actionPerformed(event)
-
-    assertThat(launchedPath).isEqualTo("/work/tree-project")
-  }
-
-  @Test
-  fun newThreadGroupFallsBackToFirstStandardWhenLastUsedProviderIsNotEligible() {
-    var launchedProvider: AgentSessionProvider? = null
     val fallbackProvider = AgentSessionProvider.from("fallback")
     val codexYoloOnlyBridge = PopupTestProviderBridge(
       provider = AgentSessionProvider.CODEX,
@@ -389,7 +303,10 @@ class AgentSessionsTreePopupActionsTest {
       resolveContext = { event -> resolveAgentSessionsTreePopupActionContext(event) },
       allBridges = { listOf(codexYoloOnlyBridge, fallbackBridge) },
       lastUsedProvider = { AgentSessionProvider.CODEX },
-      createNewSession = { _, provider, _, _ -> launchedProvider = provider },
+      createNewSession = { _, provider, mode, _ ->
+        launchedProvider = provider
+        launchedMode = mode
+      },
     )
     val projectContext = popupContext(
       nodeId = SessionTreeId.Project("/work/project-a"),
@@ -399,41 +316,25 @@ class AgentSessionsTreePopupActionsTest {
 
     group.update(event)
     assertThat(event.presentation.isEnabledAndVisible).isTrue()
+    assertThat(event.presentation.isPerformGroup).isFalse()
 
     group.actionPerformed(event)
+
+    assertThat(launchedProvider).isNull()
+    assertThat(launchedMode).isNull()
+
+    val children = group.getChildren(event)
+    assertThat(children).hasSize(4)
+
+    val fallbackAction = children.first { action ->
+      action.templatePresentation.text == AgentSessionsBundle.message("toolwindow.action.new.session.codex")
+    }
+    fallbackAction.actionPerformed(popupEvent(fallbackAction, projectContext))
+
     assertThat(launchedProvider).isEqualTo(fallbackProvider)
+    assertThat(launchedMode).isEqualTo(AgentSessionLaunchMode.STANDARD)
   }
 
-  @Test
-  fun newThreadGroupDoesNotFallbackToEditorContextWhenTreeContextIsNonLaunchable() {
-    val treeContext = popupContext(
-      nodeId = SessionTreeId.Thread("/work/tree-project", AgentSessionProvider.CODEX, "thread-1"),
-      node = SessionTreeNode.Thread(
-        project = AgentProjectSessions(path = "/work/tree-project", name = "Tree Project", isOpen = true),
-        thread = thread(id = "thread-1", provider = AgentSessionProvider.CODEX),
-      ),
-    )
-    val editorContext = AgentChatEditorTabActionContext(
-      project = ProjectManager.getInstance().defaultProject,
-      path = "/work/editor-project",
-    )
-    val codexBridge = PopupTestProviderBridge(
-      provider = AgentSessionProvider.CODEX,
-      supportedModes = setOf(AgentSessionLaunchMode.STANDARD),
-      cliAvailable = true,
-    )
-    val group = AgentSessionsTreePopupNewThreadGroup(
-      resolveContext = { treeContext },
-      resolveEditorContext = { editorContext },
-      allBridges = { listOf(codexBridge) },
-      createNewSession = { _, _, _, _ -> error("createNewSession must not be called for non-launchable tree context") },
-    )
-
-    val event = popupEvent(group, treeContext)
-    group.update(event)
-    assertThat(event.presentation.isEnabledAndVisible).isFalse()
-    assertThat(group.getChildren(event)).isEmpty()
-  }
 }
 
 private fun popupContext(

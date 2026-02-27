@@ -25,7 +25,8 @@ import java.util.concurrent.CancellationException
 import javax.swing.JComponent
 import javax.swing.JPanel
 
-private const val NEW_THREAD_FROM_EDITOR_TAB_ACTION_ID = "AgentWorkbenchSessions.TreePopup.NewThread"
+private const val NEW_THREAD_QUICK_FROM_EDITOR_TAB_ACTION_ID = "AgentWorkbenchSessions.EditorTab.NewThreadQuick"
+private const val NEW_THREAD_POPUP_FROM_EDITOR_TAB_ACTION_ID = "AgentWorkbenchSessions.EditorTab.NewThreadPopup"
 private const val BIND_PENDING_CODEX_THREAD_FROM_EDITOR_TAB_ACTION_ID = "AgentWorkbenchSessions.BindPendingCodexThreadFromEditorTab"
 
 internal class AgentChatFileEditor(
@@ -37,7 +38,8 @@ internal class AgentChatFileEditor(
   private val editorTabActions: ActionGroup? by lazy {
     val actionManager = ActionManager.getInstance()
     val actions = listOfNotNull(
-      actionManager.getAction(NEW_THREAD_FROM_EDITOR_TAB_ACTION_ID),
+      actionManager.getAction(NEW_THREAD_QUICK_FROM_EDITOR_TAB_ACTION_ID),
+      actionManager.getAction(NEW_THREAD_POPUP_FROM_EDITOR_TAB_ACTION_ID),
       actionManager.getAction(BIND_PENDING_CODEX_THREAD_FROM_EDITOR_TAB_ACTION_ID),
     )
     if (actions.isEmpty()) {
