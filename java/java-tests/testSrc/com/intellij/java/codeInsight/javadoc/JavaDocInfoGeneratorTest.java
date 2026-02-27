@@ -235,6 +235,7 @@ public class JavaDocInfoGeneratorTest extends JavaCodeInsightTestCase {
   }
   public void testMarkdownParagraphSeparation() { doTestClass(); }
   public void testMarkdownJepExample(){ doTestMethod(); }
+  public void testMarkdownJepExample02(){ doTestClass(); }
   public void testHtmlCodeInMarkdown() { doTestMethod(); }
   public void testMarkdownInlineCodeBlock() { doTestClass(); }
   public void testEscapeHtmlCodesInCodeBlock() { doTestClass(); }
@@ -255,6 +256,7 @@ public class JavaDocInfoGeneratorTest extends JavaCodeInsightTestCase {
   public void testPreTagInJavadocTag() { doTestClass();}
   public void testLinkTagMalformed() { doTestClass(); }
   public void testCursedCodeBlock() { doTestClass(); }
+  public void testSnippetMarkup() { doTestClass(); }
 
   public void testRepeatableAnnotations() {
     useJava8();

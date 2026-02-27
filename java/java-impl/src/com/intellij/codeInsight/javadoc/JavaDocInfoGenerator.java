@@ -2251,7 +2251,7 @@ public class JavaDocInfoGenerator {
             }
           }
         }
-        buffer.append(attributes != null ? getStyledSpan(true, attributes, text) : text);
+        buffer.append(attributes != null ? getStyledSpan(true, attributes, text) : StringUtil.escapeXmlEntities(text));
       });
   }
 
