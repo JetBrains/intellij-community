@@ -44,6 +44,7 @@ import com.intellij.openapi.projectRoots.impl.jdkDownloader.JdkDownloadTask
 import com.intellij.openapi.projectRoots.impl.jdkDownloader.JdkDownloaderDialogHostExtension
 import com.intellij.openapi.projectRoots.impl.jdkDownloader.JdkInstallRequestInfo
 import com.intellij.openapi.projectRoots.impl.jdkDownloader.JdkInstaller
+import com.intellij.openapi.projectRoots.impl.jdkDownloader.JdkItem
 import com.intellij.openapi.projectRoots.impl.jdkDownloader.JdkListDownloader
 import com.intellij.openapi.projectRoots.impl.jdkDownloader.JdkPredicate
 import com.intellij.openapi.roots.ProjectRootManager
@@ -99,6 +100,7 @@ import java.nio.file.Paths
 import javax.accessibility.AccessibleContext
 import javax.swing.Icon
 import javax.swing.JList
+import kotlin.reflect.KFunction1
 
 private val selectedJdkProperty = "jdk.selected.JAVA_MODULE"
 
@@ -134,7 +136,7 @@ fun Row.projectWizardJdkComboBox(
   sdkFilter: (Sdk) -> Boolean = { true },
   jdkPredicate: ProjectWizardJdkPredicate? = ProjectWizardJdkPredicate.IsJdkSupported(),
 ): Cell<ProjectWizardJdkComboBox> {
-  val comboBox = ProjectWizardJdkComboBox(context.projectJdk, context.disposable, sdkFilter)
+  val comboBox = ProjectWizardJdkComboBox(context.projectJdk, context.disposable, sdkFilter, jdkPredicate)
   comboBox.isUsePreferredSizeAsMinimum = false
 
   val intentValue = intentProperty.get()
@@ -236,6 +238,7 @@ class ProjectWizardJdkComboBox(
   val projectJdk: Sdk? = null,
   disposable: Disposable,
   val sdkFilter: (Sdk) -> Boolean = { true },
+  val jdkPredicate: ProjectWizardJdkPredicate? = null,
 ) : ComboBox<ProjectWizardJdkIntent>(MutableCollectionComboBoxModel()), UiDataProvider {
 
   override fun getModel(): CollectionComboBoxModel<ProjectWizardJdkIntent> {
@@ -580,6 +583,7 @@ private fun CoroutineScope.getDownloadOpenJdkIntent(comboBox: ProjectWizardJdkCo
     .downloadModelForJdkInstaller(null, predicate)
     .filter { it.isDefaultItem }
     .filter { CpuArch.fromString(it.arch) == CpuArch.CURRENT }
+    .filter { comboBox.jdkPredicate?.showJdkItem(it) ?: true }
     .maxByOrNull { it.jdkMajorVersion }
 
   if (item == null) {
@@ -645,13 +649,20 @@ private fun findDetectedJdksEel(eelDescriptor: EelDescriptor): List<DetectedJdk>
 private fun addDownloadItem(extension: SdkDownload, combo: ComboBox<ProjectWizardJdkIntent>) {
   val config = ProjectStructureConfigurable.getInstance(DefaultProjectFactory.getInstance().defaultProject)
   combo.popup?.hide()
-  val task = extension.pickSdk(JavaSdk.getInstance(), config.projectJdksModel, combo, null) ?: return
+  val sdkFilter = getSdkFilter(combo)
+  val task = extension.pickSdk(JavaSdk.getInstance(), config.projectJdksModel, combo, null, sdkFilter) ?: return
   val index = (0..combo.itemCount).firstOrNull {
     val item = combo.getItemAt(it)
     item !is NoJdk && item !is DownloadJdk
   } ?: 0
   combo.insertItemAt(DownloadJdk(task), index)
   combo.selectedIndex = index
+}
+
+private fun getSdkFilter(combo: ComboBox<ProjectWizardJdkIntent>): KFunction1<JdkItem, Boolean>? {
+  val projectWizardJdkComboBox = combo as? ProjectWizardJdkComboBox ?: return null
+  val jdkPredicate = projectWizardJdkComboBox.jdkPredicate ?: return null
+  return jdkPredicate::showJdkItem
 }
 
 internal fun ProjectWizardJdkComboBox.bindEelDescriptor(eelDescriptorProperty: ObservableProperty<EelDescriptor>) {

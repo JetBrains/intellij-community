@@ -6,6 +6,7 @@ import com.intellij.ide.JavaUiBundle
 import com.intellij.ide.projectWizard.NewProjectWizardCollector.BuildSystem.logSdkChanged
 import com.intellij.ide.projectWizard.NewProjectWizardCollector.BuildSystem.logSdkFinished
 import com.intellij.ide.projectWizard.ProjectWizardJdkIntent
+import com.intellij.ide.projectWizard.ProjectWizardJdkPredicate
 import com.intellij.ide.projectWizard.generators.JdkDownloadService
 import com.intellij.ide.projectWizard.projectWizardJdkComboBox
 import com.intellij.ide.wizard.NewProjectWizardBaseData
@@ -29,6 +30,7 @@ import com.intellij.openapi.observable.util.not
 import com.intellij.openapi.observable.util.toUiPathProperty
 import com.intellij.openapi.observable.util.transform
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.ui.BrowseFolderDescriptor.Companion.withPathToTextConvertor
 import com.intellij.openapi.ui.BrowseFolderDescriptor.Companion.withTextToPathConvertor
 import com.intellij.openapi.ui.MessageDialogBuilder
@@ -130,9 +132,13 @@ abstract class GradleNewProjectWizardStep<ParentStep>(parent: ParentStep) :
     return GradleDataView(data)
   }
 
-  protected fun setupJavaSdkUI(builder: Panel) {
+  protected fun setupJavaSdkUI(
+    builder: Panel,
+    sdkFilter: (Sdk) -> Boolean = { true },
+    jdkPredicate: ProjectWizardJdkPredicate? = null,
+  ) {
     builder.row(JavaUiBundle.message("label.project.wizard.new.project.jdk")) {
-      projectWizardJdkComboBox(this, jdkIntentProperty)
+      projectWizardJdkComboBox(this, jdkIntentProperty, sdkFilter, jdkPredicate)
         .validationOnInput { validateJavaSdk(withDialog = false) }
         .validationOnApply { validateJavaSdk(withDialog = true) }
         .whenItemSelectedFromUi { jdkIntent.javaVersion?.let { logSdkChanged(it.feature) } }

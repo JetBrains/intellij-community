@@ -16,6 +16,7 @@ import com.intellij.openapi.projectRoots.SdkModificator
 import com.intellij.openapi.projectRoots.SdkType
 import com.intellij.openapi.projectRoots.SdkTypeId
 import com.intellij.openapi.projectRoots.impl.DependentSdkType
+import com.intellij.openapi.projectRoots.impl.jdkDownloader.JdkItem
 import com.intellij.openapi.roots.ProjectRootManager
 import com.intellij.openapi.roots.ui.configuration.projectRoot.SdkDownload
 import com.intellij.openapi.roots.ui.configuration.projectRoot.SdkDownloadTask
@@ -27,6 +28,7 @@ import org.jdom.Element
 import java.io.File
 import java.util.Properties
 import java.util.function.Consumer
+import java.util.function.Predicate
 import javax.swing.JComponent
 
 abstract class SdkTestCase : LightPlatformTestCase() {
@@ -143,7 +145,9 @@ abstract class SdkTestCase : LightPlatformTestCase() {
     override fun pickSdk(sdkTypeId: SdkTypeId,
                          sdkModel: SdkModel,
                          parentComponent: JComponent,
-                         selectedSdk: Sdk?): SdkDownloadTask? = null
+                         selectedSdk: Sdk?,
+                         sdkFilter: Predicate<JdkItem>?
+    ): SdkDownloadTask? = null
   }
 
   object TestSdkGenerator {

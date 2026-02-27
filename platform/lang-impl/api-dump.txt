@@ -1031,7 +1031,7 @@ com.intellij.openapi.roots.ui.configuration.libraryEditor.LibraryEditor
 - a:setName(java.lang.String):V
 com.intellij.openapi.roots.ui.configuration.projectRoot.SdkDownload
 - getIconForDownloadAction(com.intellij.openapi.projectRoots.SdkTypeId):javax.swing.Icon
-- pickSdk(com.intellij.openapi.projectRoots.SdkTypeId,com.intellij.openapi.projectRoots.SdkModel,javax.swing.JComponent,com.intellij.openapi.projectRoots.Sdk):com.intellij.openapi.roots.ui.configuration.projectRoot.SdkDownloadTask
+- pickSdk(com.intellij.openapi.projectRoots.SdkTypeId,com.intellij.openapi.projectRoots.SdkModel,javax.swing.JComponent,com.intellij.openapi.projectRoots.Sdk,java.util.function.Predicate):com.intellij.openapi.roots.ui.configuration.projectRoot.SdkDownloadTask
 - showDownloadUI(com.intellij.openapi.projectRoots.SdkTypeId,com.intellij.openapi.projectRoots.SdkModel,javax.swing.JComponent,com.intellij.openapi.project.Project,com.intellij.openapi.projectRoots.Sdk,java.util.function.Predicate,java.util.function.Consumer):V
 - a:showDownloadUI(com.intellij.openapi.projectRoots.SdkTypeId,com.intellij.openapi.projectRoots.SdkModel,javax.swing.JComponent,com.intellij.openapi.projectRoots.Sdk,java.util.function.Consumer):V
 - a:supportsDownload(com.intellij.openapi.projectRoots.SdkTypeId):Z

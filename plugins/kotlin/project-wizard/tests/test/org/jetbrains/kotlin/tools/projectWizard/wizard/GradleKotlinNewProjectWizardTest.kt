@@ -3,12 +3,14 @@ package org.jetbrains.kotlin.tools.projectWizard.wizard
 
 import com.intellij.ide.projectWizard.NewProjectWizardConstants.Language.KOTLIN
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil
+import com.intellij.openapi.projectRoots.JavaSdkVersion
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.testFramework.closeProjectAsync
 import com.intellij.testFramework.junit5.RegistryKey
 import com.intellij.testFramework.withProjectAsync
 import com.intellij.util.asDisposable
 import kotlinx.coroutines.runBlocking
+import org.jetbrains.kotlin.tools.projectWizard.gradle.isLessOrEqualToMaxJvmTarget
 import org.jetbrains.plugins.gradle.frameworkSupport.GradleDsl
 import org.jetbrains.plugins.gradle.testFramework.annotations.CsvCrossProductSource
 import org.jetbrains.plugins.gradle.util.GradleConstants.SYSTEM_ID
@@ -316,5 +318,15 @@ class GradleKotlinNewProjectWizardTest : GradleKotlinNewProjectWizardTestCase() 
                 }
             })
         }.closeProjectAsync()
+    }
+
+    @Test
+    fun testSdkFilterForMaxSupportedVersion() {
+        Assertions.assertTrue(JavaSdkVersion.JDK_25.isLessOrEqualToMaxJvmTarget())
+    }
+
+    @Test
+    fun testSdkFilterForUnsupportedVersion() {
+        Assertions.assertFalse(JavaSdkVersion.JDK_26.isLessOrEqualToMaxJvmTarget())
     }
 }
