@@ -10,6 +10,7 @@ import com.sun.jdi.LongValue
 import com.sun.jdi.Method
 import com.sun.jdi.ObjectReference
 import com.sun.jdi.ReferenceType
+import com.sun.jdi.Type
 import com.sun.jdi.Value
 
 const val EMPTY_CTOR_SIGNATURE: String = "()V"
@@ -55,6 +56,8 @@ interface ValueContext {
    */
   fun array(componentType: String, size: Int): ArrayReference
   fun array(vararg values: Value?): ArrayReference
+
+  fun Type.defaultValue(): Value?
 
   /**
    * Mirrors primitive values in JDI.

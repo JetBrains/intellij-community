@@ -54,14 +54,18 @@ internal class OptionalRuntimeHandler(
 
   private fun ValueContext.unwrapOptionalOrDefault(optional: ObjectReference): Value? {
     val typeName = optional.referenceType().name()
-    val (orElseSig, defaultArg: Value?) = when (typeName) {
-      JAVA_UTIL_OPTIONAL        -> Pair("(Ljava/lang/Object;)Ljava/lang/Object;", null)
-      JAVA_UTIL_OPTIONAL_INT    -> Pair("(I)I", 0.mirror)
-      JAVA_UTIL_OPTIONAL_LONG   -> Pair("(J)J", 0L.mirror)
-      JAVA_UTIL_OPTIONAL_DOUBLE -> Pair("(D)D", 0.0.mirror)
-      else -> throw UnexpectedValueTypeException("Expected Optional but got $typeName")
-    }
-    return optional.referenceType().method("orElse", orElseSig).invoke(optional, listOf(defaultArg))
+    val orElseSignature = getOrElseSignature(typeName)
+    val orElseMethod = optional.referenceType().method("orElse", orElseSignature)
+    val orElseArg = orElseMethod.argumentTypes().first().defaultValue()
+    return orElseMethod.invoke(optional, listOf(orElseArg))
+  }
+
+  private fun getOrElseSignature(typeName: String): String = when (typeName) {
+    JAVA_UTIL_OPTIONAL -> "(Ljava/lang/Object;)Ljava/lang/Object;"
+    JAVA_UTIL_OPTIONAL_INT -> "(I)I"
+    JAVA_UTIL_OPTIONAL_LONG -> "(J)J"
+    JAVA_UTIL_OPTIONAL_DOUBLE -> "(D)D"
+    else -> throw UnexpectedValueTypeException("Expected Optional but got $typeName")
   }
 
   private fun assertIsOptional(value: ObjectReference) {

@@ -19,6 +19,7 @@ import com.sun.jdi.Method
 import com.sun.jdi.ObjectReference
 import com.sun.jdi.PrimitiveType
 import com.sun.jdi.ReferenceType
+import com.sun.jdi.Type
 import com.sun.jdi.Value
 
 /**
@@ -135,6 +136,9 @@ private class ValueContextImpl(
     arr.values = values.toList()
     return arr
   }
+
+  // Hack for getting proper type
+  override fun Type.defaultValue(): Value? = array(this.name(), 1).getValue(0)
 
   override val Int.mirror: IntegerValue get() = vm.mirrorOf(this)
   override val Long.mirror: LongValue get() = vm.mirrorOf(this)
