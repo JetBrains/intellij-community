@@ -3,10 +3,8 @@ package com.intellij.searchEverywhereLucene.backend
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.debug
-import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.getProjectDataPath
-import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.flow.Flow
