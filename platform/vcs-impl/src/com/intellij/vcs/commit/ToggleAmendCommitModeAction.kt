@@ -99,6 +99,7 @@ class ToggleAmendCommitModeAction : CheckboxAction(), DumbAware {
       isVisible = presentation.isVisible
       isEnabled = presentation.isEnabled
       linkLabel.isVisible = isAmendSpecificCommitSupported
+      linkLabel.update()
     }
   }
 }
