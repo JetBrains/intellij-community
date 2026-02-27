@@ -54,7 +54,8 @@ internal object InMemoryRebaseOperations {
     val generatedEntries = when (entriesSource) {
                              is RebaseEntriesSource.Entries -> entriesSource.entries
                              is RebaseEntriesSource.LogData -> {
-                               repository.project.service<GitInteractiveRebaseEntriesProvider>().tryGetEntriesUsingLog(repository, commits.last(), entriesSource.logData)
+                               repository.project.service<GitInteractiveRebaseEntriesProvider>()
+                                 .tryGetEntriesForCommitEditing(repository, commits.last(), entriesSource.logData)
                              }
                            } ?: return GitCommitEditingOperationResult.Incomplete
 
