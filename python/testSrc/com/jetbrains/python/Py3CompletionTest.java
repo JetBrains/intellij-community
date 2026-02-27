@@ -955,6 +955,60 @@ public class Py3CompletionTest extends PyTestCase {
     );
   }
 
+  // PY-88016
+  public void testQualifyClassAttributeViaExistingModuleImport() {
+    myFixture.configureByText("mod.py", """
+      class Class:
+          unique_attribute = 1
+      """);
+    doTestByText("""
+      import mod
+
+      Class.uniq<caret>""");
+    myFixture.checkResult("""
+      import mod
+
+      mod.Class.unique_attribute""");
+  }
+
+  // PY-88016
+  public void testQualifyClassAttributeViaExistingAliasedModuleImport() {
+    myFixture.configureByText("mod.py", """
+      class Class:
+          unique_attribute = 1
+      """);
+    doTestByText("""
+      import mod as m
+
+      Class.uniq<caret>""");
+    myFixture.checkResult("""
+      import mod as m
+
+      m.Class.unique_attribute""");
+  }
+
+  // PY-88016
+  public void testQualifyNestedClassAttributeViaExistingModuleImport() {
+    myFixture.configureByText("mod.py", """
+      class Outer:
+          class Inner:
+              unique_attribute = 1
+      """);
+    doTestByText("""
+      import mod
+
+      Inner.uniq<caret>""");
+    myFixture.checkResult("""
+      import mod
+
+      mod.Outer.Inner.unique_attribute""");
+  }
+
+  // PY-88016
+  public void testQualifyClassAttributeViaExistingFromImport() {
+    doMultiFileTest();
+  }
+
   private void doTestVariants(String @NotNull ... expected) {
     final String testName = getTestName(true);
     myFixture.configureByFile(testName + ".py");

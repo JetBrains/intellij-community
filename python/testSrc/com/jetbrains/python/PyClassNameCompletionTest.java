@@ -203,6 +203,20 @@ public class PyClassNameCompletionTest extends PyTestCase {
       assertContainsElements(variantQNames, "requests", "requests.request");
     });
   }
+  // PY-88016
+  public void testReuseExistingFromImportForModule() {
+    doTest();
+  }
+
+  // PY-88016
+  public void testReuseExistingRegularImportForModule() {
+    doTestWithoutFromImport();
+  }
+
+  // PY-88016
+  public void testReuseExistingFromImportForModuleViaAlias() {
+    doTest();
+  }
 
   // PY-80238
   public void testOldStyleTypeAliasCompletion() {

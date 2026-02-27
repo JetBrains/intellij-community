@@ -848,6 +848,11 @@ public final class AddImportHelper {
     final PsiFileSystemItem toImport = elementToImport.getContainingFile();
     if (toImport == null) return;
 
+    // Check if the target is accessible via an already-imported module
+    if (qualifyViaExistingImport(toImport, name, nestedQualifierPrefix, file, element)) {
+      return;
+    }
+
     final QualifiedName importPath = QualifiedNameFinder.findCanonicalImportPath(elementToImport, element);
     if (importPath == null) return;
 
@@ -858,7 +863,8 @@ public final class AddImportHelper {
       addImportStatement(file, path, null, priority, element);
 
       final PyElementGenerator elementGenerator = PyElementGenerator.getInstance(file.getProject());
-      element.replace(elementGenerator.createExpressionFromText(LanguageLevel.forElement(elementToImport), path + "." + name));
+      String refText = nestedQualifierPrefix != null ? nestedQualifierPrefix : name;
+      element.replace(elementGenerator.createExpressionFromText(LanguageLevel.forElement(elementToImport), path + "." + refText));
     }
     else {
       addOrUpdateFromImportStatement(file, path, name, null, priority, element);
@@ -901,5 +907,86 @@ public final class AddImportHelper {
       String importSource = importPath.removeLastComponent().toString();
       addOrUpdateFromImportStatement(file, importSource, importedName, null, priority, element);
     }
+  }
+
+  private static boolean qualifyViaExistingImport(@NotNull PsiFileSystemItem toImport,
+                                                  @NotNull String importedName,
+                                                  @Nullable String nestedQualifierPrefix,
+                                                  @NotNull PsiFile file,
+                                                  @NotNull PyElement element) {
+    if (!(file instanceof PyFile pyFile)) return false;
+
+    if (processFromImports(toImport, importedName, nestedQualifierPrefix, element, pyFile) ||
+        processRegularImports(toImport, importedName, nestedQualifierPrefix, element, pyFile)) {
+      return true;
+    }
+
+    return false;
+  }
+
+  // Check regular imports: "import pkg.src" where pkg.src resolves to the target's module
+  private static boolean processRegularImports(@NotNull PsiFileSystemItem toImport,
+                                   @NotNull String importedName,
+                                   @Nullable String nestedQualifierPrefix,
+                                   @NotNull PyElement element,
+                                   PyFile pyFile) {
+    for (PyImportElement importElement : pyFile.getImportTargets()) {
+      PsiElement resolved = importElement.resolve();
+      PsiFile resolvedFile = as(PyUtil.turnDirIntoInit(resolved), PsiFile.class);
+      if (resolvedFile == null || !resolvedFile.equals(toImport)) continue;
+
+      QualifiedName importedQName = importElement.getImportedQName();
+      if (importedQName == null) continue;
+
+      String prefix = importElement.getAsName() != null
+          ? importElement.getVisibleName()
+          : importedQName.toString();
+      if (prefix == null) continue;
+
+      String qualifiedRef = nestedQualifierPrefix != null
+          ? prefix + "." + nestedQualifierPrefix
+          : prefix + "." + importedName;
+      replaceQualifier(element, qualifiedRef);
+      return true;
+    }
+    return false;
+  }
+
+  // Check from-imports: "from pkg import src" where src resolves to the target's module
+  private static boolean processFromImports(@NotNull PsiFileSystemItem toImport,
+                                            @NotNull String importedName,
+                                            @Nullable String nestedQualifierPrefix,
+                                            @NotNull PyElement element,
+                                            PyFile pyFile) {
+    for (PyFromImportStatement fromImport : pyFile.getFromImports()) {
+      if (fromImport.isStarImport()) continue;
+      for (PyImportElement importElement : fromImport.getImportElements()) {
+        PsiElement resolved = importElement.resolve();
+        PsiFile resolvedFile = as(PyUtil.turnDirIntoInit(resolved), PsiFile.class);
+        if (resolvedFile == null || !resolvedFile.equals(toImport)) continue;
+
+        String visibleName = importElement.getVisibleName();
+        if (visibleName == null) continue;
+
+        String qualifiedRef = nestedQualifierPrefix != null
+            ? visibleName + "." + nestedQualifierPrefix
+            : visibleName + "." + importedName;
+        replaceQualifier(element, qualifiedRef);
+        return true;
+      }
+    }
+    return false;
+  }
+
+  private static void replaceQualifier(@NotNull PyElement element, @NotNull String qualifiedRef) {
+    PyElement toRewrite = element;
+    if (element instanceof PyReferenceExpression refExpr) {
+      PyExpression qualifier = refExpr.getQualifier();
+      if (qualifier instanceof PyReferenceExpression qualifierRef) {
+        toRewrite = qualifierRef;
+      }
+    }
+    PyElementGenerator gen = PyElementGenerator.getInstance(element.getProject());
+    toRewrite.replace(gen.createExpressionFromText(LanguageLevel.forElement(element), qualifiedRef));
   }
 }
