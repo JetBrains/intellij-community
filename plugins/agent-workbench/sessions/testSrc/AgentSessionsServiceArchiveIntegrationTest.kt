@@ -3,6 +3,7 @@ package com.intellij.agent.workbench.sessions
 
 import com.intellij.agent.workbench.sessions.core.AgentSessionLaunchMode
 import com.intellij.agent.workbench.sessions.core.AgentSessionProvider
+import com.intellij.agent.workbench.sessions.core.AgentSubAgent
 import com.intellij.agent.workbench.sessions.core.providers.AgentSessionLaunchSpec
 import com.intellij.agent.workbench.sessions.core.providers.AgentSessionProviderBridge
 import com.intellij.agent.workbench.sessions.core.providers.AgentSessionProviderBridges
@@ -125,7 +126,7 @@ class AgentSessionsServiceArchiveIntegrationTest {
         withService(
           sessionSourcesProvider = { listOf(sessionSource) },
           projectEntriesProvider = { listOf(openProjectEntry(PROJECT_PATH, "Project A")) },
-          archiveChatCleanup = { projectPath, threadIdentity ->
+          archiveChatCleanup = { projectPath, threadIdentity, _ ->
             cleanupCalls.add(projectPath to threadIdentity)
           },
         ) { service ->
@@ -179,7 +180,7 @@ class AgentSessionsServiceArchiveIntegrationTest {
         withService(
           sessionSourcesProvider = { listOf(sessionSource) },
           projectEntriesProvider = { listOf(openProjectEntry(PROJECT_PATH, "Project A")) },
-          archiveChatCleanup = { projectPath, threadIdentity ->
+          archiveChatCleanup = { projectPath, threadIdentity, _ ->
             cleanupCalls.add(projectPath to threadIdentity)
           },
         ) { service ->
@@ -233,7 +234,7 @@ class AgentSessionsServiceArchiveIntegrationTest {
         withService(
           sessionSourcesProvider = { listOf(sessionSource) },
           projectEntriesProvider = { listOf(openProjectEntry(PROJECT_PATH, "Project A")) },
-          archiveChatCleanup = { projectPath, threadIdentity ->
+          archiveChatCleanup = { projectPath, threadIdentity, _ ->
             cleanupCalls.add(projectPath to threadIdentity)
           },
         ) { service ->
@@ -282,7 +283,7 @@ class AgentSessionsServiceArchiveIntegrationTest {
         withService(
           sessionSourcesProvider = { listOf(sessionSource) },
           projectEntriesProvider = { listOf(openProjectEntry(PROJECT_PATH, "Project A")) },
-          archiveChatCleanup = { projectPath, threadIdentity ->
+          archiveChatCleanup = { projectPath, threadIdentity, _ ->
             cleanupCalls.add(projectPath to threadIdentity)
           },
         ) { service ->
@@ -300,6 +301,80 @@ class AgentSessionsServiceArchiveIntegrationTest {
           assertThat(archiveCalls.get()).isEqualTo(0)
           assertThat(cleanupCalls)
             .containsExactly(PROJECT_PATH to buildAgentSessionIdentity(AgentSessionProvider.CODEX, "new-pending"))
+        }
+      }
+    }
+  }
+
+  @Test
+  fun archiveSubAgentUsesSubAgentThreadIdAndTargetsSubAgentMetadata() = runBlocking(Dispatchers.Default) {
+    val cleanupCalls = mutableListOf<Triple<String, String, String?>>()
+    val archiveCalls = mutableListOf<String>()
+    val sourceThreads = mutableListOf(
+      thread(
+        id = "codex-parent",
+        updatedAt = 200,
+        provider = AgentSessionProvider.CODEX,
+        subAgents = listOf(AgentSubAgent(id = "codex-sub-1", name = "Sub-agent 1")),
+      ),
+    )
+    val sessionSource = ScriptedSessionSource(
+      provider = AgentSessionProvider.CODEX,
+      listFromOpenProject = { path, _ ->
+        if (path == PROJECT_PATH) sourceThreads.toList() else emptyList()
+      },
+    )
+    val bridge = testCodexBridge(
+      sessionSource = sessionSource,
+      onArchive = { _, threadId ->
+        archiveCalls.add(threadId)
+        sourceThreads.replaceAll { thread ->
+          if (thread.id != "codex-parent") {
+            thread
+          }
+          else {
+            thread.copy(subAgents = thread.subAgents.filterNot { subAgent -> subAgent.id == threadId })
+          }
+        }
+        true
+      },
+    )
+
+    AgentSessionProviderBridges.withRegistryForTest(InMemoryAgentSessionProviderRegistry(listOf(bridge))) {
+      runBlocking(Dispatchers.Default) {
+        withService(
+          sessionSourcesProvider = { listOf(sessionSource) },
+          projectEntriesProvider = { listOf(openProjectEntry(PROJECT_PATH, "Project A")) },
+          archiveChatCleanup = { projectPath, threadIdentity, subAgentId ->
+            cleanupCalls.add(Triple(projectPath, threadIdentity, subAgentId))
+          },
+        ) { service ->
+          service.refresh()
+          waitForCondition {
+            service.state.value.projects.firstOrNull()?.threads
+              ?.firstOrNull { it.id == "codex-parent" }
+              ?.subAgents
+              ?.any { it.id == "codex-sub-1" } == true
+          }
+
+          service.archiveThread(PROJECT_PATH, AgentSessionProvider.CODEX, "codex-sub-1")
+
+          waitForCondition {
+            service.state.value.projects.firstOrNull()?.threads
+              ?.firstOrNull { it.id == "codex-parent" }
+              ?.subAgents
+              ?.none { it.id == "codex-sub-1" } == true
+          }
+
+          assertThat(archiveCalls).containsExactly("codex-sub-1")
+          assertThat(cleanupCalls)
+            .containsExactly(
+              Triple(
+                PROJECT_PATH,
+                buildAgentSessionIdentity(AgentSessionProvider.CODEX, "codex-parent"),
+                "codex-sub-1",
+              )
+            )
         }
       }
     }
@@ -337,7 +412,7 @@ class AgentSessionsServiceArchiveIntegrationTest {
         withService(
           sessionSourcesProvider = { listOf(sessionSource) },
           projectEntriesProvider = { listOf(openProjectEntry(PROJECT_PATH, "Project A")) },
-          archiveChatCleanup = { _, _ -> error("cleanup failed") },
+          archiveChatCleanup = { _, _, _ -> error("cleanup failed") },
         ) { service ->
           service.refresh()
           waitForCondition {

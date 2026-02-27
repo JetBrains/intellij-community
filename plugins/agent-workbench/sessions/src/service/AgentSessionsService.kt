@@ -35,7 +35,6 @@ import com.intellij.agent.workbench.sessions.util.SingleFlightPolicy
 import com.intellij.agent.workbench.sessions.util.SingleFlightProgressRequest
 import com.intellij.agent.workbench.sessions.util.buildAgentSessionIdentity
 import com.intellij.agent.workbench.sessions.util.buildAgentSessionNewIdentity
-import com.intellij.agent.workbench.sessions.util.buildAgentSessionResumeCommand
 import com.intellij.agent.workbench.sessions.util.isAgentSessionNewIdentity
 import com.intellij.agent.workbench.sessions.util.isAgentSessionNewSessionId
 import com.intellij.agent.workbench.sessions.util.parseAgentSessionIdentity
@@ -94,7 +93,7 @@ internal class AgentSessionsService private constructor(
   private val sessionSourcesProvider: () -> List<AgentSessionSource>,
   private val projectEntriesProvider: suspend (AgentSessionsService) -> List<ProjectEntry>,
   private val treeUiState: SessionsTreeUiState,
-  private val archiveChatCleanup: suspend (projectPath: String, threadIdentity: String) -> Unit,
+  private val archiveChatCleanup: suspend (projectPath: String, threadIdentity: String, subAgentId: String?) -> Unit,
   subscribeToProjectLifecycle: Boolean,
 ) {
   @Suppress("unused")
@@ -103,8 +102,8 @@ internal class AgentSessionsService private constructor(
     sessionSourcesProvider = AgentSessionProviderBridges::sessionSources,
     projectEntriesProvider = { service -> service.projectCatalog.collectProjects() },
     treeUiState = service<AgentSessionsTreeUiStateService>(),
-    archiveChatCleanup = { projectPath, threadIdentity ->
-      closeAndForgetAgentChatsForThread(projectPath = projectPath, threadIdentity = threadIdentity)
+    archiveChatCleanup = { projectPath, threadIdentity, subAgentId ->
+      closeAndForgetAgentChatsForThread(projectPath = projectPath, threadIdentity = threadIdentity, subAgentId = subAgentId)
     },
     subscribeToProjectLifecycle = true,
   )
@@ -114,7 +113,7 @@ internal class AgentSessionsService private constructor(
     sessionSourcesProvider: () -> List<AgentSessionSource>,
     projectEntriesProvider: suspend () -> List<ProjectEntry>,
     treeUiState: SessionsTreeUiState = InMemorySessionsTreeUiState(),
-    archiveChatCleanup: suspend (projectPath: String, threadIdentity: String) -> Unit = { _, _ -> },
+    archiveChatCleanup: suspend (projectPath: String, threadIdentity: String, subAgentId: String?) -> Unit = { _, _, _ -> },
     subscribeToProjectLifecycle: Boolean = false,
   ) : this(
     serviceScope = serviceScope,
@@ -406,12 +405,16 @@ internal class AgentSessionsService private constructor(
 
     targets.forEach { target ->
       val provider = target.provider
+      val cleanupTarget = resolveArchivedChatCleanupTarget(
+        path = target.path,
+        provider = provider,
+        archivedThreadId = target.threadId,
+      )
 
       if (provider == AgentSessionProvider.CODEX && isAgentSessionNewSessionId(target.threadId)) {
         stateStore.removeThread(target.path, provider, target.threadId)
-        val threadIdentity = buildAgentSessionIdentity(provider, target.threadId)
         try {
-          archiveChatCleanup(target.path, threadIdentity)
+          archiveChatCleanup(target.path, cleanupTarget.threadIdentity, cleanupTarget.subAgentId)
         }
         catch (t: Throwable) {
           if (t is CancellationException) {
@@ -456,9 +459,8 @@ internal class AgentSessionsService private constructor(
       }
       stateStore.removeThread(target.path, provider, target.threadId)
 
-      val threadIdentity = buildAgentSessionIdentity(provider, target.threadId)
       try {
-        archiveChatCleanup(target.path, threadIdentity)
+        archiveChatCleanup(target.path, cleanupTarget.threadIdentity, cleanupTarget.subAgentId)
       }
       catch (t: Throwable) {
         if (t is CancellationException) {
@@ -493,6 +495,28 @@ internal class AgentSessionsService private constructor(
     return normalizedByKey.values.toList()
   }
 
+  private fun resolveArchivedChatCleanupTarget(
+    path: String,
+    provider: AgentSessionProvider,
+    archivedThreadId: String,
+  ): ArchivedChatCleanupTarget {
+    val parentThreadId = stateStore.findParentThreadIdForSubAgent(
+      path = path,
+      provider = provider,
+      subAgentId = archivedThreadId,
+    )
+    if (parentThreadId == null) {
+      return ArchivedChatCleanupTarget(
+        threadIdentity = buildAgentSessionIdentity(provider, archivedThreadId),
+        subAgentId = null,
+      )
+    }
+    return ArchivedChatCleanupTarget(
+      threadIdentity = buildAgentSessionIdentity(provider, parentThreadId),
+      subAgentId = archivedThreadId,
+    )
+  }
+
   private fun showArchiveNotification(outcome: ArchiveBatchOutcome) {
     if (ApplicationManager.getApplication().isUnitTestMode) {
       return
@@ -525,6 +549,11 @@ private data class ArchiveBatchOutcome(
   @JvmField val archivedTargets: List<ArchiveThreadTarget>,
   @JvmField val undoTargets: List<ArchiveThreadTarget>,
   @JvmField val requiresCodexRefreshDelay: Boolean,
+)
+
+private data class ArchivedChatCleanupTarget(
+  @JvmField val threadIdentity: String,
+  @JvmField val subAgentId: String?,
 )
 
   private fun launchDropAction(
@@ -785,17 +814,20 @@ private suspend fun openChatInProject(
   subAgent: AgentSubAgent?,
   shellCommandOverride: List<String>?,
 ) {
-  val identity = buildAgentSessionIdentity(provider = thread.provider, sessionId = thread.id)
-  val command = buildAgentSessionResumeCommand(provider = thread.provider, sessionId = thread.id)
+  val chatOpenPayload = resolveAgentSessionChatOpenPayload(
+    thread = thread,
+    subAgent = subAgent,
+    shellCommandOverride = shellCommandOverride,
+  )
   withContext(Dispatchers.EDT) {
     openChat(
       project = project,
       projectPath = projectPath,
-      threadIdentity = identity,
-      shellCommand = shellCommandOverride ?: command,
-      threadId = thread.id,
-      threadTitle = thread.title,
-      subAgentId = subAgent?.id,
+      threadIdentity = chatOpenPayload.threadIdentity,
+      shellCommand = chatOpenPayload.shellCommand,
+      threadId = chatOpenPayload.runtimeThreadId,
+      threadTitle = chatOpenPayload.threadTitle,
+      subAgentId = chatOpenPayload.subAgentId,
       threadActivity = thread.activity,
     )
     focusProjectWindowSync(project)

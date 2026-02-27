@@ -3,6 +3,7 @@ package com.intellij.agent.workbench.sessions.state
 
 import com.intellij.agent.workbench.common.normalizeAgentWorkbenchPath
 import com.intellij.agent.workbench.sessions.core.AgentSessionProvider
+import com.intellij.agent.workbench.sessions.core.AgentSessionThread
 import com.intellij.agent.workbench.sessions.model.AgentProjectSessions
 import com.intellij.agent.workbench.sessions.model.AgentSessionsState
 import com.intellij.agent.workbench.sessions.model.AgentWorktree
@@ -170,6 +171,28 @@ internal class AgentSessionsStateStore {
     return null
   }
 
+  fun findParentThreadIdForSubAgent(path: String, provider: AgentSessionProvider, subAgentId: String): String? {
+    val normalizedPath = normalizeAgentWorkbenchPath(path)
+    val projectThreads = mutableState.value.projects.firstOrNull { it.path == normalizedPath }?.threads
+    val projectMatch = projectThreads?.firstOrNull { thread ->
+      thread.provider == provider && thread.subAgents.any { subAgent -> subAgent.id == subAgentId }
+    }
+    if (projectMatch != null) {
+      return projectMatch.id
+    }
+
+    mutableState.value.projects.forEach { project ->
+      val worktreeThreads = project.worktrees.firstOrNull { it.path == normalizedPath }?.threads ?: return@forEach
+      val worktreeMatch = worktreeThreads.firstOrNull { thread ->
+        thread.provider == provider && thread.subAgents.any { subAgent -> subAgent.id == subAgentId }
+      }
+      if (worktreeMatch != null) {
+        return worktreeMatch.id
+      }
+    }
+    return null
+  }
+
   private fun buildInitialVisibleThreadCounts(
     knownPaths: List<String>,
     currentVisibleThreadCounts: Map<String, Int>,
@@ -195,15 +218,23 @@ private fun findThreadIndex(
 ): Int? {
   val projectThreads = projects.firstOrNull { it.path == normalizedPath }?.threads
   if (projectThreads != null) {
-    val index = projectThreads.indexOfFirst { it.provider == provider && it.id == threadId }
+    val index = projectThreads.indexOfFirst { thread ->
+      thread.matchesProviderAndThreadOrSubAgent(provider = provider, threadId = threadId)
+    }
     if (index >= 0) return index
   }
 
   projects.forEach { project ->
     val worktreeThreads = project.worktrees.firstOrNull { it.path == normalizedPath }?.threads ?: return@forEach
-    val index = worktreeThreads.indexOfFirst { it.provider == provider && it.id == threadId }
+    val index = worktreeThreads.indexOfFirst { thread ->
+      thread.matchesProviderAndThreadOrSubAgent(provider = provider, threadId = threadId)
+    }
     if (index >= 0) return index
   }
 
   return null
+}
+
+private fun AgentSessionThread.matchesProviderAndThreadOrSubAgent(provider: AgentSessionProvider, threadId: String): Boolean {
+  return this.provider == provider && (id == threadId || subAgents.any { subAgent -> subAgent.id == threadId })
 }

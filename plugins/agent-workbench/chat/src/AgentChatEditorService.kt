@@ -411,7 +411,7 @@ suspend fun updateOpenAgentChatTabPresentation(
         }
 
         var presentationUpdated = false
-        if (targetTitle != null && chatFile.updateThreadTitle(targetTitle)) {
+        if (targetTitle != null && chatFile.subAgentId == null && chatFile.updateThreadTitle(targetTitle)) {
           presentationUpdated = true
         }
         if (targetActivity != null && chatFile.updateThreadActivity(targetActivity)) {

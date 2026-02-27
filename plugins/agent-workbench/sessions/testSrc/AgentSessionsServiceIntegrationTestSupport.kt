@@ -3,6 +3,7 @@ package com.intellij.agent.workbench.sessions
 
 import com.intellij.agent.workbench.sessions.core.AgentSessionProvider
 import com.intellij.agent.workbench.sessions.core.AgentSessionThread
+import com.intellij.agent.workbench.sessions.core.AgentSubAgent
 import com.intellij.agent.workbench.sessions.core.providers.AgentSessionSource
 import com.intellij.agent.workbench.sessions.model.ProjectEntry
 import com.intellij.agent.workbench.sessions.model.WorktreeEntry
@@ -51,6 +52,7 @@ internal fun thread(
   updatedAt: Long,
   provider: AgentSessionProvider,
   title: String = id,
+  subAgents: List<AgentSubAgent> = emptyList(),
 ): AgentSessionThread {
   return AgentSessionThread(
     id = id,
@@ -58,6 +60,7 @@ internal fun thread(
     updatedAt = updatedAt,
     archived = false,
     provider = provider,
+    subAgents = subAgents,
   )
 }
 
@@ -65,7 +68,7 @@ internal suspend fun withService(
   sessionSourcesProvider: () -> List<AgentSessionSource>,
   projectEntriesProvider: suspend () -> List<ProjectEntry>,
   treeUiState: SessionsTreeUiState = InMemorySessionsTreeUiState(),
-  archiveChatCleanup: suspend (projectPath: String, threadIdentity: String) -> Unit = { _, _ -> },
+  archiveChatCleanup: suspend (projectPath: String, threadIdentity: String, subAgentId: String?) -> Unit = { _, _, _ -> },
   action: suspend (AgentSessionsService) -> Unit,
 ) {
   @Suppress("RAW_SCOPE_CREATION")

@@ -205,7 +205,11 @@ class AgentSessionsEditorTabActionsTest {
 
   @Test
   fun archiveThreadActionInvokesArchiveCallback() {
-    val context = editorContext()
+    val context = editorContext(
+      threadIdentity = "codex:thread-1",
+      sessionId = "thread-1",
+      threadId = "sub-agent-1",
+    )
     var archivedTargets: List<ArchiveThreadTarget>? = null
 
     val action = AgentSessionsEditorTabArchiveThreadAction(
@@ -218,13 +222,17 @@ class AgentSessionsEditorTabActionsTest {
 
     val archivedTarget = checkNotNull(archivedTargets).single()
     assertThat(archivedTarget.path).isEqualTo(context.path)
-    assertThat(archivedTarget.threadId).isEqualTo(context.sessionId)
+    assertThat(archivedTarget.threadId).isEqualTo(context.threadId)
     assertThat(archivedTarget.provider).isEqualTo(context.provider)
   }
 
   @Test
   fun selectInAgentThreadsActionEnsuresVisibilityAndActivatesToolWindow() {
-    val context = editorContext()
+    val context = editorContext(
+      threadIdentity = "codex:thread-1",
+      sessionId = "thread-1",
+      threadId = "sub-agent-1",
+    )
     var ensuredPath: String? = null
     var ensuredProvider: AgentSessionProvider? = null
     var ensuredThreadId: String? = null
@@ -249,7 +257,7 @@ class AgentSessionsEditorTabActionsTest {
     action.actionPerformed(event)
     assertThat(ensuredPath).isEqualTo(context.path)
     assertThat(ensuredProvider).isEqualTo(context.provider)
-    assertThat(ensuredThreadId).isEqualTo(context.sessionId)
+    assertThat(ensuredThreadId).isEqualTo(context.threadId)
     assertThat(activatedProjectName).isEqualTo(context.project.name)
   }
 
@@ -396,7 +404,11 @@ class AgentSessionsEditorTabActionsTest {
 
   @Test
   fun copyThreadIdActionCopiesThreadId() {
-    val context = editorContext(threadId = "thread-42", sessionId = "thread-42")
+    val context = editorContext(
+      threadIdentity = "codex:thread-42",
+      sessionId = "thread-42",
+      threadId = "sub-agent-42",
+    )
     var copiedThreadId: String? = null
 
     val action = AgentSessionsCopyThreadIdFromEditorTabAction(
@@ -410,7 +422,7 @@ class AgentSessionsEditorTabActionsTest {
     assertThat(event.presentation.isEnabled).isTrue()
 
     action.actionPerformed(event)
-    assertThat(copiedThreadId).isEqualTo("thread-42")
+    assertThat(copiedThreadId).isEqualTo("sub-agent-42")
   }
 
   @Test

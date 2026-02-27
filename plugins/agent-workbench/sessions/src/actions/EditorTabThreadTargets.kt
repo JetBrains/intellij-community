@@ -19,7 +19,22 @@ internal fun resolveAgentSessionsEditorTabThreadCoordinates(
   }
 
   val provider = context.provider ?: return null
-  val threadId = context.sessionId.takeIf { it.isNotBlank() } ?: return null
+  val sessionId = context.sessionId.takeIf { it.isNotBlank() } ?: return null
+  if (context.threadIdentity.isNotBlank()) {
+    val separator = context.threadIdentity.indexOf(':')
+    if (separator <= 0 || separator == context.threadIdentity.lastIndex) {
+      return null
+    }
+    val identityProviderId = context.threadIdentity.substring(0, separator).lowercase()
+    if (identityProviderId != provider.value) {
+      return null
+    }
+    val identitySessionId = context.threadIdentity.substring(separator + 1)
+    if (identitySessionId.isBlank() || identitySessionId != sessionId || identitySessionId.startsWith("new-")) {
+      return null
+    }
+  }
+  val threadId = context.threadId.takeIf { it.isNotBlank() } ?: sessionId
   return AgentSessionsEditorTabThreadCoordinates(
     path = context.path,
     provider = provider,

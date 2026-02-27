@@ -93,16 +93,21 @@ internal class AgentChatTabsStateService(scope: CoroutineScope?)
     return AgentChatTabKey.parse(tabKey)?.let(::delete) ?: false
   }
 
-  fun deleteByThread(projectPath: String, threadIdentity: String): Int {
-    return deleteByThreadWithKeys(projectPath, threadIdentity).deletedKeys.size
+  fun deleteByThread(projectPath: String, threadIdentity: String, subAgentId: String? = null): Int {
+    return deleteByThreadWithKeys(projectPath, threadIdentity, subAgentId).deletedKeys.size
   }
 
-  fun deleteByThreadWithKeys(projectPath: String, threadIdentity: String): AgentChatDeleteByThreadResult {
+  fun deleteByThreadWithKeys(
+    projectPath: String,
+    threadIdentity: String,
+    subAgentId: String? = null,
+  ): AgentChatDeleteByThreadResult {
     val normalizedProjectPath = normalizeAgentWorkbenchPath(projectPath)
     val keysToDelete = state.tabsByKey.entries
       .filter { (_, tab) ->
         normalizeAgentWorkbenchPath(tab.projectPath) == normalizedProjectPath &&
-        tab.threadIdentity == threadIdentity
+        tab.threadIdentity == threadIdentity &&
+        (subAgentId == null || tab.subAgentId == subAgentId)
       }
       .map { (key, _) -> key }
 

@@ -15,13 +15,15 @@ private val LIFECYCLE_LOG = logger<AgentChatMetadataLifecycleLog>()
 suspend fun closeAndForgetAgentChatsForThread(
   projectPath: String,
   threadIdentity: String,
+  subAgentId: String? = null,
 ) {
   val normalizedProjectPath = normalizeAgentWorkbenchPath(projectPath)
   val cleanupResult = serviceAsync<AgentChatTabsService>()
-    .closeAndForgetByThread(projectPath = normalizedProjectPath, threadIdentity = threadIdentity)
+    .closeAndForgetByThread(projectPath = normalizedProjectPath, threadIdentity = threadIdentity, subAgentId = subAgentId)
 
   LIFECYCLE_LOG.debug {
-    "Archived thread cleanup(identity=$threadIdentity, path=$normalizedProjectPath): closedTabs=${cleanupResult.closedTabs}, deletedStates=${cleanupResult.deletedStates}"
+    "Archived thread cleanup(identity=$threadIdentity, subAgentId=$subAgentId, path=$normalizedProjectPath): " +
+    "closedTabs=${cleanupResult.closedTabs}, deletedStates=${cleanupResult.deletedStates}"
   }
 }
 

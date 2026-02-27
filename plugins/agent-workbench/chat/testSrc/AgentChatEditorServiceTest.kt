@@ -200,6 +200,38 @@ class AgentChatEditorServiceTest {
   }
 
   @Test
+  fun testUpdateOpenChatTabPresentationDoesNotOverrideSubAgentTitle(): Unit = timeoutRunBlocking {
+    openChatInModal(
+      threadIdentity = "CODEX:thread-1",
+      shellCommand = codexCommand,
+      threadId = "thread-1",
+      threadTitle = "Parent thread",
+      subAgentId = null,
+    )
+    openChatInModal(
+      threadIdentity = "CODEX:thread-1",
+      shellCommand = listOf("codex", "resume", "sub-1"),
+      threadId = "sub-1",
+      threadTitle = "Sub-agent label",
+      subAgentId = "sub-1",
+    )
+
+    val updatedTabs = runInUi {
+      updateOpenAgentChatTabPresentation(
+        titleByPathAndThreadIdentity = mapOf(
+          (projectPath to "CODEX:thread-1") to "Renamed parent",
+        ),
+        activityByPathAndThreadIdentity = emptyMap(),
+      )
+    }
+    assertThat(updatedTabs).isEqualTo(1)
+
+    val files = openedChatFiles()
+    assertThat(files.first { it.subAgentId == null }.threadTitle).isEqualTo("Renamed parent")
+    assertThat(files.first { it.subAgentId == "sub-1" }.threadTitle).isEqualTo("Sub-agent label")
+  }
+
+  @Test
   fun testRebindOpenPendingChatTabToConcreteThread(): Unit = timeoutRunBlocking {
     openChatInModal(
       threadIdentity = "CODEX:new-1",
@@ -500,6 +532,50 @@ class AgentChatEditorServiceTest {
       assertThat(tabsService.load(tabKey)).isNull()
     }
     assertThat(tabsService.load(unrelatedTabKey)).isNotNull
+  }
+
+  @Test
+  fun testArchiveCleanupForSubAgentClosesOnlyMatchingSubAgentTabAndMetadata(): Unit = timeoutRunBlocking {
+    openChatInModal(
+      threadIdentity = "CODEX:thread-1",
+      shellCommand = codexCommand,
+      threadId = "thread-1",
+      threadTitle = "Main thread",
+      subAgentId = null,
+    )
+    openChatInModal(
+      threadIdentity = "CODEX:thread-1",
+      shellCommand = listOf("codex", "resume", "sub-alpha"),
+      threadId = "sub-alpha",
+      threadTitle = "Alpha",
+      subAgentId = "sub-alpha",
+    )
+    openChatInModal(
+      threadIdentity = "CODEX:thread-1",
+      shellCommand = listOf("codex", "resume", "sub-beta"),
+      threadId = "sub-beta",
+      threadTitle = "Beta",
+      subAgentId = "sub-beta",
+    )
+
+    val tabsService = service<AgentChatTabsService>()
+    val beforeCleanup = openedChatFiles()
+    val alphaTabKey = beforeCleanup.first { it.subAgentId == "sub-alpha" }.tabKey
+    val betaTabKey = beforeCleanup.first { it.subAgentId == "sub-beta" }.tabKey
+    val baseTabKey = beforeCleanup.first { it.subAgentId == null }.tabKey
+
+    closeAndForgetAgentChatsForThread(
+      projectPath = projectPath,
+      threadIdentity = "CODEX:thread-1",
+      subAgentId = "sub-alpha",
+    )
+
+    val remaining = openedChatFiles()
+    assertThat(remaining).hasSize(2)
+    assertThat(remaining.map { it.subAgentId }).containsExactlyInAnyOrder(null, "sub-beta")
+    assertThat(tabsService.load(alphaTabKey)).isNull()
+    assertThat(tabsService.load(baseTabKey)).isNotNull
+    assertThat(tabsService.load(betaTabKey)).isNotNull
   }
 
   @Test
