@@ -17,6 +17,7 @@ import com.intellij.openapi.externalSystem.util.ExternalSystemConstants;
 import com.intellij.openapi.externalSystem.util.Order;
 import com.intellij.openapi.projectRoots.JavaSdkVersionUtil;
 import com.intellij.openapi.projectRoots.Sdk;
+import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.NioPathUtil;
 import com.intellij.pom.java.LanguageLevel;
@@ -28,6 +29,7 @@ import org.gradle.tooling.model.idea.IdeaModule;
 import org.gradle.tooling.model.idea.IdeaProject;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.VisibleForTesting;
 import org.jetbrains.plugins.gradle.model.AnnotationProcessingModel;
 import org.jetbrains.plugins.gradle.model.ExternalSourceSet;
 import org.jetbrains.plugins.gradle.model.GradleBuildScriptClasspathModel;
@@ -48,6 +50,7 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Stream;
 
@@ -58,6 +61,13 @@ import static org.jetbrains.plugins.gradle.util.GradleConstants.SYSTEM_ID;
  */
 @Order(ExternalSystemConstants.UNORDERED)
 public final class JavaGradleProjectResolver extends AbstractProjectResolverExtension {
+
+  private static final Key<Map<String, Optional<Sdk>>> SDK_BY_NAME_CACHE =
+    Key.create("JavaGradleProjectResolver.sdkByNameCache");
+  private static final Key<Map<String, Optional<Sdk>>> SDK_BY_PATH_CACHE =
+    Key.create("JavaGradleProjectResolver.sdkByPathCache");
+  private static final Key<Map<JavaVersion, Optional<Sdk>>> SDK_BY_VERSION_CACHE =
+    Key.create("JavaGradleProjectResolver.sdkByVersionCache");
 
   private final HashMap<GradleBuildScriptClasspathModel, List<BuildScriptClasspathData.ClasspathEntry>> buildScriptEntriesMap =
     new HashMap<>();
@@ -187,7 +197,8 @@ public final class JavaGradleProjectResolver extends AbstractProjectResolverExte
     }
   }
 
-  private void populateJavaProjectCompilerSettings(@NotNull IdeaProject ideaProject, @NotNull DataNode<ProjectData> projectNode) {
+  @VisibleForTesting
+  public void populateJavaProjectCompilerSettings(@NotNull IdeaProject ideaProject, @NotNull DataNode<ProjectData> projectNode) {
     projectNode.createChild(JavaProjectData.KEY, createProjectData(ideaProject));
     projectNode.createChild(ProjectSdkData.KEY, createProjectSdkData(ideaProject));
   }
@@ -209,7 +220,8 @@ public final class JavaGradleProjectResolver extends AbstractProjectResolverExte
     return resolverCtx.getProjectPath() + "/build/classes";
   }
 
-  private void populateJavaModuleCompilerSettings(@NotNull IdeaModule ideaModule, @NotNull DataNode<ModuleData> moduleNode) {
+  @VisibleForTesting
+  public void populateJavaModuleCompilerSettings(@NotNull IdeaModule ideaModule, @NotNull DataNode<ModuleData> moduleNode) {
     var sourceSetModel = resolverCtx.getProjectModel(ideaModule, GradleSourceSetModel.class);
     if (sourceSetModel == null) return;
 
@@ -452,23 +464,27 @@ public final class JavaGradleProjectResolver extends AbstractProjectResolverExte
   }
 
   private @Nullable Sdk lookupSdkByName(@NotNull String sdkName) {
-    var sdkVersion = JavaVersion.tryParse(sdkName);
-    var gradleJvm = lookupGradleJvmIfMatches(sdkVersion);
-    if (gradleJvm != null) return gradleJvm;
-    return ExternalSystemJdkUtil.lookupJdkByName(resolverCtx.getProject(), sdkName);
+    return resolverCtx.putUserDataIfAbsent(SDK_BY_NAME_CACHE, new HashMap<>())
+      .computeIfAbsent(sdkName, key ->
+        Optional.ofNullable(lookupGradleJvmIfMatches(JavaVersion.tryParse(key)))
+          .or(() -> Optional.ofNullable(ExternalSystemJdkUtil.lookupJdkByName(resolverCtx.getProject(), key)))
+      ).orElse(null);
   }
 
   private @Nullable Sdk lookupSdkByPath(@NotNull String sdkHome) {
-    var sdkVersion = ExternalSystemJdkUtil.getJavaVersion(sdkHome);
-    var gradleJvm = lookupGradleJvmIfMatches(sdkVersion);
-    if (gradleJvm != null) return gradleJvm;
-    return ExternalSystemJdkUtil.lookupJdkByPath(resolverCtx.getProject(), sdkHome);
+    return resolverCtx.putUserDataIfAbsent(SDK_BY_PATH_CACHE, new HashMap<>())
+      .computeIfAbsent(sdkHome, key ->
+        Optional.ofNullable(lookupGradleJvmIfMatches(ExternalSystemJdkUtil.getJavaVersion(key)))
+          .or(() -> Optional.of(ExternalSystemJdkUtil.lookupJdkByPath(resolverCtx.getProject(), key)))
+      ).orElse(null);
   }
 
   private @Nullable Sdk lookupSdkByVersion(@NotNull JavaVersion sdkVersion) {
-    var gradleJvm = lookupGradleJvmIfMatches(sdkVersion);
-    if (gradleJvm != null) return gradleJvm;
-    return ExternalSystemJdkUtil.lookupJdkByVersion(resolverCtx.getProject(), sdkVersion);
+    return resolverCtx.putUserDataIfAbsent(SDK_BY_VERSION_CACHE, new HashMap<>())
+      .computeIfAbsent(sdkVersion, key ->
+        Optional.ofNullable(lookupGradleJvmIfMatches(key))
+          .or(() -> Optional.ofNullable(ExternalSystemJdkUtil.lookupJdkByVersion(resolverCtx.getProject(), key)))
+      ).orElse(null);
   }
 
   private @Nullable Sdk lookupGradleJvmIfMatches(@Nullable JavaVersion versionRequirement) {
@@ -492,10 +508,7 @@ public final class JavaGradleProjectResolver extends AbstractProjectResolverExte
   }
 
   private @Nullable GradleProjectSettings getProjectSettings() {
-    var project = resolverCtx.getExternalSystemTaskId().findProject();
-    if (project == null) return null;
-    var settings = GradleSettings.getInstance(project);
-    var linkedProjectPath = resolverCtx.getProjectPath();
-    return settings.getLinkedProjectSettings(linkedProjectPath);
+    return GradleSettings.getInstance(resolverCtx.getProject())
+      .getLinkedProjectSettings(resolverCtx.getProjectPath());
   }
 }
