@@ -1,3 +1,12 @@
+load("@rules_java//java:defs.bzl", "java_binary")
+
+java_binary(
+  name = "standalone_run",
+  main_class = "org.jetbrains.jewel.samples.standalone.MainKt",
+  visibility = ["//visibility:public"],
+  runtime_deps = [":standalone"],
+)
+
 ### auto-generated section `build intellij.platform.jewel.samples.standalone` start
 load("//build:compiler-options.bzl", "create_kotlinc_options")
 load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
@@ -43,6 +52,7 @@ jvm_library(
     "//platform/jewel/markdown/extensions/gfm-alerts",
     "//platform/jewel/markdown/extensions/gfm-tables",
     "//platform/jewel/markdown/extensions/gfm-strikethrough",
+    "//platform/jewel/markdown/extensions/front-matter",
     "//libraries/coil",
     "//platform/jewel/markdown/extensions/images",
     "//platform/jewel/int-ui/int-ui-standalone:jewel-intUi-standalone",
@@ -79,6 +89,7 @@ jvm_library(
     "//platform/jewel/markdown/extensions/gfm-alerts:gfm-alerts_test_lib",
     "//platform/jewel/markdown/extensions/gfm-tables:gfm-tables_test_lib",
     "//platform/jewel/markdown/extensions/gfm-strikethrough:gfm-strikethrough_test_lib",
+    "//platform/jewel/markdown/extensions/front-matter:front-matter_test_lib",
     "//libraries/coil:coil_test_lib",
     "//platform/jewel/markdown/extensions/images:images_test_lib",
     "//platform/jewel/int-ui/int-ui-standalone:jewel-intUi-standalone_test_lib",

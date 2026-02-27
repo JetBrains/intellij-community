@@ -1,0 +1,83 @@
+### auto-generated section `build intellij.platform.jewel.markdown.extensions.frontMatter` start
+load("//build:compiler-options.bzl", "create_kotlinc_options")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
+
+create_kotlinc_options(
+  name = "custom_front-matter",
+  opt_in = [
+    "androidx.compose.ui.ExperimentalComposeUiApi",
+    "androidx.compose.foundation.ExperimentalFoundationApi",
+    "org.jetbrains.jewel.foundation.ExperimentalJewelApi",
+    "org.jetbrains.jewel.foundation.InternalJewelApi",
+  ],
+  x_context_parameters = True,
+  x_explicit_api_mode = "strict"
+)
+
+resourcegroup(
+  name = "front-matter_resources",
+  srcs = glob(["src/main/resources/**/*"]),
+  strip_prefix = "src/main/resources"
+)
+
+jvm_library(
+  name = "front-matter",
+  module_name = "intellij.platform.jewel.markdown.extensions.frontMatter",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/main/kotlin/**/*.kt", "src/main/kotlin/**/*.java", "src/main/kotlin/**/*.form"], allow_empty = True),
+  resources = [":front-matter_resources"],
+  kotlinc_opts = ":custom_front-matter",
+  deps = [
+    "@lib//:kotlin-stdlib",
+    "//libraries/kotlinx/coroutines/core",
+    "@lib//:jetbrains-annotations",
+    "//platform/jewel/markdown/core",
+    "//platform/jewel/markdown/extensions/gfm-tables",
+    "//platform/jewel/ui",
+    "//platform/jewel/foundation",
+    "//libraries/compose-foundation-desktop",
+    "//libraries/compose-runtime-desktop",
+  ],
+  plugins = ["@lib//:compose-plugin"]
+)
+
+jvm_library(
+  name = "front-matter_test_lib",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/test/kotlin/**/*.kt", "src/test/kotlin/**/*.java", "src/test/kotlin/**/*.form"], allow_empty = True),
+  kotlinc_opts = ":custom_front-matter",
+  associates = [":front-matter"],
+  deps = [
+    "@lib//:kotlin-stdlib",
+    "//libraries/kotlinx/coroutines/core",
+    "//libraries/kotlinx/coroutines/core:core_test_lib",
+    "@lib//:jetbrains-annotations",
+    "//platform/jewel/markdown/core",
+    "//platform/jewel/markdown/core:core_test_lib",
+    "//platform/jewel/markdown/extensions/gfm-tables",
+    "//platform/jewel/markdown/extensions/gfm-tables:gfm-tables_test_lib",
+    "//platform/jewel/ui",
+    "//platform/jewel/ui:ui_test_lib",
+    "//platform/jewel/foundation",
+    "//platform/jewel/foundation:foundation_test_lib",
+    "//libraries/compose-foundation-desktop",
+    "//libraries/compose-foundation-desktop:compose-foundation-desktop_test_lib",
+    "//libraries/compose-runtime-desktop",
+    "//libraries/compose-runtime-desktop:compose-runtime-desktop_test_lib",
+    "//libraries/compose-foundation-desktop-junit",
+    "//libraries/compose-foundation-desktop-junit:compose-foundation-desktop-junit_test_lib",
+    "//libraries/junit4",
+    "//libraries/junit4:junit4_test_lib",
+  ],
+  plugins = ["@lib//:compose-plugin"]
+)
+### auto-generated section `build intellij.platform.jewel.markdown.extensions.frontMatter` end
+
+### auto-generated section `test intellij.platform.jewel.markdown.extensions.frontMatter` start
+load("@community//build:tests-options.bzl", "jps_test")
+
+jps_test(
+  name = "front-matter_test",
+  runtime_deps = [":front-matter_test_lib"]
+)
+### auto-generated section `test intellij.platform.jewel.markdown.extensions.frontMatter` end
