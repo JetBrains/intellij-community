@@ -8,6 +8,14 @@ import com.intellij.agent.workbench.sessions.core.providers.AgentSessionLaunchSp
 import com.intellij.agent.workbench.sessions.core.providers.AgentSessionProviderBridge
 import com.intellij.agent.workbench.sessions.core.providers.AgentSessionProviderIcon
 import com.intellij.agent.workbench.sessions.core.providers.AgentSessionSource
+import com.intellij.agent.workbench.sessions.util.buildAgentSessionEntryCommand
+import com.intellij.agent.workbench.sessions.util.buildAgentSessionIdentity
+import com.intellij.agent.workbench.sessions.util.buildAgentSessionNewCommand
+import com.intellij.agent.workbench.sessions.util.buildAgentSessionNewIdentity
+import com.intellij.agent.workbench.sessions.util.buildAgentSessionResumeCommand
+import com.intellij.agent.workbench.sessions.util.isAgentSessionNewIdentity
+import com.intellij.agent.workbench.sessions.util.parseAgentSessionIdentity
+import com.intellij.agent.workbench.sessions.util.resolveAgentSessionId
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer

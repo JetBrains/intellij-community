@@ -3,6 +3,8 @@ package com.intellij.agent.workbench.sessions
 
 import com.intellij.agent.workbench.sessions.core.AgentSessionProvider
 import com.intellij.agent.workbench.sessions.core.AgentSessionThread
+import com.intellij.agent.workbench.sessions.service.AgentSessionSourceLoadResult
+import com.intellij.agent.workbench.sessions.service.mergeAgentSessionSourceLoadResults
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 

@@ -1,6 +1,9 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.agent.workbench.sessions
 
+import com.intellij.agent.workbench.sessions.git.GitWorktreeDiscovery
+import com.intellij.agent.workbench.sessions.git.shortBranchName
+import com.intellij.agent.workbench.sessions.git.worktreeDisplayName
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 

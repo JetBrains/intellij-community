@@ -1,6 +1,9 @@
 package com.intellij.agent.workbench.sessions
 
 import com.intellij.agent.workbench.sessions.core.AgentSessionProvider
+import com.intellij.agent.workbench.sessions.model.AgentSessionThreadPreview
+import com.intellij.agent.workbench.sessions.state.AgentSessionsTreeUiStateService
+import com.intellij.agent.workbench.sessions.state.DEFAULT_VISIBLE_THREAD_COUNT
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.Test
 

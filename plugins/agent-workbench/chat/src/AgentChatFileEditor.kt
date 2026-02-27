@@ -3,6 +3,7 @@ package com.intellij.agent.workbench.chat
 
 // @spec community/plugins/agent-workbench/spec/agent-chat-editor.spec.md
 
+import com.intellij.agent.workbench.common.AgentWorkbenchActionIds
 import com.intellij.agent.workbench.sessions.core.AgentSessionProvider
 import com.intellij.openapi.actionSystem.ActionGroup
 import com.intellij.openapi.actionSystem.ActionManager
@@ -24,10 +25,6 @@ import java.beans.PropertyChangeListener
 import java.util.concurrent.CancellationException
 import javax.swing.JComponent
 import javax.swing.JPanel
-
-private const val NEW_THREAD_QUICK_FROM_EDITOR_TAB_ACTION_ID = "AgentWorkbenchSessions.EditorTab.NewThreadQuick"
-private const val NEW_THREAD_POPUP_FROM_EDITOR_TAB_ACTION_ID = "AgentWorkbenchSessions.EditorTab.NewThreadPopup"
-private const val BIND_PENDING_CODEX_THREAD_FROM_EDITOR_TAB_ACTION_ID = "AgentWorkbenchSessions.BindPendingCodexThreadFromEditorTab"
 
 internal class AgentChatFileEditor(
   private val project: Project,
@@ -127,6 +124,11 @@ internal class AgentChatFileEditor(
     }
   }
 }
+
+private val NEW_THREAD_QUICK_FROM_EDITOR_TAB_ACTION_ID: String = AgentWorkbenchActionIds.Sessions.EditorTab.NEW_THREAD_QUICK
+private val NEW_THREAD_POPUP_FROM_EDITOR_TAB_ACTION_ID: String = AgentWorkbenchActionIds.Sessions.EditorTab.NEW_THREAD_POPUP
+private val BIND_PENDING_CODEX_THREAD_FROM_EDITOR_TAB_ACTION_ID: String =
+  AgentWorkbenchActionIds.Sessions.BIND_PENDING_CODEX_THREAD_FROM_EDITOR_TAB
 
 internal interface AgentChatTerminalTab {
   val component: JComponent
