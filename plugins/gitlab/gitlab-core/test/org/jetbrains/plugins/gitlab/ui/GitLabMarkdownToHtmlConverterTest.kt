@@ -2,7 +2,8 @@ package org.jetbrains.plugins.gitlab.ui
 
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.testFramework.LightPlatformTestCase
+import com.intellij.testFramework.junit5.TestApplication
+import com.intellij.testFramework.junit5.fixture.projectFixture
 import git4idea.repo.GitRepository
 import io.mockk.every
 import io.mockk.mockk
@@ -11,21 +12,29 @@ import org.jetbrains.plugins.gitlab.api.GitLabServerPath
 import org.jetbrains.plugins.gitlab.ui.GitLabMarkdownToHtmlConverter.Companion.OPEN_FILE_LINK_PREFIX
 import org.jetbrains.plugins.gitlab.ui.GitLabMarkdownToHtmlConverter.Companion.OPEN_MR_LINK_PREFIX
 import org.jetbrains.plugins.gitlab.util.GitLabProjectPath.Companion.extractProjectPath
+import org.junit.jupiter.api.BeforeEach
+import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.assertDoesNotThrow
 import java.nio.file.Path
 
 private const val IMAGES_API_BASE = """http://base/url/api/v4/projects/1"""
 private const val WEB_BASE = """http://base/url/-/project/1"""
 private const val P_CLASS = """class="custom_image""""
 
-class GitLabMarkdownToHtmlConverterTest : LightPlatformTestCase() {
+@TestApplication
+class GitLabMarkdownToHtmlConverterTest {
+  companion object {
+    private val fixture = projectFixture()
+  }
+
+  private val project = fixture.get()
   private val gitRoot = "/tmp/git-repo"
 
   private lateinit var gitRepository: GitRepository
   private lateinit var gitRootVf: VirtualFile
 
-  override fun setUp() {
-    super.setUp()
-
+  @BeforeEach
+  fun setUp() {
     gitRootVf = mockk {
       every { toNioPath() } returns Path.of(gitRoot)
     }
@@ -35,14 +44,16 @@ class GitLabMarkdownToHtmlConverterTest : LightPlatformTestCase() {
   }
 
   // https://youtrack.jetbrains.com/issue/IJPL-148576
+  @Test
   fun `test link with query does not throw an exception`() {
-    assertNoThrowable {
+    assertDoesNotThrow {
       convertToHtml("""
         [link](/some/invalid/file/path?query=123)
       """.trimIndent())
     }
   }
 
+  @Test
   fun `test link with starting with project path redirects to browser (for now)`() {
     val parsed = convertToHtml("""
         [link](/test-account/mr-test/-/merge_requests/1)
@@ -51,6 +62,7 @@ class GitLabMarkdownToHtmlConverterTest : LightPlatformTestCase() {
     assertThat(parsed).contains("href=\"/test-account/mr-test/-/merge_requests/1\"")
   }
 
+  @Test
   fun `test simple file link gets file link prefix`() {
     val parsed = convertToHtml("""
         [link](bla.md)
@@ -59,6 +71,7 @@ class GitLabMarkdownToHtmlConverterTest : LightPlatformTestCase() {
     assertThat(parsed).contains("${OPEN_FILE_LINK_PREFIX}${gitRoot}/bla.md")
   }
 
+  @Test
   fun `test nested file link gets file link prefix`() {
     val parsed = convertToHtml("""
         [link](directory/a/b/bla.md)
@@ -67,6 +80,7 @@ class GitLabMarkdownToHtmlConverterTest : LightPlatformTestCase() {
     assertThat(parsed).contains("${OPEN_FILE_LINK_PREFIX}${gitRoot}/directory/a/b/bla.md")
   }
 
+  @Test
   fun `test nested file link with backslashes gets file link prefix`() {
     val parsed = convertToHtml("""
         [link](directory\a\b\bla.md)
@@ -75,6 +89,7 @@ class GitLabMarkdownToHtmlConverterTest : LightPlatformTestCase() {
     assertThat(parsed).contains("${OPEN_FILE_LINK_PREFIX}${gitRoot}/directory/a/b/bla.md")
   }
 
+  @Test
   fun `test uploads files link rendering`() {
     val parsed = convertToHtml("""
         [link](/uploads/a/b/c.jpg) some text
@@ -83,6 +98,7 @@ class GitLabMarkdownToHtmlConverterTest : LightPlatformTestCase() {
     assertThat(parsed).isEqualTo("""<body><p><a href="$WEB_BASE/uploads/a/b/c.jpg" title="link">link</a> some text</p></body>""")
   }
 
+  @Test
   fun `test simple MR link gets MR link prefix`() {
     val parsed = convertToHtml("""
         !53
@@ -91,6 +107,7 @@ class GitLabMarkdownToHtmlConverterTest : LightPlatformTestCase() {
     assertThat(parsed).contains("${OPEN_MR_LINK_PREFIX}53")
   }
 
+  @Test
   fun `test images rendering`() {
     val parsed = convertToHtml("""
         ![link](/uploads/a/b/c.jpg)
@@ -99,6 +116,7 @@ class GitLabMarkdownToHtmlConverterTest : LightPlatformTestCase() {
     assertThat(parsed).isEqualTo("""<body><p><p $P_CLASS><a href="$WEB_BASE/uploads/a/b/c.jpg"><img src="$IMAGES_API_BASE/uploads/a/b/c.jpg" alt="link" title="link" /></a></p></p></body>""")
   }
 
+  @Test
   fun `test images rendering with one setting`() {
     val parsed = convertToHtml("""
         ![link](/uploads/a/b/c.jpg){width=10}
@@ -107,6 +125,7 @@ class GitLabMarkdownToHtmlConverterTest : LightPlatformTestCase() {
     assertThat(parsed).isEqualTo("""<body><p><p $P_CLASS><a href="$WEB_BASE/uploads/a/b/c.jpg"><img src="$IMAGES_API_BASE/uploads/a/b/c.jpg" alt="link" title="link" /></a></p></p></body>""")
   }
 
+  @Test
   fun `test images rendering with one percent setting`() {
     val parsed = convertToHtml("""
         ![link](/uploads/a/b/c.jpg){width=10%}
@@ -115,6 +134,7 @@ class GitLabMarkdownToHtmlConverterTest : LightPlatformTestCase() {
     assertThat(parsed).isEqualTo("""<body><p><p $P_CLASS><a href="$WEB_BASE/uploads/a/b/c.jpg"><img src="$IMAGES_API_BASE/uploads/a/b/c.jpg" alt="link" title="link" /></a></p></p></body>""")
   }
 
+  @Test
   fun `test images rendering with two settings`() {
     val parsed = convertToHtml("""
         ![link](/uploads/a/b/c.jpg){width=10 height=10}
@@ -123,6 +143,7 @@ class GitLabMarkdownToHtmlConverterTest : LightPlatformTestCase() {
     assertThat(parsed).isEqualTo("""<body><p><p $P_CLASS><a href="$WEB_BASE/uploads/a/b/c.jpg"><img src="$IMAGES_API_BASE/uploads/a/b/c.jpg" alt="link" title="link" /></a></p></p></body>""")
   }
 
+  @Test
   fun `test images rendering with two precent settings`() {
     val parsed = convertToHtml("""
         ![link](/uploads/a/b/c.jpg){width=10% height=10%}
@@ -131,6 +152,7 @@ class GitLabMarkdownToHtmlConverterTest : LightPlatformTestCase() {
     assertThat(parsed).isEqualTo("""<body><p><p $P_CLASS><a href="$WEB_BASE/uploads/a/b/c.jpg"><img src="$IMAGES_API_BASE/uploads/a/b/c.jpg" alt="link" title="link" /></a></p></p></body>""")
   }
 
+  @Test
   fun `test images rendering with many settings`() {
     val parsed = convertToHtml("""
         ![link](/uploads/a/b/c.jpg){width=10 height=10 other=123 other2=123}
@@ -139,6 +161,7 @@ class GitLabMarkdownToHtmlConverterTest : LightPlatformTestCase() {
     assertThat(parsed).isEqualTo("""<body><p><p $P_CLASS><a href="$WEB_BASE/uploads/a/b/c.jpg"><img src="$IMAGES_API_BASE/uploads/a/b/c.jpg" alt="link" title="link" /></a></p></p></body>""")
   }
 
+  @Test
   fun `test images rendering with many percent settings`() {
     val parsed = convertToHtml("""
         ![link](/uploads/a/b/c.jpg){width=10% height=10% other=123% other2=123%}
@@ -147,6 +170,7 @@ class GitLabMarkdownToHtmlConverterTest : LightPlatformTestCase() {
     assertThat(parsed).isEqualTo("""<body><p><p $P_CLASS><a href="$WEB_BASE/uploads/a/b/c.jpg"><img src="$IMAGES_API_BASE/uploads/a/b/c.jpg" alt="link" title="link" /></a></p></p></body>""")
   }
 
+  @Test
   fun `test images rendering with different settings`() {
     val parsed = convertToHtml("""
         ![link](/uploads/a/b/c.jpg){width=10 height=10% other=123 other2=123%}
@@ -155,6 +179,7 @@ class GitLabMarkdownToHtmlConverterTest : LightPlatformTestCase() {
     assertThat(parsed).isEqualTo("""<body><p><p $P_CLASS><a href="$WEB_BASE/uploads/a/b/c.jpg"><img src="$IMAGES_API_BASE/uploads/a/b/c.jpg" alt="link" title="link" /></a></p></p></body>""")
   }
 
+  @Test
   fun `test images rendering with two double quote settings`() {
     val parsed = convertToHtml("""
         ![link](/uploads/a/b/c.jpg){width="10" height="10"}
@@ -163,6 +188,7 @@ class GitLabMarkdownToHtmlConverterTest : LightPlatformTestCase() {
     assertThat(parsed).isEqualTo("""<body><p><p $P_CLASS><a href="$WEB_BASE/uploads/a/b/c.jpg"><img src="$IMAGES_API_BASE/uploads/a/b/c.jpg" alt="link" title="link" /></a></p></p></body>""")
   }
 
+  @Test
   fun `test images rendering with two double quote settings and some text`() {
     val parsed = convertToHtml("""
         ![link](/uploads/a/b/c.jpg){width="10" height="10"} some text
@@ -171,6 +197,7 @@ class GitLabMarkdownToHtmlConverterTest : LightPlatformTestCase() {
     assertThat(parsed).isEqualTo("""<body><p><p $P_CLASS><a href="$WEB_BASE/uploads/a/b/c.jpg"><img src="$IMAGES_API_BASE/uploads/a/b/c.jpg" alt="link" title="link" /></a></p> some text</p></body>""")
   }
 
+  @Test
   fun `test images rendering with different settings and some text`() {
     val parsed = convertToHtml("""
         ![link](/uploads/a/b/c.jpg){width=10 height=10% other=123 other2=123%} some text
@@ -179,6 +206,7 @@ class GitLabMarkdownToHtmlConverterTest : LightPlatformTestCase() {
     assertThat(parsed).isEqualTo("""<body><p><p $P_CLASS><a href="$WEB_BASE/uploads/a/b/c.jpg"><img src="$IMAGES_API_BASE/uploads/a/b/c.jpg" alt="link" title="link" /></a></p> some text</p></body>""")
   }
 
+  @Test
   fun `test images rendering with settings and additional curly braces section`() {
     val parsed = convertToHtml("""
         ![link](/uploads/a/b/c.jpg){width=10 height=10} {here is the additional section}
@@ -187,6 +215,7 @@ class GitLabMarkdownToHtmlConverterTest : LightPlatformTestCase() {
     assertThat(parsed).isEqualTo("""<body><p><p $P_CLASS><a href="$WEB_BASE/uploads/a/b/c.jpg"><img src="$IMAGES_API_BASE/uploads/a/b/c.jpg" alt="link" title="link" /></a></p> {here is the additional section}</p></body>""")
   }
 
+  @Test
   fun `test images rendering with settings and immediate symbols after curly braces`() {
     val parsed = convertToHtml("""
         ![link](/uploads/a/b/c.jpg){width=10 height=10}immediate text
@@ -195,6 +224,7 @@ class GitLabMarkdownToHtmlConverterTest : LightPlatformTestCase() {
     assertThat(parsed).isEqualTo("""<body><p><p $P_CLASS><a href="$WEB_BASE/uploads/a/b/c.jpg"><img src="$IMAGES_API_BASE/uploads/a/b/c.jpg" alt="link" title="link" /></a></p>immediate text</p></body>""")
   }
 
+  @Test
   fun `test images rendering with settings and immediate curly braces after curly braces section`() {
     val parsed = convertToHtml("""
         ![link](/uploads/a/b/c.jpg){width=10 height=10}{here is the additional section}
@@ -203,6 +233,7 @@ class GitLabMarkdownToHtmlConverterTest : LightPlatformTestCase() {
     assertThat(parsed).isEqualTo("""<body><p><p $P_CLASS><a href="$WEB_BASE/uploads/a/b/c.jpg"><img src="$IMAGES_API_BASE/uploads/a/b/c.jpg" alt="link" title="link" /></a></p>{here is the additional section}</p></body>""")
   }
 
+  @Test
   fun `test images rendering with settings reference link`() {
     val parsed = convertToHtml("""
         [link]: http://url "label"
@@ -212,6 +243,7 @@ class GitLabMarkdownToHtmlConverterTest : LightPlatformTestCase() {
     assertThat(parsed).isEqualTo("""<body><p>The picture <p $P_CLASS><a href="http://url"><img src="http://url" alt="image" title="label" /></a></p></p></body>""")
   }
 
+  @Test
   fun `test images rendering with settings reference link with settings`() {
     val parsed = convertToHtml("""
         [link]: http://url "label"
@@ -221,6 +253,7 @@ class GitLabMarkdownToHtmlConverterTest : LightPlatformTestCase() {
     assertThat(parsed).isEqualTo("""<body><p>The picture <p $P_CLASS><a href="http://url"><img src="http://url" alt="image" title="label" /></a></p></p></body>""")
   }
 
+  @Test
   fun `test images rendering with settings reference link with settings and immediate text after`() {
     val parsed = convertToHtml("""
         [link]: http://url "label"
@@ -230,6 +263,7 @@ class GitLabMarkdownToHtmlConverterTest : LightPlatformTestCase() {
     assertThat(parsed).isEqualTo("""<body><p>The picture <p $P_CLASS><a href="http://url"><img src="http://url" alt="image" title="label" /></a></p>immediate text</p></body>""")
   }
 
+  @Test
   fun `test images rendering with settings reference link and text`() {
     val parsed = convertToHtml("""
         [link]: http://url "label"
@@ -239,6 +273,7 @@ class GitLabMarkdownToHtmlConverterTest : LightPlatformTestCase() {
     assertThat(parsed).isEqualTo("""<body><p>The picture <p $P_CLASS><a href="http://url"><img src="http://url" alt="image" title="label" /></a></p> some text</p></body>""")
   }
 
+  @Test
   fun `test images rendering with settings reference link with settings and text`() {
     val parsed = convertToHtml("""
         [link]: http://url "label"
@@ -249,6 +284,7 @@ class GitLabMarkdownToHtmlConverterTest : LightPlatformTestCase() {
   }
 
 
+  @Test
   fun `test full reference link with absolute web url`() {
     val parsed = convertToHtml("""
         [link]: http://url "label"
@@ -258,6 +294,7 @@ class GitLabMarkdownToHtmlConverterTest : LightPlatformTestCase() {
     assertThat(parsed).isEqualTo("""<body><p>The link <a href="http://url" title="label">link-description</a> and some text</p></body>""")
   }
 
+  @Test
   fun `test full reference link for uploads file`() {
     val parsed = convertToHtml("""
         [link]: /uploads/some/path.pdf "label"
@@ -267,6 +304,7 @@ class GitLabMarkdownToHtmlConverterTest : LightPlatformTestCase() {
     assertThat(parsed).isEqualTo("""<body><p>The link <a href="$WEB_BASE/uploads/some/path.pdf" title="label">link-description</a> and some text</p></body>""")
   }
 
+  @Test
   fun `test full reference link for local file`() {
     val parsed = convertToHtml("""
         [link]: /local/file/some/path.pdf "label"
@@ -276,6 +314,7 @@ class GitLabMarkdownToHtmlConverterTest : LightPlatformTestCase() {
     assertThat(parsed).isEqualTo("""<body><p>The link <a href="glfilelink:/local/file/some/path.pdf" title="label">link-description</a> and some text</p></body>""")
   }
 
+  @Test
   fun `test full reference link for local file with backslashes`() {
     val parsed = convertToHtml("""
         [link]: win\local\file\some\path.pdf "label"
@@ -287,6 +326,7 @@ class GitLabMarkdownToHtmlConverterTest : LightPlatformTestCase() {
     )
   }
 
+  @Test
   fun `test short reference link with absolute web url`() {
     val parsed = convertToHtml("""
         [link]: http://url "label"
@@ -296,6 +336,7 @@ class GitLabMarkdownToHtmlConverterTest : LightPlatformTestCase() {
     assertThat(parsed).isEqualTo("""<body><p>The link <a href="http://url" title="label">link</a> and some text</p></body>""")
   }
 
+  @Test
   fun `test short reference link for uploads file`() {
     val parsed = convertToHtml("""
         [link]: /uploads/some/path.pdf "label"
@@ -305,6 +346,7 @@ class GitLabMarkdownToHtmlConverterTest : LightPlatformTestCase() {
     assertThat(parsed).isEqualTo("""<body><p>The link <a href="$WEB_BASE/uploads/some/path.pdf" title="label">link</a> and some text</p></body>""")
   }
 
+  @Test
   fun `test short reference link for local file`() {
     val parsed = convertToHtml("""
         [link]: /local/file/some/path.pdf "label"
