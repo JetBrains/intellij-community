@@ -187,7 +187,9 @@ public final class IdeMessagePanel implements MessagePoolListener, IconLikeCusto
 
   @Override
   public void newEntryAdded() {
-    updateIconAndNotify();
+    UIUtil.invokeLaterIfNeeded(() -> {
+      updateIconAndNotify();
+    });
   }
 
   @Override
