@@ -8,8 +8,9 @@ import com.intellij.openapi.editor.ex.EditorEx
 import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.module.ModuleUtilCore
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.registry.Registry
+import com.intellij.openapi.util.text.HtmlChunk
+import com.intellij.openapi.util.text.plus
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.problems.ProblemListener
 import com.intellij.problems.WolfTheProblemSolver
@@ -43,18 +44,17 @@ open class PsiAwareFileEditorManagerImpl(project: Project, coroutineScope: Corou
 
   override fun isProblem(file: VirtualFile): Boolean = problemSolver.isProblemFile(file)
 
-  override fun getFileTooltipText(file: VirtualFile, composite: EditorComposite?): String {
-    val tooltipText: @NlsSafe StringBuilder = StringBuilder()
-    if (Registry.`is`("ide.tab.tooltip.module", false)) {
+  override fun getFileTooltipText(file: VirtualFile, composite: EditorComposite?): HtmlChunk {
+    val originalTooltipText = super.getFileTooltipText(file, composite)
+    return if (Registry.`is`("ide.tab.tooltip.module", false)) {
       val module = ModuleUtilCore.findModuleForFile(file, project)
       if (module != null && ModuleManager.getInstance(project).modules.size > 1) {
-        tooltipText.append('[')
-        tooltipText.append(module.name)
-        tooltipText.append("] ")
+        val moduleText = HtmlChunk.text("[${module.name}] ")
+        moduleText + originalTooltipText
       }
+      else originalTooltipText
     }
-    tooltipText.append(super.getFileTooltipText(file, composite))
-    return tooltipText.toString()
+    else originalTooltipText
   }
 
   private inner class MyProblemListener : ProblemListener {

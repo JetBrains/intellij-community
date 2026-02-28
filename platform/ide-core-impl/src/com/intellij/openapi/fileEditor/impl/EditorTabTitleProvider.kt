@@ -5,6 +5,7 @@ import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsContexts
+import com.intellij.openapi.util.text.HtmlChunk
 import com.intellij.openapi.vfs.VirtualFile
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -17,7 +18,7 @@ private val limitedDispatcher = Dispatchers.Default.limitedParallelism(2)
 
 /**
  *
- * Provides custom name/tooltip for editor tab instead of filename/path.
+ * Provides a custom name / tooltip for the editor tab instead of filename / path.
  */
 interface EditorTabTitleProvider : DumbAware {
   companion object {
@@ -38,5 +39,20 @@ interface EditorTabTitleProvider : DumbAware {
     }
   }
 
+  /**
+   * Provides a custom tooltip for the editor tab instead of the filename / path.
+   *
+   * Tooltip is allowed to contain HTML markup. Construct the description using [HtmlChunk].
+   * If your tooltip doesn't suppose to contain HTML markup,
+   * prefer using [HtmlChunk.text] to avoid accidental HTML injections.
+   */
+  fun getEditorTabTooltipHtmlText(project: Project, virtualFile: VirtualFile): HtmlChunk? {
+    @Suppress("DEPRECATION")
+    val text = getEditorTabTooltipText(project, virtualFile) ?: return null
+    // Use `raw` because returned text from `getEditorTabTooltipText` can contain HTML tags.
+    return HtmlChunk.raw(text)
+  }
+
+  @Deprecated("Use getEditorTabTooltipHtmlText instead to avoid accidental HTML injections")
   fun getEditorTabTooltipText(project: Project, virtualFile: VirtualFile): @NlsContexts.Tooltip String? = null
 }

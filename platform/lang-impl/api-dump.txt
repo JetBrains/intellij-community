@@ -931,6 +931,8 @@ com.intellij.openapi.editor.richcopy.SyntaxInfoBuilder$RangeIterator
 com.intellij.openapi.editor.richcopy.view.RawTextWithMarkup
 - com.intellij.codeInsight.editorActions.TextBlockTransferableData
 - a:setRawText(java.lang.String):V
+c:com.intellij.openapi.fileEditor.impl.PsiAwareFileEditorManagerImpl
+- getFileTooltipText(com.intellij.openapi.vfs.VirtualFile,com.intellij.openapi.fileEditor.impl.EditorComposite):com.intellij.openapi.util.text.HtmlChunk
 com.intellij.openapi.module.ModuleTypeWithWebFeatures
 - a:hasWebFeatures(com.intellij.openapi.module.Module):Z
 - s:isAvailable(com.intellij.openapi.module.Module):Z
