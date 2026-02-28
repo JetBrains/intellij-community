@@ -9,10 +9,11 @@ import com.intellij.openapi.actionSystem.MouseShortcut
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.event.EditorMouseEvent
+import com.intellij.openapi.editor.ex.RangeHighlighterEx
+import com.intellij.openapi.editor.markup.RangeHighlighter
 import com.intellij.openapi.keymap.KeymapUtil
 import com.intellij.openapi.util.text.HtmlBuilder
 import com.intellij.openapi.util.text.HtmlChunk
-import com.intellij.reference.SoftReference
 import com.intellij.ui.HintHint
 import com.intellij.ui.HyperlinkAdapter
 import com.intellij.ui.LightweightHint
@@ -20,24 +21,46 @@ import com.intellij.ui.awt.RelativePoint
 import com.intellij.util.system.OS
 import com.intellij.util.ui.JBUI
 import org.jetbrains.annotations.Nls
+import java.awt.Point
+import java.awt.Rectangle
 import java.awt.event.InputEvent
 import java.awt.event.MouseEvent
-import java.lang.ref.Reference
-import java.lang.ref.WeakReference
 import javax.swing.JComponent
 import javax.swing.event.HyperlinkEvent
 import javax.swing.event.HyperlinkListener
 
 internal class InvisibleHyperlinkHintManager(private val editor: Editor) {
 
-  private var hintRef: Reference<LightweightHint>? = null
+  private var hintInfo: HintInfo? = null
 
   fun isInsideHint(e: EditorMouseEvent): Boolean {
-    val hint = getVisibleHint()
+    val hint = getHintInfoIfVisible()?.hint
     return hint != null && hint.isInsideHint(RelativePoint(e.mouseEvent))
   }
 
-  fun showHint(offset: Int, action: () -> Unit) {
+  fun onHoveredLinkChange(hoveredLink: RangeHighlighter?, e: EditorMouseEvent) {
+    val hintInfo = getHintInfoIfVisible()
+    if (hintInfo != null && hintInfo.link !== hoveredLink && !isInsideHintOrBetweenHintAndLink(e)) {
+      // hide the popup if the mouse is outside the link, the popup, and the area between them
+      hideIfVisible() 
+    }
+  }
+
+  private fun isInsideHintOrBetweenHintAndLink(e: EditorMouseEvent): Boolean {
+    val hintInfo = getHintInfoIfVisible() ?: return false
+    val hint = hintInfo.hint
+    val mousePoint = RelativePoint(e.mouseEvent)
+    if (hint.isInsideHint(mousePoint)) {
+      return true
+    }
+    val hintBounds = Rectangle(hint.component.locationOnScreen, hint.component.size)
+    val initialMouseY = RelativePoint(hintInfo.initialEvent.mouseEvent).screenPoint.y
+    val neighbourhood = hintBounds.union(Rectangle(Point(hintBounds.location.x, initialMouseY)))
+    return neighbourhood.height < hintBounds.height * 4 /* sanity check */ &&
+           neighbourhood.contains(mousePoint.screenPoint)
+  }
+
+  fun showHint(link: RangeHighlighterEx, e: EditorMouseEvent, action: () -> Unit) {
     if (ApplicationManager.getApplication().isUnitTestMode) {
       return
     }
@@ -48,8 +71,13 @@ internal class InvisibleHyperlinkHintManager(private val editor: Editor) {
         hideIfVisible()
       }
     })
-    val hint = showHint(editor, offset, component)
-    hintRef = WeakReference(hint)
+    val hint = showHint(editor, e.offset, component)
+    hintInfo = HintInfo(hint, link, e)
+    hint.addHintListener {
+      if (hintInfo?.hint == hint) {
+        hintInfo = null
+      }
+    }
   }
 
   private fun createHintLabel(listener: HyperlinkListener): JComponent {
@@ -75,8 +103,8 @@ internal class InvisibleHyperlinkHintManager(private val editor: Editor) {
   }
 
   private fun hideIfVisible() {
-    getVisibleHint()?.hide()
-    hintRef = null
+    getHintInfoIfVisible()?.hint?.hide()
+    hintInfo = null
   }
 
   private fun showHint(editor: Editor, offset: Int, component: JComponent): LightweightHint {
@@ -95,7 +123,13 @@ internal class InvisibleHyperlinkHintManager(private val editor: Editor) {
     return hint
   }
 
-  private fun getVisibleHint(): LightweightHint? {
-    return SoftReference.dereference(hintRef)?.takeIf { it.isVisible }
+  private fun getHintInfoIfVisible(): HintInfo? {
+    return hintInfo?.takeIf { it.hint.isVisible }
   }
+
+  private data class HintInfo(
+    val hint: LightweightHint,
+    val link: RangeHighlighterEx,
+    val initialEvent: EditorMouseEvent,
+  )
 }

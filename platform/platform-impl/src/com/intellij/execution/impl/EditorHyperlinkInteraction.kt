@@ -1,6 +1,7 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.impl
 
+
 import com.intellij.openapi.editor.colors.CodeInsightColors
 import com.intellij.openapi.editor.colors.EditorColorsManager
 import com.intellij.openapi.editor.event.EditorMouseEvent
@@ -53,7 +54,7 @@ internal class EditorHyperlinkInteraction(
   @RequiresEdt(generateAssertion = false)
   fun followLink(link: RangeHighlighterEx, event: EditorMouseEvent, action: () -> Unit) {
     if (effectSupplier.isInvisibleLink(link) && !event.isCtrlPressed) {
-      hintManager.showHint(event.offset, action)
+      hintManager.showHint(link, event, action)
     }
     else {
       action()
@@ -83,6 +84,7 @@ internal class EditorHyperlinkInteraction(
 
   @RequiresEdt(generateAssertion = false)
   fun linkHovered(link: RangeHighlighter?, e: EditorMouseEvent) {
+    hintManager.onHoveredLinkChange(link, e)
     if (hintManager.isInsideHint(e)) {
       linkHovered(null, false)
     }
