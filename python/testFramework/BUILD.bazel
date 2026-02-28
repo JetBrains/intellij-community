@@ -28,8 +28,6 @@ jvm_library(
     "//platform/execution",
     "//platform/lang-impl",
     "//python:python-community-impl",
-    "//python:python-commonTests",
-    "//python/impl.helperLocator:community-helpersLocator",
   ]
 )
 
@@ -54,8 +52,6 @@ jvm_library(
     "//platform/execution:execution_test_lib",
     "//platform/lang-impl:lang-impl_test_lib",
     "//python:python-community-impl_test_lib",
-    "//python:python-commonTests_test_lib",
-    "//python/impl.helperLocator:community-helpersLocator_test_lib",
   ]
 )
 ### auto-generated section `build intellij.python.community.testFramework` end

@@ -8,7 +8,6 @@ import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.TextRange
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.psi.PsiComment
-import com.intellij.python.community.helpersLocator.PythonHelpersLocator
 import com.intellij.testFramework.fixtures.CodeInsightTestFixture
 import com.intellij.util.io.URLUtil
 import com.jetbrains.python.inspections.PyAbstractClassInspection
@@ -56,7 +55,7 @@ object PyConformanceTestSuiteUtils {
       current = current.parent
     }
 
-    PythonHelpersLocator.getPythonCommunityPath().resolve("testData").toString()
+    throw IllegalStateException("Cannot find community/python/testData from $jarPath")
   }
 
   val TESTS_DIR_ABSOLUTE_PATH: Path get() = Path.of(TEST_DATA_PATH, TESTS_DIR)

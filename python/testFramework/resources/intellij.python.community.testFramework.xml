@@ -1,10 +1,7 @@
 <idea-plugin>
   <dependencies>
+    <module name="intellij.python.community.impl"/>
     <module name="intellij.libraries.junit4"/>
     <module name="intellij.platform.testFramework"/>
-    <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
-    <module name="intellij.python.community.helpersLocator"/>
-    <module name="intellij.python.community.impl"/>
-    <!-- endregion -->
   </dependencies>
 </idea-plugin>
