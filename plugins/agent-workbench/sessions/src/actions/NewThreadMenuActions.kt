@@ -4,7 +4,13 @@ package com.intellij.agent.workbench.sessions.actions
 import com.intellij.agent.workbench.sessions.AgentSessionsBundle
 import com.intellij.agent.workbench.sessions.core.AgentSessionLaunchMode
 import com.intellij.agent.workbench.sessions.core.AgentSessionProvider
+import com.intellij.agent.workbench.sessions.core.providers.AgentSessionProviderActionModel
 import com.intellij.agent.workbench.sessions.core.providers.AgentSessionProviderBridge
+import com.intellij.agent.workbench.sessions.core.providers.AgentSessionProviderMenuItem
+import com.intellij.agent.workbench.sessions.core.providers.AgentSessionProviderMenuModel
+import com.intellij.agent.workbench.sessions.core.providers.buildAgentSessionProviderActionModel
+import com.intellij.agent.workbench.sessions.core.providers.buildAgentSessionProviderMenuModel
+import com.intellij.agent.workbench.sessions.core.providers.hasEntries
 import com.intellij.agent.workbench.sessions.service.AgentSessionsService
 import com.intellij.agent.workbench.sessions.ui.providerDisplayName
 import com.intellij.agent.workbench.sessions.ui.providerIcon
@@ -25,52 +31,21 @@ internal fun createNewThreadViaService(
   service<AgentSessionsService>().createNewSession(path, provider, mode, currentProject)
 }
 
-internal fun buildNewThreadMenuModel(bridges: List<AgentSessionProviderBridge>): NewThreadMenuModel {
-  val standardItems = ArrayList<NewThreadMenuItem>(bridges.size)
-  val yoloItems = ArrayList<NewThreadMenuItem>()
-
-  bridges.forEach { bridge ->
-    if (AgentSessionLaunchMode.STANDARD in bridge.supportedLaunchModes) {
-      standardItems += NewThreadMenuItem(
-        bridge = bridge,
-        mode = AgentSessionLaunchMode.STANDARD,
-        label = AgentSessionsBundle.message(bridge.newSessionLabelKey),
-        isEnabled = true,
-      )
-    }
-
-    val yoloLabelKey = bridge.yoloSessionLabelKey
-    if (yoloLabelKey != null && AgentSessionLaunchMode.YOLO in bridge.supportedLaunchModes) {
-      yoloItems += NewThreadMenuItem(
-        bridge = bridge,
-        mode = AgentSessionLaunchMode.YOLO,
-        label = AgentSessionsBundle.message(yoloLabelKey),
-        isEnabled = true,
-      )
-    }
-  }
-
-  return NewThreadMenuModel(
-    standardItems = standardItems,
-    yoloItems = yoloItems,
-  )
+internal fun buildNewThreadMenuModel(bridges: List<AgentSessionProviderBridge>): AgentSessionProviderMenuModel {
+  return buildAgentSessionProviderMenuModel(bridges)
 }
 
 internal fun buildNewThreadActionModel(
   bridges: List<AgentSessionProviderBridge>,
   lastUsedProvider: AgentSessionProvider?,
-): NewThreadActionModel {
-  val menuModel = buildNewThreadMenuModel(bridges)
-  return NewThreadActionModel(
-    menuModel = menuModel,
-    quickStartItem = resolveQuickStartThreadItem(menuModel, lastUsedProvider),
-  )
+): AgentSessionProviderActionModel {
+  return buildAgentSessionProviderActionModel(bridges, lastUsedProvider)
 }
 
 internal fun launchQuickStartThread(
   path: String,
   project: Project,
-  quickStartItem: NewThreadMenuItem?,
+  quickStartItem: AgentSessionProviderMenuItem?,
   createNewSession: (String, AgentSessionProvider, AgentSessionLaunchMode, Project) -> Unit,
 ) {
   val item = quickStartItem ?: return
@@ -80,7 +55,7 @@ internal fun launchQuickStartThread(
 internal fun buildNewThreadMenuActions(
   path: String,
   project: Project,
-  menuModel: NewThreadMenuModel,
+  menuModel: AgentSessionProviderMenuModel,
   createNewSession: (String, AgentSessionProvider, AgentSessionLaunchMode, Project) -> Unit,
 ): Array<AnAction> {
   if (!menuModel.hasEntries()) {
@@ -113,35 +88,28 @@ internal fun buildNewThreadMenuActions(
   return actions.toTypedArray()
 }
 
-private fun resolveQuickStartThreadItem(
-  menuModel: NewThreadMenuModel,
-  lastUsedProvider: AgentSessionProvider?,
-): NewThreadMenuItem? {
-  val standardItems = menuModel.standardItems.filter { it.isEnabled }
-  if (standardItems.isEmpty()) return null
-
-  val preferredItem = lastUsedProvider?.let { provider ->
-    standardItems.firstOrNull { item -> item.bridge.provider == provider }
-  }
-  return preferredItem ?: standardItems.first()
-}
-
 private class AgentSessionsCreateThreadAction(
   private val path: String,
-  private val item: NewThreadMenuItem,
+  private val item: AgentSessionProviderMenuItem,
   private val project: Project,
   private val createNewSession: (String, AgentSessionProvider, AgentSessionLaunchMode, Project) -> Unit,
-) : DumbAwareAction(item.label, null, providerIcon(item.bridge.provider)) {
+) : DumbAwareAction(AgentSessionsBundle.message(item.labelKey), null, providerIcon(item.bridge.provider)) {
   override fun update(e: AnActionEvent) {
     e.presentation.isEnabled = item.isEnabled
     e.presentation.description = if (item.isEnabled) {
       null
     }
     else {
-      AgentSessionsBundle.message(
-        "toolwindow.action.new.session.unavailable",
-        providerDisplayName(item.bridge.provider),
-      )
+      val key = item.disabledReasonKey
+      if (key == null) {
+        AgentSessionsBundle.message(
+          "toolwindow.action.new.session.unavailable",
+          providerDisplayName(item.bridge.provider),
+        )
+      }
+      else {
+        AgentSessionsBundle.message(key)
+      }
     }
   }
 

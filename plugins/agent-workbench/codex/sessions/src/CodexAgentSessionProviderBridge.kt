@@ -6,6 +6,7 @@ import com.intellij.agent.workbench.codex.common.CodexCliUtils
 import com.intellij.agent.workbench.codex.sessions.backend.appserver.SharedCodexAppServerService
 import com.intellij.agent.workbench.sessions.core.AgentSessionLaunchMode
 import com.intellij.agent.workbench.sessions.core.AgentSessionProvider
+import com.intellij.agent.workbench.sessions.core.prompt.AgentPromptInitialMessageRequest
 import com.intellij.agent.workbench.sessions.core.providers.AgentSessionLaunchSpec
 import com.intellij.agent.workbench.sessions.core.providers.AgentSessionProviderBridge
 import com.intellij.agent.workbench.sessions.core.providers.AgentSessionProviderIcon
@@ -73,6 +74,34 @@ internal class CodexAgentSessionProviderBridge(
   override suspend fun unarchiveThread(path: String, threadId: String): Boolean {
     serviceAsync<SharedCodexAppServerService>().unarchiveThread(threadId)
     return true
+  }
+
+  override fun composeInitialMessage(request: AgentPromptInitialMessageRequest): String {
+    val prompt = request.prompt.trim()
+    if (request.contextItems.isEmpty()) {
+      return prompt
+    }
+
+    val builder = StringBuilder(prompt)
+    if (builder.isNotEmpty()) {
+      builder.append("\n\n")
+    }
+    builder.append("### IDE Context\n")
+    request.contextItems.forEach { item ->
+      builder.append("- ").append(item.title)
+      if (item.metadata.isNotEmpty()) {
+        val metadata = item.metadata.entries.joinToString(separator = ", ") { (key, value) -> "$key=$value" }
+        builder.append(" (").append(metadata).append(')')
+      }
+      builder.append("\n")
+      val content = item.content.trim()
+      if (content.isNotEmpty()) {
+        builder.append("```\n")
+          .append(content)
+          .append("\n```\n")
+      }
+    }
+    return builder.toString().trimEnd()
   }
 
   override fun isCliMissingError(throwable: Throwable): Boolean {

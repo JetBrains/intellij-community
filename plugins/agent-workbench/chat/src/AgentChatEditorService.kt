@@ -85,6 +85,9 @@ suspend fun openChat(
   pendingCreatedAtMs: Long? = null,
   pendingFirstInputAtMs: Long? = null,
   pendingLaunchMode: String? = null,
+  initialComposedMessage: String? = null,
+  initialMessageToken: String? = null,
+  initialMessageSent: Boolean = false,
 ) {
   val manager = FileEditorManagerEx.getInstanceExAsync(project)
   val existing = findExistingChat(manager.openFiles, threadIdentity, subAgentId)
@@ -106,6 +109,9 @@ suspend fun openChat(
     pendingCreatedAtMs = pendingCreatedAtMs,
     pendingFirstInputAtMs = pendingFirstInputAtMs,
     pendingLaunchMode = pendingLaunchMode,
+    initialComposedMessage = initialComposedMessage,
+    initialMessageToken = initialMessageToken,
+    initialMessageSent = initialMessageSent,
   )
   val file = existing ?: fileSystem.getOrCreateFile(snapshot)
   if (existing != null) {
@@ -126,14 +132,31 @@ suspend fun openChat(
     else {
       false
     }
+    val initialMessageUpdated = if (
+      initialComposedMessage != null ||
+      initialMessageToken != null ||
+      initialMessageSent
+    ) {
+      existing.updateInitialMessageMetadata(
+        initialComposedMessage = initialComposedMessage,
+        initialMessageToken = initialMessageToken,
+        initialMessageSent = initialMessageSent,
+      )
+    }
+    else {
+      false
+    }
     tabsService.upsert(existing.toSnapshot())
     LOG.debug {
       "openChat existing tab update(identity=$threadIdentity, subAgentId=$subAgentId): " +
       "titleUpdated=$titleUpdated, activityUpdated=$activityUpdated, currentName=${existing.name}," +
       " currentTitle=${existing.threadTitle}, currentActivity=${existing.threadActivity}"
     }
-    if (titleUpdated || activityUpdated || pendingUpdated) {
+    if (titleUpdated || activityUpdated || pendingUpdated || initialMessageUpdated) {
       manager.updateFilePresentation(existing)
+    }
+    if (initialMessageUpdated && !existing.initialMessageSent) {
+      flushPendingInitialMessageForOpenEditors(manager = manager, file = existing)
     }
   }
   else {
@@ -483,6 +506,17 @@ private fun findExistingChat(
     }
   }
   return null
+}
+
+private fun flushPendingInitialMessageForOpenEditors(
+  manager: FileEditorManagerEx,
+  file: AgentChatVirtualFile,
+) {
+  manager.getAllEditors(file)
+    .filterIsInstance<AgentChatFileEditor>()
+    .forEach { editor ->
+      editor.flushPendingInitialMessageIfInitialized()
+    }
 }
 
 private fun isPendingThreadIdentity(threadIdentity: String): Boolean {

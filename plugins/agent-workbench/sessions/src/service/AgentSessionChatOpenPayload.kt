@@ -12,6 +12,8 @@ internal data class AgentSessionChatOpenPayload(
   @JvmField val runtimeThreadId: String,
   @JvmField val threadTitle: String,
   @JvmField val subAgentId: String?,
+  @JvmField val initialComposedMessage: String? = null,
+  @JvmField val initialMessageToken: String? = null,
 )
 
 internal fun resolveAgentSessionChatOpenPayload(
@@ -29,5 +31,7 @@ internal fun resolveAgentSessionChatOpenPayload(
     runtimeThreadId = runtimeThreadId,
     threadTitle = threadTitle,
     subAgentId = subAgent?.id,
+    initialComposedMessage = null,
+    initialMessageToken = null,
   )
 }

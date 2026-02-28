@@ -21,7 +21,7 @@ import kotlinx.serialization.Serializable
 import java.nio.file.Files
 import kotlin.time.Duration.Companion.minutes
 
-private const val AGENT_CHAT_TABS_STATE_VERSION = 2
+private const val AGENT_CHAT_TABS_STATE_VERSION = 3
 private const val AGENT_CHAT_TABS_STATE_TTL_MILLIS = 30L * 24 * 60 * 60 * 1000
 private const val AGENT_CHAT_LEGACY_METADATA_DIR_NAME = "agent-workbench-chat-frame"
 private const val AGENT_CHAT_LEGACY_METADATA_TABS_DIR_NAME = "tabs"
@@ -165,6 +165,9 @@ internal data class PersistedAgentChatTabState(
   @JvmField val pendingCreatedAtMs: Long? = null,
   @JvmField val pendingFirstInputAtMs: Long? = null,
   @JvmField val pendingLaunchMode: String? = null,
+  @JvmField val initialComposedMessage: String? = null,
+  @JvmField val initialMessageToken: String? = null,
+  @JvmField val initialMessageSent: Boolean = false,
   @JvmField val updatedAt: Long,
 )
 
@@ -219,6 +222,9 @@ private fun PersistedAgentChatTabState.toSnapshot(tabKey: AgentChatTabKey): Agen
       pendingCreatedAtMs = resolvedPendingCreatedAtMs,
       pendingFirstInputAtMs = pendingFirstInputAtMs,
       pendingLaunchMode = pendingLaunchMode,
+      initialComposedMessage = initialComposedMessage,
+      initialMessageToken = initialMessageToken,
+      initialMessageSent = initialMessageSent,
     ),
   )
 }
@@ -236,6 +242,9 @@ private fun AgentChatTabSnapshot.toPersisted(updatedAt: Long): PersistedAgentCha
     pendingCreatedAtMs = runtime.pendingCreatedAtMs,
     pendingFirstInputAtMs = runtime.pendingFirstInputAtMs,
     pendingLaunchMode = runtime.pendingLaunchMode,
+    initialComposedMessage = runtime.initialComposedMessage,
+    initialMessageToken = runtime.initialMessageToken,
+    initialMessageSent = runtime.initialMessageSent,
     updatedAt = updatedAt,
   )
 }

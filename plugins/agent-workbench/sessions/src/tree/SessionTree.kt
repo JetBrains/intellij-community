@@ -10,6 +10,8 @@ import com.intellij.agent.workbench.sessions.core.AgentSessionLaunchMode
 import com.intellij.agent.workbench.sessions.core.AgentSessionProvider
 import com.intellij.agent.workbench.sessions.core.AgentSessionThread
 import com.intellij.agent.workbench.sessions.core.AgentSubAgent
+import com.intellij.agent.workbench.sessions.core.formatAgentSessionRelativeTimeShort
+import com.intellij.agent.workbench.sessions.core.formatAgentSessionThreadTitle
 import com.intellij.agent.workbench.sessions.core.providers.AgentSessionProviderBridges
 import com.intellij.agent.workbench.sessions.model.AgentProjectSessions
 import com.intellij.agent.workbench.sessions.model.AgentSessionProviderWarning
@@ -20,11 +22,6 @@ import com.intellij.agent.workbench.sessions.state.SessionsTreeUiState
 import com.intellij.agent.workbench.sessions.util.isAgentSessionNewSessionId
 import com.intellij.agent.workbench.sessions.util.parseAgentSessionIdentity
 import com.intellij.openapi.util.NlsSafe
-import kotlin.math.abs
-import kotlin.math.max
-import kotlin.math.roundToLong
-
-private val THREAD_TITLE_WHITESPACE = Regex("\\s+")
 
 internal data class SessionTreeModel(
   val rootIds: List<SessionTreeId>,
@@ -637,32 +634,12 @@ internal fun parentNodesForSelection(selectedTreeId: SessionTreeId): List<Sessio
 }
 
 internal fun formatRelativeTimeShort(timestamp: Long, now: Long): String {
-  val absSeconds = abs(((timestamp - now) / 1000.0).roundToLong())
-  if (absSeconds < 60) {
-    return AgentSessionsBundle.message("toolwindow.time.now")
-  }
-  if (absSeconds < 60 * 60) {
-    val value = max(1, (absSeconds / 60.0).roundToLong())
-    return "${value}m"
-  }
-  if (absSeconds < 60 * 60 * 24) {
-    val value = max(1, (absSeconds / (60.0 * 60.0)).roundToLong())
-    return "${value}h"
-  }
-  if (absSeconds < 60 * 60 * 24 * 7) {
-    val value = max(1, (absSeconds / (60.0 * 60.0 * 24.0)).roundToLong())
-    return "${value}d"
-  }
-  if (absSeconds < 60 * 60 * 24 * 30) {
-    val value = max(1, (absSeconds / (60.0 * 60.0 * 24.0 * 7.0)).roundToLong())
-    return "${value}w"
-  }
-  if (absSeconds < 60 * 60 * 24 * 365) {
-    val value = max(1, (absSeconds / (60.0 * 60.0 * 24.0 * 30.0)).roundToLong())
-    return "${value}mo"
-  }
-  val value = max(1, (absSeconds / (60.0 * 60.0 * 24.0 * 365.0)).roundToLong())
-  return "${value}y"
+  return formatAgentSessionRelativeTimeShort(
+    timestamp = timestamp,
+    now = now,
+    nowLabel = AgentSessionsBundle.message("toolwindow.time.now"),
+    unknownLabel = AgentSessionsBundle.message("toolwindow.time.unknown"),
+  )
 }
 
 internal fun threadDisplayTitle(thread: AgentSessionThread): @NlsSafe String {
@@ -670,14 +647,7 @@ internal fun threadDisplayTitle(thread: AgentSessionThread): @NlsSafe String {
 }
 
 internal fun threadDisplayTitle(threadId: String, title: String): @NlsSafe String {
-  val normalized = title
-    .replace('\n', ' ')
-    .replace('\r', ' ')
-    .replace(THREAD_TITLE_WHITESPACE, " ")
-    .trim()
-  if (normalized.isNotEmpty()) {
-    return normalized
+  return formatAgentSessionThreadTitle(threadId = threadId, title = title) { idPrefix ->
+    AgentSessionsBundle.message("toolwindow.thread.fallback.title", idPrefix)
   }
-  val idPrefix = threadId.trim().takeIf { it.isNotEmpty() }?.take(8) ?: "unknown"
-  return AgentSessionsBundle.message("toolwindow.thread.fallback.title", idPrefix)
 }

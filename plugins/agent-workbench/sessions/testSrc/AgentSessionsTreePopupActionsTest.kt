@@ -197,7 +197,7 @@ class AgentSessionsTreePopupActionsTest {
   }
 
   @Test
-  fun newThreadGroupVisibilityChildrenAndDispatch() {
+  fun newThreadGroupVisibilityAndDispatchUsesEligibleLastUsedProvider() {
     var launchedPath: String? = null
     var launchedProvider: AgentSessionProvider? = null
     var launchedMode: AgentSessionLaunchMode? = null
@@ -211,7 +211,7 @@ class AgentSessionsTreePopupActionsTest {
     val claudeBridge = TestAgentSessionProviderBridge(
       provider = AgentSessionProvider.CLAUDE,
       supportedModes = setOf(AgentSessionLaunchMode.STANDARD),
-      cliAvailable = false,
+      cliAvailable = true,
     )
     val group = AgentSessionsTreePopupNewThreadGroup(
       resolveContext = { event -> resolveAgentSessionsTreePopupActionContext(event) },
@@ -247,6 +247,7 @@ class AgentSessionsTreePopupActionsTest {
     assertThat(projectEvent.presentation.isPerformGroup).isTrue()
     assertThat(projectEvent.presentation.isPopupGroup).isTrue()
 
+    // Happy path: quick-start dispatches the eligible last-used provider.
     group.actionPerformed(projectEvent)
     assertThat(launchedPath).isEqualTo("/work/project-a")
     assertThat(launchedProvider).isEqualTo(AgentSessionProvider.CLAUDE)
@@ -277,6 +278,73 @@ class AgentSessionsTreePopupActionsTest {
     assertThat(launchedProvider).isEqualTo(AgentSessionProvider.CODEX)
     assertThat(launchedMode).isEqualTo(AgentSessionLaunchMode.YOLO)
     assertThat(launchedProject).isEqualTo(projectContext.project)
+  }
+
+  @Test
+  fun newThreadGroupFallsBackQuickStartAndDisablesUnavailableProviderChild() {
+    var launchedPath: String? = null
+    var launchedProvider: AgentSessionProvider? = null
+    var launchedMode: AgentSessionLaunchMode? = null
+    var launchedProject: Project? = null
+    val codexBridge = TestAgentSessionProviderBridge(
+      provider = AgentSessionProvider.CODEX,
+      supportedModes = setOf(AgentSessionLaunchMode.STANDARD, AgentSessionLaunchMode.YOLO),
+      cliAvailable = true,
+      yoloSessionLabelKey = "toolwindow.action.new.session.codex.yolo",
+    )
+    val claudeBridge = TestAgentSessionProviderBridge(
+      provider = AgentSessionProvider.CLAUDE,
+      supportedModes = setOf(AgentSessionLaunchMode.STANDARD),
+      cliAvailable = false,
+    )
+    val group = AgentSessionsTreePopupNewThreadGroup(
+      resolveContext = { event -> resolveAgentSessionsTreePopupActionContext(event) },
+      allBridges = { listOf(codexBridge, claudeBridge) },
+      lastUsedProvider = { AgentSessionProvider.CLAUDE },
+      createNewSession = { path, provider, mode, project ->
+        launchedPath = path
+        launchedProvider = provider
+        launchedMode = mode
+        launchedProject = project
+      },
+    )
+    val projectContext = popupContext(
+      nodeId = SessionTreeId.Project("/work/project-a"),
+      node = SessionTreeNode.Project(AgentProjectSessions(path = "/work/project-a", name = "Project A", isOpen = true)),
+    )
+    val event = popupEvent(group, projectContext)
+
+    group.update(event)
+    assertThat(event.presentation.isEnabledAndVisible).isTrue()
+    assertThat(event.presentation.isPerformGroup).isTrue()
+
+    // Fallback path: disabled last-used provider is skipped for quick-start.
+    group.actionPerformed(event)
+    assertThat(launchedPath).isEqualTo("/work/project-a")
+    assertThat(launchedProvider).isEqualTo(AgentSessionProvider.CODEX)
+    assertThat(launchedMode).isEqualTo(AgentSessionLaunchMode.STANDARD)
+    assertThat(launchedProject).isEqualTo(projectContext.project)
+
+    launchedPath = null
+    launchedProvider = null
+    launchedMode = null
+    launchedProject = null
+
+    val children = group.getChildren(event)
+
+    val claudeAction = children.first { action ->
+      action.templatePresentation.text == AgentSessionsBundle.message("toolwindow.action.new.session.claude")
+    }
+    val claudeEvent = popupEvent(claudeAction, projectContext)
+    claudeAction.update(claudeEvent)
+    assertThat(claudeEvent.presentation.isEnabled).isFalse()
+    assertThat(claudeEvent.presentation.description).isEqualTo(AgentSessionsBundle.message("toolwindow.error.cli"))
+
+    claudeAction.actionPerformed(claudeEvent)
+    assertThat(launchedPath).isNull()
+    assertThat(launchedProvider).isNull()
+    assertThat(launchedMode).isNull()
+    assertThat(launchedProject).isNull()
   }
 
   @Test
