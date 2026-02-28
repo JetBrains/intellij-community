@@ -16,6 +16,12 @@ import org.jetbrains.kotlin.psi.KtDestructuringDeclaration
 import org.jetbrains.kotlin.psi.KtParameter
 import org.jetbrains.kotlin.psi.KtPsiFactory
 
+/**
+ * Extracts primary constructor parameters for a data class destructuring declaration.
+ *
+ * Returns non-null only if all destructuring entries can be matched to constructor parameters
+ * (i.e., the number of entries does not exceed the number of parameters).
+ */
 fun KaSession.extractPrimaryParameters(
     declaration: KtDestructuringDeclaration,
 ): List<KaValueParameterSymbol>? {

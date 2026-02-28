@@ -8079,6 +8079,11 @@ public abstract class HighLevelQuickFixTestGenerated extends AbstractHighLevelQu
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
 
+        @TestMetadata("customComponentBeyondProperties.kt")
+        public void testCustomComponentBeyondProperties() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/destructingShortForm/customComponentBeyondProperties.kt");
+        }
+
         @TestMetadata("entryUsedInLambda.kt")
         public void testEntryUsedInLambda() throws Exception {
             runTest("../../../idea/tests/testData/quickfix/destructingShortForm/entryUsedInLambda.kt");
