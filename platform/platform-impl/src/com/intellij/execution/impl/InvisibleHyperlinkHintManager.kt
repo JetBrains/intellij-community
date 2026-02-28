@@ -5,69 +5,78 @@ import com.intellij.codeInsight.hint.HintManager
 import com.intellij.codeInsight.hint.HintManagerImpl
 import com.intellij.codeInsight.hint.HintUtil
 import com.intellij.ide.IdeBundle
+import com.intellij.openapi.actionSystem.MouseShortcut
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.event.EditorMouseEvent
-import com.intellij.openapi.keymap.KeymapTextContext
 import com.intellij.openapi.keymap.KeymapUtil
 import com.intellij.openapi.util.text.HtmlBuilder
 import com.intellij.openapi.util.text.HtmlChunk
 import com.intellij.reference.SoftReference
+import com.intellij.ui.HintHint
 import com.intellij.ui.HyperlinkAdapter
 import com.intellij.ui.LightweightHint
 import com.intellij.ui.awt.RelativePoint
 import com.intellij.util.system.OS
 import com.intellij.util.ui.JBUI
 import org.jetbrains.annotations.Nls
+import java.awt.event.InputEvent
+import java.awt.event.MouseEvent
 import java.lang.ref.Reference
 import java.lang.ref.WeakReference
 import javax.swing.JComponent
 import javax.swing.event.HyperlinkEvent
+import javax.swing.event.HyperlinkListener
 
 internal class InvisibleHyperlinkHintManager(private val editor: Editor) {
 
   private var hintRef: Reference<LightweightHint>? = null
 
   fun isInsideHint(e: EditorMouseEvent): Boolean {
-    val hint = SoftReference.dereference(hintRef) ?: return false
-    return hint.isInsideHint(RelativePoint(e.mouseEvent))
+    val hint = getVisibleHint()
+    return hint != null && hint.isInsideHint(RelativePoint(e.mouseEvent))
   }
 
-  fun showHint(hostOffset: Int, action: () -> Unit) {
+  fun showHint(offset: Int, action: () -> Unit) {
     if (ApplicationManager.getApplication().isUnitTestMode) {
       return
     }
     hideIfVisible()
-    val hyperlinkListener = object : HyperlinkAdapter() {
+    val component = createHintLabel(object : HyperlinkAdapter() {
       override fun hyperlinkActivated(e: HyperlinkEvent) {
         action()
         hideIfVisible()
       }
-    }
-    val component = HintUtil.createInformationLabel(getHtmlText(), hyperlinkListener, null, null).also {
-      it.border = JBUI.Borders.empty()
-    }
-    val hint = showHint(editor, hostOffset, component)
+    })
+    val hint = showHint(editor, offset, component)
     hintRef = WeakReference(hint)
   }
 
-  private fun hideIfVisible() {
-    SoftReference.dereference(hintRef)?.let {
-      if (it.isVisible) {
-        it.hide()
-      }
-    }
-    hintRef = null
+  private fun createHintLabel(listener: HyperlinkListener): JComponent {
+    val hintHint = HintUtil.getInformationHint()
+    hintHint.setTextFg(JBUI.CurrentTheme.Tooltip.shortcutForeground())
+    val hintLabel = HintUtil.createLabel(getHtmlText(hintHint), null, hintHint.textBackground, hintHint)
+    hintLabel.pane!!.addHyperlinkListener(listener)
+    return hintLabel
   }
 
-  private fun getHtmlText(): @Nls String {
-    val mouseShortcut = KeymapUtil.parseMouseShortcut(if (OS.CURRENT == OS.macOS) "meta button1" else "ctrl button1")
-    val text = KeymapTextContext().getMouseShortcutText(mouseShortcut)
-    val message = HtmlBuilder()
+  private fun getHtmlText(hintHint: HintHint): @Nls String {
+    val htmlBodyText = HtmlBuilder()
       .append(HtmlChunk.link("", IdeBundle.message("editor.invisible.link.popup.open")))
       .append(HtmlChunk.nbsp())
-      .append(HtmlChunk.text(text)).toString()
-    return HintUtil.prepareHintText(message, HintUtil.getInformationHint())
+      .append(HtmlChunk.text(getMouseShortcutText())).toString()
+    return HintUtil.prepareHintText(htmlBodyText, hintHint)
+  }
+
+  private fun getMouseShortcutText(): @Nls String {
+    val modifiersEx = if (OS.CURRENT == OS.macOS) InputEvent.META_DOWN_MASK else InputEvent.CTRL_DOWN_MASK
+    val shortcut = MouseShortcut(MouseEvent.BUTTON1, modifiersEx, 1)
+    return KeymapUtil.getShortcutText(shortcut)
+  }
+
+  private fun hideIfVisible() {
+    getVisibleHint()?.hide()
+    hintRef = null
   }
 
   private fun showHint(editor: Editor, offset: Int, component: JComponent): LightweightHint {
@@ -86,4 +95,7 @@ internal class InvisibleHyperlinkHintManager(private val editor: Editor) {
     return hint
   }
 
+  private fun getVisibleHint(): LightweightHint? {
+    return SoftReference.dereference(hintRef)?.takeIf { it.isVisible }
+  }
 }
