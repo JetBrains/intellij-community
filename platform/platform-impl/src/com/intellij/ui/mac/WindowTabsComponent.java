@@ -23,6 +23,7 @@ import com.intellij.openapi.ui.popup.util.PopupUtil;
 import com.intellij.openapi.util.ActionCallback;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.registry.Registry;
+import com.intellij.openapi.util.text.HtmlChunk;
 import com.intellij.openapi.wm.IdeGlassPaneUtil;
 import com.intellij.openapi.wm.impl.IdeFrameImpl;
 import com.intellij.ui.ClientProperty;
@@ -443,7 +444,10 @@ public final class WindowTabsComponent extends JBTabsImpl {
 
   private void createTabItem(@NotNull IdeFrameImpl tabFrame, int index, boolean selection) {
     TabInfo info = new TabInfo(new JLabel());
-    info.setObject(tabFrame).setText(tabFrame.getTitle()).setTooltipText(tabFrame.getTitle()); //NON-NLS
+    String tabTitle = tabFrame.getTitle(); //NON-NLS
+    info.setObject(tabFrame)
+      .setText(tabTitle)
+      .setTooltipText(HtmlChunk.text(tabTitle));
     info.setTabLabelActions(createTabActions(tabFrame), ActionPlaces.UNKNOWN);
     info.setDefaultForeground(JBUI.CurrentTheme.MainWindow.Tab.foreground(selection, false));
 
@@ -467,7 +471,10 @@ public final class WindowTabsComponent extends JBTabsImpl {
       Disposer.register(myParentDisposable, () -> tabFrame.removeWindowListener(listener));
     }
 
-    PropertyChangeListener listener = event -> info.setText((String)event.getNewValue()).setTooltipText((String)event.getNewValue());
+    PropertyChangeListener listener = event -> {
+      String title = (String)event.getNewValue();
+      info.setText(title).setTooltipText(HtmlChunk.text(title));
+    };
     tabFrame.addPropertyChangeListener("title", listener);
     info.getComponent().putClientProperty(TITLE_LISTENER_KEY, listener);
 
