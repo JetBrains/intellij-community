@@ -14,14 +14,20 @@ import com.intellij.agent.workbench.sessions.ui.SessionTreeRowActionPresentation
 import com.intellij.agent.workbench.sessions.ui.buildSessionTreeThreadRowPresentation
 import com.intellij.agent.workbench.sessions.ui.buildSessionTreeThreadTooltipHtml
 import com.intellij.agent.workbench.sessions.ui.computeSessionTreeThreadTrailingPaint
+import com.intellij.agent.workbench.sessions.ui.configureSessionTreeRenderingProperties
 import com.intellij.agent.workbench.sessions.ui.extractSessionTreeId
+import com.intellij.agent.workbench.sessions.ui.isSessionTreeRowClipped
 import com.intellij.agent.workbench.sessions.ui.resolveSessionTreeThreadTimePaintX
+import com.intellij.agent.workbench.sessions.ui.resolveSessionTreeThreadTooltipWidth
 import com.intellij.agent.workbench.sessions.ui.sessionTreeRowActionRightPadding
 import com.intellij.agent.workbench.sessions.ui.sessionTreeRowActionsRightBoundary
 import com.intellij.icons.AllIcons
 import com.intellij.ide.ui.ProductIcons
 import com.intellij.ide.util.treeView.NodeDescriptor
 import com.intellij.testFramework.junit5.TestApplication
+import com.intellij.ui.AnimatedIcon
+import com.intellij.ui.render.RenderingHelper
+import com.intellij.ui.treeStructure.Tree
 import com.intellij.util.IconUtil
 import com.intellij.util.ui.EmptyIcon
 import com.intellij.util.ui.JBUI
@@ -33,6 +39,68 @@ import javax.swing.tree.TreePath
 
 @TestApplication
 class AgentSessionsSwingTreeCellRendererTest {
+  @Test
+  fun treeRenderingPropertiesEnableShrinkAndDisableExpandableItems() {
+    val tree = Tree()
+
+    configureSessionTreeRenderingProperties(tree)
+
+    assertThat(tree.expandableItemsHandler.isEnabled).isFalse()
+    assertThat(tree.getClientProperty(AnimatedIcon.ANIMATION_IN_RENDERER_ALLOWED)).isEqualTo(true)
+    assertThat(tree.getClientProperty(RenderingHelper.SHRINK_LONG_RENDERER)).isEqualTo(true)
+    assertThat(tree.getClientProperty(RenderingHelper.SHRINK_LONG_SELECTION)).isEqualTo(true)
+  }
+
+  @Test
+  fun rowClippingDetectedWhenPathExtendsBeyondVisibleRightBoundary() {
+    val clipped = isSessionTreeRowClipped(
+      pathBoundsX = 20,
+      pathBoundsWidth = 320,
+      helperX = 0,
+      helperWidth = 300,
+      helperRightMargin = 8,
+      selectionRightInset = 12,
+    )
+
+    assertThat(clipped).isTrue()
+  }
+
+  @Test
+  fun rowClippingNotDetectedWhenPathFitsVisibleArea() {
+    val clipped = isSessionTreeRowClipped(
+      pathBoundsX = 20,
+      pathBoundsWidth = 240,
+      helperX = 0,
+      helperWidth = 300,
+      helperRightMargin = 8,
+      selectionRightInset = 12,
+    )
+
+    assertThat(clipped).isFalse()
+  }
+
+  @Test
+  fun tooltipWidthRespectsTreeVisibleWidthAndInsets() {
+    val width = resolveSessionTreeThreadTooltipWidth(
+      helperWidth = 300,
+      helperRightMargin = 8,
+      selectionRightInset = 12,
+    )
+
+    assertThat(width).isEqualTo(300 - 8 - 12 - JBUI.scale(16))
+  }
+
+  @Test
+  fun tooltipWidthReturnsNullWhenNoSpaceAvailable() {
+    val width = resolveSessionTreeThreadTooltipWidth(
+      helperWidth = 12,
+      helperRightMargin = 8,
+      selectionRightInset = 12,
+    )
+
+    assertThat(width).isNull()
+  }
+
   @Test
   fun projectRowsUseProjectNodeIcon() {
     val project = AgentProjectSessions(path = "/work/project-a", name = "Project A", isOpen = true)
@@ -343,8 +411,7 @@ class AgentSessionsSwingTreeCellRendererTest {
     trailing ?: return
 
     assertThat(trailing.timeLabel).isEqualTo("2w")
-    assertThat(trailing.timeX).isNotNull()
-    assertThat(trailing.timeX!! + trailing.timeTextWidth).isEqualTo(trailing.timeRightBoundary)
+    assertThat(trailing.timeX + trailing.timeTextWidth).isEqualTo(trailing.timeRightBoundary)
     assertThat(trailing.reserveWidth).isGreaterThan(0)
   }
 
@@ -370,7 +437,27 @@ class AgentSessionsSwingTreeCellRendererTest {
   }
 
   @Test
-  fun threadTooltipOmitsUpdatedLineWhenTimestampMissing() {
+  fun threadTooltipUsesConfiguredMaxWidthWhenProvided() {
+    val now = 28L * 24L * 60L * 60L * 1000L
+    val project = AgentProjectSessions(path = "/work/project-a", name = "Project A", isOpen = true)
+    val thread = AgentSessionThread(
+      provider = AgentSessionProvider.CODEX,
+      id = "thread-1",
+      title = "How much time need to compute A-C?",
+      updatedAt = 14L * 24L * 60L * 60L * 1000L,
+      archived = false,
+    )
+    val tooltip = buildSessionTreeThreadTooltipHtml(
+      treeNode = SessionTreeNode.Thread(project, thread),
+      now = now,
+      maxWidthPx = 260,
+    )
+
+    assertThat(tooltip).contains("<body style='width:260px;'>")
+  }
+
+  @Test
+  fun threadTooltipUsesUnknownUpdatedLabelWhenTimestampMissing() {
     val project = AgentProjectSessions(path = "/work/project-a", name = "Project A", isOpen = true)
     val thread = AgentSessionThread(
       provider = AgentSessionProvider.CODEX,
@@ -385,7 +472,7 @@ class AgentSessionsSwingTreeCellRendererTest {
     )
 
     assertThat(tooltip).contains("How much time")
-    assertThat(tooltip).doesNotContain("Updated")
+    assertThat(tooltip).contains(AgentSessionsBundle.message("toolwindow.updated", AgentSessionsBundle.message("toolwindow.time.unknown")))
   }
 
   @Test
@@ -417,8 +504,8 @@ class AgentSessionsSwingTreeCellRendererTest {
     assertThat(shortTrailing.timeRightBoundary).isEqualTo(longTrailing.timeRightBoundary)
     assertThat(shortTrailing.reserveWidth).isEqualTo(longTrailing.reserveWidth)
     assertThat(shortTrailing.timeX).isNotEqualTo(longTrailing.timeX)
-    assertThat(shortTrailing.timeX!! + shortTrailing.timeTextWidth).isEqualTo(shortTrailing.timeRightBoundary)
-    assertThat(longTrailing.timeX!! + longTrailing.timeTextWidth).isEqualTo(longTrailing.timeRightBoundary)
+    assertThat(shortTrailing.timeX + shortTrailing.timeTextWidth).isEqualTo(shortTrailing.timeRightBoundary)
+    assertThat(longTrailing.timeX + longTrailing.timeTextWidth).isEqualTo(longTrailing.timeRightBoundary)
   }
 
   @Test
@@ -521,6 +608,25 @@ class AgentSessionsSwingTreeCellRendererTest {
     )
 
     assertThat(presentation.title).isEqualTo("Thread abcdef12")
+  }
+
+  @Test
+  fun threadPresentationUsesUnknownTimePlaceholderWhenTimestampMissing() {
+    val thread = AgentSessionThread(
+      provider = AgentSessionProvider.CODEX,
+      id = "abcdef123456",
+      title = "How much time",
+      updatedAt = 0L,
+      archived = false,
+    )
+    val project = AgentProjectSessions(path = "/work/project-a", name = "Project A", isOpen = true)
+
+    val presentation = buildSessionTreeThreadRowPresentation(
+      treeNode = SessionTreeNode.Thread(project, thread),
+      now = 0L,
+    )
+
+    assertThat(presentation.timeLabel).isEqualTo(AgentSessionsBundle.message("toolwindow.time.unknown"))
   }
 
   @Test

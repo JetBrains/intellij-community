@@ -39,6 +39,7 @@ import com.intellij.agent.workbench.sessions.tree.threadDisplayTitle
 import com.intellij.agent.workbench.sessions.util.isAgentSessionNewSessionId
 import com.intellij.icons.AllIcons
 import com.intellij.ide.ui.ProductIcons
+import com.intellij.ide.ui.UISettings
 import com.intellij.ide.util.treeView.AbstractTreeStructure
 import com.intellij.ide.util.treeView.NodeDescriptor
 import com.intellij.openapi.Disposable
@@ -138,9 +139,56 @@ internal class AgentSessionsToolWindowPanel(
     override fun getToolTipText(event: MouseEvent?): String? {
       val mouseEvent = event ?: return null
       val path = getPathForLocation(mouseEvent.x, mouseEvent.y) ?: return null
+      val bounds = getPathBounds(path) ?: return null
       val id = idFromPath(path) ?: return null
       val treeNode = sessionTreeNode(id) as? SessionTreeNode.Thread ?: return null
-      return buildSessionTreeThreadTooltipHtml(treeNode, System.currentTimeMillis())
+      val now = System.currentTimeMillis()
+      val threadPresentation = buildSessionTreeThreadRowPresentation(treeNode = treeNode, now = now)
+      val row = getRowForPath(path)
+      val rowActions = if (row >= 0) {
+        rowActionPresentation(
+          row = row,
+          treeNode = treeNode,
+          selected = selectionModel.isRowSelected(row),
+        )
+      }
+      else {
+        null
+      }
+      val actionRightPadding = sessionTreeRowActionRightPadding(rowActions?.actionSlots ?: 0)
+
+      val viewportLayout = resolveSessionTreeViewportLayout(this)
+      val rowOverflowClipped = isSessionTreeRowClipped(
+        pathBoundsX = bounds.x,
+        pathBoundsWidth = bounds.width,
+        helperX = viewportLayout.x,
+        helperWidth = viewportLayout.width,
+        helperRightMargin = viewportLayout.rightMargin,
+        selectionRightInset = viewportLayout.selectionRightInset,
+      )
+
+      val fontMetrics = getFontMetrics(font)
+      val sharedTimeColumnWidth = computeSessionTreeSharedTimeColumnWidth(fontMetrics)
+      val horizontalLayout = computeSessionTreeThreadHorizontalLayout(
+        contentWidth = bounds.width,
+        actionRightPadding = actionRightPadding,
+        selectionRightInset = viewportLayout.selectionRightInset,
+        timeTextWidth = fontMetrics.stringWidth(threadPresentation.timeLabel),
+        timeColumnWidth = sharedTimeColumnWidth,
+      )
+      val titleClipped = isSessionTreeThreadTitleClipped(
+        title = threadPresentation.title,
+        fontMetrics = fontMetrics,
+        titleMaxWidth = horizontalLayout.titleMaxWidth,
+      )
+      if (!rowOverflowClipped && !titleClipped) return null
+
+      val tooltipWidthPx = resolveSessionTreeThreadTooltipWidth(
+        helperWidth = viewportLayout.width,
+        helperRightMargin = viewportLayout.rightMargin,
+        selectionRightInset = viewportLayout.selectionRightInset,
+      )
+      return buildSessionTreeThreadTooltipHtml(treeNode, now, maxWidthPx = tooltipWidthPx)
     }
 
     override fun uiDataSnapshot(sink: DataSink) {
@@ -189,8 +237,7 @@ internal class AgentSessionsToolWindowPanel(
       rowActionsProvider = { row, treeNode, selected -> rowActionPresentation(row, treeNode, selected) },
       nodeResolver = { treeId -> sessionTreeModel.entriesById[treeId]?.node },
     )
-    tree.setExpandableItemsEnabled(false)
-    tree.putClientProperty(AnimatedIcon.ANIMATION_IN_RENDERER_ALLOWED, true)
+    configureSessionTreeRenderingProperties(tree)
     ToolTipManager.sharedInstance().registerComponent(tree)
     ExpandOnDoubleClick.DEFAULT.installOn(tree)
 
@@ -308,17 +355,18 @@ internal class AgentSessionsToolWindowPanel(
     val bounds = tree.getRowBounds(row) ?: return null
     if (!tree.visibleRect.intersects(bounds)) return null
 
-    val helper = RenderingHelper(tree)
+    val viewportLayout = resolveSessionTreeViewportLayout(tree)
     val slot = JBUI.scale(SESSION_TREE_ACTION_SLOT_SIZE)
     val rightGap = JBUI.scale(SESSION_TREE_ACTION_RIGHT_GAP)
     val gap = JBUI.scale(SESSION_TREE_ACTION_GAP)
     val y = bounds.y + (bounds.height - slot) / 2
 
     var right = sessionTreeRowActionsRightBoundary(
-      helperWidth = helper.width,
-      helperRightMargin = helper.rightMargin,
+      helperX = viewportLayout.x,
+      helperWidth = viewportLayout.width,
+      helperRightMargin = viewportLayout.rightMargin,
       rightGap = rightGap,
-      selectionRightInset = sessionTreeThreadSelectionRightInset(tree),
+      selectionRightInset = viewportLayout.selectionRightInset,
     )
 
     fun consumeSlot(show: Boolean): Rectangle? {
@@ -888,17 +936,37 @@ internal const val SESSION_TREE_MORE_ROW_FRAGMENT_TAG = "agent.sessions.tree.mor
 internal data class SessionTreeThreadRowPresentation(
   val statusColor: Color,
   val title: @NlsSafe String,
-  val timeLabel: @NlsSafe String?,
+  val timeLabel: @NlsSafe String,
   val branchMismatchMessage: @NlsSafe String?,
   val accessibleStatusText: @NlsSafe String?,
 )
 
+internal data class SessionTreeViewportLayout(
+  val x: Int,
+  val width: Int,
+  val rightMargin: Int,
+  val selectionRightInset: Int,
+) {
+  val rightBoundary: Int
+    get() = x + width - rightMargin - selectionRightInset
+}
+
+internal data class SessionTreeThreadHorizontalLayout(
+  val reserveWidth: Int,
+  val titleMaxWidth: Int,
+  val timeX: Int,
+  val timeRightBoundary: Int,
+)
+
 internal data class SessionTreeThreadTrailingPaint(
   val reserveWidth: Int,
-  val timeLabel: @NlsSafe String?,
-  val timeX: Int?,
+  val timeLabel: @NlsSafe String,
+  val timeX: Int,
   val timeRightBoundary: Int,
   val timeTextWidth: Int,
+  val timeColumnWidth: Int,
+  val actionRightPadding: Int,
+  val selectionRightInset: Int,
 )
 
 internal fun sessionTreeRowActionRightPadding(actionSlots: Int): Int {
@@ -910,12 +978,101 @@ internal fun sessionTreeRowActionRightPadding(actionSlots: Int): Int {
 }
 
 internal fun sessionTreeRowActionsRightBoundary(
+  helperX: Int = 0,
   helperWidth: Int,
   helperRightMargin: Int,
   rightGap: Int,
   selectionRightInset: Int,
 ): Int {
-  return helperWidth - helperRightMargin - selectionRightInset - rightGap
+  return helperX + helperWidth - helperRightMargin - selectionRightInset - rightGap
+}
+
+internal fun configureSessionTreeRenderingProperties(tree: Tree) {
+  tree.setExpandableItemsEnabled(false)
+  tree.putClientProperty(AnimatedIcon.ANIMATION_IN_RENDERER_ALLOWED, true)
+  tree.putClientProperty(RenderingHelper.SHRINK_LONG_RENDERER, true)
+  tree.putClientProperty(RenderingHelper.SHRINK_LONG_SELECTION, true)
+}
+
+internal fun resolveSessionTreeViewportLayout(
+  helperX: Int,
+  helperWidth: Int,
+  helperRightMargin: Int,
+  selectionRightInset: Int,
+): SessionTreeViewportLayout {
+  return SessionTreeViewportLayout(
+    x = helperX,
+    width = helperWidth,
+    rightMargin = helperRightMargin,
+    selectionRightInset = selectionRightInset,
+  )
+}
+
+private fun resolveSessionTreeViewportLayout(tree: JTree): SessionTreeViewportLayout {
+  val helper = RenderingHelper(tree)
+  return resolveSessionTreeViewportLayout(
+    helperX = helper.x,
+    helperWidth = helper.width,
+    helperRightMargin = helper.rightMargin,
+    selectionRightInset = sessionTreeThreadSelectionRightInset(tree),
+  )
+}
+
+internal fun isSessionTreeRowClipped(
+  pathBoundsX: Int,
+  pathBoundsWidth: Int,
+  helperX: Int,
+  helperWidth: Int,
+  helperRightMargin: Int,
+  selectionRightInset: Int,
+): Boolean {
+  val viewportLayout = resolveSessionTreeViewportLayout(
+    helperX = helperX,
+    helperWidth = helperWidth,
+    helperRightMargin = helperRightMargin,
+    selectionRightInset = selectionRightInset,
+  )
+  val visibleRightBoundary = viewportLayout.rightBoundary
+  val rowRightBoundary = pathBoundsX + pathBoundsWidth
+  return pathBoundsX < helperX || rowRightBoundary > visibleRightBoundary
+}
+
+internal fun resolveSessionTreeThreadTooltipWidth(
+  helperWidth: Int,
+  helperRightMargin: Int,
+  selectionRightInset: Int,
+): Int? {
+  val availableWidth = helperWidth - helperRightMargin - selectionRightInset - JBUI.scale(16)
+  return availableWidth.takeIf { it > 0 }
+}
+
+internal fun computeSessionTreeThreadHorizontalLayout(
+  contentWidth: Int,
+  actionRightPadding: Int,
+  selectionRightInset: Int,
+  timeTextWidth: Int,
+  timeColumnWidth: Int,
+): SessionTreeThreadHorizontalLayout {
+  val rightGap = JBUI.scale(SESSION_TREE_THREAD_META_RIGHT_GAP)
+  val leftGap = JBUI.scale(SESSION_TREE_THREAD_META_LEFT_GAP)
+  val reserveWidth = actionRightPadding + selectionRightInset + rightGap + leftGap + timeColumnWidth
+  val titleMaxWidth = (contentWidth - reserveWidth).coerceAtLeast(0)
+  val timeRightBoundary = (contentWidth - selectionRightInset - actionRightPadding - rightGap).coerceAtLeast(0)
+  val timeX = (timeRightBoundary - timeTextWidth).coerceAtLeast(0)
+  return SessionTreeThreadHorizontalLayout(
+    reserveWidth = reserveWidth,
+    titleMaxWidth = titleMaxWidth,
+    timeX = timeX,
+    timeRightBoundary = timeRightBoundary,
+  )
+}
+
+internal fun isSessionTreeThreadTitleClipped(
+  title: @NlsSafe String,
+  fontMetrics: FontMetrics,
+  titleMaxWidth: Int,
+): Boolean {
+  return fontMetrics.stringWidth(title) > titleMaxWidth
 }
 
 internal fun buildSessionTreeThreadRowPresentation(
@@ -925,7 +1082,7 @@ internal fun buildSessionTreeThreadRowPresentation(
   val activityColor = JBColor(Color(treeNode.thread.activity.argb, true), Color(treeNode.thread.activity.argb, true))
   val timeLabel = treeNode.thread.updatedAt.takeIf { it > 0 }?.let { timestamp ->
     formatRelativeTimeShort(timestamp, now)
-  }
+  } ?: AgentSessionsBundle.message("toolwindow.time.unknown")
   val originBranch = treeNode.thread.originBranch
   val parentBranch = treeNode.parentWorktreeBranch
   val branchMismatchMessage = if (originBranch != null && parentBranch != null && originBranch != parentBranch) {
@@ -935,10 +1092,7 @@ internal fun buildSessionTreeThreadRowPresentation(
     null
   }
   val providerName = providerDisplayName(treeNode.thread.provider)
-  val accessibleStatusText = when {
-    timeLabel != null -> "$providerName, $timeLabel"
-    else -> providerName
-  }
+  val accessibleStatusText = "$providerName, $timeLabel"
   return SessionTreeThreadRowPresentation(
     statusColor = activityColor,
     title = threadDisplayTitle(treeNode.thread),
@@ -951,18 +1105,24 @@ internal fun buildSessionTreeThreadRowPresentation(
 internal fun buildSessionTreeThreadTooltipHtml(
   treeNode: SessionTreeNode.Thread,
   now: Long,
+  maxWidthPx: Int? = null,
 ): @NlsSafe String {
   val presentation = buildSessionTreeThreadRowPresentation(treeNode = treeNode, now = now)
   val title = StringUtil.escapeXmlEntities(presentation.title)
-  val updatedText = presentation.timeLabel?.let { label ->
-    StringUtil.escapeXmlEntities(AgentSessionsBundle.message("toolwindow.updated", label))
-  }
-  return if (updatedText == null) {
-    "<html>$title</html>"
-  }
-  else {
-    "<html>$title<br>$updatedText</html>"
-  }
+  val updatedText = StringUtil.escapeXmlEntities(AgentSessionsBundle.message("toolwindow.updated", presentation.timeLabel))
+
+  val escapedWidth = maxWidthPx?.coerceAtLeast(1)
+  val bodyWidthStyle = escapedWidth?.let { " style='width:${it}px;'" } ?: ""
+  val bodyOpen = "<body$bodyWidthStyle>"
+  val bodyClose = "</body>"
+
+  return "<html>$bodyOpen$title<br>$updatedText$bodyClose</html>"
+}
+
+internal fun computeSessionTreeSharedTimeColumnWidth(fontMetrics: FontMetrics): Int {
+  val nowLabel = AgentSessionsBundle.message("toolwindow.time.now")
+  val unknownLabel = AgentSessionsBundle.message("toolwindow.time.unknown")
+  return (SESSION_TREE_TIME_LABEL_SAMPLES + nowLabel + unknownLabel).maxOf(fontMetrics::stringWidth)
 }
 
 private object SessionTreeMiddleTextClipper : FragmentTextClipper {
@@ -973,17 +1133,22 @@ private object SessionTreeMiddleTextClipper : FragmentTextClipper {
     text: String,
     availTextWidth: Int,
   ): String {
-    if (availTextWidth <= 0) {
+    // appendWithClipping gets full component width from SimpleColoredComponent; subtract right reserved
+    // area so thread titles don't paint into the trailing time/actions column.
+    val rightReservedWidth = component.ipad.right + component.insets.right
+    val effectiveAvailTextWidth = (availTextWidth - rightReservedWidth).coerceAtLeast(0)
+
+    if (effectiveAvailTextWidth <= 0) {
       return StringUtil.ELLIPSIS
     }
 
     val fontMetrics = component.getFontMetrics(g.font)
-    if (fontMetrics.stringWidth(text) <= availTextWidth) {
+    if (fontMetrics.stringWidth(text) <= effectiveAvailTextWidth) {
       return text
     }
 
     val ellipsis = StringUtil.ELLIPSIS
-    if (fontMetrics.stringWidth(ellipsis) > availTextWidth) {
+    if (fontMetrics.stringWidth(ellipsis) > effectiveAvailTextWidth) {
       return ellipsis
     }
 
@@ -993,7 +1158,7 @@ private object SessionTreeMiddleTextClipper : FragmentTextClipper {
     while (low <= high) {
       val mid = (low + high) ushr 1
       val candidate = StringUtil.trimMiddle(text, mid)
-      if (fontMetrics.stringWidth(candidate) <= availTextWidth) {
+      if (fontMetrics.stringWidth(candidate) <= effectiveAvailTextWidth) {
         best = candidate
         low = mid + 1
       }
@@ -1013,29 +1178,26 @@ internal fun computeSessionTreeThreadTrailingPaint(
   sharedTimeColumnWidth: Int,
 ): SessionTreeThreadTrailingPaint? {
   if (timeLabel == null) return null
-
-  val helper = RenderingHelper(tree)
-  val rightBoundary = (
-    helper.width -
-    helper.rightMargin -
-    actionRightPadding -
-    sessionTreeThreadSelectionRightInset(tree) -
-    JBUI.scale(SESSION_TREE_THREAD_META_RIGHT_GAP)
-  )
-    .coerceAtLeast(0)
-
+  val selectionRightInset = sessionTreeThreadSelectionRightInset(tree)
   val timeTextWidth = fontMetrics.stringWidth(timeLabel)
-  val effectiveTimeColumnWidth = maxOf(sharedTimeColumnWidth, timeTextWidth)
-  val timeX = (rightBoundary - timeTextWidth).coerceAtLeast(0)
-  val leftEdge = (rightBoundary - effectiveTimeColumnWidth).coerceAtLeast(0)
-  val reserveWidth = (rightBoundary - leftEdge + JBUI.scale(SESSION_TREE_THREAD_META_LEFT_GAP)).coerceAtLeast(0)
+  val timeColumnWidth = maxOf(sharedTimeColumnWidth, timeTextWidth)
+  val horizontalLayout = computeSessionTreeThreadHorizontalLayout(
+    contentWidth = tree.width,
+    actionRightPadding = actionRightPadding,
+    selectionRightInset = selectionRightInset,
+    timeTextWidth = timeTextWidth,
+    timeColumnWidth = timeColumnWidth,
+  )
 
   return SessionTreeThreadTrailingPaint(
-    reserveWidth = reserveWidth,
+    reserveWidth = horizontalLayout.reserveWidth,
     timeLabel = timeLabel,
-    timeX = timeX,
-    timeRightBoundary = rightBoundary,
+    timeX = horizontalLayout.timeX,
+    timeRightBoundary = horizontalLayout.timeRightBoundary,
     timeTextWidth = timeTextWidth,
+    timeColumnWidth = timeColumnWidth,
+    actionRightPadding = actionRightPadding,
+    selectionRightInset = selectionRightInset,
   )
 }
 
@@ -1155,7 +1317,7 @@ internal class SessionTreeCellRenderer(
 ) : ColoredTreeCellRenderer() {
   private data class SharedTimeColumnWidthCacheKey(
     val fontHash: Int,
-    val nowLabel: @NlsSafe String,
+    val labelsSignature: @NlsSafe String,
   )
 
   private data class ThreadCompositeIconCacheKey(
@@ -1298,9 +1460,25 @@ internal class SessionTreeCellRenderer(
     ipad = if (rightPadding > 0) JBUI.insetsRight(rightPadding) else JBUI.emptyInsets()
   }
 
-  override fun doPaint(g: Graphics2D) {
-    super.doPaint(g)
-    paintThreadTrailingMeta(g)
+  override fun paintComponent(g: Graphics) {
+    val g2 = g as? Graphics2D ?: run {
+      super.paintComponent(g)
+      return
+    }
+
+    UISettings.setupAntialiasing(g2)
+
+    val width = this.width
+    val height = this.height
+    if (isOpaque) {
+      g2.color = background
+      g2.fillRect(0, 0, width, height)
+    }
+
+    // Paint the core renderer normally (selection/background/border), then overlay the trailing time.
+    // Title clipping is handled by SessionTreeMiddleTextClipper using right-side reserved space.
+    super.paintComponent(g2)
+    paintThreadTrailingMeta(g2)
   }
 
   private fun paintThreadTrailingMeta(g: Graphics2D) {
@@ -1312,16 +1490,15 @@ internal class SessionTreeCellRenderer(
     val metrics = g.getFontMetrics(font)
     val baseline = area.y + getTextBaseLine(metrics, area.height)
 
-    val label = trailing.timeLabel ?: return
-    val preferredX = trailing.timeX ?: return
-    val x = resolveSessionTreeThreadTimePaintX(
-      preferredX = preferredX,
-      rendererWidth = width,
+    val horizontalLayout = computeSessionTreeThreadHorizontalLayout(
+      contentWidth = width,
+      actionRightPadding = trailing.actionRightPadding,
+      selectionRightInset = trailing.selectionRightInset,
       timeTextWidth = trailing.timeTextWidth,
-      selectionRightInset = sessionTreeThreadSelectionRightInset(tree),
+      timeColumnWidth = trailing.timeColumnWidth,
     )
     g.color = trailingTextColor()
-    g.drawString(label, x, baseline)
+    g.drawString(trailing.timeLabel, horizontalLayout.timeX, baseline)
   }
 
   private fun trailingTextColor(): Color {
@@ -1333,9 +1510,10 @@ internal class SessionTreeCellRenderer(
 
   private fun computeSharedTimeColumnWidth(fontMetrics: FontMetrics): Int {
     val nowLabel = AgentSessionsBundle.message("toolwindow.time.now")
+    val unknownLabel = AgentSessionsBundle.message("toolwindow.time.unknown")
     val key = SharedTimeColumnWidthCacheKey(
       fontHash = fontMetrics.font.hashCode(),
-      nowLabel = nowLabel,
+      labelsSignature = "$nowLabel::$unknownLabel",
     )
 
     val cachedKey = sharedTimeColumnWidthCacheKey
@@ -1343,7 +1521,7 @@ internal class SessionTreeCellRenderer(
       return sharedTimeColumnWidthCacheValue
     }
 
-    val width = (SESSION_TREE_TIME_LABEL_SAMPLES + nowLabel).maxOf(fontMetrics::stringWidth)
+    val width = computeSessionTreeSharedTimeColumnWidth(fontMetrics)
 
     sharedTimeColumnWidthCacheKey = key
     sharedTimeColumnWidthCacheValue = width
