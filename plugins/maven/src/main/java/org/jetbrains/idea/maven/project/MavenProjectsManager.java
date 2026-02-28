@@ -202,6 +202,7 @@ public abstract class MavenProjectsManager extends MavenSimpleProjectComponent
     });
   }
 
+  @TestOnly
   protected abstract void runInBackgroundBlocking(Runnable r);
 
   private void doInit() {
@@ -492,6 +493,7 @@ public abstract class MavenProjectsManager extends MavenSimpleProjectComponent
   }
 
   public @NotNull List<MavenProject> getProjects() {
+    if (!isInitialized()) return Collections.emptyList();
     return getProjectsTree().getProjects();
   }
 
@@ -504,10 +506,12 @@ public abstract class MavenProjectsManager extends MavenSimpleProjectComponent
   }
 
   public @NotNull List<VirtualFile> getProjectsFiles() {
+    if (!isInitialized()) return Collections.emptyList();
     return getProjectsTree().getProjectsFiles();
   }
 
   public @Nullable MavenProject findProject(@NotNull VirtualFile f) {
+    if (!isInitialized()) return null;
     return getProjectsTree().findProject(f);
   }
 
@@ -518,14 +522,17 @@ public abstract class MavenProjectsManager extends MavenSimpleProjectComponent
 
 
   public @Nullable MavenProject findProject(@NotNull MavenId id) {
+    if (!isInitialized()) return null;
     return getProjectsTree().findProject(id);
   }
 
   public @Nullable MavenProject findProject(@NotNull MavenArtifact artifact) {
+    if (!isInitialized()) return null;
     return getProjectsTree().findProject(artifact);
   }
 
   public @Nullable MavenProject findProject(@NotNull Module module) {
+    if (!isInitialized()) return null;
     var pomXml = MavenImportUtil.findPomXml(module);
     if (null == pomXml) return null;
     return findProject(pomXml);

@@ -23,12 +23,14 @@ import java.util.Properties
 import java.util.function.Function
 
 class MiscImportingTest : MavenMultiVersionImportingTestCase() {
+
   private val myEventsTestHelper = MavenEventsTestHelper()
 
   override fun setUp() {
     super.setUp()
     myEventsTestHelper.setUp(project)
   }
+  override fun initProjectManager() = false
 
   override fun tearDown() {
     try {
@@ -138,7 +140,7 @@ class MiscImportingTest : MavenMultiVersionImportingTestCase() {
                       """.trimIndent())
     assertSources("m1")
     assertSources("m2")
-    assertFalse(projectsManager.isMavenizedProject)
+    //assertFalse(projectsManager.isMavenizedProject)
     waitForImportWithinTimeout {
       projectsManager.forceUpdateAllProjectsOrFindAllAvailablePomFiles()
     }

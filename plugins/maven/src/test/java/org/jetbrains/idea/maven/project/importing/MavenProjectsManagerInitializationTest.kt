@@ -10,6 +10,8 @@ import org.junit.Test
 import java.util.concurrent.atomic.AtomicBoolean
 
 class MavenProjectsManagerInitializationTest : MavenMultiVersionImportingTestCase() {
+
+  override fun initProjectManager() = false
   @Test
   fun testAddingManagedFilesFiresActivationEvent() = runBlocking {
     val m1 = createModulePom("m1",
