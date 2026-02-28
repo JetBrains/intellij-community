@@ -6,8 +6,16 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.EventListener;
 
-/** Internal API. See a note in {@link MessagePool}. */
+/**
+ * Internal API, unavailable to use in plugins.
+ * <p>
+ * For reporting errors, see [com.intellij.openapi.diagnostic.Logger.error] methods.
+ * For receiving reports, register own [com.intellij.openapi.diagnostic.ErrorReportSubmitter].
+ *
+ * @deprecated use {@link MessagePoolAdvisor} instead.
+ */
 @ApiStatus.Internal
+@Deprecated(forRemoval = true)
 public interface MessagePoolListener extends EventListener {
   default boolean beforeEntryAdded(@NotNull AbstractMessage message) {
     return true;
