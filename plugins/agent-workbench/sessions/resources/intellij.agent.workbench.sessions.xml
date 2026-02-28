@@ -10,6 +10,7 @@
   </dependencies>
 
   <extensions defaultExtensionNs="com.intellij">
+    <agent.workbench.promptLauncher implementation="com.intellij.agent.workbench.sessions.service.AgentSessionsPromptLauncherBridge"/>
     <toolWindow
       id="agent.workbench.sessions"
       anchor="right"

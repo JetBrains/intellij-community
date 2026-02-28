@@ -67,6 +67,31 @@ class CodexAppServerSessionBackendTest {
   }
 
   @Test
+  fun defaultRecorderArchivesOrphanOnlyOnceAcrossRefreshes() {
+    runBlocking(Dispatchers.Default) {
+      val projectDir = tempDir.resolve("project-default-recorder")
+      Files.createDirectories(projectDir)
+      val cwd = normalizeRootPath(projectDir.invariantSeparatorsPathString)
+      val archiveCalls = ArrayList<String>()
+
+      val backend = CodexAppServerSessionBackend(
+        listThreadsForProject = {
+          listOf(
+            parentThread(id = "parent-1", cwd = cwd, updatedAt = 200L),
+            subAgentThread(id = "orphan-1", cwd = cwd, parentThreadId = "missing-parent", updatedAt = 240L),
+          )
+        },
+        archiveThread = { threadId -> archiveCalls.add(threadId) },
+      )
+
+      backend.listThreads(path = projectDir.toString(), openProject = null)
+      backend.listThreads(path = projectDir.toString(), openProject = null)
+
+      assertThat(archiveCalls).containsExactly("orphan-1")
+    }
+  }
+
+  @Test
   fun prefetchArchivesAtMostOneOrphanPerCall() {
     runBlocking(Dispatchers.Default) {
       val projectA = tempDir.resolve("project-a")

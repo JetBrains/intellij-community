@@ -9,6 +9,7 @@ import com.intellij.openapi.actionSystem.ActionGroup
 import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.actionSystem.DefaultActionGroup
 import com.intellij.openapi.components.serviceAsync
+import com.intellij.openapi.components.serviceIfCreated
 import com.intellij.openapi.fileEditor.FileEditor
 import com.intellij.openapi.fileEditor.FileEditorState
 import com.intellij.openapi.project.Project
@@ -96,6 +97,7 @@ internal class AgentChatFileEditor(
       val createdTab = terminalTabs.createTab(project, file)
       tab = createdTab
       subscribePendingFirstInput(createdTab)
+      sendInitialMessageIfNeeded(createdTab)
       component.removeAll()
       component.add(createdTab.component, BorderLayout.CENTER)
       component.revalidate()
@@ -107,6 +109,11 @@ internal class AgentChatFileEditor(
     catch (e: Throwable) {
       AgentChatRestoreNotificationService.reportTerminalInitializationFailure(project, file, e)
     }
+  }
+
+  internal fun flushPendingInitialMessageIfInitialized(): Boolean {
+    val initializedTab = tab ?: return false
+    return sendInitialMessageIfNeeded(initializedTab)
   }
 
   private fun subscribePendingFirstInput(createdTab: AgentChatTerminalTab) {
@@ -123,11 +130,24 @@ internal class AgentChatFileEditor(
       }
     }
   }
+
+  private fun sendInitialMessageIfNeeded(createdTab: AgentChatTerminalTab): Boolean {
+    val initialMessage = file.initialComposedMessage?.trim().orEmpty()
+    if (initialMessage.isEmpty() || file.initialMessageSent) {
+      return false
+    }
+    createdTab.sendText(initialMessage, shouldExecute = true)
+    if (!file.markInitialMessageSent()) {
+      return false
+    }
+    serviceIfCreated<AgentChatTabsService>()?.upsert(file.toSnapshot())
+    return true
+  }
 }
 
-private val NEW_THREAD_QUICK_FROM_EDITOR_TAB_ACTION_ID: String = AgentWorkbenchActionIds.Sessions.EditorTab.NEW_THREAD_QUICK
-private val NEW_THREAD_POPUP_FROM_EDITOR_TAB_ACTION_ID: String = AgentWorkbenchActionIds.Sessions.EditorTab.NEW_THREAD_POPUP
-private val BIND_PENDING_CODEX_THREAD_FROM_EDITOR_TAB_ACTION_ID: String =
+private const val NEW_THREAD_QUICK_FROM_EDITOR_TAB_ACTION_ID: String = AgentWorkbenchActionIds.Sessions.EditorTab.NEW_THREAD_QUICK
+private const val NEW_THREAD_POPUP_FROM_EDITOR_TAB_ACTION_ID: String = AgentWorkbenchActionIds.Sessions.EditorTab.NEW_THREAD_POPUP
+private const val BIND_PENDING_CODEX_THREAD_FROM_EDITOR_TAB_ACTION_ID: String =
   AgentWorkbenchActionIds.Sessions.BIND_PENDING_CODEX_THREAD_FROM_EDITOR_TAB
 
 internal interface AgentChatTerminalTab {
@@ -135,6 +155,8 @@ internal interface AgentChatTerminalTab {
   val preferredFocusableComponent: JComponent
   val coroutineScope: CoroutineScope
   val keyEventsFlow: Flow<*>
+
+  fun sendText(text: String, shouldExecute: Boolean)
 }
 
 internal interface AgentChatTerminalTabs {
@@ -191,4 +213,16 @@ private class ToolWindowAgentChatTerminalTab(
 
   override val keyEventsFlow: Flow<*>
     get() = delegate.view.keyEventsFlow
+
+  override fun sendText(text: String, shouldExecute: Boolean) {
+    val normalizedText = text.trim()
+    if (normalizedText.isEmpty()) {
+      return
+    }
+    val sendTextBuilder = delegate.view.createSendTextBuilder().useBracketedPasteMode()
+    if (shouldExecute) {
+      sendTextBuilder.shouldExecute()
+    }
+    sendTextBuilder.send(normalizedText)
+  }
 }

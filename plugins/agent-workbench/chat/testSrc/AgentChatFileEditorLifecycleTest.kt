@@ -79,6 +79,57 @@ class AgentChatFileEditorLifecycleTest {
     assertThat(terminalTabs.createCalls).isEqualTo(0)
     assertThat(terminalTabs.closeCalls).isEqualTo(0)
   }
+
+  @Test
+  fun selectNotifySendsInitialMessageOnce() {
+    val terminalTabs = FakeAgentChatTerminalTabs()
+    val file = testFile().also {
+      it.updateInitialMessageMetadata(
+        initialComposedMessage = "Refactor selected code",
+        initialMessageToken = "token-1",
+        initialMessageSent = false,
+      )
+    }
+    val editor = AgentChatFileEditor(
+      project = testProject(),
+      file = file,
+      terminalTabs = terminalTabs,
+    )
+
+    editor.selectNotify()
+    editor.selectNotify()
+
+    assertThat(file.initialMessageSent).isTrue()
+    assertThat(terminalTabs.tab.sentTexts)
+      .containsExactly(SentTerminalText("Refactor selected code", shouldExecute = true))
+  }
+
+  @Test
+  fun flushPendingInitialMessageSendsInjectedMessageForInitializedEditor() {
+    val terminalTabs = FakeAgentChatTerminalTabs()
+    val file = testFile()
+    val editor = AgentChatFileEditor(
+      project = testProject(),
+      file = file,
+      terminalTabs = terminalTabs,
+    )
+
+    editor.selectNotify()
+    file.updateInitialMessageMetadata(
+      initialComposedMessage = "Apply follow-up changes",
+      initialMessageToken = "token-follow-up",
+      initialMessageSent = false,
+    )
+
+    val firstFlushSent = editor.flushPendingInitialMessageIfInitialized()
+    val secondFlushSent = editor.flushPendingInitialMessageIfInitialized()
+
+    assertThat(firstFlushSent).isTrue()
+    assertThat(secondFlushSent).isFalse()
+    assertThat(file.initialMessageSent).isTrue()
+    assertThat(terminalTabs.tab.sentTexts)
+      .containsExactly(SentTerminalText("Apply follow-up changes", shouldExecute = true))
+  }
 }
 
 private class FakeAgentChatTerminalTabs : AgentChatTerminalTabs {
@@ -104,7 +155,18 @@ private class FakeAgentChatTerminalTab : AgentChatTerminalTab {
     override val coroutineContext = Job()
   }
   override val keyEventsFlow: Flow<*> = emptyFlow<Unit>()
+
+  @JvmField val sentTexts: MutableList<SentTerminalText> = mutableListOf()
+
+  override fun sendText(text: String, shouldExecute: Boolean) {
+    sentTexts += SentTerminalText(text, shouldExecute)
+  }
 }
+
+private data class SentTerminalText(
+  @JvmField val text: String,
+  @JvmField val shouldExecute: Boolean,
+)
 
 private fun testFile(): AgentChatVirtualFile {
   return AgentChatVirtualFile(

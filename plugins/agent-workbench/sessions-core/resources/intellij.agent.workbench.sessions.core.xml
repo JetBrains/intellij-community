@@ -10,5 +10,13 @@
       qualifiedName="com.intellij.agent.workbench.sessionProviderBridge"
       interface="com.intellij.agent.workbench.sessions.core.providers.AgentSessionProviderBridge"
       dynamic="true"/>
+    <extensionPoint
+      qualifiedName="com.intellij.agent.workbench.promptLauncher"
+      interface="com.intellij.agent.workbench.sessions.core.prompt.AgentPromptLauncherBridge"
+      dynamic="true"/>
+    <extensionPoint
+      qualifiedName="com.intellij.agent.workbench.promptContextContributor"
+      interface="com.intellij.agent.workbench.sessions.core.prompt.AgentPromptContextContributorBridge"
+      dynamic="true"/>
   </extensionPoints>
 </idea-plugin>

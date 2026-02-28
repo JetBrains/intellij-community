@@ -25,6 +25,7 @@ import kotlin.io.path.invariantSeparatorsPathString
 
 private val LOG = logger<CodexAppServerSessionBackend>()
 private const val PREFETCH_FETCH_PARALLELISM = 4
+private const val MAX_TRACKED_ORPHAN_SUB_AGENT_IDS = 4_096
 
 class CodexAppServerSessionBackend(
   private val listThreadsForProject: suspend (Path) -> List<CodexThread> = { projectPath ->
@@ -33,9 +34,7 @@ class CodexAppServerSessionBackend(
   private val archiveThread: suspend (String) -> Unit = { threadId ->
     service<SharedCodexAppServerService>().archiveThread(threadId)
   },
-  private val orphanArchiveAttemptRecorder: (String) -> Boolean = { threadId ->
-    service<CodexSubAgentArchiveStateService>().markArchiveAttempted(threadId)
-  },
+  private val orphanArchiveAttemptRecorder: (String) -> Boolean = InMemoryOrphanArchiveAttemptRecorder()::markArchiveAttempted,
 ) : CodexSessionBackend {
   override suspend fun listThreads(path: String, @Suppress("UNUSED_PARAMETER") openProject: Project?): List<CodexBackendThread> {
     val workingDirectory = resolveProjectDirectoryFromPath(path) ?: return emptyList()
@@ -123,6 +122,31 @@ class CodexAppServerSessionBackend(
     }
 
     return result
+  }
+}
+
+private class InMemoryOrphanArchiveAttemptRecorder {
+  private val attemptedThreadIds = LinkedHashSet<String>()
+
+  @Synchronized
+  fun markArchiveAttempted(threadId: String): Boolean {
+    val normalizedThreadId = threadId.trim()
+    if (normalizedThreadId.isEmpty()) {
+      return false
+    }
+    if (!attemptedThreadIds.add(normalizedThreadId)) {
+      return false
+    }
+
+    while (attemptedThreadIds.size > MAX_TRACKED_ORPHAN_SUB_AGENT_IDS) {
+      val iterator = attemptedThreadIds.iterator()
+      if (!iterator.hasNext()) {
+        break
+      }
+      iterator.next()
+      iterator.remove()
+    }
+    return true
   }
 }
 

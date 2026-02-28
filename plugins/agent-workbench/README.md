@@ -11,6 +11,18 @@ The Agent Workbench plugin reimagines the IDE experience around AI-assisted deve
 
 The goal is to make AI assistance feel like a native part of the development environment, reducing context switching and keeping developers in flow.
 
+## Global Prompt Palette
+
+Use `Cmd+\` (macOS) or `Ctrl+\` (Windows/Linux) to open a centered prompt palette from anywhere in the IDE.
+
+The palette:
+
+- Defaults to Codex (provider-extensible).
+- Captures invocation context (selection/caret snippet, file, symbol, project).
+- Falls back to last selected editor context when invoked outside editors.
+- Lets you add custom context entries before sending.
+- Sends the composed first prompt into a newly opened chat session.
+
 ## Architecture
 
 The plugin provides two complementary views for working with AI-assisted development:
@@ -67,6 +79,7 @@ Detailed requirements and testing contracts are documented in `spec/`.
 - [Agent Chat Dedicated Frame](spec/agent-dedicated-frame.spec.md) - Dedicated-frame mode routing, lifecycle, shortcut semantics, and filtering.
 - [Codex Sessions Rollout Source](spec/agent-sessions-codex-rollout-source.spec.md) - Rollout-default Codex discovery, watcher semantics, backend selector, and app-server write interoperability.
 - [Agent Sessions New-Session Actions](spec/actions/new-thread.spec.md) - New-thread UX, provider/YOLO selection, creation dedup, pending-thread rebinding.
+- [Global Prompt Entry](spec/actions/global-prompt-entry.spec.md) - Global shortcut entrypoint, centered popup UX, context capture, and launch bridge flow.
 - [Testing Contract](spec/agent-sessions-testing.spec.md) - Coverage ownership matrix and required contract test suites.
 
 ## Test All

@@ -64,6 +64,15 @@ internal class AgentChatVirtualFile internal constructor(
   var pendingLaunchMode: String? = null
     private set
 
+  var initialComposedMessage: String? = null
+    private set
+
+  var initialMessageToken: String? = null
+    private set
+
+  var initialMessageSent: Boolean = false
+    private set
+
   @TestOnly
   internal constructor(
     projectPath: String,
@@ -158,6 +167,33 @@ internal class AgentChatVirtualFile internal constructor(
     return true
   }
 
+  fun updateInitialMessageMetadata(
+    initialComposedMessage: String?,
+    initialMessageToken: String?,
+    initialMessageSent: Boolean,
+  ): Boolean {
+    val normalizedMessage = initialComposedMessage?.takeIf { it.isNotBlank() }
+    if (
+      this.initialComposedMessage == normalizedMessage &&
+      this.initialMessageToken == initialMessageToken &&
+      this.initialMessageSent == initialMessageSent
+    ) {
+      return false
+    }
+    this.initialComposedMessage = normalizedMessage
+    this.initialMessageToken = initialMessageToken
+    this.initialMessageSent = initialMessageSent
+    return true
+  }
+
+  fun markInitialMessageSent(): Boolean {
+    if (initialComposedMessage.isNullOrBlank() || initialMessageSent) {
+      return false
+    }
+    initialMessageSent = true
+    return true
+  }
+
   fun markPendingFirstInputAtMsIfAbsent(timestampMs: Long): Boolean {
     if (!isPendingThread) {
       return false
@@ -193,6 +229,9 @@ internal class AgentChatVirtualFile internal constructor(
       changed = true
     }
     if (updatePendingMetadata(pendingCreatedAtMs = null, pendingFirstInputAtMs = null, pendingLaunchMode = null)) {
+      changed = true
+    }
+    if (updateInitialMessageMetadata(initialComposedMessage = null, initialMessageToken = null, initialMessageSent = false)) {
       changed = true
     }
 
@@ -231,6 +270,11 @@ internal class AgentChatVirtualFile internal constructor(
       pendingFirstInputAtMs = snapshot.runtime.pendingFirstInputAtMs,
       pendingLaunchMode = snapshot.runtime.pendingLaunchMode,
     )
+    updateInitialMessageMetadata(
+      initialComposedMessage = snapshot.runtime.initialComposedMessage,
+      initialMessageToken = snapshot.runtime.initialMessageToken,
+      initialMessageSent = snapshot.runtime.initialMessageSent,
+    )
   }
 
   private fun updateThreadCoordinates() {
@@ -257,6 +301,9 @@ internal class AgentChatVirtualFile internal constructor(
         pendingCreatedAtMs = pendingCreatedAtMs,
         pendingFirstInputAtMs = pendingFirstInputAtMs,
         pendingLaunchMode = pendingLaunchMode,
+        initialComposedMessage = initialComposedMessage,
+        initialMessageToken = initialMessageToken,
+        initialMessageSent = initialMessageSent,
       ),
     )
   }

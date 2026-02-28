@@ -4,6 +4,7 @@ package com.intellij.agent.workbench.sessions.service
 // @spec community/plugins/agent-workbench/spec/agent-sessions.spec.md
 // @spec community/plugins/agent-workbench/spec/agent-dedicated-frame.spec.md
 // @spec community/plugins/agent-workbench/spec/actions/new-thread.spec.md
+// @spec community/plugins/agent-workbench/spec/actions/global-prompt-entry.spec.md
 
 import com.intellij.agent.workbench.chat.AgentChatTabSelectionService
 import com.intellij.agent.workbench.chat.closeAndForgetAgentChatsForThread
@@ -16,6 +17,10 @@ import com.intellij.agent.workbench.sessions.core.AgentSessionLaunchMode
 import com.intellij.agent.workbench.sessions.core.AgentSessionProvider
 import com.intellij.agent.workbench.sessions.core.AgentSessionThread
 import com.intellij.agent.workbench.sessions.core.AgentSubAgent
+import com.intellij.agent.workbench.sessions.core.prompt.AgentPromptInitialMessageRequest
+import com.intellij.agent.workbench.sessions.core.prompt.AgentPromptLaunchError
+import com.intellij.agent.workbench.sessions.core.prompt.AgentPromptLaunchRequest
+import com.intellij.agent.workbench.sessions.core.prompt.AgentPromptLaunchResult
 import com.intellij.agent.workbench.sessions.core.providers.AgentSessionProviderBridges
 import com.intellij.agent.workbench.sessions.core.providers.AgentSessionSource
 import com.intellij.agent.workbench.sessions.frame.AGENT_SESSIONS_TOOL_WINDOW_ID
@@ -213,6 +218,11 @@ internal class AgentSessionsService private constructor(
     loadingCoordinator.refreshCatalogAndLoadNewlyOpened()
   }
 
+  internal fun refreshProviderForPath(path: String, provider: AgentSessionProvider) {
+    val normalizedPath = normalizeAgentWorkbenchPath(path)
+    loadingCoordinator.refreshProviderScope(provider = provider, scopedPaths = setOf(normalizedPath))
+  }
+
   fun openOrFocusProject(path: String) {
     val normalizedPath = normalizeAgentWorkbenchPath(path)
     launchDropAction(
@@ -250,7 +260,13 @@ internal class AgentSessionsService private constructor(
     return bridge.supportsArchiveThread
   }
 
-  fun openChatThread(path: String, thread: AgentSessionThread, currentProject: Project? = null) {
+  fun openChatThread(
+    path: String,
+    thread: AgentSessionThread,
+    currentProject: Project? = null,
+    initialComposedMessage: String? = null,
+    initialMessageToken: String? = null,
+  ) {
     val normalizedPath = normalizeAgentWorkbenchPath(path)
     markClaudeQuotaHintEligible(thread.provider)
     launchDropAction(
@@ -266,7 +282,13 @@ internal class AgentSessionsService private constructor(
         }
         if (!proceed) return@launchDropAction
       }
-      openChat(normalizedPath = normalizedPath, thread = thread, subAgent = null)
+      openChat(
+        normalizedPath = normalizedPath,
+        thread = thread,
+        subAgent = null,
+        initialComposedMessage = initialComposedMessage,
+        initialMessageToken = initialMessageToken,
+      )
     }
   }
 
@@ -287,6 +309,8 @@ internal class AgentSessionsService private constructor(
     provider: AgentSessionProvider,
     mode: AgentSessionLaunchMode = AgentSessionLaunchMode.STANDARD,
     currentProject: Project? = null,
+    initialMessageRequest: AgentPromptInitialMessageRequest? = null,
+    preferredDedicatedFrame: Boolean? = null,
   ) {
     val normalizedPath = normalizeAgentWorkbenchPath(path)
     markClaudeQuotaHintEligible(provider)
@@ -313,12 +337,99 @@ internal class AgentSessionsService private constructor(
       val identity = launchSpec.sessionId?.let { sessionId ->
         buildAgentSessionIdentity(provider, sessionId)
       } ?: buildAgentSessionNewIdentity(provider)
+      val initialComposedMessage = initialMessageRequest
+        ?.let(bridge::composeInitialMessage)
+        ?.trim()
+        ?.takeIf { it.isNotEmpty() }
+      val initialMessageToken = initialComposedMessage
+        ?.let { message -> buildInitialMessageToken(identity = identity, message = message) }
 
-      openNewChat(normalizedPath = normalizedPath, identity = identity, command = launchSpec.command)
+      openNewChat(
+        normalizedPath = normalizedPath,
+        identity = identity,
+        command = launchSpec.command,
+        initialComposedMessage = initialComposedMessage,
+        initialMessageToken = initialMessageToken,
+        preferredDedicatedFrame = preferredDedicatedFrame,
+      )
       if (provider == AgentSessionProvider.CODEX) {
         loadingCoordinator.refreshProviderScope(provider = provider, scopedPaths = setOf(normalizedPath))
       }
     }
+  }
+
+  fun launchPromptRequest(request: AgentPromptLaunchRequest): AgentPromptLaunchResult {
+    val bridge = AgentSessionProviderBridges.find(request.provider)
+      ?: return AgentPromptLaunchResult.failure(AgentPromptLaunchError.PROVIDER_UNAVAILABLE)
+    if (request.launchMode !in bridge.supportedLaunchModes) {
+      return AgentPromptLaunchResult.failure(AgentPromptLaunchError.UNSUPPORTED_LAUNCH_MODE)
+    }
+
+    val targetThreadId = request.targetThreadId?.trim()
+    if (targetThreadId != null && targetThreadId.isEmpty()) {
+      return AgentPromptLaunchResult.failure(AgentPromptLaunchError.TARGET_THREAD_NOT_FOUND)
+    }
+
+    return try {
+      if (targetThreadId == null) {
+        createNewSession(
+          path = request.projectPath,
+          provider = request.provider,
+          mode = request.launchMode,
+          initialMessageRequest = request.initialMessageRequest,
+          preferredDedicatedFrame = request.preferredDedicatedFrame,
+        )
+      }
+      else {
+        val normalizedPath = normalizeAgentWorkbenchPath(request.projectPath)
+        val targetThread = findPromptTargetThread(
+          normalizedPath = normalizedPath,
+          provider = request.provider,
+          threadId = targetThreadId,
+        ) ?: return AgentPromptLaunchResult.failure(AgentPromptLaunchError.TARGET_THREAD_NOT_FOUND)
+
+        val initialComposedMessage = bridge.composeInitialMessage(request.initialMessageRequest)
+          .trim()
+          .takeIf { message -> message.isNotEmpty() }
+        val targetIdentity = buildAgentSessionIdentity(provider = request.provider, sessionId = targetThread.id)
+        val initialMessageToken = initialComposedMessage
+          ?.let { message -> buildInitialMessageToken(identity = targetIdentity, message = message) }
+
+        openChatThread(
+          path = normalizedPath,
+          thread = targetThread,
+          initialComposedMessage = initialComposedMessage,
+          initialMessageToken = initialMessageToken,
+        )
+      }
+      AgentPromptLaunchResult.SUCCESS
+    }
+    catch (t: Throwable) {
+      LOG.warn("Failed to launch prompt request for ${request.provider}:${request.projectPath}", t)
+      AgentPromptLaunchResult.failure(AgentPromptLaunchError.INTERNAL_ERROR)
+    }
+  }
+
+  private fun findPromptTargetThread(
+    normalizedPath: String,
+    provider: AgentSessionProvider,
+    threadId: String,
+  ): AgentSessionThread? {
+    val stateSnapshot = stateStore.snapshot()
+    stateSnapshot.projects.firstOrNull { project -> project.path == normalizedPath }
+      ?.threads
+      ?.firstOrNull { thread -> thread.matchesPromptTarget(provider = provider, threadId = threadId) }
+      ?.let { thread -> return thread }
+
+    stateSnapshot.projects.forEach { project ->
+      project.worktrees
+        .firstOrNull { worktree -> worktree.path == normalizedPath }
+        ?.threads
+        ?.firstOrNull { thread -> thread.matchesPromptTarget(provider = provider, threadId = threadId) }
+        ?.let { thread -> return thread }
+    }
+
+    return null
   }
 
   fun archiveThread(path: String, provider: AgentSessionProvider, threadId: String) {
@@ -637,6 +748,8 @@ private suspend fun openChat(
   thread: AgentSessionThread,
   subAgent: AgentSubAgent?,
   shellCommandOverride: List<String>? = null,
+  initialComposedMessage: String? = null,
+  initialMessageToken: String? = null,
 ) {
   if (AgentChatOpenModeSettings.openInDedicatedFrame()) {
     openChatInDedicatedFrame(
@@ -644,11 +757,21 @@ private suspend fun openChat(
       thread = thread,
       subAgent = subAgent,
       shellCommandOverride = shellCommandOverride,
+      initialComposedMessage = initialComposedMessage,
+      initialMessageToken = initialMessageToken,
     )
     return
   }
   val openProject = openProject(normalizedPath) ?: return
-  openChatInProject(openProject, normalizedPath, thread, subAgent, shellCommandOverride)
+  openChatInProject(
+    project = openProject,
+    projectPath = normalizedPath,
+    thread = thread,
+    subAgent = subAgent,
+    shellCommandOverride = shellCommandOverride,
+    initialComposedMessage = initialComposedMessage,
+    initialMessageToken = initialMessageToken,
+  )
 }
 
 private fun buildOpenProjectActionKey(path: String): String {
@@ -664,6 +787,10 @@ private fun markClaudeQuotaHintEligible(provider: AgentSessionProvider) {
 
 private fun buildCreateSessionActionKey(path: String, provider: AgentSessionProvider, mode: AgentSessionLaunchMode): String {
   return "$CREATE_SESSION_ACTION_KEY_PREFIX:$path:$provider:mode=$mode"
+}
+
+private fun buildInitialMessageToken(identity: String, message: String): String {
+  return "$identity:${message.hashCode()}:${System.nanoTime()}"
 }
 
 private fun buildOpenThreadActionKey(path: String, thread: AgentSessionThread): String {
@@ -715,15 +842,37 @@ private fun resolvePendingCodexMetadata(identity: String, command: List<String>)
   )
 }
 
-private suspend fun openNewChat(normalizedPath: String, identity: String, command: List<String>) {
+private suspend fun openNewChat(
+  normalizedPath: String,
+  identity: String,
+  command: List<String>,
+  initialComposedMessage: String?,
+  initialMessageToken: String?,
+  preferredDedicatedFrame: Boolean?,
+) {
   val title = AgentSessionsBundle.message("toolwindow.action.new.thread")
-  val dedicatedFrame = AgentChatOpenModeSettings.openInDedicatedFrame()
+  val dedicatedFrame = preferredDedicatedFrame ?: AgentChatOpenModeSettings.openInDedicatedFrame()
   if (dedicatedFrame) {
-    openNewChatInDedicatedFrame(normalizedPath = normalizedPath, identity = identity, command = command, title = title)
+    openNewChatInDedicatedFrame(
+      normalizedPath = normalizedPath,
+      identity = identity,
+      command = command,
+      title = title,
+      initialComposedMessage = initialComposedMessage,
+      initialMessageToken = initialMessageToken,
+    )
     return
   }
   val openProject = openProject(normalizedPath) ?: return
-  openNewChatInProject(project = openProject, projectPath = normalizedPath, identity = identity, command = command, title = title)
+  openNewChatInProject(
+    project = openProject,
+    projectPath = normalizedPath,
+    identity = identity,
+    command = command,
+    title = title,
+    initialComposedMessage = initialComposedMessage,
+    initialMessageToken = initialMessageToken,
+  )
 }
 
 private suspend fun openNewChatInDedicatedFrame(
@@ -731,12 +880,22 @@ private suspend fun openNewChatInDedicatedFrame(
   identity: String,
   command: List<String>,
   title: String,
+  initialComposedMessage: String?,
+  initialMessageToken: String?,
 ) {
   val dedicatedProjectPath = AgentWorkbenchDedicatedFrameProjectManager.dedicatedProjectPath()
   val openProject = findOpenProject(dedicatedProjectPath)
   if (openProject != null) {
     AgentWorkbenchDedicatedFrameProjectManager.configureProject(openProject)
-    openNewChatInProject(project = openProject, projectPath = normalizedPath, identity = identity, command = command, title = title)
+    openNewChatInProject(
+      project = openProject,
+      projectPath = normalizedPath,
+      identity = identity,
+      command = command,
+      title = title,
+      initialComposedMessage = initialComposedMessage,
+      initialMessageToken = initialMessageToken,
+    )
     return
   }
 
@@ -753,7 +912,15 @@ private suspend fun openNewChatInDedicatedFrame(
 
   val dedicatedProject = openDedicatedFrameProject(dedicatedProjectDir) ?: return
   AgentWorkbenchDedicatedFrameProjectManager.configureProject(dedicatedProject)
-  openNewChatInProject(project = dedicatedProject, projectPath = normalizedPath, identity = identity, command = command, title = title)
+  openNewChatInProject(
+    project = dedicatedProject,
+    projectPath = normalizedPath,
+    identity = identity,
+    command = command,
+    title = title,
+    initialComposedMessage = initialComposedMessage,
+    initialMessageToken = initialMessageToken,
+  )
 }
 
 private suspend fun openNewChatInProject(
@@ -762,6 +929,8 @@ private suspend fun openNewChatInProject(
   identity: String,
   command: List<String>,
   title: String,
+  initialComposedMessage: String?,
+  initialMessageToken: String?,
 ) {
   val threadId = resolveAgentSessionId(identity)
   val pendingMetadata = resolvePendingCodexMetadata(identity = identity, command = command)
@@ -776,6 +945,8 @@ private suspend fun openNewChatInProject(
     threadActivity = AgentThreadActivity.READY,
     pendingCreatedAtMs = pendingMetadata?.createdAtMs,
     pendingLaunchMode = pendingMetadata?.launchMode,
+    initialComposedMessage = initialComposedMessage,
+    initialMessageToken = initialMessageToken,
   )
   focusProjectWindow(project)
 }
@@ -785,12 +956,22 @@ private suspend fun openChatInDedicatedFrame(
   thread: AgentSessionThread,
   subAgent: AgentSubAgent?,
   shellCommandOverride: List<String>?,
+  initialComposedMessage: String? = null,
+  initialMessageToken: String? = null,
 ) {
   val dedicatedProjectPath = AgentWorkbenchDedicatedFrameProjectManager.dedicatedProjectPath()
   val openProject = findOpenProject(dedicatedProjectPath)
   if (openProject != null) {
     AgentWorkbenchDedicatedFrameProjectManager.configureProject(openProject)
-    openChatInProject(openProject, normalizedPath, thread, subAgent, shellCommandOverride)
+    openChatInProject(
+      project = openProject,
+      projectPath = normalizedPath,
+      thread = thread,
+      subAgent = subAgent,
+      shellCommandOverride = shellCommandOverride,
+      initialComposedMessage = initialComposedMessage,
+      initialMessageToken = initialMessageToken,
+    )
     return
   }
 
@@ -804,7 +985,15 @@ private suspend fun openChatInDedicatedFrame(
 
   val dedicatedProject = openDedicatedFrameProject(dedicatedProjectDir) ?: return
   AgentWorkbenchDedicatedFrameProjectManager.configureProject(dedicatedProject)
-  openChatInProject(dedicatedProject, normalizedPath, thread, subAgent, shellCommandOverride)
+  openChatInProject(
+    project = dedicatedProject,
+    projectPath = normalizedPath,
+    thread = thread,
+    subAgent = subAgent,
+    shellCommandOverride = shellCommandOverride,
+    initialComposedMessage = initialComposedMessage,
+    initialMessageToken = initialMessageToken,
+  )
 }
 
 private suspend fun openChatInProject(
@@ -813,6 +1002,8 @@ private suspend fun openChatInProject(
   thread: AgentSessionThread,
   subAgent: AgentSubAgent?,
   shellCommandOverride: List<String>?,
+  initialComposedMessage: String? = null,
+  initialMessageToken: String? = null,
 ) {
   val chatOpenPayload = resolveAgentSessionChatOpenPayload(
     thread = thread,
@@ -829,6 +1020,8 @@ private suspend fun openChatInProject(
       threadTitle = chatOpenPayload.threadTitle,
       subAgentId = chatOpenPayload.subAgentId,
       threadActivity = thread.activity,
+      initialComposedMessage = initialComposedMessage ?: chatOpenPayload.initialComposedMessage,
+      initialMessageToken = initialMessageToken ?: chatOpenPayload.initialMessageToken,
     )
     focusProjectWindowSync(project)
   }
@@ -970,4 +1163,8 @@ internal fun mergeAgentSessionSourceLoadResults(
     hasUnknownThreadCount = hasUnknownThreadCount,
     providerWarnings = if (allSourcesFailed) emptyList() else providerWarnings,
   )
+}
+
+private fun AgentSessionThread.matchesPromptTarget(provider: AgentSessionProvider, threadId: String): Boolean {
+  return this.provider == provider && !archived && id == threadId
 }

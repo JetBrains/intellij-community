@@ -3,6 +3,7 @@ package com.intellij.agent.workbench.sessions.core.providers
 
 import com.intellij.agent.workbench.sessions.core.AgentSessionLaunchMode
 import com.intellij.agent.workbench.sessions.core.AgentSessionProvider
+import com.intellij.agent.workbench.sessions.core.prompt.AgentPromptInitialMessageRequest
 
 interface AgentSessionProviderBridge {
   val provider: AgentSessionProvider
@@ -37,6 +38,33 @@ interface AgentSessionProviderBridge {
   suspend fun archiveThread(path: String, threadId: String): Boolean = false
 
   suspend fun unarchiveThread(path: String, threadId: String): Boolean = false
+
+  fun composeInitialMessage(request: AgentPromptInitialMessageRequest): String {
+    val prompt = request.prompt.trim()
+    if (request.contextItems.isEmpty()) {
+      return prompt
+    }
+
+    val builder = StringBuilder(prompt)
+    if (builder.isNotEmpty()) {
+      builder.append("\n\n")
+    }
+    builder.append("## Context\n")
+    request.contextItems.forEachIndexed { index, item ->
+      builder.append(index + 1)
+        .append(". ")
+        .append(item.title.ifBlank { item.kindId })
+        .append(" [")
+        .append(item.kindId)
+        .append("]\n")
+      if (item.metadata.isNotEmpty()) {
+        val metadata = item.metadata.entries.joinToString(separator = ", ") { (key, value) -> "$key=$value" }
+        builder.append("   metadata: ").append(metadata).append('\n')
+      }
+      builder.append(item.content.trim()).append("\n\n")
+    }
+    return builder.toString().trimEnd()
+  }
 
   fun isCliMissingError(throwable: Throwable): Boolean = false
 }
