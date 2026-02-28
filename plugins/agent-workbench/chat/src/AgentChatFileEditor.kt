@@ -159,7 +159,21 @@ private object ToolWindowAgentChatTerminalTabs : AgentChatTerminalTabs {
 
   override fun closeTab(project: Project, tab: AgentChatTerminalTab) {
     val toolWindowTab = (tab as? ToolWindowAgentChatTerminalTab)?.delegate ?: return
-    TerminalToolWindowTabsManager.getInstance(project).closeTab(toolWindowTab)
+    closeTerminalToolWindowTab(project, toolWindowTab)
+  }
+}
+
+internal fun closeTerminalToolWindowTab(
+  project: Project,
+  tab: TerminalToolWindowTab,
+  managerProvider: (Project) -> TerminalToolWindowTabsManager = TerminalToolWindowTabsManager::getInstance,
+) {
+  val content = tab.content
+  if (content.manager != null) {
+    managerProvider(project).closeTab(tab)
+  }
+  else {
+    content.release()
   }
 }
 

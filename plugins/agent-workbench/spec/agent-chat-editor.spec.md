@@ -18,7 +18,7 @@ targets:
 # Agent Chat Editor
 
 Status: Draft
-Date: 2026-02-22
+Date: 2026-02-28
 
 ## Summary
 Define how Agent chat tabs are opened, restored, reused, and rendered in editor tabs. This spec owns tab lifecycle and persistence behavior. Shared command mapping and shared editor-tab popup action semantics are owned by `spec/agent-core-contracts.spec.md`.
@@ -72,6 +72,12 @@ Define how Agent chat tabs are opened, restored, reused, and rendered in editor 
   - lightweight tab/editor shell is created immediately,
   - terminal session starts only on first explicit tab selection/focus.
   [@test] ../chat/testSrc/AgentChatTabSelectionServiceTest.kt
+
+- Disposing an initialized chat editor must always release terminal tab resources:
+  - manager-backed tab content must close through `TerminalToolWindowTabsManager.closeTab`,
+  - detached tab content (no content manager) must still be released.
+  [@test] ../chat/testSrc/AgentChatFileEditorLifecycleTest.kt
+  [@test] ../chat/testSrc/AgentChatTerminalTabCloseTest.kt
 
 - Editor tab title must come from thread title with fallback `Agent Chat`, via `EditorTabTitleProvider` (no virtual-file-name mutation dependency), and must be middle-truncated to 50 characters for presentation while tooltip keeps full title.
   [@test] ../chat/testSrc/AgentChatEditorServiceTest.kt
@@ -140,3 +146,4 @@ Define how Agent chat tabs are opened, restored, reused, and rendered in editor 
 - `spec/agent-core-contracts.spec.md`
 - `spec/agent-dedicated-frame.spec.md`
 - `spec/agent-sessions.spec.md`
+- `spec/agent-chat-terminal-api-spike.md`
