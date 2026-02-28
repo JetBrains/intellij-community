@@ -89,8 +89,9 @@ public final class JBListWithOpenInRightSplit<T> extends JBList<T> {
 
     AnAction action = ActionManager.getInstance().getAction(getActionId());
     if (action != null) {
-      String text = KeymapUtil.getFirstKeyboardShortcutText(action);
-      myTooltip = new HelpTooltip().setTitle(StringUtil.notNullize(action.getTemplatePresentation().getText())).setShortcut(text);
+      String tooltipText = StringUtil.notNullize(action.getTemplatePresentation().getText());
+      String shortcutText = KeymapUtil.getFirstKeyboardShortcutText(action);
+      myTooltip = new HelpTooltip().setPlainTextTitle(tooltipText).setShortcut(shortcutText);
       myTooltip.installOn(this);
       HelpTooltip.setMasterPopupOpenCondition(this, () -> {
         return isHovered();
