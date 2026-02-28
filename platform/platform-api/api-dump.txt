@@ -580,6 +580,8 @@ pc:com.intellij.ide.HelpTooltip$OverTipMouseListener
 - p:doExit():V
 - mouseEntered(java.awt.event.MouseEvent):V
 - mouseExited(java.awt.event.MouseEvent):V
+f:com.intellij.ide.HelpTooltipKt
+- sf:setToolTipText(javax.swing.JComponent,com.intellij.openapi.util.text.HtmlChunk):V
 f:com.intellij.ide.IdeBundle
 - sf:BUNDLE:java.lang.String
 - s:message(java.lang.String,java.lang.Object[]):java.lang.String
