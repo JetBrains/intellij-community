@@ -757,7 +757,7 @@ class AgentChatEditorServiceTest {
 
   private suspend fun editorTabTooltip(file: AgentChatVirtualFile): String? {
     return runInUi {
-      AgentChatEditorTabTitleProvider().getEditorTabTooltipText(project, file)
+      AgentChatEditorTabTitleProvider().getEditorTabTooltipHtmlText(project, file)?.toString()
     }
   }
 

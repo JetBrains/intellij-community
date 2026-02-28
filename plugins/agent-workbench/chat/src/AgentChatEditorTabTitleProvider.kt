@@ -4,6 +4,7 @@ package com.intellij.agent.workbench.chat
 import com.intellij.openapi.fileEditor.impl.EditorTabTitleProvider
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.text.HtmlChunk
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vfs.VirtualFile
 
@@ -15,8 +16,8 @@ internal class AgentChatEditorTabTitleProvider : EditorTabTitleProvider, DumbAwa
     return StringUtil.trimMiddle(chatFile.threadTitle, MAX_EDITOR_TAB_TITLE_LENGTH)
   }
 
-  override fun getEditorTabTooltipText(project: Project, virtualFile: VirtualFile): String? {
+  override fun getEditorTabTooltipHtmlText(project: Project, virtualFile: VirtualFile): HtmlChunk? {
     val chatFile = virtualFile as? AgentChatVirtualFile ?: return null
-    return chatFile.threadTitle
+    return HtmlChunk.text(chatFile.threadTitle)
   }
 }

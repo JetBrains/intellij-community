@@ -16,6 +16,7 @@ import com.intellij.openapi.fileEditor.impl.EditorTabTitleProvider
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
+import com.intellij.openapi.util.text.HtmlChunk
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFilePathWrapper
 import com.intellij.openapi.vfs.VirtualFileSystem
@@ -101,9 +102,9 @@ internal class DefaultVcsLogFile(private val pathId: VcsLogVirtualFileSystem.Vcs
 
 internal class DefaultVcsLogFileTabTitleProvider : EditorTabTitleProvider, DumbAware {
 
-  override fun getEditorTabTooltipText(project: Project, file: VirtualFile): String? {
-    if (file !is DefaultVcsLogFile) return null
-    return getEditorTabTitle(project, file)
+  override fun getEditorTabTooltipHtmlText(project: Project, virtualFile: VirtualFile): HtmlChunk? {
+    if (virtualFile !is DefaultVcsLogFile) return null
+    return getEditorTabTitle(project, virtualFile)?.let { HtmlChunk.text(it) }
   }
 
   override fun getEditorTabTitle(project: Project, file: VirtualFile): String? {

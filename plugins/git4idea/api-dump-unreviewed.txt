@@ -3256,12 +3256,6 @@ f:git4idea.index.vfs.GitIndexVirtualFileStatusProvider
 - <init>(com.intellij.openapi.project.Project):V
 - getFileStatus(com.intellij.openapi.vfs.VirtualFile):com.intellij.openapi.vcs.FileStatus
 - f:getProject():com.intellij.openapi.project.Project
-f:git4idea.index.vfs.GitIndexVirtualFileTabTitleProvider
-- com.intellij.openapi.vcs.vfs.CustomisableUniqueNameEditorTabTitleProvider
-- <init>():V
-- getEditorTabTitle(com.intellij.openapi.vfs.VirtualFile,java.lang.String):java.lang.String
-- getEditorTabTooltipText(com.intellij.openapi.project.Project,com.intellij.openapi.vfs.VirtualFile):java.lang.String
-- isApplicable(com.intellij.openapi.vfs.VirtualFile):Z
 f:git4idea.light.LightGitPresentationKt
 - sf:getColor(git4idea.index.LightFileStatus):java.awt.Color
 - sf:getPresentation(git4idea.index.LightFileStatus):java.lang.String
