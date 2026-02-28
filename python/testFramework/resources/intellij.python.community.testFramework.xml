@@ -2,6 +2,5 @@
   <dependencies>
     <module name="intellij.python.community.impl"/>
     <module name="intellij.libraries.junit4"/>
-    <module name="intellij.platform.testFramework"/>
   </dependencies>
 </idea-plugin>
