@@ -5,6 +5,7 @@ package com.intellij.ui.tabs.impl
 
 import com.intellij.concurrency.ContextAwareRunnable
 import com.intellij.icons.AllIcons
+import com.intellij.ide.setToolTipText
 import com.intellij.ide.ui.UISettings
 import com.intellij.ide.ui.UISettings.Companion.getInstance
 import com.intellij.ide.ui.UISettings.Companion.setupAntialiasing
@@ -1469,7 +1470,7 @@ open class JBTabsImpl internal constructor(
     info.changeSupport.addPropertyChangeListener(this)
     val label = createTabLabel(info)
     label.setText(info.coloredText)
-    label.toolTipText = info.tooltipText
+    label.setToolTipText(info.tooltipHtmlText)
     label.setIcon(info.icon)
     label.setTabActions(info.tabLabelActions)
 
@@ -1499,7 +1500,7 @@ open class JBTabsImpl internal constructor(
 
       val label = createTabLabel(tab)
       label.setText(tab.coloredText)
-      label.toolTipText = tab.tooltipText
+      label.setToolTipText(tab.tooltipHtmlText)
       label.setIcon(tab.icon)
       label.setTabActions(tab.tabLabelActions)
 
@@ -1915,7 +1916,7 @@ open class JBTabsImpl internal constructor(
   private fun updateText(tabInfo: TabInfo) {
     val label = tabInfo.tabLabel!!
     label.setText(tabInfo.coloredText)
-    label.toolTipText = tabInfo.tooltipText
+    label.setToolTipText(tabInfo.tooltipHtmlText)
   }
 
   private fun updateSideComponent(tabInfo: TabInfo) {

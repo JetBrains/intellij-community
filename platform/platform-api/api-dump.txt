@@ -9574,6 +9574,7 @@ f:com.intellij.ui.tabs.TabInfo
 - f:getTabLabelActions():com.intellij.openapi.actionSystem.ActionGroup
 - f:getTabPaneActions():com.intellij.openapi.actionSystem.ActionGroup
 - f:getText():java.lang.String
+- f:getTooltipHtmlText():com.intellij.openapi.util.text.HtmlChunk
 - f:getTooltipText():java.lang.String
 - f:isAlertRequested():Z
 - f:isEnabled():Z
@@ -9606,6 +9607,7 @@ f:com.intellij.ui.tabs.TabInfo
 - f:setTabLabelActions(com.intellij.openapi.actionSystem.ActionGroup,java.lang.String):com.intellij.ui.tabs.TabInfo
 - f:setTabPaneActions(com.intellij.openapi.actionSystem.ActionGroup):com.intellij.ui.tabs.TabInfo
 - f:setText(java.lang.String):com.intellij.ui.tabs.TabInfo
+- f:setTooltipText(com.intellij.openapi.util.text.HtmlChunk):com.intellij.ui.tabs.TabInfo
 - f:setTooltipText(java.lang.String):com.intellij.ui.tabs.TabInfo
 - f:stopAlerting():V
 f:com.intellij.ui.tabs.TabInfo$Companion
