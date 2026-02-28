@@ -544,6 +544,7 @@ c:com.intellij.ide.HelpTooltip
 - p:hidePopup(Z):V
 - installOn(javax.swing.JComponent):V
 - setBrowserLink(java.lang.String,java.net.URL):com.intellij.ide.HelpTooltip
+- setDescription(com.intellij.openapi.util.text.HtmlChunk):com.intellij.ide.HelpTooltip
 - setDescription(java.lang.String):com.intellij.ide.HelpTooltip
 - setHideDelay(I):com.intellij.ide.HelpTooltip
 - setInitialDelay(I):com.intellij.ide.HelpTooltip
@@ -553,10 +554,14 @@ c:com.intellij.ide.HelpTooltip
 - s:setMasterPopup(java.awt.Component,com.intellij.openapi.ui.popup.JBPopup):V
 - s:setMasterPopupOpenCondition(java.awt.Component,java.util.function.BooleanSupplier):V
 - setNeverHideOnTimeout(Z):com.intellij.ide.HelpTooltip
+- setPlainTextTitle(java.lang.String):com.intellij.ide.HelpTooltip
+- setPlainTextTitle(java.util.function.Supplier):com.intellij.ide.HelpTooltip
 - setShortcut(com.intellij.openapi.actionSystem.Shortcut):com.intellij.ide.HelpTooltip
 - setShortcut(java.lang.String):com.intellij.ide.HelpTooltip
+- setTitle(com.intellij.openapi.util.text.HtmlChunk):com.intellij.ide.HelpTooltip
 - setTitle(java.lang.String):com.intellij.ide.HelpTooltip
 - setTitle(java.util.function.Supplier):com.intellij.ide.HelpTooltip
+- setTitleSupplier(java.util.function.Supplier):com.intellij.ide.HelpTooltip
 - p:shouldForceHiding():Z
 e:com.intellij.ide.HelpTooltip$Alignment
 - java.lang.Enum
