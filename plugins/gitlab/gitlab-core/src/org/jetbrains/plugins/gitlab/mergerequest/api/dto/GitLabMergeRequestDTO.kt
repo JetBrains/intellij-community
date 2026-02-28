@@ -44,7 +44,7 @@ class GitLabMergeRequestDTO(
   val userPermissions: GitLabMergeRequestPermissionsDTO,
   val squash: Boolean, // property set on the MR
   val squashOnMerge: Boolean, // [squash] can be overridden by project settings, and this is the final value after override
-  val squashReadOnly: Boolean, // if [squash] can be changed for this MR
+  @SinceGitLab("17.10") val squashReadOnly: Boolean?, // if [squash] can be changed for this MR
   val defaultSquashCommitMessage: String?,
   val defaultMergeCommitMessage: String?,
   // set after the merge is triggered, ignore for our purposes

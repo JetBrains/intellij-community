@@ -1,4 +1,3 @@
-# <14.7 commits removed
 fragment mergeRequest on MergeRequest {
   id
   iid
@@ -85,6 +84,15 @@ fragment mergeRequest on MergeRequest {
     }
   }
 
+  commits(first: 1000) {
+    pageInfo {
+      ...pageInfo
+    }
+
+    nodes {
+      ...glCommit
+    }
+  }
   userPermissions {
     ...mergeRequestPermissions
   }

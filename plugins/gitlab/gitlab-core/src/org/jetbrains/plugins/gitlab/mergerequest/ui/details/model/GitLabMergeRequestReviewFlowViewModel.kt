@@ -205,7 +205,7 @@ internal class GitLabMergeRequestReviewFlowViewModelImpl(
       mergeCommitMessageDefault = details.defaultMergeCommitMessage,
       removeSourceBranch = details.removeSourceBranch,
       squashCommits = details.shouldSquashWithProject,
-      squashCommitsReadonly = details.shouldSquashReadOnly,
+      squashCommitsReadonly = details.shouldSquashReadOnly ?: projectData.squashMergeRequestBeforeMergeReadOnly,
       squashCommitMessageDefault = details.defaultSquashCommitMessage
     )
   }.stateInNow(scope, null)
