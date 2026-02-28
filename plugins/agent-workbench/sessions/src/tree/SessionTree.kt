@@ -407,6 +407,22 @@ internal fun shouldOpenOnActivation(node: SessionTreeNode): Boolean {
   }
 }
 
+internal fun shouldExpandOnDoubleClick(node: SessionTreeNode): Boolean {
+  return when (node) {
+    is SessionTreeNode.Project,
+    is SessionTreeNode.Worktree,
+    is SessionTreeNode.SubAgent -> false
+
+    is SessionTreeNode.Thread -> isAgentSessionNewSessionId(node.thread.id)
+
+    is SessionTreeNode.Warning,
+    is SessionTreeNode.Error,
+    is SessionTreeNode.Empty,
+    is SessionTreeNode.MoreProjects,
+    is SessionTreeNode.MoreThreads -> true
+  }
+}
+
 internal fun shouldRetargetSelectionForContextMenu(isClickedPathSelected: Boolean): Boolean {
   return !isClickedPathSelected
 }

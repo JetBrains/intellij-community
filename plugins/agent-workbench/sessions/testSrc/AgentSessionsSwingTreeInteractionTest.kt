@@ -11,6 +11,7 @@ import com.intellij.agent.workbench.sessions.model.ArchiveThreadTarget
 import com.intellij.agent.workbench.sessions.tree.SessionTreeId
 import com.intellij.agent.workbench.sessions.tree.SessionTreeNode
 import com.intellij.agent.workbench.sessions.tree.pathForMoreThreadsNode
+import com.intellij.agent.workbench.sessions.tree.shouldExpandOnDoubleClick
 import com.intellij.agent.workbench.sessions.tree.shouldHandleSingleClick
 import com.intellij.agent.workbench.sessions.tree.shouldOpenOnActivation
 import com.intellij.agent.workbench.sessions.tree.shouldRetargetSelectionForContextMenu
@@ -53,6 +54,29 @@ class AgentSessionsSwingTreeInteractionTest {
     assertThat(shouldOpenOnActivation(SessionTreeNode.MoreProjects(hiddenCount = 1))).isFalse()
     assertThat(shouldOpenOnActivation(SessionTreeNode.MoreThreads(project, hiddenCount = 1))).isFalse()
     assertThat(shouldOpenOnActivation(SessionTreeNode.Warning("warning"))).isFalse()
+  }
+
+  @Test
+  fun doubleClickExpandPolicyPrefersOpenForOpenableRows() {
+    val project = AgentProjectSessions(path = "/work/project-a", name = "Project A", isOpen = false)
+    val worktree = AgentWorktree(
+      path = "/work/project-a-feature",
+      name = "project-a-feature",
+      branch = "feature",
+      isOpen = false,
+    )
+    val thread = AgentSessionThread(id = "thread-1", title = "Thread 1", updatedAt = 100, archived = false)
+    val pendingThread = AgentSessionThread(id = "new-1", title = "New Thread", updatedAt = 100, archived = false)
+    val subAgent = AgentSubAgent(id = "sub-1", name = "Sub Agent")
+
+    assertThat(shouldExpandOnDoubleClick(SessionTreeNode.Project(project))).isFalse()
+    assertThat(shouldExpandOnDoubleClick(SessionTreeNode.Worktree(project, worktree))).isFalse()
+    assertThat(shouldExpandOnDoubleClick(SessionTreeNode.Thread(project, thread))).isFalse()
+    assertThat(shouldExpandOnDoubleClick(SessionTreeNode.SubAgent(project, thread, subAgent))).isFalse()
+    assertThat(shouldExpandOnDoubleClick(SessionTreeNode.Thread(project, pendingThread))).isTrue()
+    assertThat(shouldExpandOnDoubleClick(SessionTreeNode.MoreProjects(hiddenCount = 1))).isTrue()
+    assertThat(shouldExpandOnDoubleClick(SessionTreeNode.MoreThreads(project, hiddenCount = 1))).isTrue()
+    assertThat(shouldExpandOnDoubleClick(SessionTreeNode.Warning("warning"))).isTrue()
   }
 
   @Test

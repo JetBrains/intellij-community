@@ -10,7 +10,7 @@ targets:
 # Agent Threads Testing
 
 Status: Draft
-Date: 2026-02-24
+Date: 2026-02-28
 
 ## Summary
 Define required coverage ownership for Agent Workbench specs after the hard Swing cutover.
@@ -52,7 +52,7 @@ This file does not redefine runtime behavior; it maps each contract area to requ
 - Swing tree rendering coverage must include warning/error precedence, empty-state exclusivity, and `More` row exact/unknown behavior.
   [@test] ../sessions/testSrc/AgentSessionsSwingTreeRenderingTest.kt
 
-- Swing tree interaction coverage must include single-click select behavior, activation-open policy, path resolution for `More` rows, and context-menu selection retarget rules.
+- Swing tree interaction coverage must include single-click select behavior, activation-open policy, double-click open precedence on openable parent rows, path resolution for `More` rows, and context-menu selection retarget rules.
   [@test] ../sessions/testSrc/AgentSessionsSwingTreeInteractionTest.kt
 
 - Persisted tree-state coverage must include collapsed-state restoration and expansion parent mapping for selected worktree paths.

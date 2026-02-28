@@ -32,6 +32,7 @@ import com.intellij.agent.workbench.sessions.tree.pathForThreadNode
 import com.intellij.agent.workbench.sessions.tree.resolveNewSessionRowActions
 import com.intellij.agent.workbench.sessions.tree.resolveSelectedSessionTreeId
 import com.intellij.agent.workbench.sessions.tree.sessionTreeNodePresentation
+import com.intellij.agent.workbench.sessions.tree.shouldExpandOnDoubleClick
 import com.intellij.agent.workbench.sessions.tree.shouldHandleSingleClick
 import com.intellij.agent.workbench.sessions.tree.shouldRetargetSelectionForContextMenu
 import com.intellij.agent.workbench.sessions.tree.threadDisplayTitle
@@ -73,6 +74,7 @@ import com.intellij.util.EditSourceOnDoubleClickHandler
 import com.intellij.util.IconUtil
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
+import com.intellij.util.ui.tree.ExpandOnDoubleClick
 import com.intellij.util.ui.tree.TreeUtil
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -190,6 +192,7 @@ internal class AgentSessionsToolWindowPanel(
     tree.setExpandableItemsEnabled(false)
     tree.putClientProperty(AnimatedIcon.ANIMATION_IN_RENDERER_ALLOWED, true)
     ToolTipManager.sharedInstance().registerComponent(tree)
+    ExpandOnDoubleClick.DEFAULT.installOn(tree)
 
     TreeUtil.installActions(tree)
     TreeUIHelper.getInstance().installTreeSpeedSearch(tree)
@@ -1125,6 +1128,12 @@ private class AgentSessionsTreeNodeDescriptor(
   }
 
   override fun getElement(): Any = element
+
+  override fun expandOnDoubleClick(): Boolean {
+    if (element !is SessionTreeId) return true
+    val node = modelProvider().entriesById[element]?.node ?: return true
+    return shouldExpandOnDoubleClick(node)
+  }
 
   private fun computePresentationHash(): Int {
     return when (element) {

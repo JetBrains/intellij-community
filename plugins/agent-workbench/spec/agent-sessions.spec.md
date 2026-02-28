@@ -14,7 +14,7 @@ targets:
 # Agent Threads Tool Window
 
 Status: Draft
-Date: 2026-02-24
+Date: 2026-02-28
 
 ## Summary
 Define Agent Threads as a provider-agnostic, project-scoped browser implemented with native IntelliJ Swing tree APIs (`StructureTreeModel` + `AsyncTreeModel` + `Tree`).
@@ -32,7 +32,7 @@ Shared contracts remain in `spec/agent-core-contracts.spec.md`.
 - Keep project/worktree grouping deterministic across open and recent projects.
 - Merge provider results without dropping successful data when one provider fails.
 - Keep refresh/on-demand behavior predictable under concurrency.
-- Follow IntelliJ tree conventions: single-click selects, activation happens on Enter or double-click.
+- Follow IntelliJ tree conventions: single-click selects, activation happens on Enter or double-click, and double-click on openable rows prefers open/focus over expand/collapse.
 - Use one UI path only (Swing async tree), with no Compose compatibility layer.
 
 ## Non-goals
@@ -121,7 +121,8 @@ Shared contracts remain in `spec/agent-core-contracts.spec.md`.
 - Activation policy must follow IntelliJ tree conventions:
   - single-click selects rows,
   - single-click actions are reserved for `More...` rows,
-  - Enter/double-click open project/worktree/thread/sub-agent rows.
+  - Enter/double-click open project/worktree/thread/sub-agent rows,
+  - for rows that are both openable and parents, double-click prefers open/focus and does not toggle expansion.
   [@test] ../sessions/testSrc/AgentSessionsSwingTreeInteractionTest.kt
 
 - Context-menu selection policy must preserve multi-selection when right-clicking an already selected row and retarget selection when right-clicking an unselected row.
@@ -179,6 +180,8 @@ Shared contracts remain in `spec/agent-core-contracts.spec.md`.
 - Thread rows use a provider-aware leading icon; non-`READY` activities add an overlay badge, and rows show a right-aligned relative activity time.
 - Thread-row archive context menu applies to current multi-selection when invoked from a selected thread and shows `Archive Selected (N)` when `N > 1`.
 - Single-click on normal rows selects only; open happens on Enter or double-click.
+- On rows that are both openable and parents, double-click opens/focuses instead of expanding/collapsing.
+- Expand/collapse remains available through disclosure controls and keyboard tree actions.
 - Project/worktree rows expose new-session affordances when hovered/selected.
 - Project/worktree rows being refreshed show a right-side loading indicator in the row action area while refresh is in progress.
 - Provider warnings are inline and non-blocking when partial data exists.

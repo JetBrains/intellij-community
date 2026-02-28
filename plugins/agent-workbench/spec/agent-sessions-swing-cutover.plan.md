@@ -1,51 +1,52 @@
 # Hard Cutover: Agent Sessions UI to Swing Async Tree
 
 Status: Implemented
-Date: 2026-02-24
+Date: 2026-02-28
 
 ## Scope
 Full replacement of sessions tool-window UI from Compose/Jewel to IntelliJ Swing tree APIs (`StructureTreeModel` + `AsyncTreeModel` + `Tree`) with no compatibility layer and no feature flag.
 
 ## Implementation Status
-- 1. Spec contracts updated for Swing behavior and test ownership.
+- Spec contracts updated for Swing behavior and test ownership.
   Status: Done
   Evidence: `spec/agent-sessions.spec.md`, `spec/agent-sessions-testing.spec.md`, `spec/actions/new-thread.spec.md`
 
-- 2. Swing tool-window panel and controller path in place.
+- Swing tool-window panel and controller path in place.
   Status: Done
   Evidence: `sessions/src/AgentSessionsToolWindow.kt`, `sessions/src/AgentSessionsToolWindowFactory.kt`
 
-- 3. Tree domain snapshot logic extracted from UI framework types.
+- Tree domain snapshot logic extracted from UI framework types.
   Status: Done
   Evidence: `sessions/src/SessionTree.kt` (`SessionTreeSnapshot`, IDs/nodes, visibility helpers)
 
-- 4. Native async tree stack used.
+- Native async tree stack used.
   Status: Done
   Evidence: `StructureTreeModel`, `AsyncTreeModel`, `Tree`, `TreeUtil.installActions`, `TreeUIHelper.installTreeSpeedSearch`
 
-- 5. Expansion/collapse and on-demand loading synchronized with persisted UI state.
+- Expansion/collapse and on-demand loading synchronized with persisted UI state.
   Status: Done
   Evidence: `TreeExpansionListener` + `AgentSessionsTreeUiStateService` integration in `AgentSessionsToolWindow.kt`
 
-- 6. Activation/selection policy aligned to IntelliJ conventions.
+- Activation/selection policy aligned to IntelliJ conventions.
   Status: Done
   Evidence:
   - single-click actions only for `More...` rows,
   - Enter/double-click open project/worktree/thread/sub-agent,
+  - for openable parent rows, double-click open/focus takes precedence over expansion,
   - context-menu selection retarget/preserve policy.
 
-- 7. Row actions and context menus implemented in Swing.
+- Row actions and context menus implemented in Swing.
   Status: Done
   Evidence:
   - thread archive context menu with multi-select count,
   - hover/selection new-session affordances for project/worktree rows,
   - quick-create last provider + action popup with Standard/YOLO sections and CLI enablement.
 
-- 8. Top-area states migrated to Swing components.
+- Top-area states migrated to Swing components.
   Status: Done
   Evidence: global empty/loading text + Swing `ClaudeQuotaHintPanel` in `AgentSessionsToolWindow.kt`
 
-- 9. Compose code/dependencies removed from sessions module.
+- Compose code/dependencies removed from sessions module.
   Status: Done
   Evidence:
   - sessions module has no Compose source files/imports,
