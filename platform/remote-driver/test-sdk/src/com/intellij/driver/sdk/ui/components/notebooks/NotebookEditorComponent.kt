@@ -35,10 +35,10 @@ import com.intellij.driver.sdk.ui.ui
 import com.intellij.driver.sdk.waitFor
 import com.intellij.driver.sdk.waitForCodeAnalysis
 import com.intellij.driver.sdk.waitNotNull
+import com.intellij.driver.sdk.withRetries
 import org.intellij.lang.annotations.Language
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.milliseconds
-import kotlin.time.Duration.Companion.minutes
 import kotlin.time.Duration.Companion.seconds
 
 /**
@@ -339,56 +339,84 @@ fun Driver.createNewNotebook(name: String = "New Notebook", type: NotebookType) 
   }
 }
 
+
+/**
+ * Creates a new Kotlin or Jupyter notebook: first through the mouse-driven "New File or Directory" flow,
+ * then retries through [invokeAction] if the mouse flow fails in the first attempt.
+ *
+ * @param name The name for the new notebook. Defaults to "New Notebook".
+ * @param type The type of notebook to create.
+ */
 fun Driver.createNewNotebookWithMouse(name: String = "New Notebook", type: NotebookType) {
-  ideFrame {
-    waitFor("Project view should present", timeout = 1.minutes) {
+  fun createNotebookViaMouseOrAction(createViaAction: Boolean) {
+    ideFrame {
       leftToolWindowToolbar.projectButton.open()
-      projectView().present()
-    }
-    projectView {
-      projectViewTree.run {
-        waitFor("wait for project tree to load", 30.seconds) {
-          getAllTexts().isNotEmpty()
-        }
-        moveMouse()
+      waitFor("Project view should present", timeout = 15.seconds) {
+        projectView().present()
       }
-    }
+      projectView {
+        projectViewTree.run {
+          waitFor("wait for project tree to load", 15.seconds) {
+            getAllTexts().isNotEmpty()
+          }
+          moveMouse()
+        }
+      }
 
-    val newFileButton = x { byAccessibleName("New File or Directory…") }
+      when (createViaAction) {
+        true -> invokeAction(type.newNotebookActionId, false)
+        false -> {
+          val newFileButton = x { byAccessibleName("New File or Directory…") }
 
-    should("New notebook button should be pressed", timeout = 1.minutes) {
-      should(message = "new file popup should present and focused", timeout = 30.seconds) {
-        newFileButton.strictClick()
-        hasFocus(popup())
+          should("New notebook button should be pressed", timeout = 15.seconds) {
+            newFileButton.present()
+          }
+
+          newFileButton.strictClick()
+
+          should(message = "new file popup should present and focused", timeout = 15.seconds) {
+            hasFocus(popup())
+          }
+
+          popup().run {
+            waitOneText("${type.typeName} Notebook").strictClick()
+            hasSubtext("New ${type.typeName} Notebook")
+          }
+        }
       }
 
       popup().run {
-        waitOneText("${type.typeName} Notebook").strictClick()
-        hasSubtext("New ${type.typeName} Notebook")
+        keyboard {
+          waitFor("expect $name in the popup") {
+            driver.ui.pasteText(name)
+            getAllTexts().any { it.text == name }
+          }
+          enter() // submit the popup
+        }
+      }
+      projectView {
+        projectViewTree.run {
+          waitOneText(message = "File name should present in project tree", timeout = 15.seconds) {
+            it.text == "$name.ipynb"
+          }
+        }
       }
     }
-
-    popup().run {
-      keyboard {
-        waitFor("expect $name in the popup") {
-          driver.ui.pasteText(name)
-          getAllTexts().any { it.text == name }
-        }
-        enter() // submit the popup
-      }
-    }
-    projectView {
-      projectViewTree.run {
-        waitOneText(message = "File name should present in project tree", timeout = 15.seconds) {
-          it.text == "$name.ipynb"
-        }
+    withNotebookEditor {
+      waitFor("the editor is present", timeout = 15.seconds) {
+        notebookCellEditors.isNotEmpty()
       }
     }
   }
-  withNotebookEditor {
-    waitFor("the editor is present", timeout = 1.minutes) {
-      notebookCellEditors.isNotEmpty()
-    }
+
+  fun dismissCreateNotebookPopupAfterFailure() {
+    ideFrame { keyboard { escape() } }
+  }
+  var creationAttempt = 0
+  withRetries(message = "create new notebook with mouse then action", times = 2,
+              onError = ::dismissCreateNotebookPopupAfterFailure) {
+    creationAttempt++
+    createNotebookViaMouseOrAction(createViaAction = creationAttempt > 1)
   }
 }
 
