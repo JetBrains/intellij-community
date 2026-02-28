@@ -39,6 +39,7 @@ internal class LocalEelWindowsProcess private constructor(
   }
 
   override suspend fun kill() {
+    LocalProcessService.getInstance().killWinProcessRecursively(process)
     process.destroyForcibly()
   }
 

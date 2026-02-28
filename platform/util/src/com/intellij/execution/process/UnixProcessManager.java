@@ -12,6 +12,7 @@ import com.intellij.util.Processor;
 import com.intellij.util.ReflectionUtil;
 import com.sun.jna.Library;
 import com.sun.jna.Native;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
@@ -143,6 +144,21 @@ public final class UnixProcessManager {
     if (pid <= 0) {
       throw new IllegalArgumentException("Invalid PID: " + pid + " (killing all user processes in one shot is prohibited here)");
     }
+    return sendSignalImpl(pid, signal);
+  }
+
+  /**
+   * Same as {@link #sendSignal(int, int)}, but sends signal to the process group
+   */
+  @ApiStatus.Internal
+  public static int sendSignalToGroup(int pid, int signal) {
+    if (pid == 0) {
+      throw new IllegalArgumentException("Pid 0 is prohibited");
+    }
+    return sendSignalImpl(-pid, signal);
+  }
+
+  private static int sendSignalImpl(int pid, int signal) {
     checkCLib();
     return Java8Helper.C_LIB.kill(pid, signal);
   }
