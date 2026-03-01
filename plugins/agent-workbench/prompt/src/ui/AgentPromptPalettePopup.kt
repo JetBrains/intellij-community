@@ -44,7 +44,6 @@ import com.intellij.openapi.ui.popup.JBPopup
 import com.intellij.openapi.ui.popup.JBPopupFactory
 import com.intellij.openapi.ui.popup.JBPopupListener
 import com.intellij.openapi.ui.popup.LightweightWindowEvent
-import com.intellij.openapi.util.IconLoader
 import com.intellij.ui.components.JBLabel
 import com.intellij.ui.components.JBList
 import com.intellij.ui.components.JBScrollPane
@@ -738,14 +737,7 @@ internal class AgentPromptPalettePopup(
   }
 
   private fun providerIcon(bridge: AgentSessionProviderBridge): Icon {
-    val iconSpec = bridge.icon
-    if (iconSpec.path.isBlank()) {
-      return AllIcons.Toolwindows.ToolWindowMessages
-    }
-
-    return runCatching {
-      IconLoader.getIcon(iconSpec.path, iconSpec.iconClass)
-    }.getOrDefault(AllIcons.Toolwindows.ToolWindowMessages)
+    return bridge.icon
   }
 
   private fun resolveSessionsMessage(@NonNls key: String, bridge: AgentSessionProviderBridge? = null, vararg params: Any): @Nls String? {
