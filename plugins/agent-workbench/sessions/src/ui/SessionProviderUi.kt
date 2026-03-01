@@ -4,7 +4,6 @@ package com.intellij.agent.workbench.sessions.ui
 import com.intellij.agent.workbench.sessions.AgentSessionsBundle
 import com.intellij.agent.workbench.sessions.core.AgentSessionProvider
 import com.intellij.agent.workbench.sessions.core.providers.AgentSessionProviderBridges
-import com.intellij.openapi.util.IconLoader
 import org.jetbrains.annotations.Nls
 import javax.swing.Icon
 
@@ -15,9 +14,5 @@ internal fun providerDisplayName(provider: AgentSessionProvider): @Nls String {
 
 internal fun providerIcon(provider: AgentSessionProvider): Icon? {
   val bridge = AgentSessionProviderBridges.find(provider) ?: return null
-  val icon = bridge.icon
-  if (icon.path.isBlank()) return null
-  return runCatching {
-    IconLoader.getIcon(icon.path, icon.iconClass)
-  }.getOrNull()
+  return bridge.icon
 }

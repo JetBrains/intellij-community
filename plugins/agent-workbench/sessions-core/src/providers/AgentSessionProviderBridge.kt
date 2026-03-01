@@ -5,6 +5,7 @@ import com.intellij.agent.workbench.sessions.core.AgentSessionLaunchMode
 import com.intellij.agent.workbench.sessions.core.AgentSessionProvider
 import com.intellij.agent.workbench.sessions.core.prompt.AgentPromptContextEnvelopeFormatter
 import com.intellij.agent.workbench.sessions.core.prompt.AgentPromptInitialMessageRequest
+import javax.swing.Icon
 
 interface AgentSessionProviderBridge {
   val provider: AgentSessionProvider
@@ -12,7 +13,7 @@ interface AgentSessionProviderBridge {
   val newSessionLabelKey: String
   val yoloSessionLabelKey: String?
     get() = null
-  val icon: AgentSessionProviderIcon
+  val icon: Icon
 
   val supportedLaunchModes: Set<AgentSessionLaunchMode>
     get() = setOf(AgentSessionLaunchMode.STANDARD)
