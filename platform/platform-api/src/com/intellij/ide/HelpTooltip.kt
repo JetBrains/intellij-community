@@ -13,5 +13,6 @@ import javax.swing.JComponent
  * prefer using [HtmlChunk.text] to avoid accidental HTML injections.
  */
 fun JComponent.setToolTipText(html: HtmlChunk?) {
+  @Suppress("UseHtmlChunkToolTip")
   this.toolTipText = html?.toString()
 }

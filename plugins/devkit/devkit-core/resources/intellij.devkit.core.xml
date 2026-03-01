@@ -253,6 +253,12 @@
                      enabledByDefault="true" level="WARNING"
                      implementationClass="org.jetbrains.idea.devkit.inspections.UseIntelliJVirtualThreadsInspection"
                      key="inspection.use.intellij.virtual.threads.display.name"/>
+    <localInspection language="UAST" shortName="UseHtmlChunkToolTip"
+                     projectType="INTELLIJ_PLUGIN"
+                     groupPathKey="inspections.group.path" groupKey="inspections.group.code"
+                     enabledByDefault="true" level="WARNING"
+                     implementationClass="org.jetbrains.idea.devkit.inspections.UseHtmlChunkToolTipInspection"
+                     key="inspection.use.html.chunk.tooltip.display.name"/>
     <localInspection language="UAST" shortName="UseDPIAwareInsets"
                      projectType="INTELLIJ_PLUGIN"
                      groupPathKey="inspections.group.path" groupKey="inspections.group.code"
@@ -769,6 +775,9 @@
     <cancellationCheckInLoopsFixProvider
       language="JAVA"
       implementationClass="org.jetbrains.idea.devkit.inspections.quickfix.JavaCancellationCheckInLoopsFixProvider"/>
+    <useHtmlChunkToolTipFixProvider
+      language="JAVA"
+      implementationClass="org.jetbrains.idea.devkit.inspections.quickfix.JavaUseHtmlChunkToolTipFixProvider"/>
     <visitorProviderForRBCInspection
       language="JAVA"
       implementationClass="org.jetbrains.idea.devkit.inspections.CallingMethodShouldBeRequiresBlockingContextInspection$VisitorProviderForJava"/>
@@ -829,6 +838,12 @@
                     dynamic="true">
       <with attribute="implementationClass"
             implements="org.jetbrains.idea.devkit.inspections.quickfix.CancellationCheckInLoopsFixProvider"/>
+    </extensionPoint>
+    <extensionPoint qualifiedName="DevKit.lang.useHtmlChunkToolTipFixProvider"
+                    beanClass="com.intellij.lang.LanguageExtensionPoint"
+                    dynamic="true">
+      <with attribute="implementationClass"
+            implements="org.jetbrains.idea.devkit.inspections.quickfix.UseHtmlChunkToolTipFixProvider"/>
     </extensionPoint>
     <extensionPoint qualifiedName="DevKit.lang.visitorProviderForRBCInspection"
                     beanClass="com.intellij.lang.LanguageExtensionPoint"
