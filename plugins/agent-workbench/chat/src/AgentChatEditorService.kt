@@ -78,6 +78,7 @@ suspend fun openChat(
   projectPath: String,
   threadIdentity: String,
   shellCommand: List<String>,
+  startupShellCommandOverride: List<String>? = null,
   threadId: String,
   threadTitle: String,
   subAgentId: String?,
@@ -91,6 +92,10 @@ suspend fun openChat(
 ) {
   val manager = FileEditorManagerEx.getInstanceExAsync(project)
   val existing = findExistingChat(manager.openFiles, threadIdentity, subAgentId)
+  val startupOverrideForNewTab = if (existing == null) startupShellCommandOverride else null
+  val snapshotInitialComposedMessage = if (startupOverrideForNewTab != null) null else initialComposedMessage
+  val snapshotInitialMessageToken = if (startupOverrideForNewTab != null) null else initialMessageToken
+  val snapshotInitialMessageSent = if (startupOverrideForNewTab != null) false else initialMessageSent
   LOG.debug {
     "openChat(project=${project.name}, path=$projectPath, identity=$threadIdentity, " +
     "subAgentId=$subAgentId, existing=${existing != null}, title=$threadTitle)"
@@ -109,9 +114,9 @@ suspend fun openChat(
     pendingCreatedAtMs = pendingCreatedAtMs,
     pendingFirstInputAtMs = pendingFirstInputAtMs,
     pendingLaunchMode = pendingLaunchMode,
-    initialComposedMessage = initialComposedMessage,
-    initialMessageToken = initialMessageToken,
-    initialMessageSent = initialMessageSent,
+    initialComposedMessage = snapshotInitialComposedMessage,
+    initialMessageToken = snapshotInitialMessageToken,
+    initialMessageSent = snapshotInitialMessageSent,
   )
   val file = existing ?: fileSystem.getOrCreateFile(snapshot)
   if (existing != null) {
@@ -160,6 +165,9 @@ suspend fun openChat(
     }
   }
   else {
+    if (startupOverrideForNewTab != null) {
+      file.setStartupShellCommandOverride(startupOverrideForNewTab)
+    }
     tabsService.upsert(file.toSnapshot())
     LOG.debug {
       "openChat created new tab(identity=$threadIdentity, subAgentId=$subAgentId, fileName=${file.name}, activity=$threadActivity)"

@@ -56,6 +56,41 @@ class AgentSessionsPromptLauncherBridgeTest {
           assertThat(providerBridge.lastCreateMode.get()).isEqualTo(AgentSessionLaunchMode.STANDARD)
           assertThat(providerBridge.composeCalls.get()).isEqualTo(1)
           assertThat(providerBridge.lastComposeRequest.get()).isEqualTo(request.initialMessageRequest)
+          assertThat(providerBridge.startupCommandCalls.get()).isEqualTo(1)
+          assertThat(providerBridge.lastStartupBaseCommand.get())
+            .containsExactly("test", "create", INVALID_PROMPT_PROJECT_PATH, AgentSessionLaunchMode.STANDARD.name)
+          assertThat(providerBridge.lastStartupPrompt.get()).isEqualTo("composed:Refactor selected code")
+        }
+      }
+    }
+  }
+
+  @Test
+  fun launchFallsBackWhenStartupPromptCommandIsNotSupported() {
+    val providerBridge = RecordingPromptLaunchProviderBridge(
+      provider = AgentSessionProvider.CODEX,
+      supportedModes = setOf(AgentSessionLaunchMode.STANDARD),
+      startupPromptCommandSupported = false,
+    )
+    AgentSessionProviderBridges.withRegistryForTest(
+      InMemoryAgentSessionProviderRegistry(listOf(providerBridge))
+    ) {
+      runBlocking(Dispatchers.Default) {
+        withService(
+          sessionSourcesProvider = { listOf(providerBridge.sessionSource) },
+          projectEntriesProvider = { listOf(openProjectEntry(PROJECT_PATH, "Project A")) },
+        ) { service ->
+          val bridge = AgentSessionsPromptLauncherBridge { service }
+          val result = bridge.launch(promptLaunchRequest(projectPath = INVALID_PROMPT_PROJECT_PATH))
+
+          assertThat(result.launched).isTrue()
+          assertThat(result.error).isNull()
+          waitForCondition {
+            providerBridge.createCalls.get() == 1
+          }
+          assertThat(providerBridge.composeCalls.get()).isEqualTo(1)
+          assertThat(providerBridge.startupCommandCalls.get()).isEqualTo(1)
+          assertThat(providerBridge.lastStartupPrompt.get()).isEqualTo("composed:Refactor selected code")
         }
       }
     }
@@ -439,12 +474,16 @@ private fun promptLaunchRequest(
 private class RecordingPromptLaunchProviderBridge(
   override val provider: AgentSessionProvider,
   private val supportedModes: Set<AgentSessionLaunchMode>,
+  private val startupPromptCommandSupported: Boolean = true,
 ) : AgentSessionProviderBridge {
   val createCalls: AtomicInteger = AtomicInteger(0)
   val composeCalls: AtomicInteger = AtomicInteger(0)
+  val startupCommandCalls: AtomicInteger = AtomicInteger(0)
   val lastCreatePath: AtomicReference<String?> = AtomicReference(null)
   val lastCreateMode: AtomicReference<AgentSessionLaunchMode?> = AtomicReference(null)
   val lastComposeRequest: AtomicReference<AgentPromptInitialMessageRequest?> = AtomicReference(null)
+  val lastStartupBaseCommand: AtomicReference<List<String>?> = AtomicReference(null)
+  val lastStartupPrompt: AtomicReference<String?> = AtomicReference(null)
 
   override val displayNameKey: String
     get() = "toolwindow.provider.codex"
@@ -477,6 +516,16 @@ private class RecordingPromptLaunchProviderBridge(
   override fun buildNewSessionCommand(mode: AgentSessionLaunchMode): List<String> = listOf("test", "new", mode.name)
 
   override fun buildNewEntryCommand(): List<String> = listOf("test")
+
+  override fun buildCommandWithInitialPrompt(baseCommand: List<String>, prompt: String): List<String>? {
+    startupCommandCalls.incrementAndGet()
+    lastStartupBaseCommand.set(baseCommand)
+    lastStartupPrompt.set(prompt)
+    if (!startupPromptCommandSupported) {
+      return null
+    }
+    return baseCommand + listOf("--", prompt)
+  }
 
   override suspend fun createNewSession(path: String, mode: AgentSessionLaunchMode): AgentSessionLaunchSpec {
     createCalls.incrementAndGet()

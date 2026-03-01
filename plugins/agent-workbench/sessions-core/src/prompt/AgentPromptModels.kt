@@ -14,7 +14,15 @@ data class AgentPromptContextItem(
 
 data class AgentPromptInitialMessageRequest(
   @JvmField val prompt: String,
+  @JvmField val projectPath: String? = null,
   @JvmField val contextItems: List<AgentPromptContextItem> = emptyList(),
+  @JvmField val contextEnvelopeSummary: AgentPromptContextEnvelopeSummary? = null,
+)
+
+data class AgentPromptContextEnvelopeSummary(
+  @JvmField val softCapChars: Int = 12_000,
+  @JvmField val softCapExceeded: Boolean = false,
+  @JvmField val autoTrimApplied: Boolean = false,
 )
 
 data class AgentPromptLaunchRequest(

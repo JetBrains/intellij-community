@@ -42,6 +42,10 @@ internal class ClaudeAgentSessionProviderBridge(
 
   override fun buildNewEntryCommand(): List<String> = listOf(ClaudeCliSupport.CLAUDE_COMMAND)
 
+  override fun buildCommandWithInitialPrompt(baseCommand: List<String>, prompt: String): List<String> {
+    return baseCommand + listOf("--", prompt)
+  }
+
   override suspend fun createNewSession(path: String, mode: AgentSessionLaunchMode): AgentSessionLaunchSpec {
     return AgentSessionLaunchSpec(
       sessionId = null,

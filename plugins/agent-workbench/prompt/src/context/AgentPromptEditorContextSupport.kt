@@ -3,6 +3,8 @@ package com.intellij.agent.workbench.prompt.context
 
 import com.intellij.agent.workbench.prompt.AgentPromptBundle
 import com.intellij.agent.workbench.sessions.core.prompt.AgentPromptContextItem
+import com.intellij.agent.workbench.sessions.core.prompt.AgentPromptContextMetadataKeys
+import com.intellij.agent.workbench.sessions.core.prompt.AgentPromptContextTruncationReasons
 import com.intellij.agent.workbench.sessions.core.prompt.AgentPromptInvocationData
 import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.application.runReadActionBlocking
@@ -52,33 +54,54 @@ internal object AgentPromptEditorContextSupport {
     else {
       "context.snippet.caret.title"
     }
+    val snippetMetadata = linkedMapOf(
+      "startLine" to snippet.startLine.toString(),
+      "endLine" to snippet.endLine.toString(),
+      "selection" to snippet.fromSelection.toString(),
+      AgentPromptContextMetadataKeys.SOURCE to "editor",
+      AgentPromptContextMetadataKeys.ORIGINAL_CHARS to snippet.originalChars.toString(),
+      AgentPromptContextMetadataKeys.INCLUDED_CHARS to snippet.includedChars.toString(),
+      AgentPromptContextMetadataKeys.TRUNCATED to snippet.truncated.toString(),
+      AgentPromptContextMetadataKeys.TRUNCATION_REASON to snippet.truncationReason,
+    )
+    snapshot.language?.takeIf { it.isNotBlank() }?.let { snippetMetadata[AgentPromptContextMetadataKeys.LANGUAGE] = it }
     items += AgentPromptContextItem(
       kindId = AgentPromptContextKinds.SNIPPET,
       title = AgentPromptBundle.message(snippetTitleKey, snippet.startLine, snippet.endLine),
       content = snippet.text,
-      metadata = mapOf(
-        "startLine" to snippet.startLine.toString(),
-        "endLine" to snippet.endLine.toString(),
-        "selection" to snippet.fromSelection.toString(),
-      ),
+      metadata = snippetMetadata,
     )
 
     if (!snapshot.filePath.isNullOrBlank()) {
-      val metadata = LinkedHashMap<String, String>()
-      snapshot.language?.let { metadata["language"] = it }
+      val filePath = snapshot.filePath
+      val metadata = linkedMapOf(
+        AgentPromptContextMetadataKeys.SOURCE to "editor",
+        AgentPromptContextMetadataKeys.ORIGINAL_CHARS to filePath.length.toString(),
+        AgentPromptContextMetadataKeys.INCLUDED_CHARS to filePath.length.toString(),
+        AgentPromptContextMetadataKeys.TRUNCATED to false.toString(),
+        AgentPromptContextMetadataKeys.TRUNCATION_REASON to AgentPromptContextTruncationReasons.NONE,
+      )
       items += AgentPromptContextItem(
         kindId = AgentPromptContextKinds.FILE,
         title = AgentPromptBundle.message("context.file.title"),
-        content = snapshot.filePath,
+        content = filePath,
         metadata = metadata,
       )
     }
 
     if (!snapshot.symbolName.isNullOrBlank()) {
+      val symbolName = snapshot.symbolName
       items += AgentPromptContextItem(
         kindId = AgentPromptContextKinds.SYMBOL,
         title = AgentPromptBundle.message("context.symbol.title"),
-        content = snapshot.symbolName,
+        content = symbolName,
+        metadata = linkedMapOf(
+          AgentPromptContextMetadataKeys.SOURCE to "editor",
+          AgentPromptContextMetadataKeys.ORIGINAL_CHARS to symbolName.length.toString(),
+          AgentPromptContextMetadataKeys.INCLUDED_CHARS to symbolName.length.toString(),
+          AgentPromptContextMetadataKeys.TRUNCATED to false.toString(),
+          AgentPromptContextMetadataKeys.TRUNCATION_REASON to AgentPromptContextTruncationReasons.NONE,
+        ),
       )
     }
 
@@ -93,7 +116,7 @@ internal object AgentPromptEditorContextSupport {
     val snippet = extractSnippet(editor) ?: return null
     val symbolName = resolveSymbolName(psiFile, editor)
     val filePath = virtualFile?.path ?: psiFile?.virtualFile?.path
-    val language = resolveLanguageName(psiFile, virtualFile)
+    val language = resolveLanguageName(psiFile)
     return AgentEditorContextSnapshot(
       filePath = filePath,
       language = language,
@@ -102,13 +125,9 @@ internal object AgentPromptEditorContextSupport {
     )
   }
 
-  private fun resolveLanguageName(psiFile: PsiFile?, virtualFile: VirtualFile?): String? {
+  private fun resolveLanguageName(psiFile: PsiFile?): String? {
     return runReadActionBlocking {
-      val psiLanguage = psiFile?.language?.displayName?.takeIf { it.isNotBlank() }
-      if (psiLanguage != null) {
-        return@runReadActionBlocking psiLanguage
-      }
-      virtualFile?.fileType?.name?.takeIf { it.isNotBlank() }
+      psiFile?.language?.id?.takeIf { it.isNotBlank() }
     }
   }
 
@@ -140,11 +159,16 @@ internal object AgentPromptEditorContextSupport {
       val startLine = document.getLineNumber(startOffset) + 1
       val endLine = document.getLineNumber(safeEndOffsetExclusive - 1) + 1
       val text = document.getText(TextRange(startOffset, safeEndOffsetExclusive))
+      val truncateOutcome = truncate(text)
       return AgentPromptSnippet(
-        text = truncate(text),
+        text = truncateOutcome.text,
         startLine = startLine,
         endLine = endLine,
         fromSelection = true,
+        originalChars = truncateOutcome.originalChars,
+        includedChars = truncateOutcome.includedChars,
+        truncated = truncateOutcome.truncated,
+        truncationReason = truncateOutcome.reason,
       )
     }
 
@@ -161,35 +185,66 @@ internal object AgentPromptEditorContextSupport {
       return null
     }
     val text = document.getText(TextRange(startOffset, endOffset))
+    val truncateOutcome = truncate(text)
     return AgentPromptSnippet(
-      text = truncate(text),
+      text = truncateOutcome.text,
       startLine = startLineIndex + 1,
       endLine = endLineIndex + 1,
       fromSelection = false,
+      originalChars = truncateOutcome.originalChars,
+      includedChars = truncateOutcome.includedChars,
+      truncated = truncateOutcome.truncated,
+      truncationReason = truncateOutcome.reason,
     )
   }
 
-  private fun truncate(text: String): String {
+  private fun truncate(text: String): TruncateOutcome {
+    val originalChars = text.length
     if (text.length <= MAX_SNIPPET_CHARS) {
-      return text
+      return TruncateOutcome(
+        text = text,
+        originalChars = originalChars,
+        includedChars = originalChars,
+        truncated = false,
+        reason = AgentPromptContextTruncationReasons.NONE,
+      )
     }
-    return buildString(MAX_SNIPPET_CHARS + 32) {
+    val truncatedText = buildString(MAX_SNIPPET_CHARS + 32) {
       append(text, 0, MAX_SNIPPET_CHARS)
       append("\n...[truncated]")
     }
+    return TruncateOutcome(
+      text = truncatedText,
+      originalChars = originalChars,
+      includedChars = truncatedText.length,
+      truncated = true,
+      reason = AgentPromptContextTruncationReasons.SOURCE_LIMIT,
+    )
   }
 }
 
+private data class TruncateOutcome(
+  @JvmField val text: String,
+  @JvmField val originalChars: Int,
+  @JvmField val includedChars: Int,
+  @JvmField val truncated: Boolean,
+  @JvmField val reason: String,
+)
+
 internal data class AgentEditorContextSnapshot(
-  val filePath: String?,
-  val language: String?,
-  val snippet: AgentPromptSnippet,
-  val symbolName: String?,
+  @JvmField val filePath: String?,
+  @JvmField val language: String?,
+  @JvmField val snippet: AgentPromptSnippet,
+  @JvmField val symbolName: String?,
 )
 
 internal data class AgentPromptSnippet(
-  val text: String,
-  val startLine: Int,
-  val endLine: Int,
-  val fromSelection: Boolean,
+  @JvmField val text: String,
+  @JvmField val startLine: Int,
+  @JvmField val endLine: Int,
+  @JvmField val fromSelection: Boolean,
+  @JvmField val originalChars: Int,
+  @JvmField val includedChars: Int,
+  @JvmField val truncated: Boolean,
+  @JvmField val truncationReason: String,
 )

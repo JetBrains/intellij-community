@@ -4,14 +4,16 @@ package com.intellij.agent.workbench.prompt.ui
 // @spec community/plugins/agent-workbench/spec/actions/global-prompt-entry.spec.md
 
 import com.intellij.AbstractBundle
+import com.intellij.CommonBundle
 import com.intellij.agent.workbench.prompt.AgentPromptBundle
-import com.intellij.agent.workbench.prompt.context.AgentPromptContextKinds
 import com.intellij.agent.workbench.prompt.context.AgentPromptContextResolverService
 import com.intellij.agent.workbench.prompt.context.dataContextOrNull
 import com.intellij.agent.workbench.sessions.core.AgentSessionLaunchMode
 import com.intellij.agent.workbench.sessions.core.AgentSessionProvider
 import com.intellij.agent.workbench.sessions.core.formatAgentSessionRelativeTimeShort
 import com.intellij.agent.workbench.sessions.core.formatAgentSessionThreadTitle
+import com.intellij.agent.workbench.sessions.core.prompt.AgentPromptContextEnvelopeFormatter
+import com.intellij.agent.workbench.sessions.core.prompt.AgentPromptContextEnvelopeSummary
 import com.intellij.agent.workbench.sessions.core.prompt.AgentPromptContextItem
 import com.intellij.agent.workbench.sessions.core.prompt.AgentPromptExistingThreadsSnapshot
 import com.intellij.agent.workbench.sessions.core.prompt.AgentPromptInitialMessageRequest
@@ -37,7 +39,6 @@ import com.intellij.openapi.actionSystem.Separator
 import com.intellij.openapi.application.UI
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.ui.MessageDialogBuilder
 import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.ui.popup.JBPopup
 import com.intellij.openapi.ui.popup.JBPopupFactory
@@ -83,7 +84,7 @@ import javax.swing.event.DocumentEvent
 import javax.swing.event.DocumentListener
 import javax.swing.text.DefaultEditorKit
 
-private const val CONTEXT_CHAR_BUDGET = 12_000
+private const val CONTEXT_SOFT_CAP_CHARS = AgentPromptContextEnvelopeFormatter.DEFAULT_SOFT_CAP_CHARS
 private const val MAX_EXISTING_TASKS = 200
 private const val CONTEXT_CHIP_GAP = 6
 
@@ -114,9 +115,7 @@ internal class AgentPromptPalettePopup(
   private var popupActive: Boolean = false
   private var clearDraftOnClose: Boolean = false
   private var canSubmitNow: Boolean = false
-  private var customContextCounter: Int = 1
   private var contextEntries: List<ContextEntry> = emptyList()
-  private var lastResolvedContextItems: List<AgentPromptContextItem> = emptyList()
   private var providerEntries: List<ProviderEntry> = emptyList()
   private var providerMenuModel: AgentSessionProviderMenuModel = AgentSessionProviderMenuModel(emptyList(), emptyList())
   private var selectedProvider: ProviderEntry? = null
@@ -134,7 +133,7 @@ internal class AgentPromptPalettePopup(
 
     val content = createContentPanel()
     refreshProviders()
-    refreshContext(resetCustomCounter = false)
+    loadInitialContext()
 
     restoreDraft()
     clearStatus()
@@ -369,19 +368,9 @@ internal class AgentPromptPalettePopup(
     return AgentPromptBundle.message("popup.error.provider.unavailable", item.displayNameFallback())
   }
 
-  private fun refreshContext(resetCustomCounter: Boolean) {
-    if (resetCustomCounter) {
-      customContextCounter = 1
-    }
+  private fun loadInitialContext() {
     val resolved = contextResolverService.collectDefaultContext(invocationData)
-    val contextItems = if (resolved.isNotEmpty()) {
-      lastResolvedContextItems = resolved
-      resolved
-    }
-    else {
-      lastResolvedContextItems
-    }
-    contextEntries = contextItems.map { item -> ContextEntry(item = item) }
+    contextEntries = resolved.map { item -> ContextEntry(item = item, projectBasePath = project.basePath) }
     rebuildContextChips()
   }
 
@@ -390,13 +379,6 @@ internal class AgentPromptPalettePopup(
     contextEntries.forEach { entry ->
       contextChipsPanel.add(createContextChip(entry))
     }
-    contextChipsPanel.add(createActionChip(AgentPromptBundle.message("popup.context.refresh.chip")) {
-      refreshContext(resetCustomCounter = true)
-      showInfo(AgentPromptBundle.message("popup.status.context.refreshed"))
-    })
-    contextChipsPanel.add(createActionChip(AgentPromptBundle.message("popup.context.add.chip")) {
-      addCustomContext()
-    })
     contextChipsPanel.revalidate()
     contextChipsPanel.repaint()
   }
@@ -420,44 +402,6 @@ internal class AgentPromptPalettePopup(
         }
       entry.tooltipText?.let(::setToolTip)
     }
-  }
-
-  private fun createActionChip(@Nls text: String, action: () -> Unit): JComponent {
-    return JButton(text).apply {
-      isFocusable = false
-      isOpaque = false
-      background = UIUtil.TRANSPARENT_COLOR
-      putClientProperty("styleTag", true)
-      // Keep tag UI/border, but with transparent fill so chips blend into popup background.
-      putClientProperty("JButton.backgroundColor", UIUtil.TRANSPARENT_COLOR)
-      margin = JBUI.insets(3, 10)
-      addActionListener { action() }
-    }
-  }
-
-  private fun addCustomContext() {
-    val text = Messages.showMultilineInputDialog(
-      project,
-      AgentPromptBundle.message("popup.context.custom.input.message"),
-      AgentPromptBundle.message("popup.context.custom.input.title"),
-      "",
-      null,
-      null,
-    )?.trim().orEmpty()
-    if (text.isEmpty()) {
-      return
-    }
-
-    val entry = ContextEntry(
-      item = AgentPromptContextItem(
-        kindId = AgentPromptContextKinds.CUSTOM,
-        title = AgentPromptBundle.message("context.custom.title", customContextCounter++),
-        content = text,
-      ),
-    )
-    contextEntries = contextEntries + entry
-    rebuildContextChips()
-    showInfo(AgentPromptBundle.message("popup.status.context.added"))
   }
 
   private fun reloadExistingTasks() {
@@ -630,16 +574,7 @@ internal class AgentPromptPalettePopup(
     }
 
     val selectedContextItems = contextEntries.map { it.item }
-    val budgetOutcome = applyContextBudget(selectedContextItems)
-    if (budgetOutcome.truncated) {
-      val continueWithTrimmedContext = MessageDialogBuilder.yesNo(
-        AgentPromptBundle.message("popup.context.truncated.title"),
-        AgentPromptBundle.message("popup.context.truncated.message", CONTEXT_CHAR_BUDGET),
-      ).ask(project)
-      if (!continueWithTrimmedContext) {
-        return
-      }
-    }
+    val contextSelection = resolveContextSelection(selectedContextItems) ?: return
 
     val launcher = launcherProvider()
     if (launcher == null) {
@@ -661,7 +596,9 @@ internal class AgentPromptPalettePopup(
       launchMode = AgentSessionLaunchMode.STANDARD,
       initialMessageRequest = AgentPromptInitialMessageRequest(
         prompt = prompt,
-        contextItems = budgetOutcome.items,
+        projectPath = projectPath,
+        contextItems = contextSelection.items,
+        contextEnvelopeSummary = contextSelection.summary,
       ),
       targetThreadId = targetThreadId,
       preferredDedicatedFrame = null,
@@ -684,38 +621,65 @@ internal class AgentPromptPalettePopup(
     showError(errorMessage)
   }
 
-  private fun applyContextBudget(items: List<AgentPromptContextItem>): ContextBudgetOutcome {
-    var remainingChars = CONTEXT_CHAR_BUDGET
-    var truncated = false
-    val trimmedItems = ArrayList<AgentPromptContextItem>(items.size)
-
-    items.forEach { item ->
-      if (remainingChars <= 0) {
-        truncated = true
-        return@forEach
-      }
-
-      val content = item.content.trim()
-      if (content.isEmpty()) {
-        return@forEach
-      }
-
-      if (content.length <= remainingChars) {
-        trimmedItems += item.copy(content = content)
-        remainingChars -= content.length
-        return@forEach
-      }
-
-      val truncatedContent = buildString {
-        append(content.take(remainingChars))
-        append("\n...[truncated]")
-      }
-      trimmedItems += item.copy(content = truncatedContent)
-      remainingChars = 0
-      truncated = true
+  private fun resolveContextSelection(items: List<AgentPromptContextItem>): ContextSelection? {
+    val baseSummary = AgentPromptContextEnvelopeSummary(
+      softCapChars = CONTEXT_SOFT_CAP_CHARS,
+      softCapExceeded = false,
+      autoTrimApplied = false,
+    )
+    if (items.isEmpty()) {
+      return ContextSelection(items = emptyList(), summary = baseSummary)
     }
 
-    return ContextBudgetOutcome(items = trimmedItems, truncated = truncated)
+    val normalizedItems = items.map { item -> item.copy(content = item.content.trim()) }
+    val serializedChars = AgentPromptContextEnvelopeFormatter.measureContextBlockChars(
+      items = normalizedItems,
+      summary = baseSummary,
+      projectPath = project.basePath,
+    )
+    if (serializedChars <= CONTEXT_SOFT_CAP_CHARS) {
+      return ContextSelection(items = normalizedItems, summary = baseSummary)
+    }
+
+    val choice = Messages.showDialog(
+      project,
+      AgentPromptBundle.message("popup.context.softcap.message", serializedChars, CONTEXT_SOFT_CAP_CHARS),
+      AgentPromptBundle.message("popup.context.softcap.title"),
+      arrayOf(
+        AgentPromptBundle.message("popup.context.softcap.action.send.full"),
+        AgentPromptBundle.message("popup.context.softcap.action.auto.trim"),
+        CommonBundle.getCancelButtonText(),
+      ),
+      0,
+      Messages.getWarningIcon(),
+    )
+
+    return when (choice) {
+      0 -> ContextSelection(
+        items = normalizedItems,
+        summary = AgentPromptContextEnvelopeSummary(
+          softCapChars = CONTEXT_SOFT_CAP_CHARS,
+          softCapExceeded = true,
+          autoTrimApplied = false,
+        ),
+      )
+      1 -> {
+        val trimResult = AgentPromptContextEnvelopeFormatter.applySoftCap(
+          items = normalizedItems,
+          softCapChars = CONTEXT_SOFT_CAP_CHARS,
+          projectPath = project.basePath,
+        )
+        ContextSelection(
+          items = trimResult.items,
+          summary = AgentPromptContextEnvelopeSummary(
+            softCapChars = CONTEXT_SOFT_CAP_CHARS,
+            softCapExceeded = true,
+            autoTrimApplied = true,
+          ),
+        )
+      }
+      else -> null
+    }
   }
 
   private fun restoreDraft() {
@@ -816,6 +780,11 @@ internal class AgentPromptPalettePopup(
     footerLabel.text = message
   }
 }
+
+private data class ContextSelection(
+  @JvmField val items: List<AgentPromptContextItem>,
+  @JvmField val summary: AgentPromptContextEnvelopeSummary,
+)
 
 internal fun installPromptEnterHandlers(
   promptArea: JBTextArea,

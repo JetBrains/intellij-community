@@ -2,6 +2,9 @@
 package com.intellij.agent.workbench.claude.sessions
 
 import com.intellij.agent.workbench.sessions.core.AgentSessionLaunchMode
+import com.intellij.agent.workbench.sessions.core.prompt.AgentPromptContextItem
+import com.intellij.agent.workbench.sessions.core.prompt.AgentPromptContextMetadataKeys
+import com.intellij.agent.workbench.sessions.core.prompt.AgentPromptInitialMessageRequest
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 
@@ -24,5 +27,40 @@ class ClaudeAgentSessionProviderBridgeTest {
   fun buildYoloCommand() {
     assertThat(bridge.buildNewSessionCommand(AgentSessionLaunchMode.YOLO))
       .containsExactly("claude", "--dangerously-skip-permissions")
+  }
+
+  @Test
+  fun buildCommandWithInitialPromptForResumeCommand() {
+    val resumeCommand = bridge.buildResumeCommand("session-1")
+
+    assertThat(bridge.buildCommandWithInitialPrompt(resumeCommand, "-summarize\nchanges"))
+      .containsExactly("claude", "--resume", "session-1", "--", "-summarize\nchanges")
+  }
+
+  @Test
+  fun composeInitialMessageUsesCompactContextBlock() {
+    val message = bridge.composeInitialMessage(
+      AgentPromptInitialMessageRequest(
+        prompt = "Summarize changes",
+        contextItems = listOf(
+          AgentPromptContextItem(
+            kindId = "paths",
+            title = "Project Selection",
+            content = "file: /tmp/demo.kt",
+            metadata = mapOf(
+              AgentPromptContextMetadataKeys.SOURCE to "projectView",
+            ),
+          )
+        ),
+      )
+    )
+
+    assertThat(message).startsWith("Summarize changes\n\n### IDE Context")
+    assertThat(message).contains("paths:")
+    assertThat(message).contains("file: /tmp/demo.kt")
+    assertThat(message).doesNotContain("soft-cap:")
+    assertThat(message).doesNotContain("Metadata:")
+    assertThat(message).doesNotContain("Items:")
+    assertThat(message).doesNotContain("\"schema\"")
   }
 }

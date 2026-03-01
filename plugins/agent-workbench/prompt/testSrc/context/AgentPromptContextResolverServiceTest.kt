@@ -4,6 +4,7 @@ package com.intellij.agent.workbench.prompt.context
 import com.intellij.agent.workbench.sessions.core.prompt.AgentPromptContextContributorBridge
 import com.intellij.agent.workbench.sessions.core.prompt.AgentPromptContextContributorPhase
 import com.intellij.agent.workbench.sessions.core.prompt.AgentPromptContextItem
+import com.intellij.agent.workbench.sessions.core.prompt.AgentPromptContextMetadataKeys
 import com.intellij.agent.workbench.sessions.core.prompt.AgentPromptInvocationData
 import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.actionSystem.impl.SimpleDataContext
@@ -42,6 +43,7 @@ class AgentPromptContextResolverServiceTest {
     val resolved = service.collectDefaultContext(invocationData())
 
     assertThat(resolved.map { it.kindId }).containsExactly("invocation")
+    assertThat(resolved.single().metadata[AgentPromptContextMetadataKeys.PHASE]).isEqualTo("invocation")
     assertThat(firstInvocationCalls).isEqualTo(1)
     assertThat(secondInvocationCalls).isEqualTo(1)
     assertThat(fallbackCalls).isZero()
@@ -66,6 +68,7 @@ class AgentPromptContextResolverServiceTest {
     val resolved = service.collectDefaultContext(invocationData())
 
     assertThat(resolved.map { it.kindId }).containsExactly("fallback")
+    assertThat(resolved.single().metadata[AgentPromptContextMetadataKeys.PHASE]).isEqualTo("fallback")
     assertThat(fallbackCalls).isEqualTo(1)
   }
 
@@ -87,6 +90,7 @@ class AgentPromptContextResolverServiceTest {
     val resolved = service.collectDefaultContext(invocationData())
 
     assertThat(resolved.map { it.kindId }).containsExactly("recovered")
+    assertThat(resolved.single().metadata[AgentPromptContextMetadataKeys.PHASE]).isEqualTo("invocation")
   }
 
   private fun invocationData(): AgentPromptInvocationData {

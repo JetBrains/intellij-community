@@ -6,6 +6,4 @@ internal object AgentPromptContextKinds {
   const val FILE: String = "file"
   const val SYMBOL: String = "symbol"
   const val PATHS: String = "paths"
-  const val CUSTOM: String = "custom"
 }
-
