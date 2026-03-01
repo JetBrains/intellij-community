@@ -1313,7 +1313,8 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
     RangeHighlighter[] highlighters = DocumentMarkupModel.forDocument(editor.getDocument(), project, true).getAllHighlighters();
     for (RangeHighlighter highlighter : highlighters) {
       GutterMark renderer = highlighter.getGutterIconRenderer();
-      if (renderer != null &&
+      if (highlighter.isValid() &&
+          renderer != null &&
           editor.getDocument().getLineNumber(offset) == editor.getDocument().getLineNumber(highlighter.getStartOffset()) &&
           !processor.process(renderer)) {
         return false;
@@ -1340,8 +1341,9 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
 
     RangeHighlighter[] highlighters = DocumentMarkupModel.forDocument(editor.getDocument(), project, true).getAllHighlighters();
     for (RangeHighlighter highlighter : highlighters) {
-      if (!highlighter.isValid()) continue;
-      addGutterIconRenderer(highlighter.getGutterIconRenderer(), highlighter.getStartOffset(), result);
+      if (highlighter.isValid()) {
+        addGutterIconRenderer(highlighter.getGutterIconRenderer(), highlighter.getStartOffset(), result);
+      }
     }
     return ContainerUtil.concat(result.values());
   }

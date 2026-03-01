@@ -173,7 +173,7 @@ public final class HighlightInfoUpdaterImpl extends HighlightInfoUpdater impleme
         // all maps for a FileViewProvider were gc-ed, we need to dispose the dangling range highlighters from the document markup
         MarkupModelEx markupModel = (MarkupModelEx)DocumentMarkupModel.forDocument(document, project, false);
         if (markupModel != null) {
-          List<HighlightInfo> allInfos = ContainerUtil.mapNotNull(markupModel.getAllHighlighters(), h -> HighlightInfo.fromRangeHighlighter(h));
+          List<HighlightInfo> allInfos = ContainerUtil.mapNotNull(markupModel.getAllHighlighters(), h -> h.isValid() ? HighlightInfo.fromRangeHighlighter(h) : null);
           List<HighlightInfo> infos = ContainerUtil.filter(allInfos, h-> h.toolId != null);
           addEvictedInfos(infos);
         }
@@ -743,6 +743,7 @@ public final class HighlightInfoUpdaterImpl extends HighlightInfoUpdater impleme
       hostRange = TextRange.from(0, hostDocument.getTextLength());
     }
     return Arrays.stream(DocumentMarkupModel.forDocument(hostDocument, project, true).getAllHighlighters())
+      .filter(h->h.isValid())
       .map(m -> HighlightInfo.fromRangeHighlighter(m))
       .filter(Objects::nonNull)
       .filter(h->h.toolId != null)

@@ -297,7 +297,7 @@ class ConsoleViewImplTest : LightPlatformTestCase() {
         UIUtil.dispatchAllInvocationEvents()
         console.waitAllRequests()
         val model = DocumentMarkupModel.forDocument(console.editor!!.document, project, true)
-        val highlighter = assertOneElement(model.allHighlighters)
+        val highlighter = assertOneElement(model.allHighlighters.filter{it.isValid})
         assertEquals(TextRange(0, console.editor!!.document.textLength), highlighter.textRange)
       }.start()
     }
@@ -1074,15 +1074,15 @@ class ConsoleViewImplTest : LightPlatformTestCase() {
     get() =
       lines to placeholderText!!
 
-  private val allRangeHighlighters: MutableList<RangeHighlighter>
+  private val allRangeHighlighters: List<RangeHighlighter>
     get() {
       val model = DocumentMarkupModel.forDocument(consoleEditor.document, project, true)
       val highlighters = model.allHighlighters
       Arrays.sort(highlighters, Comparator.comparingInt { obj: RangeMarker -> obj.startOffset }.thenComparingInt { obj: RangeMarker -> obj.endOffset })
-      return mutableListOf(*highlighters)
+      return highlighters.filter{it.isValid}
     }
 
-  private fun assertMarkersEqual(actual: MutableList<out RangeHighlighter>, vararg expected: ExpectedHighlighter) {
+  private fun assertMarkersEqual(actual: List<RangeHighlighter>, vararg expected: ExpectedHighlighter) {
     assertEquals(expected.size, actual.size)
     for (i in expected.indices) {
       assertMarkerEquals(expected[i], actual[i])

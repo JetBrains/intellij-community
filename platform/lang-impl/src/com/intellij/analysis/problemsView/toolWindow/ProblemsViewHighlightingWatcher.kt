@@ -33,7 +33,11 @@ internal class ProblemsViewHighlightingWatcher(
     val markupModel = DocumentMarkupModel.forDocument(document, provider.project, true) as MarkupModelEx
     markupModel.addMarkupModelListener(this, this)
     val highlighters = markupModel.allHighlighters
-    highlighters.forEach { afterAdded(it as RangeHighlighterEx) }
+    highlighters.forEach {
+      if (it.isValid) {
+        afterAdded(it as RangeHighlighterEx)
+      }
+    }
     Disposer.register(provider, this)
   }
 

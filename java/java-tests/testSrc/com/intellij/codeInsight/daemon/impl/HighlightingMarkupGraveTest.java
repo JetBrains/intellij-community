@@ -100,6 +100,7 @@ public class HighlightingMarkupGraveTest extends DaemonAnalyzerTestCase {
 
           List<String> symbolHighlighters =
             Arrays.stream(markupModel.getAllHighlighters())
+              .filter(h -> h.isValid())
               .filter(h -> h.getTextAttributesKey() != null)
               .filter(h -> h.getLayer() == HighlighterLayer.ADDITIONAL_SYNTAX)
               .filter(h -> HighlightingNecromancer.isZombieMarkup(h))
@@ -168,8 +169,7 @@ public class HighlightingMarkupGraveTest extends DaemonAnalyzerTestCase {
           MarkupModel markupModel = DocumentMarkupModel.forDocument(document, getProject(), true);
           CoroutineKt.executeSomeCoroutineTasksAndDispatchAllInvocationEvents(myProject);
 
-          RangeHighlighter
-            errorHighlighter = ContainerUtil.find(markupModel.getAllHighlighters(), h -> CodeInsightColors.ERRORS_ATTRIBUTES.equals(h.getTextAttributesKey()));
+          RangeHighlighter errorHighlighter = ContainerUtil.find(markupModel.getAllHighlighters(), h -> h.isValid() && CodeInsightColors.ERRORS_ATTRIBUTES.equals(h.getTextAttributesKey()));
           assertNotNull(errorHighlighter);
           assertEquals("//XXX", errorHighlighter.getTextRange().substring(document.getText()));
           assertTrue(HighlightingNecromancer.isZombieMarkup(errorHighlighter));

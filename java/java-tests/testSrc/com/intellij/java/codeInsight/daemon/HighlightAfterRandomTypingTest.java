@@ -486,6 +486,7 @@ class X {
       if (info == null
           || info.getToolId() == HighlightVisitorImpl.class && TextRange.create(info).isEmpty()
           || info.getToolId() == HighlightVisitorImpl.class && TextRange.create(info).getLength()==1 && info.getDescription() != null && StringUtil.endsWith(info.getDescription(), " expected")
+        || !highlighter.isValid()
       ) { // ignore empty error elements, there are can be multiple at the same offset after reparse
         continue;
       }

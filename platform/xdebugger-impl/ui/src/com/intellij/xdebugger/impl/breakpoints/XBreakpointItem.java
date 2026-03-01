@@ -170,7 +170,7 @@ public class XBreakpointItem extends BreakpointItem {
         DocumentMarkupModel.forDocument(editor.getDocument(), editor.getProject(), false);
 
       for (RangeHighlighter highlighter : documentModel.getAllHighlighters()) {
-        if (highlighter.getUserData(DebuggerColors.BREAKPOINT_HIGHLIGHTER_KEY) == Boolean.TRUE) {
+        if (highlighter.isValid() && highlighter.getUserData(DebuggerColors.BREAKPOINT_HIGHLIGHTER_KEY) == Boolean.TRUE) {
           int line1 = editor.offsetToLogicalPosition(highlighter.getStartOffset()).line;
           if (line1 != line) {
             if (highlighter.getTargetArea() == HighlighterTargetArea.LINES_IN_RANGE) {

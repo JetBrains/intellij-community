@@ -187,6 +187,7 @@ class HighlightingBenchmarkAction : AnAction() {
 
         val maxSeverity = model.allHighlighters
             .mapNotNull { highlighter ->
+                if (!highlighter.isValid) return@mapNotNull null
                 val info = HighlightInfo.fromRangeHighlighter(highlighter) ?: return@mapNotNull null
                 info.severity
             }.maxWithOrNull(severityRegistrar)
